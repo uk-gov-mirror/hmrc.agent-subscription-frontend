@@ -13,6 +13,7 @@ trait MicroService {
   import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
   import uk.gov.hmrc.versioning.SbtGitVersioning
   import play.sbt.routes.RoutesKeys.routesGenerator
+  import org.scalastyle.sbt.ScalastylePlugin.scalastyleConfig
 
 
   import TestPhases._
@@ -47,7 +48,8 @@ trait MicroService {
       libraryDependencies ++= appDependencies,
       retrieveManaged := true,
       evictionWarningOptions in update := EvictionWarningOptions.default.withWarnScalaVersionEviction(false),
-      routesGenerator := StaticRoutesGenerator
+      routesGenerator := StaticRoutesGenerator,
+      (scalastyleConfig in Test) := baseDirectory.value / "scalastyle-test-config.xml"
     )
     .configs(IntegrationTest)
     .settings(inConfig(IntegrationTest)(Defaults.itSettings): _*)
