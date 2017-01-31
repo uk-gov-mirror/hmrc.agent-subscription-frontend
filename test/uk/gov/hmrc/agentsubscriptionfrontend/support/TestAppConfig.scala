@@ -14,21 +14,17 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentsubscriptionfrontend.controllers
+package uk.gov.hmrc.agentsubscriptionfrontend.support
 
-import javax.inject.{Inject, Singleton}
-
-import play.api.i18n.{I18nSupport, MessagesApi}
-import play.api.mvc._
 import uk.gov.hmrc.agentsubscriptionfrontend.AppConfig
-import uk.gov.hmrc.play.frontend.controller.FrontendController
 
-import scala.concurrent.Future
+object TestAppConfig extends AppConfig {
 
+  override val analyticsToken: String = "N/A"
+  override val analyticsHost: String = "auto"
 
-@Singleton
-class SubscriptionController @Inject() (override val messagesApi: MessagesApi)(implicit appConfig: AppConfig) extends FrontendController with I18nSupport {
-  val showCheckAgencyStatus = Action.async { implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.agentsubscriptionfrontend.views.html.subscribe()))
-  }
+  private val contactHost = "http://localhost:9250"
+  private val contactFormServiceIdentifier = "AOSS"
+  override lazy val reportAProblemPartialUrl = s"$contactHost/contact/problem_reports_ajax?service=$contactFormServiceIdentifier"
+  override lazy val reportAProblemNonJSUrl = s"$contactHost/contact/problem_reports_nonjs?service=$contactFormServiceIdentifier"
 }

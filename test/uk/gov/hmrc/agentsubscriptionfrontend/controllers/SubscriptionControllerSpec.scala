@@ -16,18 +16,17 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
-import org.scalatestplus.play.OneAppPerSuite
-import play.api.i18n.MessagesApi
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
+import uk.gov.hmrc.agentsubscriptionfrontend.support.TestAppConfig
+import uk.gov.hmrc.agentsubscriptionfrontend.support.TestMessagesApi.testMessagesApi
 import uk.gov.hmrc.play.test.UnitSpec
 
-class SubscriptionControllerSpec extends UnitSpec with OneAppPerSuite {
+class SubscriptionControllerSpec extends UnitSpec {
 
   val fakeRequest = FakeRequest("GET", "/check-agency-status")
 
-  val messagesApi = app.injector.instanceOf[MessagesApi]
-  val controller = new SubscriptionController(messagesApi)
+  val controller = new SubscriptionController(testMessagesApi)(TestAppConfig)
 
   "showCheckAgencyStatus" should {
     "return 200" in {

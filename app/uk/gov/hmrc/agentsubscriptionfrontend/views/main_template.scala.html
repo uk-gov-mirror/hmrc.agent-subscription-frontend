@@ -1,4 +1,5 @@
-@(title: String,
+@(appConfig: uk.gov.hmrc.agentsubscriptionfrontend.AppConfig,
+  title: String,
   sidebarLinks: Option[Html] = None,
   contentHeader: Option[Html] = None,
   bodyClasses: Option[String] = None,
@@ -17,7 +18,7 @@
 }
 
 
-@govuk_wrapper(appConfig = uk.gov.hmrc.agentsubscriptionfrontend.FrontendAppConfig,
+@govuk_wrapper(appConfig = appConfig,
                title = title,
                mainClass = mainClass,
                bodyClasses = bodyClasses,
