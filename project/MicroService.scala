@@ -48,7 +48,6 @@ trait MicroService {
       libraryDependencies ++= appDependencies,
       retrieveManaged := true,
       evictionWarningOptions in update := EvictionWarningOptions.default.withWarnScalaVersionEviction(false),
-      routesGenerator := StaticRoutesGenerator,
       (scalastyleConfig in Test) := baseDirectory.value / "scalastyle-test-config.xml"
     )
     .configs(IntegrationTest)

@@ -17,28 +17,27 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import play.api.http.Status
+import play.api.i18n.MessagesApi
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import play.api.http._
-import play.api.test.FakeRequest
-import play.api.test.Helpers._
-import uk.gov.hmrc.play.test.UnitSpec
-import uk.gov.hmrc.play.test.{WithFakeApplication, UnitSpec}
+import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 
 
-class HelloWorldControllerSpec extends UnitSpec with WithFakeApplication{
+class SubscriptionControllerSpec extends UnitSpec with WithFakeApplication {
 
-  val fakeRequest = FakeRequest("GET", "/")
+  val fakeRequest = FakeRequest("GET", "/subscribe")
 
+  val messagesApi = fakeApplication.injector.instanceOf[MessagesApi]
+  val controller = new SubscriptionController(messagesApi)
 
-  "GET /" should {
+  "GET /subscribe" should {
     "return 200" in {
-      val result = HelloWorld.helloWorld(fakeRequest)
+      val result = controller.showSubscribe(fakeRequest)
       status(result) shouldBe Status.OK
     }
 
     "return HTML" in {
-      val result = HelloWorld.helloWorld(fakeRequest)
+      val result = controller.showSubscribe(fakeRequest)
       contentType(result) shouldBe Some("text/html")
       charset(result) shouldBe Some("utf-8")
     }
