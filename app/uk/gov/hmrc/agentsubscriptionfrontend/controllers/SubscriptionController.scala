@@ -27,7 +27,7 @@ import scala.concurrent.Future
 
 @Singleton
 class SubscriptionController @Inject() (override val messagesApi: MessagesApi) extends FrontendController with I18nSupport {
-  val showSubscribe = Action.async { implicit request =>
+  val showCheckAgencyStatus = Action.async { implicit request =>
     Future.successful(Ok(uk.gov.hmrc.agentsubscriptionfrontend.views.html.subscribe()))
   }
 }

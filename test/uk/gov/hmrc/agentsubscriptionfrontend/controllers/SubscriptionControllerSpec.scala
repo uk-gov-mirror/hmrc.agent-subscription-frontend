@@ -23,28 +23,23 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.play.test.UnitSpec
 
-
 class SubscriptionControllerSpec extends UnitSpec with OneAppPerSuite {
 
-  val fakeRequest = FakeRequest("GET", "/subscribe")
+  val fakeRequest = FakeRequest("GET", "/check-agency-status")
 
   val messagesApi = app.injector.instanceOf[MessagesApi]
   val controller = new SubscriptionController(messagesApi)
 
-  "GET /subscribe" should {
+  "showCheckAgencyStatus" should {
     "return 200" in {
-      val result = controller.showSubscribe(fakeRequest)
+      val result = controller.showCheckAgencyStatus(fakeRequest)
       status(result) shouldBe Status.OK
     }
 
     "return HTML" in {
-      val result = controller.showSubscribe(fakeRequest)
+      val result = controller.showCheckAgencyStatus(fakeRequest)
       contentType(result) shouldBe Some("text/html")
       charset(result) shouldBe Some("utf-8")
     }
-
-
   }
-
-
 }
