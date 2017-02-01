@@ -17,6 +17,7 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import org.scalatestplus.play.OneAppPerSuite
+import play.api.mvc.Result
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.play.test.UnitSpec
@@ -26,12 +27,19 @@ class SubscriptionControllerISpec extends UnitSpec with OneAppPerSuite {
 
   "showCheckAgencyStatus" should {
     "be available at /agent-subscription/check-agency-status" in {
-      val result = await(route(app, FakeRequest("GET", "/agent-subscription/check-agency-status")).get)
+      val result = get("/agent-subscription/check-agency-status")
 
       status(result) shouldBe OK
-      bodyOf(result) should include ("Check agency status")
+      bodyOf(result) should include("Check agency status")
+    }
+
+    "return HTML" in {
+      val result = get("/agent-subscription/check-agency-status")
+
       contentType(result) shouldBe Some("text/html")
       charset(result) shouldBe Some("utf-8")
     }
   }
+
+  private def get(path: String): Result = await(route(app, FakeRequest("GET", path)).get)
 }
