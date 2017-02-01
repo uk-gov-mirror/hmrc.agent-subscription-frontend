@@ -41,5 +41,21 @@ class SubscriptionControllerISpec extends UnitSpec with OneAppPerSuite {
     }
   }
 
+  "showSubscriptionDetails" should {
+    "be available at /agent-subscription/subscription-details" in {
+      val result = get("/agent-subscription/subscription-details")
+
+      status(result) shouldBe OK
+      bodyOf(result) should include("Subscription Details")
+    }
+
+    "return HTML" in {
+      val result = get("/agent-subscription/subscription-details")
+
+      contentType(result) shouldBe Some("text/html")
+      charset(result) shouldBe Some("utf-8")
+    }
+  }
+
   private def get(path: String): Result = await(route(app, FakeRequest("GET", path)).get)
 }
