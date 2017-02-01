@@ -1,15 +1,12 @@
-import sbt._
-import play.sbt.PlayImport._
 import play.core.PlayVersion
-import uk.gov.hmrc.SbtAutoBuildPlugin
-import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
-import uk.gov.hmrc.versioning.SbtGitVersioning
+import play.sbt.PlayImport._
+import sbt._
 
 object FrontendBuild extends Build with MicroService {
 
   val appName = "agent-subscription-frontend"
 
-  override lazy val appDependencies: Seq[ModuleID] = compile ++ test()
+  override lazy val appDependencies: Seq[ModuleID] = compile ++ test() ++ test("it")
 
   val compile = Seq(
     ws,

@@ -46,6 +46,8 @@ object FrontendGlobal
     ApplicationCrypto.verifyConfiguration()
   }
 
+  implicit lazy val appConfig: AppConfig = current.injector.instanceOf[AppConfig]
+
   override def standardErrorTemplate(pageTitle: String, heading: String, message: String)(implicit rh: Request[_]): Html =
     uk.gov.hmrc.agentsubscriptionfrontend.views.html.error_template(pageTitle, heading, message)
 

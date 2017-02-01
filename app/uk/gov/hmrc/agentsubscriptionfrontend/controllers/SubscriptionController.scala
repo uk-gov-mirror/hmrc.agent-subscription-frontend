@@ -20,14 +20,15 @@ import javax.inject.{Inject, Singleton}
 
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc._
+import uk.gov.hmrc.agentsubscriptionfrontend.AppConfig
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 
 import scala.concurrent.Future
 
 
 @Singleton
-class SubscriptionController @Inject() (override val messagesApi: MessagesApi) extends FrontendController with I18nSupport {
-  val showSubscribe = Action.async { implicit request =>
+class SubscriptionController @Inject() (override val messagesApi: MessagesApi)(implicit appConfig: AppConfig) extends FrontendController with I18nSupport {
+  val showCheckAgencyStatus = Action.async { implicit request =>
     Future.successful(Ok(uk.gov.hmrc.agentsubscriptionfrontend.views.html.subscribe()))
   }
 }
