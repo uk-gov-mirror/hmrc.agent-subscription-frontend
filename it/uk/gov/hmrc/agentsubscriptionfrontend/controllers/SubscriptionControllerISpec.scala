@@ -17,36 +17,51 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import org.scalatestplus.play.OneAppPerSuite
+import play.api.Application
+import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.Result
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
+import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub
+import uk.gov.hmrc.agentsubscriptionfrontend.support.AuthMocking.sessionKeysForMockAuth
+import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUsers.subscribingAgent
+import uk.gov.hmrc.agentsubscriptionfrontend.support.WireMockSupport
 import uk.gov.hmrc.play.test.UnitSpec
 
-class SubscriptionControllerISpec extends UnitSpec with OneAppPerSuite {
+class SubscriptionControllerISpec extends UnitSpec with OneAppPerSuite with WireMockSupport {
+
+  override implicit lazy val app: Application = new GuiceApplicationBuilder()
+    .configure(
+      "microservice.services.auth.port" -> wireMockPort
+    )
+    .build()
+
   private implicit val materializer = app.materializer
+
+  private lazy val controller: SubscriptionController = app.injector.instanceOf[SubscriptionController]
 
   "showCheckAgencyStatus" should {
     "redirect to the company-auth-frontend page if the current user is not logged in" in {
-      val result = get("/agent-subscription/check-agency-status")
+      AuthStub.userIsNotAuthenticated()
+      val request = FakeRequest("GET", "/agent-subscription/check-agency-status")
+      val result = await(controller.showCheckAgencyStatus(request))
 
       status(result) shouldBe SEE_OTHER
       redirectLocation(result).head should include("gg/sign-in")
     }
 
-// to-do: stub tests so that user can be 'logged in'
-//    "be available at /agent-subscription/check-agency-status" in {
-//      val result = get("/agent-subscription/check-agency-status")
-//
-//      status(result) shouldBe OK
-//      bodyOf(result) should include("Check agency status")
-//    }
-//
-//    "return HTML" in {
-//      val result = get("/agent-subscription/check-agency-status")
-//
-//      contentType(result) shouldBe Some("text/html")
-//      charset(result) shouldBe Some("utf-8")
-//    }
+    "display the check agency status page if the current user is logged in" in {
+      AuthStub.userIsAuthenticated(subscribingAgent)
+      val sessionKeys = sessionKeysForMockAuth(subscribingAgent)
+
+      val request = FakeRequest("GET", "/agent-subscription/check-agency-status").withSession(sessionKeys: _*)
+      val result = await(controller.showCheckAgencyStatus(request))
+
+      status(result) shouldBe OK
+      contentType(result) shouldBe Some("text/html")
+      charset(result) shouldBe Some("utf-8")
+      bodyOf(result) should include("Check agency status")
+    }
   }
 
   "showSubscriptionDetails" should {

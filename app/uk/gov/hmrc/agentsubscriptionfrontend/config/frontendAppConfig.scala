@@ -30,17 +30,17 @@ trait AppConfig {
 }
 
 trait StrictConfig{
-  def loadConfig(key: String) = configuration.getString(key).getOrElse(throw new Exception(s"Missing configuration key: $key"))
+  def loadConfig(key: String): String = configuration.getString(key).getOrElse(throw new Exception(s"Missing configuration key: $key"))
 }
 
-object GGConfig extends StrictConfig{
-  lazy val ggSignInUrl = {
+object GGConfig extends StrictConfig {
+  lazy val ggSignInUrl: String = {
     val ggBaseUrl = loadConfig("authentication.government-gateway.sign-in.base-url")
     val ggSignInPath = loadConfig("authentication.government-gateway.sign-in.path")
     s"$ggBaseUrl$ggSignInPath"
   }
 
-  lazy val checkAgencyStatusCallbackUrl = loadConfig("authentication.login-callback.url") +
+  lazy val checkAgencyStatusCallbackUrl: String = loadConfig("authentication.login-callback.url") +
     routes.SubscriptionController.showCheckAgencyStatus().url
 }
 
@@ -49,8 +49,8 @@ class FrontendAppConfig extends AppConfig with StrictConfig with ServicesConfig 
   private val contactHost = configuration.getString(s"contact-frontend.host").getOrElse("")
   private val contactFormServiceIdentifier = "AOSS"
 
-  override lazy val analyticsToken = loadConfig(s"google-analytics.token")
-  override lazy val analyticsHost = loadConfig(s"google-analytics.host")
+  override lazy val analyticsToken: String = loadConfig(s"google-analytics.token")
+  override lazy val analyticsHost: String = loadConfig(s"google-analytics.host")
   override lazy val reportAProblemPartialUrl = s"$contactHost/contact/problem_reports_ajax?service=$contactFormServiceIdentifier"
   override lazy val reportAProblemNonJSUrl = s"$contactHost/contact/problem_reports_nonjs?service=$contactFormServiceIdentifier"
 }
