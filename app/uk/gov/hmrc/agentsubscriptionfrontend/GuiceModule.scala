@@ -17,6 +17,7 @@
 package uk.gov.hmrc.agentsubscriptionfrontend
 
 import com.google.inject.AbstractModule
+import uk.gov.hmrc.agentsubscriptionfrontend.config.{AppConfig, FrontendAppConfig}
 
 class GuiceModule extends AbstractModule {
   override def configure(): Unit = {
