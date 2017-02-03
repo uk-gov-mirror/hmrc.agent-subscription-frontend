@@ -46,7 +46,7 @@ object GGConfig extends StrictConfig {
 
 @Singleton
 class FrontendAppConfig extends AppConfig with StrictConfig with ServicesConfig {
-  private val contactHost = configuration.getString(s"contact-frontend.host").getOrElse("")
+  private lazy val contactHost = configuration.getString(s"contact-frontend.host").getOrElse("")
   private val contactFormServiceIdentifier = "AOSS"
 
   override lazy val analyticsToken: String = loadConfig(s"google-analytics.token")
