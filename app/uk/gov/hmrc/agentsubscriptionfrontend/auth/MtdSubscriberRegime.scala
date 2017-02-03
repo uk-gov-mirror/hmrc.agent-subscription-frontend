@@ -27,6 +27,6 @@ object MtdSubscriberRegime extends TaxRegime {
 
 object ClientGovernmentGateway extends auth.GovernmentGateway {
   // to do: plug in config
-  override lazy val loginURL = "localhost:9025/gg/sign-in"
-  override lazy val continueURL = "localhost:9437/agent-subscription/check-agency-status"
+  override lazy val loginURL = "http://localhost:9025/gg/sign-in"
+  override lazy val continueURL = "http://localhost:9437/agent-subscription/check-agency-status"
 }
