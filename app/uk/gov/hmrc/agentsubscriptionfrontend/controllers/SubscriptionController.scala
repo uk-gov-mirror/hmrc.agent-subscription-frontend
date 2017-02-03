@@ -26,20 +26,41 @@ import uk.gov.hmrc.agentsubscriptionfrontend.config.{AppConfig, FrontendAuthConn
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.auth.{Actions, AuthContext}
 import uk.gov.hmrc.play.frontend.controller.FrontendController
+import uk.gov.hmrc.play.http.HeaderCarrier
 
-import scala.concurrent.Future.successful
+import scala.concurrent.Future
 
 @Singleton
 class SubscriptionController @Inject() (override val messagesApi: MessagesApi) (implicit appConfig: AppConfig)
-  extends FrontendController with I18nSupport with Actions{
-  val showCheckAgencyStatus =
-    AuthorisedFor(NoOpRegime, GGConfidence).async { implicit authContext: AuthContext =>implicit request =>
-    successful(Ok(html.subscribe()))
-  }
-
-  val showSubscriptionDetails = Action.async { implicit request =>
-    successful(Ok(html.subscription_details()))
-  }
+  extends FrontendController with I18nSupport with Actions {
 
   override protected def authConnector: AuthConnector = FrontendAuthConnector
+
+  val showCheckAgencyStatus: Action[AnyContent] = AuthorisedFor(NoOpRegime, GGConfidence).async { implicit authContext: AuthContext => implicit request =>
+    ensureAffinityGroupIsAgent {
+      Ok(html.subscribe())
+    }
+  }
+
+  val showNonAgentNextSteps: Action[AnyContent] = AuthorisedFor(NoOpRegime, GGConfidence).async { implicit authContext: AuthContext => implicit request =>
+    Future successful Ok(html.non_agent_next_steps())
+  }
+
+  val showSubscriptionDetails: Action[AnyContent] = Action.async { implicit request =>
+    Future successful Ok(html.subscription_details())
+  }
+
+
+  private def ensureAffinityGroupIsAgent(action: => Result)(implicit authContext: AuthContext, hc: HeaderCarrier) =
+    authConnector.getUserDetails(authContext).map { userDetailsResponse =>
+      val affinityGroup = (userDetailsResponse.json \ "affinityGroup").as[String]
+      if (affinityGroup == "Agent") {
+        action
+      } else {
+        redirectToNonAgentNextSteps
+      }
+    }
+
+  private def redirectToNonAgentNextSteps =
+    SeeOther(routes.SubscriptionController.showNonAgentNextSteps().url)
 }

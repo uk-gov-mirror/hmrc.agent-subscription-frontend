@@ -21,10 +21,9 @@ import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.Result
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
+import play.api.test.Helpers.{contentType, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub
-import uk.gov.hmrc.agentsubscriptionfrontend.support.AuthMocking.sessionKeysForMockAuth
-import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUsers.subscribingAgent
+import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUsers._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.WireMockSupport
 import uk.gov.hmrc.play.test.UnitSpec
 
@@ -41,7 +40,7 @@ class SubscriptionControllerISpec extends UnitSpec with OneAppPerSuite with Wire
   private lazy val controller: SubscriptionController = app.injector.instanceOf[SubscriptionController]
 
   "showCheckAgencyStatus" should {
-    "redirect to the company-auth-frontend page if the current user is not logged in" in {
+    "redirect to the company-auth-frontend sign-in page if the current user is not logged in" in {
       AuthStub.userIsNotAuthenticated()
       val request = FakeRequest("GET", "/agent-subscription/check-agency-status")
       val result = await(controller.showCheckAgencyStatus(request))
@@ -50,9 +49,18 @@ class SubscriptionControllerISpec extends UnitSpec with OneAppPerSuite with Wire
       redirectLocation(result).head should include("gg/sign-in")
     }
 
-    "display the check agency status page if the current user is logged in" in {
-      AuthStub.userIsAuthenticated(subscribingAgent)
-      val sessionKeys = sessionKeysForMockAuth(subscribingAgent)
+    "redirect to the non-Agent next steps page if the current user is logged in and does not have affinity group = Agent" in {
+      val sessionKeys = AuthStub.userIsAuthenticated(individual)
+
+      val request = FakeRequest("GET", "/agent-subscription/check-agency-status").withSession(sessionKeys: _*)
+      val result = await(controller.showCheckAgencyStatus(request))
+
+      status(result) shouldBe SEE_OTHER
+      redirectLocation(result).head should include("non-agent-next-steps")
+    }
+
+    "display the check agency status page if the current user is logged in and has affinity group = Agent" in {
+      val sessionKeys = AuthStub.userIsAuthenticated(subscribingAgent)
 
       val request = FakeRequest("GET", "/agent-subscription/check-agency-status").withSession(sessionKeys: _*)
       val result = await(controller.showCheckAgencyStatus(request))
@@ -61,6 +69,30 @@ class SubscriptionControllerISpec extends UnitSpec with OneAppPerSuite with Wire
       contentType(result) shouldBe Some("text/html")
       charset(result) shouldBe Some("utf-8")
       bodyOf(result) should include("Check agency status")
+    }
+  }
+
+  "showNonAgentNextSteps" should {
+    "display the non-agent next steps page if the current user is logged in" in {
+      val sessionKeys = AuthStub.userIsAuthenticated(individual)
+
+      val request = FakeRequest(routes.SubscriptionController.showNonAgentNextSteps()).withSession(sessionKeys: _*)
+      val result = await(controller.showNonAgentNextSteps(request))
+
+      status(result) shouldBe OK
+      contentType(result) shouldBe Some("text/html")
+      charset(result) shouldBe Some("utf-8")
+      bodyOf(result) should include("Affinity Group")
+    }
+
+    "redirect to the company-auth-frontend sign-in page if the current user is not logged in" in {
+      AuthStub.userIsNotAuthenticated()
+
+      val request = FakeRequest(routes.SubscriptionController.showNonAgentNextSteps())
+      val result = await(controller.showNonAgentNextSteps(request))
+
+      status(result) shouldBe SEE_OTHER
+      redirectLocation(result).head should include("gg/sign-in")
     }
   }
 

@@ -16,15 +16,7 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.support
 
-import uk.gov.hmrc.play.http.SessionKeys
-
 object SessionKeysForTesting {
   // Workaround to hide the deprecation warning. It it OK to use this here, as long as we write sessions and not read them.
   val token = "token" // SessionKeys.token
-}
-
-object AuthMocking {
-  def sessionKeysForMockAuth(user: SampleUser): Seq[(String, String)] = Seq(
-    SessionKeys.userId -> user.authorityUri,
-    SessionKeysForTesting.token -> "fakeToken")
 }
