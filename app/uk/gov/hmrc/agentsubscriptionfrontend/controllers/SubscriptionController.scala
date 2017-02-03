@@ -20,7 +20,7 @@ import javax.inject.{Inject, Singleton}
 
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc._
-import uk.gov.hmrc.agentsubscriptionfrontend.auth.MtdSubscriberRegime
+import uk.gov.hmrc.agentsubscriptionfrontend.auth.NoOpRegime
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.agentsubscriptionfrontend.config.{AppConfig, FrontendAuthConnector}
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
@@ -33,7 +33,7 @@ import scala.concurrent.Future.successful
 class SubscriptionController @Inject() (override val messagesApi: MessagesApi) (implicit appConfig: AppConfig)
   extends FrontendController with I18nSupport with Actions{
   val showCheckAgencyStatus =
-    AuthorisedFor(MtdSubscriberRegime, GGConfidence).async { implicit authContext: AuthContext => implicit request =>
+    AuthorisedFor(NoOpRegime, GGConfidence).async { implicit authContext: AuthContext =>implicit request =>
     successful(Ok(html.subscribe()))
   }
 

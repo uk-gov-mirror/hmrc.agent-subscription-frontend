@@ -16,16 +16,15 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.auth
 
-import uk.gov.hmrc.play.frontend.auth
-import uk.gov.hmrc.play.frontend.auth.TaxRegime
+import uk.gov.hmrc.play.frontend.auth.{GovernmentGateway, TaxRegime}
 import uk.gov.hmrc.play.frontend.auth.connectors.domain.Accounts
 
-object MtdSubscriberRegime extends TaxRegime {
+object NoOpRegime extends TaxRegime {
   override def isAuthorised(accounts: Accounts) = true
-  override val authenticationType = ClientGovernmentGateway
+  override val authenticationType = CheckAgencyStatusGovernmentGateway
 }
 
-object ClientGovernmentGateway extends auth.GovernmentGateway {
+object CheckAgencyStatusGovernmentGateway extends GovernmentGateway {
   // to do: plug in config
   override lazy val loginURL = "http://localhost:9025/gg/sign-in"
   override lazy val continueURL = "http://localhost:9437/agent-subscription/check-agency-status"
