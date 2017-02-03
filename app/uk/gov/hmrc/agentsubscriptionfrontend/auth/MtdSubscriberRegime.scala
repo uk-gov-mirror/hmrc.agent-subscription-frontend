@@ -21,7 +21,7 @@ import uk.gov.hmrc.play.frontend.auth.TaxRegime
 import uk.gov.hmrc.play.frontend.auth.connectors.domain.Accounts
 
 object MtdSubscriberRegime extends TaxRegime {
-  override def isAuthorised(accounts: Accounts) = accounts.sa.isDefined
+  override def isAuthorised(accounts: Accounts) = true
   override val authenticationType = ClientGovernmentGateway
 }
 
