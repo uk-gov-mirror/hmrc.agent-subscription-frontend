@@ -20,20 +20,26 @@ import javax.inject.{Inject, Singleton}
 
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc._
-import uk.gov.hmrc.agentsubscriptionfrontend.AppConfig
+import uk.gov.hmrc.agentsubscriptionfrontend.auth.NoOpRegime
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
+import uk.gov.hmrc.agentsubscriptionfrontend.config.{AppConfig, FrontendAuthConnector}
+import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
+import uk.gov.hmrc.play.frontend.auth.{Actions, AuthContext}
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 
 import scala.concurrent.Future.successful
 
-
 @Singleton
-class SubscriptionController @Inject() (override val messagesApi: MessagesApi)(implicit appConfig: AppConfig) extends FrontendController with I18nSupport {
-  val showCheckAgencyStatus = Action.async { implicit request =>
+class SubscriptionController @Inject() (override val messagesApi: MessagesApi) (implicit appConfig: AppConfig)
+  extends FrontendController with I18nSupport with Actions{
+  val showCheckAgencyStatus =
+    AuthorisedFor(NoOpRegime, GGConfidence).async { implicit authContext: AuthContext =>implicit request =>
     successful(Ok(html.subscribe()))
   }
 
   val showSubscriptionDetails = Action.async { implicit request =>
     successful(Ok(html.subscription_details()))
   }
+
+  override protected def authConnector: AuthConnector = FrontendAuthConnector
 }

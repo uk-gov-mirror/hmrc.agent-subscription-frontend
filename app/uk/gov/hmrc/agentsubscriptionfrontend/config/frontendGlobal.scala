@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentsubscriptionfrontend
+package uk.gov.hmrc.agentsubscriptionfrontend.config
 
 import java.io.File
 

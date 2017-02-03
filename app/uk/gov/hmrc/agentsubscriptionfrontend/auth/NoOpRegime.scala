@@ -14,13 +14,18 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentsubscriptionfrontend
+package uk.gov.hmrc.agentsubscriptionfrontend.auth
 
-import com.google.inject.AbstractModule
-import uk.gov.hmrc.agentsubscriptionfrontend.config.{AppConfig, FrontendAppConfig}
+import uk.gov.hmrc.agentsubscriptionfrontend.config.GGConfig
+import uk.gov.hmrc.play.frontend.auth.{GovernmentGateway, TaxRegime}
+import uk.gov.hmrc.play.frontend.auth.connectors.domain.Accounts
 
-class GuiceModule extends AbstractModule {
-  override def configure(): Unit = {
-    bind(classOf[AppConfig]).to(classOf[FrontendAppConfig])
-  }
+object NoOpRegime extends TaxRegime {
+  override def isAuthorised(accounts: Accounts) = true
+  override val authenticationType = CheckAgencyStatusGovernmentGateway
+}
+
+object CheckAgencyStatusGovernmentGateway extends GovernmentGateway {
+  override lazy val loginURL = GGConfig.ggSignInUrl
+  override lazy val continueURL = GGConfig.checkAgencyStatusCallbackUrl
 }
