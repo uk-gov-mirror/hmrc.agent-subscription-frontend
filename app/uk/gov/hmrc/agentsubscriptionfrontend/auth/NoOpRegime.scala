@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.auth
 
+import uk.gov.hmrc.agentsubscriptionfrontend.config.GGConfig
 import uk.gov.hmrc.play.frontend.auth.{GovernmentGateway, TaxRegime}
 import uk.gov.hmrc.play.frontend.auth.connectors.domain.Accounts
 
@@ -25,7 +26,6 @@ object NoOpRegime extends TaxRegime {
 }
 
 object CheckAgencyStatusGovernmentGateway extends GovernmentGateway {
-  // to do: plug in config
-  override lazy val loginURL = "http://localhost:9025/gg/sign-in"
-  override lazy val continueURL = "http://localhost:9437/agent-subscription/check-agency-status"
+  override lazy val loginURL = GGConfig.ggSignInUrl
+  override lazy val continueURL = GGConfig.checkAgencyStatusCallbackUrl
 }
