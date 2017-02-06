@@ -17,8 +17,8 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.stubs
 
 import com.github.tomakehurst.wiremock.client.WireMock._
-import com.github.tomakehurst.wiremock.stubbing.StubMapping
-import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser
+import uk.gov.hmrc.agentsubscriptionfrontend.support.{SampleUser, SessionKeysForTesting}
+import uk.gov.hmrc.play.http.SessionKeys
 
 object AuthStub {
   def authIsDown(): Unit = {
@@ -39,7 +39,11 @@ object AuthStub {
     )
   }
 
-  def userIsAuthenticated(user: SampleUser): Unit = {
+  /**
+    * @return session keys required for the play-authorised-frontend library to
+    *         recognise that the user is logged in
+    */
+  def userIsAuthenticated(user: SampleUser): Seq[(String, String)] = {
     stubFor(get(urlEqualTo("/auth/authority"))
       .willReturn(
         aResponse()
@@ -55,6 +59,20 @@ object AuthStub {
           .withBody(user.authJson)
       )
     )
-  }
-}
 
+    stubFor(get(urlEqualTo(user.userDetailsLink))
+      .willReturn(
+        aResponse()
+          .withStatus(200)
+          .withBody(user.userDetailsJson)
+      )
+    )
+
+    sessionKeysForMockAuth(user)
+  }
+
+  private def sessionKeysForMockAuth(user: SampleUser): Seq[(String, String)] = Seq(
+    SessionKeys.userId -> user.authorityUri,
+    SessionKeysForTesting.token -> "fakeToken")
+
+}
