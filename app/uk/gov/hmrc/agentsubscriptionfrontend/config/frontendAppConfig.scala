@@ -18,6 +18,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.config
 
 import javax.inject.Singleton
 
+import play.api.Logger
 import play.api.Play.{configuration, current}
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
 import uk.gov.hmrc.play.config.ServicesConfig
@@ -36,8 +37,11 @@ trait StrictConfig{
 object GGConfig extends StrictConfig {
   lazy val ggSignInUrl: String = {
     val ggBaseUrl = loadConfig("authentication.government-gateway.sign-in.base-url")
+    Logger.debug(s"ggBaseUrl = $ggBaseUrl")
     val ggSignInPath = loadConfig("authentication.government-gateway.sign-in.path")
-    s"$ggBaseUrl$ggSignInPath"
+    val url = s"$ggBaseUrl$ggSignInPath"
+    Logger.debug(s"ggSignInUrl = $url")
+    url
   }
 
   lazy val checkAgencyStatusCallbackUrl: String = loadConfig("authentication.login-callback.url") +
