@@ -14,15 +14,19 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentsubscriptionfrontend
+package uk.gov.hmrc.agentsubscriptionfrontend.support
 
-import com.google.inject.AbstractModule
-import uk.gov.hmrc.agentsubscriptionfrontend.config.{AppConfig, FrontendAppConfig, FrontendAuthConnector}
-import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
+import play.api.i18n._
+import play.api.{Configuration, Environment}
 
-class GuiceModule extends AbstractModule {
-  override def configure(): Unit = {
-    bind(classOf[AppConfig]).to(classOf[FrontendAppConfig])
-    bind(classOf[AuthConnector]).to(classOf[FrontendAuthConnector])
-  }
+object TestMessagesApi {
+
+  private val environment = Environment.simple()
+  private val configuration = Configuration.load(environment)
+
+  val testMessagesApi: MessagesApi = new DefaultMessagesApi(
+    environment,
+    configuration,
+    new DefaultLangs(configuration)
+  )
 }

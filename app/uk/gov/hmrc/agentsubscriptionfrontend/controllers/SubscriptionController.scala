@@ -21,8 +21,8 @@ import javax.inject.{Inject, Singleton}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc._
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.NoOpRegime
+import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
-import uk.gov.hmrc.agentsubscriptionfrontend.config.{AppConfig, FrontendAuthConnector}
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.auth.{Actions, AuthContext}
 import uk.gov.hmrc.play.frontend.controller.FrontendController
@@ -31,16 +31,17 @@ import uk.gov.hmrc.play.http.HeaderCarrier
 import scala.concurrent.Future
 
 @Singleton
-class SubscriptionController @Inject() (override val messagesApi: MessagesApi) (implicit appConfig: AppConfig)
+class SubscriptionController @Inject() (override val messagesApi: MessagesApi, override val authConnector: AuthConnector) (implicit appConfig: AppConfig)
   extends FrontendController with I18nSupport with Actions {
 
-  override protected def authConnector: AuthConnector = FrontendAuthConnector
-
-  val showCheckAgencyStatus: Action[AnyContent] = AuthorisedFor(NoOpRegime, GGConfidence).async { implicit authContext: AuthContext => implicit request =>
-    ensureAffinityGroupIsAgent {
-      Ok(html.subscribe())
-    }
+  val showCheckAgencyStatusBody: (AuthContext) => (Request[AnyContent]) => Future[Result] = {
+    implicit authContext => implicit request =>
+      ensureAffinityGroupIsAgent {
+        Ok(html.subscribe())
+      }
   }
+
+  val showCheckAgencyStatus: Action[AnyContent] = AuthorisedFor(NoOpRegime, GGConfidence).async(showCheckAgencyStatusBody)
 
   val showNonAgentNextSteps: Action[AnyContent] = AuthorisedFor(NoOpRegime, GGConfidence).async { implicit authContext: AuthContext => implicit request =>
     Future successful Ok(html.non_agent_next_steps())
