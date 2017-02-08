@@ -3,3 +3,5 @@
 GET     /check-agency-status            uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showCheckAgencyStatus
 GET     /subscription-details           uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showSubscriptionDetails
 GET     /non-agent-next-steps           uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showNonAgentNextSteps
+
+POST    /submit-known-facts             uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.submitKnownFacts

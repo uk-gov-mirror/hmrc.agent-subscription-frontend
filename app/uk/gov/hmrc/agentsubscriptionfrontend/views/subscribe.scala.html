@@ -1,7 +1,25 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
+@import uk.gov.hmrc.play.views.html.helpers.form
+
+@import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
 @()(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = "Check agency status", bodyClasses = None) {
   <h1>Check agency status</h1>
   <p>This will become the check agency status page</p>
+
+  @form(
+    action = routes.SubscriptionController.submitKnownFacts,
+    'class -> "form js-form",
+    'novalidate -> "novalidate") {
+    <fieldset class="form-field-group">
+        <label for="utr">UTR</label>
+        <input type="text" name="utr" id="utr">
+        <label for="postCode">Post Code</label>
+        <input type="text" name="postCode" id="postCode">
+    </fieldset>
+    <div class="form-group">
+      <input class="button" type="submit" value="Continue">
+    </div>
+  }
 }

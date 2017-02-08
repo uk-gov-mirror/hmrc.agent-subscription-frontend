@@ -69,6 +69,8 @@ class SubscriptionControllerISpec extends UnitSpec with OneAppPerSuite with Wire
       contentType(result) shouldBe Some("text/html")
       charset(result) shouldBe Some("utf-8")
       bodyOf(result) should include("Check agency status")
+      bodyOf(result) should include("Post Code")
+      bodyOf(result) should include("UTR")
     }
   }
 

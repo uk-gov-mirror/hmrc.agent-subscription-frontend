@@ -18,6 +18,8 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import javax.inject.{Inject, Singleton}
 
+import play.api.data.Form
+import play.api.data.Forms.mapping
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc._
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.NoOpRegime
@@ -27,6 +29,7 @@ import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.auth.{Actions, AuthContext}
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 import uk.gov.hmrc.play.http.HeaderCarrier
+import play.api.data.Forms._
 
 import scala.concurrent.Future
 
@@ -50,6 +53,19 @@ class SubscriptionController @Inject() (override val messagesApi: MessagesApi) (
     Future successful Ok(html.subscription_details())
   }
 
+  case class KnownFactsForm(utr: String, postCode: String)
+
+  val knownFactsForm = Form(
+    mapping(
+      "utr" -> nonEmptyText,
+      "postCode" -> nonEmptyText
+    )(KnownFactsForm.apply)(KnownFactsForm.unapply)
+  )
+
+  val submitKnownFacts: Action[AnyContent] = AuthorisedFor(NoOpRegime, GGConfidence).async { implicit authContext: AuthContext => implicit request =>
+    val form = knownFactsForm.bindFromRequest().get
+    Future successful Ok(html.confirm_your_agency())
+  }
 
   private def ensureAffinityGroupIsAgent(action: => Result)(implicit authContext: AuthContext, hc: HeaderCarrier) =
     authConnector.getUserDetails(authContext).map { userDetailsResponse =>
