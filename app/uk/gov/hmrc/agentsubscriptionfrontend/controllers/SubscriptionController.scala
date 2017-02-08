@@ -34,7 +34,7 @@ import scala.concurrent.Future
 class SubscriptionController @Inject() (override val messagesApi: MessagesApi, override val authConnector: AuthConnector) (implicit appConfig: AppConfig)
   extends FrontendController with I18nSupport with Actions {
 
-  val showCheckAgencyStatusBody: (AuthContext) => (Request[AnyContent]) => Future[Result] = {
+  private[controllers] val showCheckAgencyStatusBody: (AuthContext) => (Request[AnyContent]) => Future[Result] = {
     implicit authContext => implicit request =>
       ensureAffinityGroupIsAgent {
         Ok(html.subscribe())
