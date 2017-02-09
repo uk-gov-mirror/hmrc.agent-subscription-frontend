@@ -19,52 +19,63 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 import javax.inject.{Inject, Singleton}
 
 import play.api.data.Form
-import play.api.data.Forms.mapping
+import play.api.data.Forms.{mapping, _}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc._
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.NoOpRegime
-import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.agentsubscriptionfrontend.config.{AppConfig, FrontendAuthConnector}
+import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.auth.{Actions, AuthContext}
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 import uk.gov.hmrc.play.http.HeaderCarrier
-import play.api.data.Forms._
 
 import scala.concurrent.Future
 
 @Singleton
-class SubscriptionController @Inject() (override val messagesApi: MessagesApi) (implicit appConfig: AppConfig)
+class SubscriptionController @Inject()(override val messagesApi: MessagesApi)(implicit appConfig: AppConfig)
   extends FrontendController with I18nSupport with Actions {
 
   override protected def authConnector: AuthConnector = FrontendAuthConnector
 
-  val showCheckAgencyStatus: Action[AnyContent] = AuthorisedFor(NoOpRegime, GGConfidence).async { implicit authContext: AuthContext => implicit request =>
-    ensureAffinityGroupIsAgent {
-      Ok(html.subscribe())
-    }
+  val showCheckAgencyStatus: Action[AnyContent] = AuthorisedFor(NoOpRegime, GGConfidence).async { implicit authContext: AuthContext =>
+    implicit request =>
+      ensureAffinityGroupIsAgent {
+        Ok(html.subscribe(knownFactsForm))
+      }
   }
 
-  val showNonAgentNextSteps: Action[AnyContent] = AuthorisedFor(NoOpRegime, GGConfidence).async { implicit authContext: AuthContext => implicit request =>
-    Future successful Ok(html.non_agent_next_steps())
+  val showNonAgentNextSteps: Action[AnyContent] = AuthorisedFor(NoOpRegime, GGConfidence).async { implicit authContext: AuthContext =>
+    implicit request =>
+      Future successful Ok(html.non_agent_next_steps())
   }
 
   val showSubscriptionDetails: Action[AnyContent] = Action.async { implicit request =>
     Future successful Ok(html.subscription_details())
   }
 
-  case class KnownFactsForm(utr: String, postCode: String)
-
-  val knownFactsForm = Form(
+  val knownFactsForm = Form[KnownFacts](
     mapping(
       "utr" -> nonEmptyText,
       "postCode" -> nonEmptyText
-    )(KnownFactsForm.apply)(KnownFactsForm.unapply)
+    )(KnownFacts.apply)(KnownFacts.unapply)
+      verifying(
+      "Failed form constraints!", fields => fields match {
+        case knownFacts => knownFacts.utr.matches("^[0-9]{10}$")
+      }
+    )
   )
 
-  val submitKnownFacts: Action[AnyContent] = AuthorisedFor(NoOpRegime, GGConfidence).async { implicit authContext: AuthContext => implicit request =>
-    val form = knownFactsForm.bindFromRequest().get
-    Future successful Ok(html.confirm_your_agency())
+  val submitKnownFacts: Action[AnyContent] = AuthorisedFor(NoOpRegime, GGConfidence).async { implicit authContext: AuthContext =>
+    implicit request =>
+      knownFactsForm.bindFromRequest().fold(
+        formWithErrors => {
+          Future successful BadRequest(html.subscribe(formWithErrors))
+        },
+        valid => {
+          Future successful Ok(html.confirm_your_agency())
+        }
+      )
   }
 
   private def ensureAffinityGroupIsAgent(action: => Result)(implicit authContext: AuthContext, hc: HeaderCarrier) =
