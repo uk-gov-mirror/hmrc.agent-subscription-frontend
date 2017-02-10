@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.config
 
+import javax.inject.Singleton
+
 import uk.gov.hmrc.play.audit.http.config.LoadAuditingConfig
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector => Auditing}
 import uk.gov.hmrc.play.config.{AppName, RunMode, ServicesConfig}
@@ -30,7 +32,8 @@ object WSHttp extends WSGet with WSPut with WSPost with WSDelete with AppName wi
   override val hooks = NoneRequired
 }
 
-object FrontendAuthConnector extends AuthConnector with ServicesConfig {
+@Singleton
+class FrontendAuthConnector extends AuthConnector with ServicesConfig {
   val serviceUrl = baseUrl("auth")
   lazy val http = WSHttp
 }

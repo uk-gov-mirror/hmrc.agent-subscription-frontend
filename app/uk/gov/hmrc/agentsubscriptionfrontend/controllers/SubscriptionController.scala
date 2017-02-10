@@ -33,15 +33,21 @@ import uk.gov.hmrc.play.http.HeaderCarrier
 import scala.concurrent.Future
 
 @Singleton
-class SubscriptionController @Inject()(override val messagesApi: MessagesApi)(implicit appConfig: AppConfig)
-  extends FrontendController with I18nSupport with Actions {
 
-  override protected def authConnector: AuthConnector = FrontendAuthConnector
+class SubscriptionController @Inject() (override val messagesApi: MessagesApi, override val authConnector: AuthConnector) (implicit appConfig: AppConfig)
+  extends FrontendController with I18nSupport with Actions {
 
   val showCheckAgencyStatus: Action[AnyContent] = AuthorisedFor(NoOpRegime, GGConfidence).async { implicit authContext: AuthContext =>
     implicit request =>
       ensureAffinityGroupIsAgent {
         Ok(html.subscribe(knownFactsForm))
+      }
+  }
+
+  private[controllers] val showCheckAgencyStatusBody: (AuthContext) => (Request[AnyContent]) => Future[Result] = {
+    implicit authContext => implicit request =>
+      ensureAffinityGroupIsAgent {
+        Ok(html.subscribe())
       }
   }
 
