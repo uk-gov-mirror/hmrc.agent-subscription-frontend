@@ -23,7 +23,7 @@ import play.api.data.Forms.{mapping, _}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc._
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.NoOpRegime
-import uk.gov.hmrc.agentsubscriptionfrontend.config.{AppConfig, FrontendAuthConnector}
+import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.auth.{Actions, AuthContext}
@@ -33,27 +33,20 @@ import uk.gov.hmrc.play.http.HeaderCarrier
 import scala.concurrent.Future
 
 @Singleton
-
 class SubscriptionController @Inject() (override val messagesApi: MessagesApi, override val authConnector: AuthConnector) (implicit appConfig: AppConfig)
   extends FrontendController with I18nSupport with Actions {
 
-  val showCheckAgencyStatus: Action[AnyContent] = AuthorisedFor(NoOpRegime, GGConfidence).async { implicit authContext: AuthContext =>
-    implicit request =>
+  private[controllers] val showCheckAgencyStatusBody: (AuthContext) => (Request[AnyContent]) => Future[Result] = {
+    implicit authContext => implicit request =>
       ensureAffinityGroupIsAgent {
         Ok(html.subscribe(knownFactsForm))
       }
   }
 
-  private[controllers] val showCheckAgencyStatusBody: (AuthContext) => (Request[AnyContent]) => Future[Result] = {
-    implicit authContext => implicit request =>
-      ensureAffinityGroupIsAgent {
-        Ok(html.subscribe())
-      }
-  }
+  val showCheckAgencyStatus: Action[AnyContent] = AuthorisedFor(NoOpRegime, GGConfidence).async(showCheckAgencyStatusBody)
 
-  val showNonAgentNextSteps: Action[AnyContent] = AuthorisedFor(NoOpRegime, GGConfidence).async { implicit authContext: AuthContext =>
-    implicit request =>
-      Future successful Ok(html.non_agent_next_steps())
+  val showNonAgentNextSteps: Action[AnyContent] = AuthorisedFor(NoOpRegime, GGConfidence).async { implicit authContext: AuthContext => implicit request =>
+    Future successful Ok(html.non_agent_next_steps())
   }
 
   val showSubscriptionDetails: Action[AnyContent] = Action.async { implicit request =>
