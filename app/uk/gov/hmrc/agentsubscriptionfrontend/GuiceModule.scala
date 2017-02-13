@@ -22,7 +22,6 @@ import javax.inject.Provider
 import com.google.inject.AbstractModule
 import com.google.inject.name.Names
 import uk.gov.hmrc.agentsubscriptionfrontend.config.{AppConfig, FrontendAppConfig, FrontendAuthConnector, WSHttp}
-import uk.gov.hmrc.agentsubscriptionfrontend.connectors.{DesBusinessPartnerRecordApiConnector, HttpDesBusinessPartnerRecordApiConnector}
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.http.HttpGet
@@ -32,10 +31,7 @@ class GuiceModule extends AbstractModule with ServicesConfig{
     bind(classOf[HttpGet]).toInstance(WSHttp)
     bind(classOf[AppConfig]).to(classOf[FrontendAppConfig])
     bind(classOf[AuthConnector]).to(classOf[FrontendAuthConnector])
-    bind(classOf[DesBusinessPartnerRecordApiConnector]).to(classOf[HttpDesBusinessPartnerRecordApiConnector])
-    bindBaseUrl("des")
-    bindConfigProperty("des.authorization-token")
-    bindConfigProperty("des.environment")
+    bindBaseUrl("agent-subscription")
   }
 
   private def bindBaseUrl(serviceName: String) =

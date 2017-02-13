@@ -22,7 +22,7 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.Result
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{contentType, _}
-import uk.gov.hmrc.agentsubscriptionfrontend.stubs.{AuthStub, DesStubs}
+import uk.gov.hmrc.agentsubscriptionfrontend.stubs.{AgentSubscriptionStub, AuthStub}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUsers._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.WireMockSupport
 import uk.gov.hmrc.play.test.UnitSpec
@@ -34,7 +34,7 @@ class SubscriptionControllerISpec extends UnitSpec with OneAppPerSuite with Wire
   override implicit lazy val app: Application = new GuiceApplicationBuilder()
     .configure(
       "microservice.services.auth.port" -> wireMockPort,
-      "microservice.services.des.port" -> wireMockPort
+      "microservice.services.agent-subscription.port" -> wireMockPort
     )
     .build()
 
@@ -76,7 +76,6 @@ class SubscriptionControllerISpec extends UnitSpec with OneAppPerSuite with Wire
 
   }
 
-  //TODO : input data as constants
   "submitKnownFacts" should {
 
     "redirect to the company-auth-frontend sign-in page if the current user is not logged in" in {
@@ -109,11 +108,13 @@ class SubscriptionControllerISpec extends UnitSpec with OneAppPerSuite with Wire
       bodyOf(result) should include("Check Agency Status")
     }
 
-    "redirect to no-agency-found page for an unknown UTR" in {
+    "redirect to no-agency-found page when no matching registration found by agent-subscription" in {
       val sessionKeys = AuthStub.userIsAuthenticated(subscribingAgent)
-      DesStubs.utrDoesNotExist()
+      val utr = "0000000000"
+      val postcode = "AA1 1AA"
+      AgentSubscriptionStub.withNonMatchingUtrAndPostcode(utr, postcode)
       val request = FakeRequest("POST", "/agent-subscription/submit-known-facts")
-        .withFormUrlEncodedBody("utr" -> "0000000000", "postCode" -> "BN11 3JB")
+        .withFormUrlEncodedBody("utr" -> utr, "postCode" -> postcode)
         .withSession(sessionKeys: _*)
       val result = await(controller.submitKnownFacts(request))
 
@@ -121,23 +122,12 @@ class SubscriptionControllerISpec extends UnitSpec with OneAppPerSuite with Wire
       bodyOf(result) should include("No Agency Found")
     }
 
-    "redirect to confirm agency page for a user who supplies a known UTR but an unknown post code" in {
+    "redirect to confirm agency page for a user who supplies a UTR and post code that agent-subscription finds a matching registration for" in {
       val sessionKeys = AuthStub.userIsAuthenticated(subscribingAgent)
-      DesStubs.utrIsValid()
+      val postcode = "AA1 1AA"
+      AgentSubscriptionStub.withMatchingUtrAndPostcode(validUTR, postcode)
       val request = FakeRequest("POST", "/agent-subscription/submit-known-facts")
-                            .withFormUrlEncodedBody("utr" -> validUTR, "postCode" -> "XXXXXX")
-                            .withSession(sessionKeys: _*)
-      val result = await(controller.submitKnownFacts(request))
-
-      status(result) shouldBe OK
-      bodyOf(result) should include("No Agency Found")
-    }
-
-    "redirect to confirm agency page for a user who supplies a known UTR and a known post code" in {
-      val sessionKeys = AuthStub.userIsAuthenticated(subscribingAgent)
-      DesStubs.utrIsValid()
-      val request = FakeRequest("POST", "/agent-subscription/submit-known-facts")
-        .withFormUrlEncodedBody("utr" -> validUTR, "postCode" -> "BN11 3JB")
+        .withFormUrlEncodedBody("utr" -> validUTR, "postCode" -> postcode)
         .withSession(sessionKeys: _*)
       val result = await(controller.submitKnownFacts(request))
 

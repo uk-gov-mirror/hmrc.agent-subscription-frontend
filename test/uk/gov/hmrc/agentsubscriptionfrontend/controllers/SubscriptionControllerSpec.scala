@@ -22,7 +22,7 @@ import org.scalatest.mock.MockitoSugar
 import play.api.mvc.Result
 import play.api.test.FakeRequest
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.connectors.DesBusinessPartnerRecordApiConnector
+import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentSubscriptionConnector
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{TestAppConfig, TestMessagesApi}
 import uk.gov.hmrc.play.frontend.auth.AuthContext
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
@@ -39,11 +39,11 @@ class SubscriptionControllerSpec extends UnitSpec with MockitoSugar {
     "propagate errors that occur when checking affinity group (APB-493-3)" in {
 
       val authConnector = mock[AuthConnector]
-      val desConnector = mock[DesBusinessPartnerRecordApiConnector]
+      val agentSubscriptionConnector = mock[AgentSubscriptionConnector]
       val failure = Upstream5xxResponse("failure in auth", 500, 500)
       when(authConnector.getUserDetails(any[AuthContext])(any[HeaderCarrier], any[HttpReads[HttpResponse]])).thenReturn(Future failed failure)
 
-      val controller = new SubscriptionController(TestMessagesApi.testMessagesApi, authConnector, desConnector)
+      val controller = new SubscriptionController(TestMessagesApi.testMessagesApi, authConnector, agentSubscriptionConnector)
 
       val authContext = mock[AuthContext]
       intercept[Upstream5xxResponse] {

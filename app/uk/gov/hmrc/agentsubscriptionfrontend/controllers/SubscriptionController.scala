@@ -24,8 +24,8 @@ import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{AnyContent, Request, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.NoOpRegime
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.connectors.DesBusinessPartnerRecordApiConnector
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{BusinessPartnerRecordFound, DesBusinessPartnerRecordApiResponse}
+import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentSubscriptionConnector
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{GetRegistrationResponse, RegistrationFound}
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.auth.{Actions, AuthContext}
@@ -35,7 +35,9 @@ import uk.gov.hmrc.play.http.HeaderCarrier
 import scala.concurrent.Future
 
 @Singleton
-class SubscriptionController @Inject()(override val messagesApi: MessagesApi, override val authConnector: AuthConnector, val desConnector: DesBusinessPartnerRecordApiConnector)(implicit appConfig: AppConfig)
+class SubscriptionController @Inject()
+  (override val messagesApi: MessagesApi, override val authConnector: AuthConnector, val agentSubscriptionConnector: AgentSubscriptionConnector)
+  (implicit appConfig: AppConfig)
   extends FrontendController with I18nSupport with Actions {
 
   private[controllers] val showCheckAgencyStatusBody: (AuthContext) => (Request[AnyContent]) => Future[Result] = {
@@ -83,12 +85,9 @@ class SubscriptionController @Inject()(override val messagesApi: MessagesApi, ov
 
   private def submitKnownFactsGivenValidForm(knownFacts: KnownFacts)
                                             (implicit authContext: AuthContext, request: Request[AnyContent]): Future[Result] = {
-    desConnector.getBusinessPartnerRecord(knownFacts.utr) map { desResponse: DesBusinessPartnerRecordApiResponse =>
-      desResponse match {
-        case businessPartnerRecord: BusinessPartnerRecordFound => businessPartnerRecord.postalCode match {
-          case knownFacts.postCode => Ok(html.confirm_your_agency())
-          case _ => Ok(html.no_agency_found())
-        }
+    agentSubscriptionConnector.getRegistration(knownFacts.utr, knownFacts.postCode) map { getRegistrationResponse: GetRegistrationResponse =>
+      getRegistrationResponse match {
+        case RegistrationFound => Ok(html.confirm_your_agency())
         case _ => Ok(html.no_agency_found())
       }
     }

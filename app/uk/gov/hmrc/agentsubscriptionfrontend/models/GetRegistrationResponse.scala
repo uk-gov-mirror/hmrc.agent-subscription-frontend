@@ -16,6 +16,6 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.models
 
-sealed trait DesBusinessPartnerRecordApiResponse
-case class BusinessPartnerRecordFound(postalCode : String) extends DesBusinessPartnerRecordApiResponse
-case class BusinessPartnerRecordNotFound() extends DesBusinessPartnerRecordApiResponse
+sealed trait GetRegistrationResponse
+case object RegistrationFound extends GetRegistrationResponse
+case object RegistrationNotFound extends GetRegistrationResponse
