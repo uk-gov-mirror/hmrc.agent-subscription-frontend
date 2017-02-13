@@ -21,9 +21,11 @@ import javax.inject.{Inject, Singleton}
 import play.api.data.Form
 import play.api.data.Forms.{mapping, _}
 import play.api.i18n.{I18nSupport, MessagesApi}
-import play.api.mvc._
+import play.api.mvc.{AnyContent, Request, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.NoOpRegime
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
+import uk.gov.hmrc.agentsubscriptionfrontend.connectors.DesBusinessPartnerRecordApiConnector
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{BusinessPartnerRecordFound, DesBusinessPartnerRecordApiResponse}
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.auth.{Actions, AuthContext}
@@ -33,27 +35,29 @@ import uk.gov.hmrc.play.http.HeaderCarrier
 import scala.concurrent.Future
 
 @Singleton
-class SubscriptionController @Inject() (override val messagesApi: MessagesApi, override val authConnector: AuthConnector) (implicit appConfig: AppConfig)
+class SubscriptionController @Inject()(override val messagesApi: MessagesApi, override val authConnector: AuthConnector, val desConnector: DesBusinessPartnerRecordApiConnector)(implicit appConfig: AppConfig)
   extends FrontendController with I18nSupport with Actions {
 
   private[controllers] val showCheckAgencyStatusBody: (AuthContext) => (Request[AnyContent]) => Future[Result] = {
-    implicit authContext => implicit request =>
-      ensureAffinityGroupIsAgent {
-        Ok(html.subscribe(knownFactsForm))
-      }
+    implicit authContext =>
+      implicit request =>
+        ensureAffinityGroupIsAgent {
+          Future successful Ok(html.subscribe(knownFactsForm))
+        }
   }
 
   val showCheckAgencyStatus: Action[AnyContent] = AuthorisedFor(NoOpRegime, GGConfidence).async(showCheckAgencyStatusBody)
 
-  val showNonAgentNextSteps: Action[AnyContent] = AuthorisedFor(NoOpRegime, GGConfidence).async { implicit authContext: AuthContext => implicit request =>
-    Future successful Ok(html.non_agent_next_steps())
+  val showNonAgentNextSteps: Action[AnyContent] = AuthorisedFor(NoOpRegime, GGConfidence).async { implicit authContext: AuthContext =>
+    implicit request =>
+      Future successful Ok(html.non_agent_next_steps())
   }
 
   val showSubscriptionDetails: Action[AnyContent] = Action.async { implicit request =>
     Future successful Ok(html.subscription_details())
   }
 
-  val knownFactsForm = Form[KnownFacts](
+  private val knownFactsForm = Form[KnownFacts](
     mapping(
       "utr" -> nonEmptyText,
       "postCode" -> nonEmptyText
@@ -67,23 +71,36 @@ class SubscriptionController @Inject() (override val messagesApi: MessagesApi, o
 
   val submitKnownFacts: Action[AnyContent] = AuthorisedFor(NoOpRegime, GGConfidence).async { implicit authContext: AuthContext =>
     implicit request =>
-      knownFactsForm.bindFromRequest().fold(
-        formWithErrors => {
-          Future successful BadRequest(html.subscribe(formWithErrors))
-        },
-        valid => {
-          Future successful Ok(html.confirm_your_agency())
-        }
-      )
+      ensureAffinityGroupIsAgent {
+        knownFactsForm.bindFromRequest().fold(
+          formWithErrors => {
+            Future successful Ok(html.subscribe(formWithErrors))
+          },
+          knownFacts => submitKnownFactsGivenValidForm(knownFacts)
+        )
+      }
   }
 
-  private def ensureAffinityGroupIsAgent(action: => Result)(implicit authContext: AuthContext, hc: HeaderCarrier) =
-    authConnector.getUserDetails(authContext).map { userDetailsResponse =>
+  private def submitKnownFactsGivenValidForm(knownFacts: KnownFacts)
+                                            (implicit authContext: AuthContext, request: Request[AnyContent]): Future[Result] = {
+    desConnector.getBusinessPartnerRecord(knownFacts.utr) map { desResponse: DesBusinessPartnerRecordApiResponse =>
+      desResponse match {
+        case businessPartnerRecord: BusinessPartnerRecordFound => businessPartnerRecord.postalCode match {
+          case knownFacts.postCode => Ok(html.confirm_your_agency())
+          case _ => Ok(html.no_agency_found())
+        }
+        case _ => Ok(html.no_agency_found())
+      }
+    }
+  }
+
+  private def ensureAffinityGroupIsAgent(action: => Future[Result])(implicit authContext: AuthContext, hc: HeaderCarrier): Future[Result] =
+    authConnector.getUserDetails(authContext).flatMap { userDetailsResponse =>
       val affinityGroup = (userDetailsResponse.json \ "affinityGroup").as[String]
       if (affinityGroup == "Agent") {
         action
       } else {
-        redirectToNonAgentNextSteps
+        Future successful redirectToNonAgentNextSteps
       }
     }
 

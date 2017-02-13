@@ -14,7 +14,7 @@ class DesSubscriptionConnectorISpec extends UnitSpec with OneAppPerSuite with Wi
 
   private implicit val hc = HeaderCarrier()
 
-  private lazy val connector: DesBusinessPartnerRecordApiConnector = new DesBusinessPartnerRecordApiConnector(new URL(s"http://localhost:${wireMockPort}"), "auth-token", "des-env", WSHttp)
+  private lazy val connector: DesBusinessPartnerRecordApiConnector = new HttpDesBusinessPartnerRecordApiConnector(new URL(s"http://localhost:${wireMockPort}"), "auth-token", "des-env", WSHttp)
 
   "DES Subscription Connector" should {
 
@@ -27,7 +27,7 @@ class DesSubscriptionConnectorISpec extends UnitSpec with OneAppPerSuite with Wi
     "return not found status for a not found UTR" in {
       DesStubs.utrDoesNotExist()
       val result: DesBusinessPartnerRecordApiResponse = await(connector.getBusinessPartnerRecord("0000000000"))
-      result shouldBe BusinessPartnerRecordNotFound
+      result shouldBe BusinessPartnerRecordNotFound()
     }
 
   }

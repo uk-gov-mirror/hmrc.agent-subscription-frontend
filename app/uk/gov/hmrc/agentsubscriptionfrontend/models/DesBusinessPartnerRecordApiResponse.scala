@@ -20,5 +20,4 @@ import play.api.mvc.Results
 
 sealed trait DesBusinessPartnerRecordApiResponse
 case class BusinessPartnerRecordFound(postalCode : String) extends DesBusinessPartnerRecordApiResponse
-case object BusinessPartnerRecordNotFound extends DesBusinessPartnerRecordApiResponse
-case class InternalError(statusCode : Results.Status) extends DesBusinessPartnerRecordApiResponse
+case class BusinessPartnerRecordNotFound() extends DesBusinessPartnerRecordApiResponse

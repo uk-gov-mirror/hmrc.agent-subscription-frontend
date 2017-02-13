@@ -16,13 +16,40 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend
 
-import com.google.inject.AbstractModule
-import uk.gov.hmrc.agentsubscriptionfrontend.config.{AppConfig, FrontendAppConfig, FrontendAuthConnector}
-import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
+import java.net.URL
+import javax.inject.Provider
 
-class GuiceModule extends AbstractModule {
+import com.google.inject.AbstractModule
+import com.google.inject.name.Names
+import uk.gov.hmrc.agentsubscriptionfrontend.config.{AppConfig, FrontendAppConfig, FrontendAuthConnector, WSHttp}
+import uk.gov.hmrc.agentsubscriptionfrontend.connectors.{DesBusinessPartnerRecordApiConnector, HttpDesBusinessPartnerRecordApiConnector}
+import uk.gov.hmrc.play.config.ServicesConfig
+import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
+import uk.gov.hmrc.play.http.HttpGet
+
+class GuiceModule extends AbstractModule with ServicesConfig{
   override def configure(): Unit = {
+    bind(classOf[HttpGet]).toInstance(WSHttp)
     bind(classOf[AppConfig]).to(classOf[FrontendAppConfig])
     bind(classOf[AuthConnector]).to(classOf[FrontendAuthConnector])
+    bind(classOf[DesBusinessPartnerRecordApiConnector]).to(classOf[HttpDesBusinessPartnerRecordApiConnector])
+    bindBaseUrl("des")
+    bindConfigProperty("des.authorization-token")
+    bindConfigProperty("des.environment")
   }
+
+  private def bindBaseUrl(serviceName: String) =
+    bind(classOf[URL]).annotatedWith(Names.named(s"$serviceName-baseUrl")).toProvider(new BaseUrlProvider(serviceName))
+
+  private class BaseUrlProvider(serviceName: String) extends Provider[URL] {
+    override lazy val get = new URL(baseUrl(serviceName))
+  }
+
+  private def bindConfigProperty(propertyName: String) =
+    bind(classOf[String]).annotatedWith(Names.named(s"$propertyName")).toProvider(new ConfigPropertyProvider(propertyName))
+
+  private class ConfigPropertyProvider(propertyName: String) extends Provider[String] {
+    override lazy val get = getConfString(propertyName, throw new RuntimeException(s"No configuration value found for '$propertyName'"))
+  }
+
 }

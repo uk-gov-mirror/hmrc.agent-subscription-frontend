@@ -19,8 +19,8 @@ package uk.gov.hmrc.agentsubscriptionfrontend.connectors
 import java.net.URL
 import javax.inject.{Inject, Named}
 
-import play.api.libs.json.Json
-import play.api.mvc.Results._
+import com.google.inject.Singleton
+import play.api.libs.json.Json.parse
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.play.http._
 import uk.gov.hmrc.play.http.logging.Authorization
@@ -28,20 +28,30 @@ import uk.gov.hmrc.play.http.logging.Authorization
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class DesBusinessPartnerRecordApiConnector @Inject()(@Named("des-baseUrl") desBaseUrl: URL,
-                                                     @Named("des.authorization-token") authorizationToken: String,
-                                                     @Named("des.environment") environment: String,
-                                                     httpGet: HttpGet) {
+trait DesBusinessPartnerRecordApiConnector {
+
+
+  def getBusinessPartnerRecord(utr: String)(implicit hc: HeaderCarrier): Future[DesBusinessPartnerRecordApiResponse]
+
+}
+
+@Singleton
+class HttpDesBusinessPartnerRecordApiConnector @Inject()(@Named("des-baseUrl") desBaseUrl: URL,
+                                                         @Named("des.authorization-token") authorizationToken: String,
+                                                         @Named("des.environment") environment: String,
+                                                         httpGet: HttpGet) extends DesBusinessPartnerRecordApiConnector {
 
   def getBusinessPartnerRecord(utr: String)(implicit hc: HeaderCarrier): Future[DesBusinessPartnerRecordApiResponse] = {
     val url: String = bprUrlFor(utr)
-    getWithDesHeaders(url) map { r =>
+    val headers: Future[HttpResponse] = getWithDesHeaders(url)
+    headers map { r =>
       r.status match {
-        case 200 => BusinessPartnerRecordFound((Json.parse(r.body) \ "addressDetails" \ "postalCode").as[String])
-        case _ => InternalError(new Status(r.status))
+        case 200 => BusinessPartnerRecordFound((parse(r.body) \ "addressDetails" \ "postalCode").as[String])
+        case _ => throw new RuntimeException("Unexpected response status from DES.")
       }
     } recover {
-      case e: NotFoundException => BusinessPartnerRecordNotFound
+      case notFound: NotFoundException => BusinessPartnerRecordNotFound()
+      case error: Exception => throw new RuntimeException("Unexpected response status from DES.")
     }
   }
 
