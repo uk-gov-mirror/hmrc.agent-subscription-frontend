@@ -40,6 +40,18 @@ class SubscriptionController @Inject()
   (implicit appConfig: AppConfig)
   extends FrontendController with I18nSupport with Actions {
 
+  private val knownFactsForm = Form[KnownFacts](
+    mapping(
+      "utr" -> nonEmptyText,
+      "postCode" -> nonEmptyText
+    )(KnownFacts.apply)(KnownFacts.unapply)
+      verifying(
+      "Failed form constraints!", fields => fields match {
+        case knownFacts => knownFacts.utr.matches("^[0-9]{10}$")
+      }
+    )
+  )
+
   private[controllers] val showCheckAgencyStatusBody: (AuthContext) => (Request[AnyContent]) => Future[Result] = {
     implicit authContext =>
       implicit request =>
@@ -58,18 +70,6 @@ class SubscriptionController @Inject()
   val showSubscriptionDetails: Action[AnyContent] = Action.async { implicit request =>
     Future successful Ok(html.subscription_details())
   }
-
-  private val knownFactsForm = Form[KnownFacts](
-    mapping(
-      "utr" -> nonEmptyText,
-      "postCode" -> nonEmptyText
-    )(KnownFacts.apply)(KnownFacts.unapply)
-      verifying(
-      "Failed form constraints!", fields => fields match {
-        case knownFacts => knownFacts.utr.matches("^[0-9]{10}$")
-      }
-    )
-  )
 
   val submitKnownFacts: Action[AnyContent] = AuthorisedFor(NoOpRegime, GGConfidence).async { implicit authContext: AuthContext =>
     implicit request =>
