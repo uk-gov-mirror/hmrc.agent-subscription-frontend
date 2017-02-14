@@ -16,6 +16,4 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.models
 
-sealed trait GetRegistrationResponse
-case object RegistrationFound extends GetRegistrationResponse
-case object RegistrationNotFound extends GetRegistrationResponse
+class Registration

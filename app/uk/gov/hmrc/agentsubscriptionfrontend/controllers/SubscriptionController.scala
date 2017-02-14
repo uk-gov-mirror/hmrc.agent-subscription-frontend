@@ -25,7 +25,7 @@ import play.api.mvc.{AnyContent, Request, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.NoOpRegime
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentSubscriptionConnector
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{GetRegistrationResponse, RegistrationFound}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.Registration
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.auth.{Actions, AuthContext}
@@ -85,10 +85,10 @@ class SubscriptionController @Inject()
 
   private def submitKnownFactsGivenValidForm(knownFacts: KnownFacts)
                                             (implicit authContext: AuthContext, request: Request[AnyContent]): Future[Result] = {
-    agentSubscriptionConnector.getRegistration(knownFacts.utr, knownFacts.postCode) map { getRegistrationResponse: GetRegistrationResponse =>
-      getRegistrationResponse match {
-        case RegistrationFound => Ok(html.confirm_your_agency())
-        case _ => Ok(html.no_agency_found())
+    agentSubscriptionConnector.getRegistration(knownFacts.utr, knownFacts.postCode) map { maybeRegistration: Option[Registration] =>
+      maybeRegistration match {
+        case Some(_) => Ok(html.confirm_your_agency())
+        case None => Ok(html.no_agency_found())
       }
     }
   }

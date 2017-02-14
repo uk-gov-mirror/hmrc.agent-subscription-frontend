@@ -18,22 +18,22 @@ class AgentSubscriptionConnectorISpec extends UnitSpec with OneAppPerSuite with 
 
   "getRegistration" should {
 
-    "return RegistrationFound when agent-subscription returns a 200 response (for a matching UTR and postcode)" in {
+    "return a Registration when agent-subscription returns a 200 response (for a matching UTR and postcode)" in {
       AgentSubscriptionStub.withMatchingUtrAndPostcode("0123456789", "AA1 1AA")
-      val result: GetRegistrationResponse = await(connector.getRegistration("0123456789", "AA1 1AA"))
-      result shouldBe RegistrationFound
+      val result: Option[Registration] = await(connector.getRegistration("0123456789", "AA1 1AA"))
+      result.isDefined shouldBe true
     }
 
     "URL-path-encode path parameters" in {
       AgentSubscriptionStub.withMatchingUtrAndPostcode("01234/56789", "AA1 1AA/&")
-      val result: GetRegistrationResponse = await(connector.getRegistration("01234/56789", "AA1 1AA/&"))
-      result shouldBe RegistrationFound
+      val result: Option[Registration] = await(connector.getRegistration("01234/56789", "AA1 1AA/&"))
+      result.isDefined shouldBe true
     }
 
-    "return RegistrationNotFound when agent-subscription returns a 404 response (for a non-matching UTR and postcode)" in {
+    "return None when agent-subscription returns a 404 response (for a non-matching UTR and postcode)" in {
       AgentSubscriptionStub.withNonMatchingUtrAndPostcode("0123456789", "AA1 1AA")
-      val result: GetRegistrationResponse = await(connector.getRegistration("0123456789", "AA1 1AA"))
-      result shouldBe RegistrationNotFound
+      val result: Option[Registration] = await(connector.getRegistration("0123456789", "AA1 1AA"))
+      result shouldBe None
     }
 
     "throw an exception when agent-subscription returns a 500 response" in {
