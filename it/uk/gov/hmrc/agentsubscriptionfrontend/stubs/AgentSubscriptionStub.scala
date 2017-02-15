@@ -17,6 +17,7 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.stubs
 
 import com.github.tomakehurst.wiremock.client.WireMock._
+import play.api.http.Status
 import uk.gov.hmrc.play.encoding.UriPathEncoding.encodePathSegment
 
 object AgentSubscriptionStub {
@@ -25,20 +26,20 @@ object AgentSubscriptionStub {
     stubFor(get(urlEqualTo(s"/agent-subscription/registration/${encodePathSegment(utr)}/postcode/${encodePathSegment(postcode)}"))
       .willReturn(
         aResponse()
-          .withStatus(200)))
+          .withStatus(Status.OK)))
   }
 
   def withNonMatchingUtrAndPostcode(utr: String, postcode: String): Unit = {
     stubFor(get(urlEqualTo(s"/agent-subscription/registration/${encodePathSegment(utr)}/postcode/${encodePathSegment(postcode)}"))
       .willReturn(
         aResponse()
-          .withStatus(404)))
+          .withStatus(Status.NOT_FOUND)))
   }
 
   def withErrorForUtrAndPostcode(utr: String, postcode: String): Unit = {
     stubFor(get(urlEqualTo(s"/agent-subscription/registration/${encodePathSegment(utr)}/postcode/${encodePathSegment(postcode)}"))
       .willReturn(
         aResponse()
-          .withStatus(500)))
+          .withStatus(Status.INTERNAL_SERVER_ERROR)))
   }
 }
