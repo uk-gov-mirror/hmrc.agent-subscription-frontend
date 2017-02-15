@@ -14,10 +14,18 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentsubscriptionfrontend.models
+package uk.gov.hmrc.play.encoding
 
-import play.api.mvc.Results
+import java.nio.charset.StandardCharsets
 
-sealed trait DesBusinessPartnerRecordApiResponse
-case class BusinessPartnerRecordFound(postalCode : String) extends DesBusinessPartnerRecordApiResponse
-case class BusinessPartnerRecordNotFound() extends DesBusinessPartnerRecordApiResponse
+import play.utils.UriEncoding
+
+object UriPathEncoding {
+
+  def encodePathSegments(pathSegments: String*): String =
+    pathSegments.map(encodePathSegment).mkString("/", "/", "")
+
+  def encodePathSegment(pathSegment: String): String =
+    UriEncoding.encodePathSegment(pathSegment, StandardCharsets.UTF_8.name)
+
+}

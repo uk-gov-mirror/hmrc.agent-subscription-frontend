@@ -24,8 +24,8 @@ import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{AnyContent, Request, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.NoOpRegime
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.connectors.DesBusinessPartnerRecordApiConnector
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{BusinessPartnerRecordFound, DesBusinessPartnerRecordApiResponse}
+import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentSubscriptionConnector
+import uk.gov.hmrc.agentsubscriptionfrontend.models.Registration
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.auth.{Actions, AuthContext}
@@ -35,8 +35,22 @@ import uk.gov.hmrc.play.http.HeaderCarrier
 import scala.concurrent.Future
 
 @Singleton
-class SubscriptionController @Inject()(override val messagesApi: MessagesApi, override val authConnector: AuthConnector, val desConnector: DesBusinessPartnerRecordApiConnector)(implicit appConfig: AppConfig)
+class SubscriptionController @Inject()
+  (override val messagesApi: MessagesApi, override val authConnector: AuthConnector, val agentSubscriptionConnector: AgentSubscriptionConnector)
+  (implicit appConfig: AppConfig)
   extends FrontendController with I18nSupport with Actions {
+
+  private val knownFactsForm = Form[KnownFacts](
+    mapping(
+      "utr" -> nonEmptyText,
+      "postcode" -> nonEmptyText
+    )(KnownFacts.apply)(KnownFacts.unapply)
+      verifying(
+      "Failed form constraints!", fields => fields match {
+        case knownFacts => knownFacts.utr.matches("^[0-9]{10}$")
+      }
+    )
+  )
 
   private[controllers] val showCheckAgencyStatusBody: (AuthContext) => (Request[AnyContent]) => Future[Result] = {
     implicit authContext =>
@@ -57,18 +71,6 @@ class SubscriptionController @Inject()(override val messagesApi: MessagesApi, ov
     Future successful Ok(html.subscription_details())
   }
 
-  private val knownFactsForm = Form[KnownFacts](
-    mapping(
-      "utr" -> nonEmptyText,
-      "postCode" -> nonEmptyText
-    )(KnownFacts.apply)(KnownFacts.unapply)
-      verifying(
-      "Failed form constraints!", fields => fields match {
-        case knownFacts => knownFacts.utr.matches("^[0-9]{10}$")
-      }
-    )
-  )
-
   val submitKnownFacts: Action[AnyContent] = AuthorisedFor(NoOpRegime, GGConfidence).async { implicit authContext: AuthContext =>
     implicit request =>
       ensureAffinityGroupIsAgent {
@@ -83,13 +85,10 @@ class SubscriptionController @Inject()(override val messagesApi: MessagesApi, ov
 
   private def submitKnownFactsGivenValidForm(knownFacts: KnownFacts)
                                             (implicit authContext: AuthContext, request: Request[AnyContent]): Future[Result] = {
-    desConnector.getBusinessPartnerRecord(knownFacts.utr) map { desResponse: DesBusinessPartnerRecordApiResponse =>
-      desResponse match {
-        case businessPartnerRecord: BusinessPartnerRecordFound => businessPartnerRecord.postalCode match {
-          case knownFacts.postCode => Ok(html.confirm_your_agency())
-          case _ => Ok(html.no_agency_found())
-        }
-        case _ => Ok(html.no_agency_found())
+    agentSubscriptionConnector.getRegistration(knownFacts.utr, knownFacts.postcode) map { maybeRegistration: Option[Registration] =>
+      maybeRegistration match {
+        case Some(_) => Ok(html.confirm_your_agency())
+        case None => Ok(html.no_agency_found())
       }
     }
   }
