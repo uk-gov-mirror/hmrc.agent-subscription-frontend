@@ -16,4 +16,4 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
-case class KnownFacts(utr: String, postCode: String)
+case class KnownFacts(utr: String, postcode: String)

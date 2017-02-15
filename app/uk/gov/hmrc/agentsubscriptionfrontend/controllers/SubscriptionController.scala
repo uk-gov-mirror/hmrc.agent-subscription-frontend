@@ -43,7 +43,7 @@ class SubscriptionController @Inject()
   private val knownFactsForm = Form[KnownFacts](
     mapping(
       "utr" -> nonEmptyText,
-      "postCode" -> nonEmptyText
+      "postcode" -> nonEmptyText
     )(KnownFacts.apply)(KnownFacts.unapply)
       verifying(
       "Failed form constraints!", fields => fields match {
@@ -85,7 +85,7 @@ class SubscriptionController @Inject()
 
   private def submitKnownFactsGivenValidForm(knownFacts: KnownFacts)
                                             (implicit authContext: AuthContext, request: Request[AnyContent]): Future[Result] = {
-    agentSubscriptionConnector.getRegistration(knownFacts.utr, knownFacts.postCode) map { maybeRegistration: Option[Registration] =>
+    agentSubscriptionConnector.getRegistration(knownFacts.utr, knownFacts.postcode) map { maybeRegistration: Option[Registration] =>
       maybeRegistration match {
         case Some(_) => Ok(html.confirm_your_agency())
         case None => Ok(html.no_agency_found())

@@ -114,7 +114,7 @@ class SubscriptionControllerISpec extends UnitSpec with OneAppPerSuite with Wire
       val postcode = "AA1 1AA"
       AgentSubscriptionStub.withNonMatchingUtrAndPostcode(utr, postcode)
       val request = FakeRequest("POST", "/agent-subscription/submit-known-facts")
-        .withFormUrlEncodedBody("utr" -> utr, "postCode" -> postcode)
+        .withFormUrlEncodedBody("utr" -> utr, "postcode" -> postcode)
         .withSession(sessionKeys: _*)
       val result = await(controller.submitKnownFacts(request))
 
@@ -127,7 +127,7 @@ class SubscriptionControllerISpec extends UnitSpec with OneAppPerSuite with Wire
       val postcode = "AA1 1AA"
       AgentSubscriptionStub.withMatchingUtrAndPostcode(validUTR, postcode)
       val request = FakeRequest("POST", "/agent-subscription/submit-known-facts")
-        .withFormUrlEncodedBody("utr" -> validUTR, "postCode" -> postcode)
+        .withFormUrlEncodedBody("utr" -> validUTR, "postcode" -> postcode)
         .withSession(sessionKeys: _*)
       val result = await(controller.submitKnownFacts(request))
 
