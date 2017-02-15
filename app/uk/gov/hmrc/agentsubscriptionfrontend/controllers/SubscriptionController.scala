@@ -18,8 +18,9 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import javax.inject.{Inject, Singleton}
 
-import play.api.data.Form
 import play.api.data.Forms.{mapping, _}
+import play.api.data.validation.{Constraint, Constraints, Invalid, Valid}
+import play.api.data.{Form, Mapping}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{AnyContent, Request, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.NoOpRegime
@@ -42,20 +43,16 @@ class SubscriptionController @Inject()
 
   private val knownFactsForm = Form[KnownFacts](
     mapping(
-      "utr" -> nonEmptyText,
+      "utr" -> FieldMappings.utr,
       "postcode" -> nonEmptyText
     )(KnownFacts.apply)(KnownFacts.unapply)
-      verifying(
-      "Failed form constraints!", fields => fields match {
-        case knownFacts => knownFacts.utr.matches("^[0-9]{10}$")
-      }
-    )
   )
 
   private[controllers] val showCheckAgencyStatusBody: (AuthContext) => (Request[AnyContent]) => Future[Result] = {
     implicit authContext =>
       implicit request =>
         ensureAffinityGroupIsAgent {
+          //TODO: rename subscribe to check_agency_status
           Future successful Ok(html.subscribe(knownFactsForm))
         }
   }
@@ -105,4 +102,18 @@ class SubscriptionController @Inject()
 
   private def redirectToNonAgentNextSteps =
     SeeOther(routes.SubscriptionController.showNonAgentNextSteps().url)
+}
+
+object FieldMappings {
+  private val utrConstraint = Constraints.pattern("^\\d{10}$".r, error = "error.utr.invalid")
+  private val nonEmptyUtr: Constraint[String] = Constraint[String] { fieldValue: String =>
+    Constraints.nonEmpty(fieldValue) match {
+      case i: Invalid =>
+        i
+      case Valid =>
+        utrConstraint(fieldValue)
+    }
+  }
+
+  def utr: Mapping[String] = text verifying nonEmptyUtr
 }
