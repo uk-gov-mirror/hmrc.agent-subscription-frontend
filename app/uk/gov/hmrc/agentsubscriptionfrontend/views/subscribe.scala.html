@@ -1,10 +1,9 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 @import uk.gov.hmrc.play.views.html.helpers.form
+@import uk.gov.hmrc.play.views.html.helpers.input
 
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.KnownFacts
-
-@import helper._
 
 @(knownFactsForm : Form[KnownFacts])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
@@ -15,12 +14,23 @@
   @form(
     action = routes.SubscriptionController.submitKnownFacts,
     'class -> "form js-form") {
-    <fieldset class="form-field-group">
-      @helper.inputText(knownFactsForm("utr"))
-      @helper.inputText(knownFactsForm("postcode"))
+
+    <fieldset class="form-group">
+      <div class="form-field">
+        <label>UTR
+          @input(knownFactsForm("utr"), 'class -> "form-control form-control--block")
+        </label>
+      </div>
+
+      <div class="form-field">
+        <label>Postcode
+          @input(knownFactsForm("postcode"), 'class -> "form-control form-control--block")
+        </label>
+      </div>
+
+      <div class="form-field">
+        <input class="button" type="submit" value="Continue">
+      </div>
     </fieldset>
-    <div class="form-group">
-      <input class="button" type="submit" value="Continue">
-    </div>
   }
 }
