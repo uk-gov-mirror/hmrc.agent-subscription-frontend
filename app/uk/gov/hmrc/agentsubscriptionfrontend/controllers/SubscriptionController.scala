@@ -19,7 +19,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 import javax.inject.{Inject, Singleton}
 
 import play.api.data.Forms.{mapping, _}
-import play.api.data.validation.{Constraint, Constraints, Invalid, Valid}
+import play.api.data.validation._
 import play.api.data.{Form, Mapping}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{AnyContent, Request, _}
@@ -44,7 +44,7 @@ class SubscriptionController @Inject()
   private val knownFactsForm = Form[KnownFacts](
     mapping(
       "utr" -> FieldMappings.utr,
-      "postcode" -> nonEmptyText
+      "postcode" -> FieldMappings.postcode
     )(KnownFacts.apply)(KnownFacts.unapply)
   )
 
@@ -114,5 +114,20 @@ object FieldMappings {
     }
   }
 
+  private val postcodeWithoutSpacesRegex = "^[A-Za-z]{1,2}[0-9]{1,2}[A-Za-z]?[0-9][A-Za-z]{2}$".r
+  private val nonEmptyPostcode: Constraint[String] = Constraint[String] { fieldValue: String =>
+    Constraints.nonEmpty(fieldValue) match {
+      case i: Invalid =>
+        i
+      case Valid =>
+        val error = "error.postcode.invalid"
+        val fieldValueWithoutSpaces = fieldValue.replace(" ", "")
+        postcodeWithoutSpacesRegex.unapplySeq(fieldValueWithoutSpaces)
+          .map(_ => Valid)
+          .getOrElse(Invalid(ValidationError(error)))
+    }
+  }
+
   def utr: Mapping[String] = text verifying nonEmptyUtr
+  def postcode: Mapping[String] = text verifying nonEmptyPostcode
 }
