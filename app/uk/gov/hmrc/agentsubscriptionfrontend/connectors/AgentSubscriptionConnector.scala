@@ -19,6 +19,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.connectors
 import java.net.URL
 import javax.inject.{Inject, Named, Singleton}
 
+import play.api.http.Status
 import uk.gov.hmrc.agentsubscriptionfrontend.models.Registration
 import uk.gov.hmrc.play.encoding.UriPathEncoding.encodePathSegment
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext.fromLoggingDetails
@@ -33,7 +34,7 @@ class AgentSubscriptionConnector @Inject() (@Named("agent-subscription-baseUrl")
     val url = getRegistrationUrlFor(utr, postcode)
     httpGet.GET[HttpResponse](url).map { response: HttpResponse =>
       response.status match {
-        case 200 => Some(new Registration)
+        case Status.OK => Some(new Registration)
       }
     } recover {
       case e: NotFoundException => None
