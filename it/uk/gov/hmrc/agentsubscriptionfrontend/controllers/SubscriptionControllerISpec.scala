@@ -78,12 +78,12 @@ class SubscriptionControllerISpec extends UnitSpec with OneAppPerSuite with Wire
 
   }
 
-  "submitKnownFacts" should {
+  "checkAgencyStatus" should {
 
     "redirect to the company-auth-frontend sign-in page if the current user is not logged in" in {
       AuthStub.userIsNotAuthenticated()
       val request = FakeRequest("POST", "/agent-subscription/submit-known-facts")
-      val result = await(controller.submitKnownFacts(request))
+      val result = await(controller.checkAgencyStatus(request))
 
       status(result) shouldBe SEE_OTHER
       redirectLocation(result).head should include("gg/sign-in")
@@ -93,7 +93,7 @@ class SubscriptionControllerISpec extends UnitSpec with OneAppPerSuite with Wire
       val sessionKeys = AuthStub.userIsAuthenticated(individual)
 
       val request = FakeRequest("POST", "/agent-subscription/submit-known-facts").withSession(sessionKeys: _*)
-      val result = await(controller.submitKnownFacts(request))
+      val result = await(controller.checkAgencyStatus(request))
 
       status(result) shouldBe SEE_OTHER
       redirectLocation(result).head should include("non-agent-next-steps")
@@ -104,7 +104,7 @@ class SubscriptionControllerISpec extends UnitSpec with OneAppPerSuite with Wire
       val request = FakeRequest("POST", "/agent-subscription/submit-known-facts")
         .withFormUrlEncodedBody("utr" -> invalidUtr, "postcode" -> validPostcode)
         .withSession(sessionKeys: _*)
-      val result = await(controller.submitKnownFacts(request))
+      val result = await(controller.checkAgencyStatus(request))
 
       status(result) shouldBe OK
       val responseBody = bodyOf(result)
@@ -119,7 +119,7 @@ class SubscriptionControllerISpec extends UnitSpec with OneAppPerSuite with Wire
       val request = FakeRequest("POST", "/agent-subscription/submit-known-facts")
         .withFormUrlEncodedBody("utr" -> "", "postcode" -> "")
         .withSession(sessionKeys: _*)
-      val result = await(controller.submitKnownFacts(request))
+      val result = await(controller.checkAgencyStatus(request))
 
       status(result) shouldBe OK
       val responseBody = bodyOf(result)
@@ -134,7 +134,7 @@ class SubscriptionControllerISpec extends UnitSpec with OneAppPerSuite with Wire
       val request = FakeRequest("POST", "/agent-subscription/submit-known-facts")
         .withFormUrlEncodedBody("utr" -> utr, "postcode" -> validPostcode)
         .withSession(sessionKeys: _*)
-      val result = await(controller.submitKnownFacts(request))
+      val result = await(controller.checkAgencyStatus(request))
 
       status(result) shouldBe OK
       bodyOf(result) should include("No Agency Found")
@@ -146,7 +146,7 @@ class SubscriptionControllerISpec extends UnitSpec with OneAppPerSuite with Wire
       val request = FakeRequest("POST", "/agent-subscription/submit-known-facts")
         .withFormUrlEncodedBody("utr" -> validUTR, "postcode" -> validPostcode)
         .withSession(sessionKeys: _*)
-      val result = await(controller.submitKnownFacts(request))
+      val result = await(controller.checkAgencyStatus(request))
 
       status(result) shouldBe OK
       bodyOf(result) should include("Confirm Your Agency")

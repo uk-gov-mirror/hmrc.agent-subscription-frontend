@@ -52,8 +52,7 @@ class SubscriptionController @Inject()
     implicit authContext =>
       implicit request =>
         ensureAffinityGroupIsAgent {
-          //TODO: rename subscribe to check_agency_status
-          Future successful Ok(html.subscribe(knownFactsForm))
+          Future successful Ok(html.check_agency_status(knownFactsForm))
         }
   }
 
@@ -68,19 +67,19 @@ class SubscriptionController @Inject()
     Future successful Ok(html.subscription_details())
   }
 
-  val submitKnownFacts: Action[AnyContent] = AuthorisedFor(NoOpRegime, GGConfidence).async { implicit authContext: AuthContext =>
+  val checkAgencyStatus: Action[AnyContent] = AuthorisedFor(NoOpRegime, GGConfidence).async { implicit authContext: AuthContext =>
     implicit request =>
       ensureAffinityGroupIsAgent {
         knownFactsForm.bindFromRequest().fold(
           formWithErrors => {
-            Future successful Ok(html.subscribe(formWithErrors))
+            Future successful Ok(html.check_agency_status(formWithErrors))
           },
-          knownFacts => submitKnownFactsGivenValidForm(knownFacts)
+          knownFacts => checkAgencyStatusGivenValidForm(knownFacts)
         )
       }
   }
 
-  private def submitKnownFactsGivenValidForm(knownFacts: KnownFacts)
+  private def checkAgencyStatusGivenValidForm(knownFacts: KnownFacts)
                                             (implicit authContext: AuthContext, request: Request[AnyContent]): Future[Result] = {
     agentSubscriptionConnector.getRegistration(knownFacts.utr, knownFacts.postcode) map { maybeRegistration: Option[Registration] =>
       maybeRegistration match {
