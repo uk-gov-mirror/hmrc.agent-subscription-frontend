@@ -83,10 +83,26 @@ class SubscriptionController @Inject()
                                             (implicit authContext: AuthContext, request: Request[AnyContent]): Future[Result] = {
     agentSubscriptionConnector.getRegistration(knownFacts.utr, knownFacts.postcode) map { maybeRegistration: Option[Registration] =>
       maybeRegistration match {
-        case Some(_) => Ok(html.confirm_your_agency())
-        case None => Ok(html.no_agency_found())
+        case Some(_) => Redirect(routes.SubscriptionController.showConfirmYourAgency())
+        case None => Redirect(routes.SubscriptionController.showNoAgencyFound())
       }
     }
+  }
+
+  val showNoAgencyFound: Action[AnyContent] = AuthorisedFor(NoOpRegime, GGConfidence).async {
+    implicit authContext =>
+      implicit request =>
+        ensureAffinityGroupIsAgent {
+          Future successful Ok(html.no_agency_found())
+        }
+  }
+
+  val showConfirmYourAgency: Action[AnyContent] = AuthorisedFor(NoOpRegime, GGConfidence).async {
+    implicit authContext =>
+      implicit request =>
+        ensureAffinityGroupIsAgent {
+          Future successful Ok(html.confirm_your_agency())
+        }
   }
 
   private def ensureAffinityGroupIsAgent(action: => Future[Result])(implicit authContext: AuthContext, hc: HeaderCarrier): Future[Result] =
@@ -100,7 +116,7 @@ class SubscriptionController @Inject()
     }
 
   private def redirectToNonAgentNextSteps =
-    SeeOther(routes.SubscriptionController.showNonAgentNextSteps().url)
+    Redirect(routes.SubscriptionController.showNonAgentNextSteps())
 }
 
 object FieldMappings {

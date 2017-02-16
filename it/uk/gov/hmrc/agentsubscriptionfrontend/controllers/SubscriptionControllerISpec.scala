@@ -19,7 +19,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 import org.scalatestplus.play.OneAppPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.mvc.Result
+import play.api.mvc.{AnyContentAsEmpty, Result}
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{contentType, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.{AgentSubscriptionStub, AuthStub}
@@ -46,29 +46,13 @@ class SubscriptionControllerISpec extends UnitSpec with OneAppPerSuite with Wire
   private lazy val controller: SubscriptionController = app.injector.instanceOf[SubscriptionController]
 
   "showCheckAgencyStatus" should {
-    "redirect to the company-auth-frontend sign-in page if the current user is not logged in" in {
-      AuthStub.userIsNotAuthenticated()
-      val request = FakeRequest("GET", "/agent-subscription/check-agency-status")
-      val result = await(controller.showCheckAgencyStatus(request))
 
-      status(result) shouldBe SEE_OTHER
-      redirectLocation(result).head should include("gg/sign-in")
-    }
-
-    "redirect to the non-Agent next steps page if the current user is logged in and does not have affinity group = Agent" in {
-      val sessionKeys = AuthStub.userIsAuthenticated(individual)
-
-      val request = FakeRequest("GET", "/agent-subscription/check-agency-status").withSession(sessionKeys: _*)
-      val result = await(controller.showCheckAgencyStatus(request))
-
-      status(result) shouldBe SEE_OTHER
-      redirectLocation(result).head should include("non-agent-next-steps")
-    }
+    behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showCheckAgencyStatus(request))
 
     "display the check agency status page if the current user is logged in and has affinity group = Agent" in {
       val sessionKeys = AuthStub.userIsAuthenticated(subscribingAgent)
 
-      val request = FakeRequest("GET", "/agent-subscription/check-agency-status").withSession(sessionKeys: _*)
+      val request = FakeRequest().withSession(sessionKeys: _*)
       val result = await(controller.showCheckAgencyStatus(request))
 
       status(result) shouldBe OK
@@ -81,28 +65,11 @@ class SubscriptionControllerISpec extends UnitSpec with OneAppPerSuite with Wire
 
   "checkAgencyStatus" should {
 
-    "redirect to the company-auth-frontend sign-in page if the current user is not logged in" in {
-      AuthStub.userIsNotAuthenticated()
-      val request = FakeRequest("POST", "/agent-subscription/submit-known-facts")
-      val result = await(controller.checkAgencyStatus(request))
-
-      status(result) shouldBe SEE_OTHER
-      redirectLocation(result).head should include("gg/sign-in")
-    }
-
-    "redirect to the non-Agent next steps page if the current user is logged in and does not have affinity group = Agent" in {
-      val sessionKeys = AuthStub.userIsAuthenticated(individual)
-
-      val request = FakeRequest("POST", "/agent-subscription/submit-known-facts").withSession(sessionKeys: _*)
-      val result = await(controller.checkAgencyStatus(request))
-
-      status(result) shouldBe SEE_OTHER
-      redirectLocation(result).head should include("non-agent-next-steps")
-    }
+    behave like anAgentAffinityGroupOnlyEndpoint(request => controller.checkAgencyStatus(request))
 
     "return a 200 response to redisplay the form with an error message for invalidly-formatted UTR" in {
       val sessionKeys = AuthStub.userIsAuthenticated(subscribingAgent)
-      val request = FakeRequest("POST", "/agent-subscription/submit-known-facts")
+      val request = FakeRequest()
         .withFormUrlEncodedBody("utr" -> invalidUtr, "postcode" -> validPostcode)
         .withSession(sessionKeys: _*)
       val result = await(controller.checkAgencyStatus(request))
@@ -117,7 +84,7 @@ class SubscriptionControllerISpec extends UnitSpec with OneAppPerSuite with Wire
 
     "return a 200 response to redisplay the form with an error message for invalidly-formatted postcode" in {
       val sessionKeys = AuthStub.userIsAuthenticated(subscribingAgent)
-      val request = FakeRequest("POST", "/agent-subscription/submit-known-facts")
+      val request = FakeRequest()
         .withFormUrlEncodedBody("utr" -> validUtr, "postcode" -> invalidPostcode)
         .withSession(sessionKeys: _*)
       val result = await(controller.checkAgencyStatus(request))
@@ -132,7 +99,7 @@ class SubscriptionControllerISpec extends UnitSpec with OneAppPerSuite with Wire
 
     "return a 200 response to redisplay the form with an error message for empty form parameters" in {
       val sessionKeys = AuthStub.userIsAuthenticated(subscribingAgent)
-      val request = FakeRequest("POST", "/agent-subscription/submit-known-facts")
+      val request = FakeRequest()
         .withFormUrlEncodedBody("utr" -> "", "postcode" -> "")
         .withSession(sessionKeys: _*)
       val result = await(controller.checkAgencyStatus(request))
@@ -147,25 +114,25 @@ class SubscriptionControllerISpec extends UnitSpec with OneAppPerSuite with Wire
       val sessionKeys = AuthStub.userIsAuthenticated(subscribingAgent)
       val utr = "0000000000"
       AgentSubscriptionStub.withNonMatchingUtrAndPostcode(utr, validPostcode)
-      val request = FakeRequest("POST", "/agent-subscription/submit-known-facts")
+      val request = FakeRequest()
         .withFormUrlEncodedBody("utr" -> utr, "postcode" -> validPostcode)
         .withSession(sessionKeys: _*)
       val result = await(controller.checkAgencyStatus(request))
 
-      status(result) shouldBe OK
-      bodyOf(result) should include("No Agency Found")
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.SubscriptionController.showNoAgencyFound().url)
     }
 
     "redirect to confirm agency page for a user who supplies a UTR and post code that agent-subscription finds a matching registration for" in {
       val sessionKeys = AuthStub.userIsAuthenticated(subscribingAgent)
       AgentSubscriptionStub.withMatchingUtrAndPostcode(validUtr, validPostcode)
-      val request = FakeRequest("POST", "/agent-subscription/submit-known-facts")
+      val request = FakeRequest()
         .withFormUrlEncodedBody("utr" -> validUtr, "postcode" -> validPostcode)
         .withSession(sessionKeys: _*)
       val result = await(controller.checkAgencyStatus(request))
 
-      status(result) shouldBe OK
-      bodyOf(result) should include("Confirm Your Agency")
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.SubscriptionController.showConfirmYourAgency().url)
     }
 
   }
@@ -174,7 +141,7 @@ class SubscriptionControllerISpec extends UnitSpec with OneAppPerSuite with Wire
     "display the non-agent next steps page if the current user is logged in" in {
       val sessionKeys = AuthStub.userIsAuthenticated(individual)
 
-      val request = FakeRequest(routes.SubscriptionController.showNonAgentNextSteps()).withSession(sessionKeys: _*)
+      val request = FakeRequest().withSession(sessionKeys: _*)
       val result = await(controller.showNonAgentNextSteps(request))
 
       status(result) shouldBe OK
@@ -186,11 +153,45 @@ class SubscriptionControllerISpec extends UnitSpec with OneAppPerSuite with Wire
     "redirect to the company-auth-frontend sign-in page if the current user is not logged in" in {
       AuthStub.userIsNotAuthenticated()
 
-      val request = FakeRequest(routes.SubscriptionController.showNonAgentNextSteps())
+      val request = FakeRequest()
       val result = await(controller.showNonAgentNextSteps(request))
 
       status(result) shouldBe SEE_OTHER
       redirectLocation(result).head should include("gg/sign-in")
+    }
+  }
+
+  "showNoAgencyFound" should {
+
+    behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showNoAgencyFound(request))
+
+    "display the no agency found page if the current user is logged in and has affinity group = Agent" in {
+      val sessionKeys = AuthStub.userIsAuthenticated(subscribingAgent)
+
+      val request = FakeRequest().withSession(sessionKeys: _*)
+      val result = await(controller.showNoAgencyFound(request))
+
+      status(result) shouldBe OK
+      contentType(result) shouldBe Some("text/html")
+      charset(result) shouldBe Some("utf-8")
+      bodyOf(result) should include("No Agency Found")
+    }
+  }
+
+  "showConfirmYourAgency" should {
+
+    behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showConfirmYourAgency(request))
+
+    "display the confirm your agency page if the current user is logged in and has affinity group = Agent" in {
+      val sessionKeys = AuthStub.userIsAuthenticated(subscribingAgent)
+
+      val request = FakeRequest().withSession(sessionKeys: _*)
+      val result = await(controller.showConfirmYourAgency(request))
+
+      status(result) shouldBe OK
+      contentType(result) shouldBe Some("text/html")
+      charset(result) shouldBe Some("utf-8")
+      bodyOf(result) should include("Confirm Your Agency")
     }
   }
 
@@ -211,4 +212,26 @@ class SubscriptionControllerISpec extends UnitSpec with OneAppPerSuite with Wire
   }
 
   private def get(path: String): Result = await(route(app, FakeRequest("GET", path)).get)
+
+  private def anAgentAffinityGroupOnlyEndpoint(doRequest: FakeRequest[AnyContentAsEmpty.type] => Result) = {
+    "redirect to the company-auth-frontend sign-in page if the current user is not logged in" in {
+      AuthStub.userIsNotAuthenticated()
+
+      val request = FakeRequest()
+      val result = await(doRequest(request))
+
+      result.header.status shouldBe 303
+      result.header.headers("Location") should include("/gg/sign-in")
+    }
+
+    "redirect to the non-Agent next steps page if the current user is logged in and does not have affinity group = Agent" in {
+      val sessionKeys = AuthStub.userIsAuthenticated(individual)
+
+      val request = FakeRequest().withSession(sessionKeys: _*)
+      val result = await(doRequest(request))
+
+      result.header.status shouldBe 303
+      result.header.headers("Location") shouldBe routes.SubscriptionController.showNonAgentNextSteps().url
+    }
+  }
 }
