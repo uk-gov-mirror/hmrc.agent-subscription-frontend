@@ -57,4 +57,78 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
       }
     }
   }
+
+  "postcode bind" should {
+    val postcodeMapping = FieldMappings.postcode.withPrefix("testKey")
+
+    def bind(fieldValue: String) = postcodeMapping.bind(Map("testKey" -> fieldValue))
+
+    def shouldAcceptFieldValue(fieldValue: String): Unit = {
+      bind(fieldValue) shouldBe Right(fieldValue)
+    }
+
+    def shouldRejectFieldValueAsInvalid(fieldValue: String): Unit = {
+      bind(fieldValue) should matchPattern { case Left(List(FormError("testKey", List("error.postcode.invalid"), _))) => }
+    }
+
+    "accept valid postcodes" in {
+      shouldAcceptFieldValue("AA1 1AA")
+      shouldAcceptFieldValue("AA1M 1AA")
+    }
+
+    "give \"error.required\" error when it is not supplied" in {
+      postcodeMapping.bind(Map.empty).left.value should contain only FormError("testKey", "error.required")
+    }
+
+    "give \"error.required\" error when it is empty" in {
+      bind("").left.value should contain only FormError("testKey", "error.required")
+    }
+
+    "give \"error.required\" error when it only contains a space" in {
+      bind(" ").left.value should contain only FormError("testKey", "error.required")
+    }
+
+    "reject postcodes containing invalid characters" in {
+      shouldRejectFieldValueAsInvalid("_A1 1AA")
+      shouldRejectFieldValueAsInvalid("A.1 1AA")
+      shouldRejectFieldValueAsInvalid("AA/ 1AA")
+      shouldRejectFieldValueAsInvalid("AA1#1AA")
+      shouldRejectFieldValueAsInvalid("AA1 ~AA")
+      shouldRejectFieldValueAsInvalid("AA1 1$A")
+      shouldRejectFieldValueAsInvalid("AA1 1A%")
+    }
+
+    "accept lower case postcodes" in {
+      shouldAcceptFieldValue("aa1 1aa")
+    }
+
+    "accept postcodes with 2 characters in the outbound part" in {
+      shouldAcceptFieldValue("A1 1AA")
+    }
+
+    "accept postcodes with 4 characters in the outbound part" in {
+      shouldAcceptFieldValue("AA1A 1AA")
+    }
+
+    "reject postcodes where the 1st character of the outbound part is a number" in {
+      shouldRejectFieldValueAsInvalid("1A1 1AA")
+    }
+
+    "reject postcodes where the length of the inbound part is not 3" in {
+      shouldRejectFieldValueAsInvalid("AA1 1A")
+      shouldRejectFieldValueAsInvalid("AA1 1AAA")
+    }
+
+    "reject postcodes where the 1st character of the inbound part is a letter" in {
+      shouldRejectFieldValueAsInvalid("AA1 AAA")
+    }
+
+    "accept postcodes without spaces" in {
+      shouldAcceptFieldValue("AA11AA")
+    }
+
+    "accept postcodes with extra spaces" in {
+      shouldAcceptFieldValue(" A A 1 1 A A ")
+    }
+  }
 }

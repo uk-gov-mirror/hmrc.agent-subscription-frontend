@@ -29,9 +29,10 @@ import uk.gov.hmrc.play.test.UnitSpec
 
 class SubscriptionControllerISpec extends UnitSpec with OneAppPerSuite with WireMockSupport {
 
-  private val validUTR = "0123456789"
+  private val validUtr = "0123456789"
   private val invalidUtr = "0123456"
   private val validPostcode = "AA1 1AA"
+  private val invalidPostcode = "not a postcode"
 
   override implicit lazy val app: Application = new GuiceApplicationBuilder()
     .configure(
@@ -99,7 +100,7 @@ class SubscriptionControllerISpec extends UnitSpec with OneAppPerSuite with Wire
       redirectLocation(result).head should include("non-agent-next-steps")
     }
 
-    "return a 200 response to redisplay the form with an error message for invalid UTR" in {
+    "return a 200 response to redisplay the form with an error message for invalidly-formatted UTR" in {
       val sessionKeys = AuthStub.userIsAuthenticated(subscribingAgent)
       val request = FakeRequest("POST", "/agent-subscription/submit-known-facts")
         .withFormUrlEncodedBody("utr" -> invalidUtr, "postcode" -> validPostcode)
@@ -112,6 +113,21 @@ class SubscriptionControllerISpec extends UnitSpec with OneAppPerSuite with Wire
       responseBody should include ("Please enter a valid UTR")
       responseBody should include (invalidUtr)
       responseBody should include (validPostcode)
+    }
+
+    "return a 200 response to redisplay the form with an error message for invalidly-formatted postcode" in {
+      val sessionKeys = AuthStub.userIsAuthenticated(subscribingAgent)
+      val request = FakeRequest("POST", "/agent-subscription/submit-known-facts")
+        .withFormUrlEncodedBody("utr" -> validUtr, "postcode" -> invalidPostcode)
+        .withSession(sessionKeys: _*)
+      val result = await(controller.checkAgencyStatus(request))
+
+      status(result) shouldBe OK
+      val responseBody = bodyOf(result)
+      responseBody should include("Check Agency Status")
+      responseBody should include ("Please enter a valid postcode")
+      responseBody should include (validUtr)
+      responseBody should include (invalidPostcode)
     }
 
     "return a 200 response to redisplay the form with an error message for empty form parameters" in {
@@ -142,9 +158,9 @@ class SubscriptionControllerISpec extends UnitSpec with OneAppPerSuite with Wire
 
     "redirect to confirm agency page for a user who supplies a UTR and post code that agent-subscription finds a matching registration for" in {
       val sessionKeys = AuthStub.userIsAuthenticated(subscribingAgent)
-      AgentSubscriptionStub.withMatchingUtrAndPostcode(validUTR, validPostcode)
+      AgentSubscriptionStub.withMatchingUtrAndPostcode(validUtr, validPostcode)
       val request = FakeRequest("POST", "/agent-subscription/submit-known-facts")
-        .withFormUrlEncodedBody("utr" -> validUTR, "postcode" -> validPostcode)
+        .withFormUrlEncodedBody("utr" -> validUtr, "postcode" -> validPostcode)
         .withSession(sessionKeys: _*)
       val result = await(controller.checkAgencyStatus(request))
 
