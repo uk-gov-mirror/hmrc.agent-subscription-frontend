@@ -58,13 +58,13 @@ class SubscriptionController @Inject()
 
   val showCheckAgencyStatus: Action[AnyContent] = AuthorisedFor(NoOpRegime, GGConfidence).async(showCheckAgencyStatusBody)
 
-  val showNonAgentNextSteps: Action[AnyContent] = AuthorisedFor(NoOpRegime, GGConfidence).async { implicit authContext: AuthContext =>
+  val showNonAgentNextSteps: Action[AnyContent] = AuthorisedFor(NoOpRegime, GGConfidence) { implicit authContext: AuthContext =>
     implicit request =>
-      Future successful Ok(html.non_agent_next_steps())
+      Ok(html.non_agent_next_steps())
   }
 
-  val showSubscriptionDetails: Action[AnyContent] = Action.async { implicit request =>
-    Future successful Ok(html.subscription_details())
+  val showSubscriptionDetails: Action[AnyContent] = Action { implicit request =>
+    Ok(html.subscription_details())
   }
 
   val checkAgencyStatus: Action[AnyContent] = AuthorisedFor(NoOpRegime, GGConfidence).async { implicit authContext: AuthContext =>
@@ -104,6 +104,24 @@ class SubscriptionController @Inject()
           Future successful Ok(html.confirm_your_agency())
         }
   }
+
+
+  val submitSubscription: Action[AnyContent] = AuthorisedFor(NoOpRegime, GGConfidence).async {
+    implicit authContext =>
+      implicit request =>
+        ensureAffinityGroupIsAgent {
+          Future successful Redirect(routes.SubscriptionController.showSubscriptionComplete())
+        }
+  }
+
+  val showSubscriptionComplete: Action[AnyContent] = AuthorisedFor(NoOpRegime, GGConfidence).async {
+    implicit authContext =>
+      implicit request =>
+        ensureAffinityGroupIsAgent {
+          Future successful Ok(html.subscription_complete())
+        }
+  }
+
 
   private def ensureAffinityGroupIsAgent(action: => Future[Result])(implicit authContext: AuthContext, hc: HeaderCarrier): Future[Result] =
     authConnector.getUserDetails(authContext).flatMap { userDetailsResponse =>

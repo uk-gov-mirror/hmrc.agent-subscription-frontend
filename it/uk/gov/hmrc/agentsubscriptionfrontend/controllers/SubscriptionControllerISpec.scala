@@ -200,7 +200,7 @@ class SubscriptionControllerISpec extends UnitSpec with OneAppPerSuite with Wire
       val result = get("/agent-subscription/subscription-details")
 
       status(result) shouldBe OK
-      bodyOf(result) should include("Subscription Details")
+      bodyOf(result) should include("Subscribe to Agent Services")
     }
 
     "return HTML" in {

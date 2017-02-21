@@ -1,0 +1,36 @@
+@import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
+@import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes.SubscriptionController
+@()(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+
+@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = "Subscribe to new agent services", bodyClasses = None) {
+  <h1>Subscribe to new agent services</h1>
+  <p>Please contact your agency administrator to get access to Agent Services.</p><p>Use this service to:</p>
+
+    <ul class="list list-bullet">
+        <li>get access to work on behalf of clients in Making Tax Digital (MTD)</li>
+        <li>generate a single new agent reference number (ARN)</li>
+    </uL>
+
+    <p>Subscription takes around 5 minutes</p>
+
+    <p>
+        <a class="button button-start" href="@SubscriptionController.showCheckAgencyStatus" role="button">Start now</a>
+    </p>
+
+    <h2 class="heading-medium">Before you start</h2>
+
+    <p>To subscribe you'll need the following information about your agency:</p>
+
+    <ul class="list list-bullet">
+        <li>name</li>
+        <li>address</li>
+        <li>email address</li>
+        <li>phone number</li>
+        <li>the Government Gateway credentials you want to use for MTD clients</li>
+        <li>SA or CT UTR</li>
+    </uL>
+
+    <p>You may also need a mobile phone for an additional security check called 2-Step Verification.</p>
+
+    <p>The online service is also available in Welsh (Cymraeg)</p>
+}
