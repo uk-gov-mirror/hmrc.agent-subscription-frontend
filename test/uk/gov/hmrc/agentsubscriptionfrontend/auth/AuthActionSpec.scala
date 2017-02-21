@@ -20,7 +20,7 @@ import org.scalatest.mock.MockitoSugar
 import play.api.mvc.Result
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentSubscriptionConnector
-import uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController
+import uk.gov.hmrc.agentsubscriptionfrontend.controllers.{CheckAgencyController, SubscriptionController}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{SessionKeysForTesting, TestAppConfig, TestMessagesApi}
 import uk.gov.hmrc.play.frontend.auth.AuthContext
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
@@ -50,7 +50,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar with WithFakeApplication
       when(authConnector.currentAuthority(any[HeaderCarrier])).thenReturn(Future successful Some(authority))
       when(authConnector.getUserDetails(any[AuthContext])(any[HeaderCarrier], any[HttpReads[HttpResponse]])).thenReturn(Future failed failure)
 
-      val controller = new SubscriptionController(TestMessagesApi.testMessagesApi, authConnector, agentSubscriptionConnector)
+      val controller = new CheckAgencyController(TestMessagesApi.testMessagesApi, authConnector, agentSubscriptionConnector)
 
       intercept[Upstream5xxResponse] {
         val eventualResult: Future[Result] = controller.showCheckAgencyStatus(FakeRequest("GET", "").withSession(sessionKeysForMockAuth: _*))

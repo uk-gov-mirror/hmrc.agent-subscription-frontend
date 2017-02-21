@@ -45,12 +45,12 @@ object GGConfig extends StrictConfig {
   }
 
   lazy val checkAgencyStatusCallbackUrl: String = loadConfig("authentication.login-callback.url") +
-    routes.SubscriptionController.showCheckAgencyStatus().url
+    routes.CheckAgencyController.showCheckAgencyStatus().url
 }
 
 @Singleton
 class FrontendAppConfig extends AppConfig with StrictConfig with ServicesConfig {
-  private lazy val contactHost = configuration.getString(s"contact-frontend.host").getOrElse("")
+  private lazy val contactHost = runModeConfiguration.getString(s"contact-frontend.host").getOrElse("")
   private val contactFormServiceIdentifier = "AOSS"
 
   override lazy val analyticsToken: String = loadConfig(s"google-analytics.token")
