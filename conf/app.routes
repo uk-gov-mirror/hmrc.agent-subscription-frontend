@@ -2,16 +2,16 @@
 
 GET     /                               uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.root
 GET     /start                          uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.start
+GET     /non-agent-next-steps           uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.showNonAgentNextSteps
 
 GET     /check-agency-status            uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showCheckAgencyStatus
 POST    /check-agency-status            uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.checkAgencyStatus
-
-GET     /subscription-details           uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showSubscriptionDetails
-GET     /non-agent-next-steps           uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showNonAgentNextSteps
 GET     /no-agency-found                uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showNoAgencyFound
 GET     /confirm-your-agency            uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showConfirmYourAgency
 GET     /already-subscribed             uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.showAlreadySubscribed
 GET     /has-other-enrolments           uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.showHasOtherEnrolments
 
-POST    /subscription-complete          uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.submitSubscription
+GET     /subscription-details           uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showSubscriptionDetails
+POST    /subscription-details           uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.submitSubscriptionDetails
+
 GET    /subscription-complete           uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showSubscriptionComplete

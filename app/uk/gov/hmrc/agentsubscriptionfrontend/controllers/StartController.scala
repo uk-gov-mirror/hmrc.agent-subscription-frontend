@@ -40,4 +40,9 @@ class StartController @Inject()(override val messagesApi: MessagesApi,
     Ok(html.start())
   }
 
+  val showNonAgentNextSteps: Action[AnyContent] = AuthorisedFor(NoOpRegime, GGConfidence) { implicit authContext =>
+    implicit request =>
+      Ok(html.non_agent_next_steps())
+  }
+
 }

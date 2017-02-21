@@ -16,32 +16,18 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
-import org.scalatestplus.play.OneAppPerSuite
-import play.api.Application
-import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.{AnyContentAsEmpty, Result}
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{contentType, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.{AgentSubscriptionStub, AuthStub}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUsers._
-import uk.gov.hmrc.agentsubscriptionfrontend.support.WireMockSupport
-import uk.gov.hmrc.play.test.UnitSpec
 
-class SubscriptionControllerISpec extends UnitSpec with OneAppPerSuite with WireMockSupport {
+class SubscriptionControllerISpec extends BaseControllerISpec {
 
   private val validUtr = "0123456789"
   private val invalidUtr = "0123456"
   private val validPostcode = "AA1 1AA"
   private val invalidPostcode = "not a postcode"
-
-  override implicit lazy val app: Application = new GuiceApplicationBuilder()
-    .configure(
-      "microservice.services.auth.port" -> wireMockPort,
-      "microservice.services.agent-subscription.port" -> wireMockPort
-    )
-    .build()
-
-  private implicit val materializer = app.materializer
 
   private lazy val controller: SubscriptionController = app.injector.instanceOf[SubscriptionController]
 
@@ -137,30 +123,6 @@ class SubscriptionControllerISpec extends UnitSpec with OneAppPerSuite with Wire
 
   }
 
-  "showNonAgentNextSteps" should {
-    "display the non-agent next steps page if the current user is logged in" in {
-      val sessionKeys = AuthStub.userIsAuthenticated(individual)
-
-      val request = FakeRequest().withSession(sessionKeys: _*)
-      val result = await(controller.showNonAgentNextSteps(request))
-
-      status(result) shouldBe OK
-      contentType(result) shouldBe Some("text/html")
-      charset(result) shouldBe Some("utf-8")
-      bodyOf(result) should include("Affinity Group")
-    }
-
-    "redirect to the company-auth-frontend sign-in page if the current user is not logged in" in {
-      AuthStub.userIsNotAuthenticated()
-
-      val request = FakeRequest()
-      val result = await(controller.showNonAgentNextSteps(request))
-
-      status(result) shouldBe SEE_OTHER
-      redirectLocation(result).head should include("gg/sign-in")
-    }
-  }
-
   "showNoAgencyFound" should {
 
     behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showNoAgencyFound(request))
@@ -231,7 +193,7 @@ class SubscriptionControllerISpec extends UnitSpec with OneAppPerSuite with Wire
       val result = await(doRequest(request))
 
       result.header.status shouldBe 303
-      result.header.headers("Location") shouldBe routes.SubscriptionController.showNonAgentNextSteps().url
+      result.header.headers("Location") shouldBe routes.StartController.showNonAgentNextSteps().url
     }
   }
 }

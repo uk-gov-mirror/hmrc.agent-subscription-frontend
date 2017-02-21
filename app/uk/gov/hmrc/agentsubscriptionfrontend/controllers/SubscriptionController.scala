@@ -58,11 +58,6 @@ class SubscriptionController @Inject()
 
   val showCheckAgencyStatus: Action[AnyContent] = AuthorisedFor(NoOpRegime, GGConfidence).async(showCheckAgencyStatusBody)
 
-  val showNonAgentNextSteps: Action[AnyContent] = AuthorisedFor(NoOpRegime, GGConfidence) { implicit authContext: AuthContext =>
-    implicit request =>
-      Ok(html.non_agent_next_steps())
-  }
-
   val showSubscriptionDetails: Action[AnyContent] = Action { implicit request =>
     Ok(html.subscription_details())
   }
@@ -106,7 +101,7 @@ class SubscriptionController @Inject()
   }
 
 
-  val submitSubscription: Action[AnyContent] = AuthorisedFor(NoOpRegime, GGConfidence).async {
+  val submitSubscriptionDetails: Action[AnyContent] = AuthorisedFor(NoOpRegime, GGConfidence).async {
     implicit authContext =>
       implicit request =>
         ensureAffinityGroupIsAgent {
@@ -134,7 +129,7 @@ class SubscriptionController @Inject()
     }
 
   private def redirectToNonAgentNextSteps =
-    Redirect(routes.SubscriptionController.showNonAgentNextSteps())
+    Redirect(routes.StartController.showNonAgentNextSteps())
 }
 
 object FieldMappings {
