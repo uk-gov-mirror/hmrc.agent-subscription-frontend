@@ -33,7 +33,7 @@ class SubscriptionController @Inject()
   (implicit appConfig: AppConfig)
   extends FrontendController with I18nSupport with AuthActions {
 
-  val showSubscriptionDetails: Action[AnyContent] = Action { implicit request =>
+  val showSubscriptionDetails: Action[AnyContent] = AuthorisedWithAgent { implicit authContext => implicit request =>
     Ok(html.subscription_details())
   }
 

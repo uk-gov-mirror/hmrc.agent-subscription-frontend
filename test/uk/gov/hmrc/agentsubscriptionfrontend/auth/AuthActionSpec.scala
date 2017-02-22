@@ -16,11 +16,14 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.auth
 
+import org.mockito.ArgumentMatchers._
+import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import play.api.mvc.Result
+import play.api.test.FakeRequest
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentSubscriptionConnector
-import uk.gov.hmrc.agentsubscriptionfrontend.controllers.{CheckAgencyController, SubscriptionController}
+import uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{SessionKeysForTesting, TestAppConfig, TestMessagesApi}
 import uk.gov.hmrc.play.frontend.auth.AuthContext
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
@@ -29,9 +32,6 @@ import uk.gov.hmrc.play.http._
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 
 import scala.concurrent.Future
-import org.mockito.ArgumentMatchers._
-import org.mockito.Mockito._
-import play.api.test.FakeRequest
 
 class AuthActionSpec extends UnitSpec with MockitoSugar with WithFakeApplication {
 

@@ -53,11 +53,11 @@ class CheckAgencyController @Inject()
           Future successful Ok(html.check_agency_status(knownFactsForm))
   }
 
-  val showAlreadySubscribed: Action[AnyContent] = AuthorisedFor(NoOpRegime, GGConfidence) { implicit authContext => implicit request =>
+  val showAlreadySubscribed: Action[AnyContent] = AuthorisedWithAgent { implicit authContext => implicit request =>
     Ok(html.already_subscribed())
   }
 
-  val showHasOtherEnrolments: Action[AnyContent] = AuthorisedFor(NoOpRegime, GGConfidence) { implicit authContext => implicit request =>
+  val showHasOtherEnrolments: Action[AnyContent] = AuthorisedWithAgent { implicit authContext => implicit request =>
     Ok(html.has_other_enrolments())
   }
 
