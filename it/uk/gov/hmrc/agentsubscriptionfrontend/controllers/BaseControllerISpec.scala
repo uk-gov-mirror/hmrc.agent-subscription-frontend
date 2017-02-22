@@ -6,7 +6,7 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{EndpointBehaviours, WireMockSupport}
 import uk.gov.hmrc.play.test.UnitSpec
 
-class BaseControllerISpec extends UnitSpec with OneAppPerSuite with WireMockSupport with EndpointBehaviours {
+abstract class BaseControllerISpec extends UnitSpec with OneAppPerSuite with WireMockSupport with EndpointBehaviours {
 
   override implicit lazy val app: Application = new GuiceApplicationBuilder()
     .configure(

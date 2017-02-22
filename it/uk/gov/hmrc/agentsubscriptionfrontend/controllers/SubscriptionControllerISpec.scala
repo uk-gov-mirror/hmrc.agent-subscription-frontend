@@ -30,6 +30,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec {
 
     "be available" in {
       val sessionKeys = AuthStub.userIsAuthenticated(subscribingAgent)
+      AuthStub.hasNoEnrolments(subscribingAgent)
 
       val request = FakeRequest().withSession(sessionKeys: _*)
       val result = await(controller.showSubscriptionDetails(request))
@@ -40,6 +41,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec {
 
     "return HTML" in {
       val sessionKeys = AuthStub.userIsAuthenticated(subscribingAgent)
+      AuthStub.hasNoEnrolments(subscribingAgent)
 
       val request = FakeRequest().withSession(sessionKeys: _*)
       val result = await(controller.showSubscriptionDetails(request))

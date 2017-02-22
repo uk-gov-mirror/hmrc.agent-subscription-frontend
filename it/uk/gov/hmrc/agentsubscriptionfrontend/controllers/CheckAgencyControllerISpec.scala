@@ -37,6 +37,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec {
 
     "display the check agency status page if the current user is logged in and has affinity group = Agent" in {
       val sessionKeys = AuthStub.userIsAuthenticated(subscribingAgent)
+      AuthStub.hasNoEnrolments(subscribingAgent)
 
       val request = FakeRequest().withSession(sessionKeys: _*)
       val result = await(controller.showCheckAgencyStatus(request))
@@ -55,6 +56,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec {
 
     "return a 200 response to redisplay the form with an error message for invalidly-formatted UTR" in {
       val sessionKeys = AuthStub.userIsAuthenticated(subscribingAgent)
+      AuthStub.hasNoEnrolments(subscribingAgent)
       val request = FakeRequest()
         .withFormUrlEncodedBody("utr" -> invalidUtr, "postcode" -> validPostcode)
         .withSession(sessionKeys: _*)
@@ -70,6 +72,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec {
 
     "return a 200 response to redisplay the form with an error message for invalidly-formatted postcode" in {
       val sessionKeys = AuthStub.userIsAuthenticated(subscribingAgent)
+      AuthStub.hasNoEnrolments(subscribingAgent)
       val request = FakeRequest()
         .withFormUrlEncodedBody("utr" -> validUtr, "postcode" -> invalidPostcode)
         .withSession(sessionKeys: _*)
@@ -85,6 +88,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec {
 
     "return a 200 response to redisplay the form with an error message for empty form parameters" in {
       val sessionKeys = AuthStub.userIsAuthenticated(subscribingAgent)
+      AuthStub.hasNoEnrolments(subscribingAgent)
       val request = FakeRequest()
         .withFormUrlEncodedBody("utr" -> "", "postcode" -> "")
         .withSession(sessionKeys: _*)
@@ -98,6 +102,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec {
 
     "redirect to no-agency-found page when no matching registration found by agent-subscription" in {
       val sessionKeys = AuthStub.userIsAuthenticated(subscribingAgent)
+      AuthStub.hasNoEnrolments(subscribingAgent)
       val utr = "0000000000"
       AgentSubscriptionStub.withNonMatchingUtrAndPostcode(utr, validPostcode)
       val request = FakeRequest()
@@ -112,6 +117,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec {
     "redirect to confirm agency page for a user who supplies a UTR and post code that agent-subscription finds a matching registration for" in {
       val sessionKeys = AuthStub.userIsAuthenticated(subscribingAgent)
       AgentSubscriptionStub.withMatchingUtrAndPostcode(validUtr, validPostcode)
+      AuthStub.hasNoEnrolments(subscribingAgent)
       val request = FakeRequest()
         .withFormUrlEncodedBody("utr" -> validUtr, "postcode" -> validPostcode)
         .withSession(sessionKeys: _*)
@@ -129,6 +135,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec {
 
     "display the no agency found page if the current user is logged in and has affinity group = Agent" in {
       val sessionKeys = AuthStub.userIsAuthenticated(subscribingAgent)
+      AuthStub.hasNoEnrolments(subscribingAgent)
 
       val request = FakeRequest().withSession(sessionKeys: _*)
       val result = await(controller.showNoAgencyFound(request))
@@ -146,6 +153,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec {
 
     "display the confirm your agency page if the current user is logged in and has affinity group = Agent" in {
       val sessionKeys = AuthStub.userIsAuthenticated(subscribingAgent)
+      AuthStub.hasNoEnrolments(subscribingAgent)
 
       val request = FakeRequest().withSession(sessionKeys: _*)
       val result = await(controller.showConfirmYourAgency(request))

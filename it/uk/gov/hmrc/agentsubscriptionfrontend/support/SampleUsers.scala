@@ -23,6 +23,7 @@ case class SampleUser(authJson: String, userDetailsJson: String) {
 
   val authorityUri: String = (json \ "uri").as[String]
   val userDetailsLink: String = (json \ "userDetailsLink").as[String]
+  val enrolmentsLink: String = (json \ "enrolments").as[String]
 }
 
 object SampleUsers {
