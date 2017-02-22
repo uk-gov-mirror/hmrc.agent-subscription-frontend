@@ -48,6 +48,28 @@ class CheckAgencyControllerISpec extends BaseControllerISpec {
       bodyOf(result) should include("Check Agency Status")
     }
 
+    "redirect to already subscribed page if user has already subscribed to MTD" in {
+      val sessionKeys = AuthStub.userIsAuthenticated(subscribingAgent)
+      AuthStub.isSubscribedToMtd(subscribingAgent)
+
+      val request = FakeRequest().withSession(sessionKeys: _*)
+      val result = await(controller.showCheckAgencyStatus(request))
+
+      status(result) shouldBe 303
+      redirectLocation(result).head shouldBe routes.CheckAgencyController.showAlreadySubscribed().url
+    }
+
+    "redirect to unclean credentials page if user has enrolled in any other services" in {
+      val sessionKeys = AuthStub.userIsAuthenticated(subscribingAgent)
+      AuthStub.isEnrolledForNonMtdServices(subscribingAgent)
+
+      val request = FakeRequest().withSession(sessionKeys: _*)
+      val result = await(controller.showCheckAgencyStatus(request))
+
+      status(result) shouldBe 303
+      redirectLocation(result).head shouldBe routes.CheckAgencyController.showHasOtherEnrolments().url
+    }
+
   }
 
   "checkAgencyStatus" should {
@@ -128,7 +150,41 @@ class CheckAgencyControllerISpec extends BaseControllerISpec {
     }
 
   }
+  "showAlreadySubscribed" should {
 
+    behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showAlreadySubscribed(request))
+
+    "display the already subscribed page if the current user is logged in and has affinity group = Agent" in {
+      val sessionKeys = AuthStub.userIsAuthenticated(subscribingAgent)
+      AuthStub.hasNoEnrolments(subscribingAgent)
+
+      val request = FakeRequest().withSession(sessionKeys: _*)
+      val result = await(controller.showAlreadySubscribed(request))
+
+      status(result) shouldBe OK
+      contentType(result) shouldBe Some("text/html")
+      charset(result) shouldBe Some("utf-8")
+      bodyOf(result) should include("Your agency is already subscribed")
+    }
+  }
+
+  "showHasOtherEnrolments" should {
+
+    behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showHasOtherEnrolments(request))
+
+    "display the has other enrolments page if the current user is logged in and has affinity group = Agent" in {
+      val sessionKeys = AuthStub.userIsAuthenticated(subscribingAgent)
+      AuthStub.hasNoEnrolments(subscribingAgent)
+
+      val request = FakeRequest().withSession(sessionKeys: _*)
+      val result = await(controller.showHasOtherEnrolments(request))
+
+      status(result) shouldBe OK
+      contentType(result) shouldBe Some("text/html")
+      charset(result) shouldBe Some("utf-8")
+      bodyOf(result) should include("Non-Agent Next Steps")
+    }
+  }
   "showNoAgencyFound" should {
 
     behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showNoAgencyFound(request))

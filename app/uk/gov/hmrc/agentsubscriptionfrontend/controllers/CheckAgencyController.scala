@@ -23,7 +23,7 @@ import play.api.data.validation._
 import play.api.data.{Form, Mapping}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{AnyContent, Request, _}
-import uk.gov.hmrc.agentsubscriptionfrontend.auth.{AuthActions, NoOpRegime}
+import uk.gov.hmrc.agentsubscriptionfrontend.auth.{AgentRequest, AuthActions}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentSubscriptionConnector
 import uk.gov.hmrc.agentsubscriptionfrontend.models.Registration
@@ -61,7 +61,18 @@ class CheckAgencyController @Inject()
     Ok(html.has_other_enrolments())
   }
 
-  val showCheckAgencyStatus: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync(showCheckAgencyStatusBody)
+  val showCheckAgencyStatus: Action[AnyContent] = AuthorisedWithSubscribingAgent {
+    implicit authContext =>
+      implicit request =>
+        (hasMtdEnrolment, hasEnrolments) match {
+          case (true, _) => Redirect(routes.CheckAgencyController.showAlreadySubscribed())
+          case (_, true) => Redirect(routes.CheckAgencyController.showHasOtherEnrolments())
+          case (false, false) => Ok(html.check_agency_status(knownFactsForm))
+        }
+  }
+
+  private def hasMtdEnrolment(implicit request: AgentRequest[_]): Boolean = request.enrolments.exists(_.key == "HMRC-AS-AGENT")
+  private def hasEnrolments(implicit request: AgentRequest[_]): Boolean = request.enrolments.nonEmpty
 
   val checkAgencyStatus: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync { implicit authContext: AuthContext =>
     implicit request =>

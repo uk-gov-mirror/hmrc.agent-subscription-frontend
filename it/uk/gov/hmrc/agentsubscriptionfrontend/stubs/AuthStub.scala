@@ -71,7 +71,7 @@ object AuthStub {
     sessionKeysForMockAuth(user)
   }
 
-  def isEnrolledForMtd(user: SampleUser): Unit = {
+  def isSubscribedToMtd(user: SampleUser): Unit = {
     stubFor(get(urlEqualTo(user.enrolmentsLink))
         .willReturn(
           aResponse()
