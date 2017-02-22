@@ -27,7 +27,7 @@ class StartControllerISpec extends BaseControllerISpec {
       status(result) shouldBe 200
     }
 
-    "be available at /agent-subscription/start" in {
+    "be available" in {
       val result = await(controller.start(FakeRequest()))
 
       bodyOf(result) should include("Subscribe to new agent services")

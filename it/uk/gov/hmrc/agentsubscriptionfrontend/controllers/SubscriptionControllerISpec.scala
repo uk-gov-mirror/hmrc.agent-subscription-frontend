@@ -28,7 +28,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec {
   "showSubscriptionDetails" should {
     behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showSubscriptionDetails(request))
 
-    "be available at /agent-subscription/subscription-details" in {
+    "be available" in {
       val sessionKeys = AuthStub.userIsAuthenticated(subscribingAgent)
 
       val request = FakeRequest().withSession(sessionKeys: _*)

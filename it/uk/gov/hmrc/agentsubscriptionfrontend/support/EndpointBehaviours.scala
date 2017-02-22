@@ -10,7 +10,7 @@ import uk.gov.hmrc.play.test.UnitSpec
 trait EndpointBehaviours {
   me: UnitSpec with WireMockSupport =>
 
-  protected def anAgentAffinityGroupOnlyEndpoint(doRequest: FakeRequest[AnyContentAsEmpty.type] => Result) = {
+  protected def anAgentAffinityGroupOnlyEndpoint(doRequest: FakeRequest[AnyContentAsEmpty.type] => Result): Unit = {
     "redirect to the company-auth-frontend sign-in page if the current user is not logged in" in {
       AuthStub.userIsNotAuthenticated()
 
