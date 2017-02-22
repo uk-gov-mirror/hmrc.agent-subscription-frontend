@@ -1,0 +1,8 @@
+@import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
+@()(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+
+@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = "Non-Agent Next Steps", bodyClasses = None) {
+  <h1>Already enrolled</h1>
+  <p>Go and set up a new GGW cred with Affinity Group 'Agent' and do not use this new cred for any other enrolments.</p>
+  <p>TODO: proper wording (ABP-598)</p>
+}
