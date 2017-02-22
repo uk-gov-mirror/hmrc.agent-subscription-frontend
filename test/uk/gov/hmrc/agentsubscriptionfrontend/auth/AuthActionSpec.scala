@@ -23,7 +23,7 @@ import play.api.mvc._
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentSubscriptionConnector
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController
-import uk.gov.hmrc.agentsubscriptionfrontend.support.{SessionKeysForTesting, TestAppConfig, TestMessagesApi}
+import uk.gov.hmrc.agentsubscriptionfrontend.support.{TestAppConfig, TestMessagesApi}
 import uk.gov.hmrc.play.frontend.auth.AuthContext
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.auth.connectors.domain.{Accounts, Authority, ConfidenceLevel}
@@ -61,7 +61,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
     val request = mock[Request[AnyContent]]
     when(request.session).thenReturn(Session(Map(
       SessionKeys.userId -> fakeAuthorityUri,
-      SessionKeysForTesting.token -> "fakeToken")))
+      SessionKeys.token -> "fakeToken")))
     when(request.headers).thenReturn(Headers())
     request
   }
