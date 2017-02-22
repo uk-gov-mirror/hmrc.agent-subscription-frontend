@@ -9,6 +9,31 @@ class StartControllerISpec extends BaseControllerISpec {
 
   private lazy val controller: StartController = app.injector.instanceOf[StartController]
 
+  "context root" should {
+    "redirect to start page" in {
+      val result = await(controller.root(FakeRequest()))
+
+      status(result) shouldBe 303
+      redirectLocation(result).head should include ("/start")
+    }
+  }
+
+  "start" should {
+    "not require authentication" in {
+      AuthStub.userIsNotAuthenticated()
+
+      val result = await(controller.start(FakeRequest()))
+
+      status(result) shouldBe 200
+    }
+
+    "be available at /agent-subscription/start" in {
+      val result = await(controller.start(FakeRequest()))
+
+      bodyOf(result) should include("Subscribe to new agent services")
+    }
+  }
+
   "showNonAgentNextSteps" should {
     "display the non-agent next steps page if the current user is logged in" in {
       val sessionKeys = AuthStub.userIsAuthenticated(individual)

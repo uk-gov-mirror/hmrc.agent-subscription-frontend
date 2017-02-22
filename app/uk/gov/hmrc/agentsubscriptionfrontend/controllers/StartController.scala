@@ -36,7 +36,7 @@ class StartController @Inject()(override val messagesApi: MessagesApi,
     Redirect(routes.StartController.start())
   }
 
-  val start: Action[AnyContent] = AuthorisedFor(NoOpRegime, GGConfidence) { implicit authContext => implicit request =>
+  val start: Action[AnyContent] = Action { implicit request =>
     Ok(html.start())
   }
 
