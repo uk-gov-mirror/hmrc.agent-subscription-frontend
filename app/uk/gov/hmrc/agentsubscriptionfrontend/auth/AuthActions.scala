@@ -31,7 +31,7 @@ trait AuthActions extends Actions {
   protected type PlayUserRequest = AuthContext => AgentRequest[AnyContent] => Result
   private implicit def hc(implicit request: Request[_]): HeaderCarrier = HeaderCarrier.fromHeadersAndSession(request.headers, Some(request.session))
 
-  def AuthorisedWithAgent(body: PlayUserRequest): Action[AnyContent] =
+  def AuthorisedWithSubscribingAgent(body: PlayUserRequest): Action[AnyContent] =
     AuthorisedFor(NoOpRegime, pageVisibility = GGConfidence).async {
       implicit authContext => implicit request =>
         isAgentAffinityGroup() map {
@@ -40,7 +40,7 @@ trait AuthActions extends Actions {
         }
     }
 
-  def AuthorisedWithAgentAsync(body: AsyncPlayUserRequest): Action[AnyContent] =
+  def AuthorisedWithSubscribingAgentAsync(body: AsyncPlayUserRequest): Action[AnyContent] =
     AuthorisedFor(NoOpRegime, pageVisibility = GGConfidence).async {
       implicit authContext => implicit request =>
         isAgentAffinityGroup() flatMap {

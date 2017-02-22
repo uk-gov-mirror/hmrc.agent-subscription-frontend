@@ -53,17 +53,17 @@ class CheckAgencyController @Inject()
           Future successful Ok(html.check_agency_status(knownFactsForm))
   }
 
-  val showAlreadySubscribed: Action[AnyContent] = AuthorisedWithAgent { implicit authContext => implicit request =>
+  val showAlreadySubscribed: Action[AnyContent] = AuthorisedWithSubscribingAgent { implicit authContext => implicit request =>
     Ok(html.already_subscribed())
   }
 
-  val showHasOtherEnrolments: Action[AnyContent] = AuthorisedWithAgent { implicit authContext => implicit request =>
+  val showHasOtherEnrolments: Action[AnyContent] = AuthorisedWithSubscribingAgent { implicit authContext => implicit request =>
     Ok(html.has_other_enrolments())
   }
 
-  val showCheckAgencyStatus: Action[AnyContent] = AuthorisedWithAgentAsync(showCheckAgencyStatusBody)
+  val showCheckAgencyStatus: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync(showCheckAgencyStatusBody)
 
-  val checkAgencyStatus: Action[AnyContent] = AuthorisedWithAgentAsync { implicit authContext: AuthContext =>
+  val checkAgencyStatus: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync { implicit authContext: AuthContext =>
     implicit request =>
         knownFactsForm.bindFromRequest().fold(
           formWithErrors => {
@@ -83,13 +83,13 @@ class CheckAgencyController @Inject()
     }
   }
 
-  val showNoAgencyFound: Action[AnyContent] = AuthorisedWithAgent {
+  val showNoAgencyFound: Action[AnyContent] = AuthorisedWithSubscribingAgent {
     implicit authContext =>
       implicit request =>
           Ok(html.no_agency_found())
   }
 
-  val showConfirmYourAgency: Action[AnyContent] = AuthorisedWithAgent {
+  val showConfirmYourAgency: Action[AnyContent] = AuthorisedWithSubscribingAgent {
     implicit authContext =>
       implicit request =>
           Ok(html.confirm_your_agency())
