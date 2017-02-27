@@ -24,7 +24,7 @@ import uk.gov.hmrc.play.http.HeaderCarrier
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-case class AgentRequest[A](request: Request[A]) extends WrappedRequest[A](request)
+case class AgentRequest[A](enrolments: List[Enrolment], request: Request[A]) extends WrappedRequest[A](request)
 
 trait AuthActions extends Actions {
   protected type AsyncPlayUserRequest = AuthContext => AgentRequest[AnyContent] => Future[Result]
@@ -34,20 +34,24 @@ trait AuthActions extends Actions {
   def AuthorisedWithSubscribingAgent(body: PlayUserRequest): Action[AnyContent] =
     AuthorisedFor(NoOpRegime, pageVisibility = GGConfidence).async {
       implicit authContext => implicit request =>
-        isAgentAffinityGroup() map {
-          case true => body(authContext)(AgentRequest(request))
-          case false => redirectToNonAgentNextSteps
-        }
-    }
-
-  def AuthorisedWithSubscribingAgentAsync(body: AsyncPlayUserRequest): Action[AnyContent] =
-    AuthorisedFor(NoOpRegime, pageVisibility = GGConfidence).async {
-      implicit authContext => implicit request =>
         isAgentAffinityGroup() flatMap {
-          case true => body(authContext)(AgentRequest(request))
+          case true => enrolments map { e => body(authContext)(AgentRequest(e, request)) }
           case false => Future successful redirectToNonAgentNextSteps
         }
     }
+
+   def AuthorisedWithSubscribingAgentAsync(body: AsyncPlayUserRequest): Action[AnyContent] =
+    AuthorisedFor(NoOpRegime, pageVisibility = GGConfidence).async {
+      implicit authContext => implicit request =>
+        isAgentAffinityGroup() flatMap {
+          case true => enrolments flatMap { e => body(authContext)(AgentRequest(e, request)) }
+          case false => Future successful redirectToNonAgentNextSteps
+        }
+    }
+
+  private def enrolments(implicit authContext: AuthContext, hc: HeaderCarrier): Future[List[Enrolment]] =
+    authConnector.getEnrolments[List[Enrolment]](authContext)
+
 
   private def isAgentAffinityGroup()(implicit authContext: AuthContext, hc: HeaderCarrier): Future[Boolean] =
     authConnector.getUserDetails(authContext).map { userDetailsResponse =>

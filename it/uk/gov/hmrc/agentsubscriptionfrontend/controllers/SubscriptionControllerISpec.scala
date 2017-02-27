@@ -16,8 +16,6 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
-import play.api.test.FakeRequest
-import play.api.test.Helpers.{contentType, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUsers._
 
@@ -29,23 +27,11 @@ class SubscriptionControllerISpec extends BaseControllerISpec {
     behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showSubscriptionDetails(request))
 
     "be available" in {
-      val sessionKeys = AuthStub.userIsAuthenticated(subscribingAgent)
+      AuthStub.hasNoEnrolments(subscribingAgent)
 
-      val request = FakeRequest().withSession(sessionKeys: _*)
-      val result = await(controller.showSubscriptionDetails(request))
+      val result = await(controller.showSubscriptionDetails(authenticatedRequest))
 
-      status(result) shouldBe OK
-      bodyOf(result) should include("Subscribe to Agent Services")
-    }
-
-    "return HTML" in {
-      val sessionKeys = AuthStub.userIsAuthenticated(subscribingAgent)
-
-      val request = FakeRequest().withSession(sessionKeys: _*)
-      val result = await(controller.showSubscriptionDetails(request))
-
-      contentType(result) shouldBe Some("text/html")
-      charset(result) shouldBe Some("utf-8")
+     checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
     }
   }
 

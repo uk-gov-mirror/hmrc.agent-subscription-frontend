@@ -71,6 +71,42 @@ object AuthStub {
     sessionKeysForMockAuth(user)
   }
 
+  def isSubscribedToMtd(user: SampleUser): Unit = {
+    stubFor(get(urlEqualTo(user.enrolmentsLink))
+        .willReturn(
+          aResponse()
+              .withStatus(200)
+              .withBody(
+                s"""
+                   |[{"key":"HMRC-AS-AGENT","state":"Activated"}]
+                 """.stripMargin
+              )
+        ))
+  }
+
+  def hasNoEnrolments(user: SampleUser): Unit = {
+    stubFor(get(urlEqualTo(user.enrolmentsLink))
+      .willReturn(
+        aResponse()
+          .withStatus(200)
+          .withBody("[]")
+      ))
+  }
+
+  def isEnrolledForNonMtdServices(user: SampleUser): Unit = {
+    stubFor(get(urlEqualTo(user.enrolmentsLink))
+      .willReturn(
+        aResponse()
+          .withStatus(200)
+          .withBody(
+            s"""
+               |[{"key":"IR-PAYE-AGENT","identifiers":[{"key":"IrAgentReference","value":"HZ1234"}],"state":"Activated"},
+               | {"key":"HMRC-AGENT-AGENT","identifiers":[{"key":"AgentRefNumber","value":"JARN1234567"}],"state":"Activated"}]
+         """.stripMargin
+          )
+      ))
+  }
+
   private def sessionKeysForMockAuth(user: SampleUser): Seq[(String, String)] = Seq(
     SessionKeys.userId -> user.authorityUri,
     SessionKeysForTesting.token -> "fakeToken")
