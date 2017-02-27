@@ -18,9 +18,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.auth
 
 import play.api.libs.json.{Format, Json}
 
-case class Enrolment(key: String, state: String) {
-  val isActivated: Boolean = state equalsIgnoreCase "Activated"
-}
+case class Enrolment(key: String)
 
 object Enrolment {
   implicit val format: Format[Enrolment] = Json.format[Enrolment]
