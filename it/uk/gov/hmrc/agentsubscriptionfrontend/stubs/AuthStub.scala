@@ -78,7 +78,7 @@ object AuthStub {
               .withStatus(200)
               .withBody(
                 s"""
-                   |[{"key":"HMRC-AS-AGENT","identifiers":[{"key":"Arn","value":"ARN0001"}],"state":"Activated"}]
+                   |[{"key":"HMRC-AS-AGENT","state":"Activated"}]
                  """.stripMargin
               )
         ))
