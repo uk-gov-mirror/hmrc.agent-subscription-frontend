@@ -7,7 +7,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.config.WSHttp
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub
 import uk.gov.hmrc.agentsubscriptionfrontend.support.WireMockSupport
-import uk.gov.hmrc.play.http.{HeaderCarrier, Upstream5xxResponse}
+import uk.gov.hmrc.play.http.{HeaderCarrier, Upstream4xxResponse, Upstream5xxResponse}
 import uk.gov.hmrc.play.test.UnitSpec
 
 class AgentSubscriptionConnectorISpec extends UnitSpec with OneAppPerSuite with WireMockSupport {
@@ -16,11 +16,12 @@ class AgentSubscriptionConnectorISpec extends UnitSpec with OneAppPerSuite with 
 
   private lazy val connector: AgentSubscriptionConnector = new AgentSubscriptionConnector(new URL(s"http://localhost:$wireMockPort"), WSHttp)
 
+  private val utr = "0123456789"
   "getRegistration" should {
 
     "return a Registration when agent-subscription returns a 200 response (for a matching UTR and postcode)" in {
-      AgentSubscriptionStub.withMatchingUtrAndPostcode("0123456789", "AA1 1AA")
-      val result: Option[Registration] = await(connector.getRegistration("0123456789", "AA1 1AA"))
+      AgentSubscriptionStub.withMatchingUtrAndPostcode(utr, "AA1 1AA")
+      val result: Option[Registration] = await(connector.getRegistration(utr, "AA1 1AA"))
       result.isDefined shouldBe true
     }
 
@@ -31,18 +32,55 @@ class AgentSubscriptionConnectorISpec extends UnitSpec with OneAppPerSuite with 
     }
 
     "return None when agent-subscription returns a 404 response (for a non-matching UTR and postcode)" in {
-      AgentSubscriptionStub.withNonMatchingUtrAndPostcode("0123456789", "AA1 1AA")
-      val result: Option[Registration] = await(connector.getRegistration("0123456789", "AA1 1AA"))
+      AgentSubscriptionStub.withNonMatchingUtrAndPostcode(utr, "AA1 1AA")
+      val result: Option[Registration] = await(connector.getRegistration(utr, "AA1 1AA"))
       result shouldBe None
     }
 
     "throw an exception when agent-subscription returns a 500 response" in {
-      AgentSubscriptionStub.withErrorForUtrAndPostcode("0123456789", "AA1 1AA")
+      AgentSubscriptionStub.withErrorForUtrAndPostcode(utr, "AA1 1AA")
       intercept[Upstream5xxResponse] {
-        await(connector.getRegistration("0123456789", "AA1 1AA"))
+        await(connector.getRegistration(utr, "AA1 1AA"))
       }
     }
 
   }
 
+  "subscribe" should {
+    "return an ARN" in {
+      AgentSubscriptionStub.subscriptionSuccess(utr, subscriptionRequest)
+
+      val result = await(connector.subscribeAgencyToMtd(utr, subscriptionRequest))
+
+      result shouldBe Arn("ARN00001")
+    }
+
+    "throw Upstream4xxResponse if subscription already exists" in {
+      AgentSubscriptionStub.subscriptionConflict(utr, subscriptionRequest)
+
+      val e = intercept[Upstream4xxResponse] {
+        await(connector.subscribeAgencyToMtd(utr, subscriptionRequest))
+      }
+
+      e.upstreamResponseCode shouldBe 409
+    }
+
+    "throw Upstream4xxResponse if postcodes don't match" in {
+      AgentSubscriptionStub.subscriptionForbidden(utr, subscriptionRequest)
+
+      val e = intercept[Upstream4xxResponse] {
+        await(connector.subscribeAgencyToMtd(utr, subscriptionRequest))
+      }
+
+      e.upstreamResponseCode shouldBe 403
+    }
+  }
+
+  private val subscriptionRequest =
+    SubscriptionRequest(utr = utr,
+      knownFacts = KnownFacts("AA1 2AA"),
+      agency = Agency(name = "My Agency",
+        address = Address(addressLine1 = "1 Some Street", addressLine2 = "Anytown", postcode = "AA1 1AA", countryCode = "GB"),
+        email = "agency@example.com",
+        telephone = "0123 456 7890"))
 }
