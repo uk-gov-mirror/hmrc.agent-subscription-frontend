@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
+import play.api.test.Helpers._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUsers._
 
@@ -41,9 +42,94 @@ class SubscriptionControllerISpec extends BaseControllerISpec {
 
   "submitSubscriptionDetails" should {
     behave like anAgentAffinityGroupOnlyEndpoint(request => controller.submitSubscriptionDetails(request))
+
+    "redirect to subscription complete" when {
+      "all fields are supplied" in {
+        AuthStub.hasNoEnrolments(subscribingAgent)
+
+        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest()))
+
+        status(result) shouldBe 303
+        redirectLocation(result).head shouldBe routes.SubscriptionController.showSubscriptionComplete().url
+      }
+
+      "county is omitted" in {
+        AuthStub.hasNoEnrolments(subscribingAgent)
+
+        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("addressLine3")))
+
+        status(result) shouldBe 303
+        redirectLocation(result).head shouldBe routes.SubscriptionController.showSubscriptionComplete().url
+      }
+    }
+
+    "redisplay form" when {
+      "name is omitted" in {
+        AuthStub.hasNoEnrolments(subscribingAgent)
+
+        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("name")))
+
+        status(result) shouldBe 200
+        checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
+      }
+
+      "email is omitted" in {
+         AuthStub.hasNoEnrolments(subscribingAgent)
+
+        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("email")))
+
+        status(result) shouldBe 200
+        checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
+      }
+
+      "telephone is omitted" in {
+         AuthStub.hasNoEnrolments(subscribingAgent)
+
+        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("telephone")))
+
+        status(result) shouldBe 200
+        checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
+      }
+
+      "building and street is omitted" in {
+         AuthStub.hasNoEnrolments(subscribingAgent)
+
+        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("addressLine1")))
+
+        status(result) shouldBe 200
+        checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
+      }
+
+      "town is omitted" in {
+         AuthStub.hasNoEnrolments(subscribingAgent)
+
+        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("addressLine2")))
+
+        status(result) shouldBe 200
+        checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
+      }
+
+      "postcode is omitted" in {
+        AuthStub.hasNoEnrolments(subscribingAgent)
+
+        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("postcode")))
+
+        status(result) shouldBe 200
+        checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
+      }
+    }
   }
 
-
+  private def subscriptionDetailsRequest(keyToRemove: String = "") =
+    authenticatedRequest.withFormUrlEncodedBody(
+        Seq("name" -> "My Agency",
+            "email" -> "agency@example.com",
+            "telephone" -> "0123 456 7890",
+            "addressLine1" -> "1 Some Street",
+            "addressLine2" -> "Sometown",
+            "addressLine3" -> "County",
+            "postcode" -> "AA1 1AA").filter(_._1 != keyToRemove): _*
+    )
 
 
 }

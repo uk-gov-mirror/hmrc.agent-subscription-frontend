@@ -18,6 +18,8 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import javax.inject.{Inject, Singleton}
 
+import play.api.data.Form
+import play.api.data.Forms.{mapping, _}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{AnyContent, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
@@ -27,20 +29,46 @@ import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 
+import scala.concurrent.Future
+
+case class SubscriptionDetails(name: String,
+                               email: String,
+                               telephone: String,
+                               addressLine1: String,
+                               addressLine2: String,
+                               addressLine3: Option[String],
+                               postcode: String)
+
 @Singleton
 class SubscriptionController @Inject()
   (override val messagesApi: MessagesApi, override val authConnector: AuthConnector, val agentSubscriptionConnector: AgentSubscriptionConnector)
   (implicit appConfig: AppConfig)
   extends FrontendController with I18nSupport with AuthActions {
 
+  private val subscriptionDetails = Form[SubscriptionDetails](
+    mapping(
+      "name" -> nonEmptyText,
+      "email" -> nonEmptyText,
+      "telephone" -> nonEmptyText,
+      "addressLine1" -> nonEmptyText,
+      "addressLine2" -> nonEmptyText,
+      "addressLine3" -> optional(nonEmptyText),
+      "postcode" -> nonEmptyText
+    )(SubscriptionDetails.apply)(SubscriptionDetails.unapply)
+  )
+
   val showSubscriptionDetails: Action[AnyContent] = AuthorisedWithSubscribingAgent { implicit authContext => implicit request =>
-    Ok(html.subscription_details())
+    Ok(html.subscription_details(subscriptionDetails))
   }
 
-  val submitSubscriptionDetails: Action[AnyContent] = AuthorisedWithSubscribingAgent {
+  val submitSubscriptionDetails: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync {
     implicit authContext =>
       implicit request =>
-          Redirect(routes.SubscriptionController.showSubscriptionComplete())
+        subscriptionDetails.bindFromRequest().fold(
+          formWithErrors => {
+            Future successful Ok(html.subscription_details(formWithErrors))
+          },
+          _ => Future successful Redirect(routes.SubscriptionController.showSubscriptionComplete()))
   }
 
   val showSubscriptionComplete: Action[AnyContent] = AuthorisedWithSubscribingAgent {
