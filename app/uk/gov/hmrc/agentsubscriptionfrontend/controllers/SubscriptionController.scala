@@ -52,15 +52,15 @@ class SubscriptionController @Inject()
 
   private val subscriptionDetails = Form[SubscriptionDetails](
     mapping(
-      "utr" -> nonEmptyText,
-      "knownFactsPostcode" -> nonEmptyText,
+      "utr" -> FieldMappings.utr,
+      "knownFactsPostcode" -> FieldMappings.postcode,
       "name" -> nonEmptyText,
       "email" -> nonEmptyText,
       "telephone" -> nonEmptyText,
       "addressLine1" -> nonEmptyText,
       "addressLine2" -> nonEmptyText,
       "addressLine3" -> optional(nonEmptyText),
-      "postcode" -> nonEmptyText
+      "postcode" -> FieldMappings.postcode
     )(SubscriptionDetails.apply)(SubscriptionDetails.unapply)
   )
 

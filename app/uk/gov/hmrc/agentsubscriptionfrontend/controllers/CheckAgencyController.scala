@@ -105,34 +105,4 @@ class CheckAgencyController @Inject()
       implicit request =>
           Ok(html.confirm_your_agency())
   }
-
-}
-
-object FieldMappings {
-  private val utrConstraint = Constraints.pattern("^\\d{10}$".r, error = "error.utr.invalid")
-  private val nonEmptyUtr: Constraint[String] = Constraint[String] { fieldValue: String =>
-    Constraints.nonEmpty(fieldValue) match {
-      case i: Invalid =>
-        i
-      case Valid =>
-        utrConstraint(fieldValue)
-    }
-  }
-
-  private val postcodeWithoutSpacesRegex = "^[A-Za-z]{1,2}[0-9]{1,2}[A-Za-z]?[0-9][A-Za-z]{2}$".r
-  private val nonEmptyPostcode: Constraint[String] = Constraint[String] { fieldValue: String =>
-    Constraints.nonEmpty(fieldValue) match {
-      case i: Invalid =>
-        i
-      case Valid =>
-        val error = "error.postcode.invalid"
-        val fieldValueWithoutSpaces = fieldValue.replace(" ", "")
-        postcodeWithoutSpacesRegex.unapplySeq(fieldValueWithoutSpaces)
-          .map(_ => Valid)
-          .getOrElse(Invalid(ValidationError(error)))
-    }
-  }
-
-  def utr: Mapping[String] = text verifying nonEmptyUtr
-  def postcode: Mapping[String] = text verifying nonEmptyPostcode
 }

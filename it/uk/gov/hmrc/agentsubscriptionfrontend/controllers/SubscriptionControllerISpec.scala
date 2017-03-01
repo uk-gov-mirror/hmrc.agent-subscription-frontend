@@ -146,10 +146,55 @@ class SubscriptionControllerISpec extends BaseControllerISpec {
         status(result) shouldBe 200
         checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
       }
+
+      "postcode is not valid" in {
+        AuthStub.hasNoEnrolments(subscribingAgent)
+
+        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("postcode", Seq("postcode" -> "1AA AA1"))))
+
+        status(result) shouldBe 200
+        checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
+      }
+
+      "known facts postcode is omitted" in {
+        AuthStub.hasNoEnrolments(subscribingAgent)
+
+        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("knownFactsPostcode")))
+
+        status(result) shouldBe 200
+        checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
+      }
+
+      "known facts postcode is not valid" in {
+        AuthStub.hasNoEnrolments(subscribingAgent)
+
+        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("knownFactsPostcode", Seq("knownFactsPostcode" -> "1AA AA1"))))
+
+        status(result) shouldBe 200
+        checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
+      }
+
+      "utr is omitted" in {
+        AuthStub.hasNoEnrolments(subscribingAgent)
+
+        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("utr")))
+
+        status(result) shouldBe 200
+        checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
+      }
+
+      "utr is not valid" in {
+        AuthStub.hasNoEnrolments(subscribingAgent)
+
+        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("utr", Seq("utr" -> "012345"))))
+
+        status(result) shouldBe 200
+        checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
+      }
     }
   }
 
-  private def subscriptionDetailsRequest(keyToRemove: String = "") =
+  private def subscriptionDetailsRequest(keyToRemove: String = "", additionalParameters: Seq[(String, String)] = Seq()) =
     authenticatedRequest.withFormUrlEncodedBody(
         Seq("utr" -> utr,
             "knownFactsPostcode" -> "AA1 2AA",
@@ -158,7 +203,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec {
             "telephone" -> "0123 456 7890",
             "addressLine1" -> "1 Some Street",
             "addressLine2" -> "Sometown",
-            "postcode" -> "AA1 1AA").filter(_._1 != keyToRemove): _*
+            "postcode" -> "AA1 1AA").filter(_._1 != keyToRemove) ++ additionalParameters: _*
     )
 
   private val subscriptionRequest =
