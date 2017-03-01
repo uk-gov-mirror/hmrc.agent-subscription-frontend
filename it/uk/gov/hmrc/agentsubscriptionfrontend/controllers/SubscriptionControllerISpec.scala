@@ -27,14 +27,15 @@ class SubscriptionControllerISpec extends BaseControllerISpec {
   private lazy val controller: SubscriptionController = app.injector.instanceOf[SubscriptionController]
 
   "showSubscriptionDetails" should {
-    behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showSubscriptionDetails(request))
+    behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showSubscriptionDetails("utr", "AA1 1AA")(request))
 
-    "be available" in {
+    "populate form with utr and postcode" in {
       AuthStub.hasNoEnrolments(subscribingAgent)
 
-      val result = await(controller.showSubscriptionDetails(authenticatedRequest))
+      val result = await(controller.showSubscriptionDetails("utr", "AA1 1AA")(authenticatedRequest))
 
-     checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
+     checkHtmlResultWithBodyText("value=\"utr\"", result)
+     checkHtmlResultWithBodyText("value=\"AA1 1AA\"", result)
     }
   }
 
@@ -150,7 +151,9 @@ class SubscriptionControllerISpec extends BaseControllerISpec {
 
   private def subscriptionDetailsRequest(keyToRemove: String = "") =
     authenticatedRequest.withFormUrlEncodedBody(
-        Seq("name" -> "My Agency",
+        Seq("utr" -> utr,
+            "knownFactsPostcode" -> "AA1 2AA",
+            "name" -> "My Agency",
             "email" -> "agency@example.com",
             "telephone" -> "0123 456 7890",
             "addressLine1" -> "1 Some Street",

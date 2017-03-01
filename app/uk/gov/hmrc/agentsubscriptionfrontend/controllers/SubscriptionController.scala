@@ -31,7 +31,9 @@ import uk.gov.hmrc.play.frontend.controller.FrontendController
 
 import scala.concurrent.Future
 
-case class SubscriptionDetails(name: String,
+case class SubscriptionDetails(utr: String,
+                               knownFactsPostcode: String,
+                               name: String,
                                email: String,
                                telephone: String,
                                addressLine1: String,
@@ -50,6 +52,8 @@ class SubscriptionController @Inject()
 
   private val subscriptionDetails = Form[SubscriptionDetails](
     mapping(
+      "utr" -> nonEmptyText,
+      "knownFactsPostcode" -> nonEmptyText,
       "name" -> nonEmptyText,
       "email" -> nonEmptyText,
       "telephone" -> nonEmptyText,
@@ -60,8 +64,9 @@ class SubscriptionController @Inject()
     )(SubscriptionDetails.apply)(SubscriptionDetails.unapply)
   )
 
-  val showSubscriptionDetails: Action[AnyContent] = AuthorisedWithSubscribingAgent { implicit authContext => implicit request =>
-    Ok(html.subscription_details(subscriptionDetails))
+  def showSubscriptionDetails(utr: String, knownFactsPostcode: String): Action[AnyContent] =
+    AuthorisedWithSubscribingAgent { implicit authContext => implicit request =>
+      Ok(html.subscription_details(subscriptionDetails.fill(SubscriptionDetails(utr, knownFactsPostcode, null, null, null, null, null, None, null))))
   }
 
   val submitSubscriptionDetails: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync {
@@ -71,7 +76,7 @@ class SubscriptionController @Inject()
           formWithErrors => {
             Future successful Ok(html.subscription_details(formWithErrors))
           },
-          form => subscriptionService.subscribeAgencyToMtd("0123456789", "AA1 2AA", form) map {
+          form => subscriptionService.subscribeAgencyToMtd(form) map {
             case Right(_) => Redirect(routes.SubscriptionController.showSubscriptionComplete())
             case Left(CONFLICT) => Redirect(routes.CheckAgencyController.showAlreadySubscribed())
             case Left(FORBIDDEN) => Redirect(routes.SubscriptionController.showSubscriptionFailed())
