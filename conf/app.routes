@@ -15,3 +15,4 @@ GET     /subscription-details           uk.gov.hmrc.agentsubscriptionfrontend.co
 POST    /subscription-details           uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.submitSubscriptionDetails
 
 GET    /subscription-complete           uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showSubscriptionComplete
+GET    /subscription-failed             uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showSubscriptionFailed

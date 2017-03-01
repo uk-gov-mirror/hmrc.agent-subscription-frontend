@@ -42,8 +42,8 @@ class AgentSubscriptionConnector @Inject() (@Named("agent-subscription-baseUrl")
     }
   }
 
-  def subscribeAgencyToMtd(utr: String, subscriptionRequest: SubscriptionRequest)(implicit hc: HeaderCarrier): Future[Arn] =
-    http.POST[SubscriptionRequest, JsValue](subscriptionUrl(utr).toString, subscriptionRequest) map { js =>
+  def subscribeAgencyToMtd(subscriptionRequest: SubscriptionRequest)(implicit hc: HeaderCarrier): Future[Arn] =
+    http.POST[SubscriptionRequest, JsValue](subscriptionUrl(subscriptionRequest.utr).toString, subscriptionRequest) map { js =>
       (js \ "arn").as[Arn]
     }
 

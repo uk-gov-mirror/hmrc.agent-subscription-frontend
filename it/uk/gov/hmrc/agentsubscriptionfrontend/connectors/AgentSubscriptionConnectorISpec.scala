@@ -50,7 +50,7 @@ class AgentSubscriptionConnectorISpec extends UnitSpec with OneAppPerSuite with 
     "return an ARN" in {
       AgentSubscriptionStub.subscriptionSuccess(utr, subscriptionRequest)
 
-      val result = await(connector.subscribeAgencyToMtd(utr, subscriptionRequest))
+      val result = await(connector.subscribeAgencyToMtd(subscriptionRequest))
 
       result shouldBe Arn("ARN00001")
     }
@@ -59,7 +59,7 @@ class AgentSubscriptionConnectorISpec extends UnitSpec with OneAppPerSuite with 
       AgentSubscriptionStub.subscriptionConflict(utr, subscriptionRequest)
 
       val e = intercept[Upstream4xxResponse] {
-        await(connector.subscribeAgencyToMtd(utr, subscriptionRequest))
+        await(connector.subscribeAgencyToMtd(subscriptionRequest))
       }
 
       e.upstreamResponseCode shouldBe 409
@@ -69,7 +69,7 @@ class AgentSubscriptionConnectorISpec extends UnitSpec with OneAppPerSuite with 
       AgentSubscriptionStub.subscriptionForbidden(utr, subscriptionRequest)
 
       val e = intercept[Upstream4xxResponse] {
-        await(connector.subscribeAgencyToMtd(utr, subscriptionRequest))
+        await(connector.subscribeAgencyToMtd(subscriptionRequest))
       }
 
       e.upstreamResponseCode shouldBe 403

@@ -24,7 +24,7 @@ import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{AnyContent, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentSubscriptionConnector
+import uk.gov.hmrc.agentsubscriptionfrontend.service.SubscriptionService
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
@@ -41,7 +41,10 @@ case class SubscriptionDetails(name: String,
 
 @Singleton
 class SubscriptionController @Inject()
-  (override val messagesApi: MessagesApi, override val authConnector: AuthConnector, val agentSubscriptionConnector: AgentSubscriptionConnector)
+  (override val messagesApi: MessagesApi,
+   override val authConnector: AuthConnector,
+   subscriptionService: SubscriptionService
+  )
   (implicit appConfig: AppConfig)
   extends FrontendController with I18nSupport with AuthActions {
 
@@ -68,7 +71,19 @@ class SubscriptionController @Inject()
           formWithErrors => {
             Future successful Ok(html.subscription_details(formWithErrors))
           },
-          _ => Future successful Redirect(routes.SubscriptionController.showSubscriptionComplete()))
+          form => subscriptionService.subscribeAgencyToMtd("0123456789", "AA1 2AA", form) map {
+            case Right(_) => Redirect(routes.SubscriptionController.showSubscriptionComplete())
+            case Left(CONFLICT) => Redirect(routes.CheckAgencyController.showAlreadySubscribed())
+            case Left(FORBIDDEN) => Redirect(routes.SubscriptionController.showSubscriptionFailed())
+            case Left(error) => InternalServerError(s"Unknown error code from agent-subscription $error")
+          })
+  }
+
+
+  val showSubscriptionFailed: Action[AnyContent] = AuthorisedWithSubscribingAgent {
+    implicit authContext =>
+      implicit request =>
+        Ok(html.subscription_failed("Postcodes do not match"))
   }
 
   val showSubscriptionComplete: Action[AnyContent] = AuthorisedWithSubscribingAgent {
