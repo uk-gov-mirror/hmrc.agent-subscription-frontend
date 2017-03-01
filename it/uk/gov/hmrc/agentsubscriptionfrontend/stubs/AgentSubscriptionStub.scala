@@ -71,7 +71,7 @@ object AgentSubscriptionStub {
   private def subscriptionRequestFor(utr: String, request: SubscriptionRequest) = {
     val agency = request.agency
     val address = agency.address
-    post(urlEqualTo(s"/agent-subscription/subscription/${encodePathSegment(utr)}"))
+    post(urlEqualTo(s"/agent-subscription/subscription"))
       .withRequestBody(equalToJson(s"""
            |{
            |  "utr": "${request.utr}",

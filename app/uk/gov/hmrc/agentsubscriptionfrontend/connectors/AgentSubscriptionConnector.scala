@@ -43,12 +43,11 @@ class AgentSubscriptionConnector @Inject() (@Named("agent-subscription-baseUrl")
   }
 
   def subscribeAgencyToMtd(subscriptionRequest: SubscriptionRequest)(implicit hc: HeaderCarrier): Future[Arn] =
-    http.POST[SubscriptionRequest, JsValue](subscriptionUrl(subscriptionRequest.utr).toString, subscriptionRequest) map { js =>
+    http.POST[SubscriptionRequest, JsValue](subscriptionUrl.toString, subscriptionRequest) map { js =>
       (js \ "arn").as[Arn]
     }
 
-  private def subscriptionUrl(utr: String) =
-    new URL(baseUrl, s"/agent-subscription/subscription/${encodePathSegment(utr)}")
+  private val subscriptionUrl = new URL(baseUrl, s"/agent-subscription/subscription")
 
   private def getRegistrationUrlFor(utr: String, postcode: String) =
     new URL(baseUrl, s"/agent-subscription/registration/${encodePathSegment(utr)}/postcode/${encodePathSegment(postcode)}").toString
