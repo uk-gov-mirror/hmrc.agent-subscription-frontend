@@ -23,7 +23,7 @@ import play.api.data.validation._
 import play.api.data.{Form, Mapping}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{AnyContent, Request, _}
-import uk.gov.hmrc.agentsubscriptionfrontend.auth.{AuthActions, NoOpRegime}
+import uk.gov.hmrc.agentsubscriptionfrontend.auth.{AgentRequest, AuthActions}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentSubscriptionConnector
 import uk.gov.hmrc.agentsubscriptionfrontend.models.Registration
@@ -61,7 +61,18 @@ class CheckAgencyController @Inject()
     Ok(html.has_other_enrolments())
   }
 
-  val showCheckAgencyStatus: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync(showCheckAgencyStatusBody)
+  val showCheckAgencyStatus: Action[AnyContent] = AuthorisedWithSubscribingAgent {
+    implicit authContext =>
+      implicit request =>
+        (hasMtdEnrolment, hasEnrolments) match {
+          case (true, _) => Redirect(routes.CheckAgencyController.showAlreadySubscribed())
+          case (_, true) => Redirect(routes.CheckAgencyController.showHasOtherEnrolments())
+          case (false, false) => Ok(html.check_agency_status(knownFactsForm))
+        }
+  }
+
+  private def hasMtdEnrolment(implicit request: AgentRequest[_]): Boolean = request.enrolments.exists(_.key == "HMRC-AS-AGENT")
+  private def hasEnrolments(implicit request: AgentRequest[_]): Boolean = request.enrolments.nonEmpty
 
   val checkAgencyStatus: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync { implicit authContext: AuthContext =>
     implicit request =>
@@ -94,34 +105,4 @@ class CheckAgencyController @Inject()
       implicit request =>
           Ok(html.confirm_your_agency())
   }
-
-}
-
-object FieldMappings {
-  private val utrConstraint = Constraints.pattern("^\\d{10}$".r, error = "error.utr.invalid")
-  private val nonEmptyUtr: Constraint[String] = Constraint[String] { fieldValue: String =>
-    Constraints.nonEmpty(fieldValue) match {
-      case i: Invalid =>
-        i
-      case Valid =>
-        utrConstraint(fieldValue)
-    }
-  }
-
-  private val postcodeWithoutSpacesRegex = "^[A-Za-z]{1,2}[0-9]{1,2}[A-Za-z]?[0-9][A-Za-z]{2}$".r
-  private val nonEmptyPostcode: Constraint[String] = Constraint[String] { fieldValue: String =>
-    Constraints.nonEmpty(fieldValue) match {
-      case i: Invalid =>
-        i
-      case Valid =>
-        val error = "error.postcode.invalid"
-        val fieldValueWithoutSpaces = fieldValue.replace(" ", "")
-        postcodeWithoutSpacesRegex.unapplySeq(fieldValueWithoutSpaces)
-          .map(_ => Valid)
-          .getOrElse(Invalid(ValidationError(error)))
-    }
-  }
-
-  def utr: Mapping[String] = text verifying nonEmptyUtr
-  def postcode: Mapping[String] = text verifying nonEmptyPostcode
 }
