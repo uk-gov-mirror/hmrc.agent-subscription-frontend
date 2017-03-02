@@ -8,8 +8,7 @@
 @(knownFactsForm : Form[KnownFacts])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = "Check Agency Status", bodyClasses = None) {
-  <h1>Check Agency Status</h1>
-  <p>This will become the check agency status page</p>
+  <h1>Check if your agency is already subscribed</h1>
 
   @form(
     action = routes.CheckAgencyController.checkAgencyStatus,
@@ -17,20 +16,17 @@
 
     <fieldset class="form-group">
       <div class="form-field">
-        <label>UTR
-          @input(knownFactsForm("utr"), 'class -> "form-control form-control--block")
-        </label>
+          @input(knownFactsForm("utr"), '_label -> "SA or CT UTR", '_inputClass -> "input--medium input--cleared")
       </div>
 
       <div class="form-field">
-        <label>Postcode
-          @input(knownFactsForm("postcode"), 'class -> "form-control form-control--block")
-        </label>
+          @input(knownFactsForm("postcode"), '_label -> "Registered business postcode", '_inputClass -> "input--small input--cleared")
       </div>
 
       <div class="form-field">
         <input class="button" type="submit" id="continue" value="Continue">
       </div>
+
     </fieldset>
   }
 }
