@@ -2,6 +2,29 @@
 @()(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = "Confirm Your Agency", bodyClasses = None) {
-  <h1>Confirm Your Agency</h1>
-  <p>This will become the Confirm Your Agency page</p>
+  <h1>Is this your agency?</h1>
+
+  <table class="form-group">
+    <thead>
+    <tr>
+      <th colspan="2">Agency details</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+      <td>Name</td>
+      <td>Redfields Accountants Ltd.</td>
+    </tr>
+    <tr>
+      <td>Postcode</td>
+      <td>GN53 2HG</td>
+    </tr>
+    <tr>
+      <td>UTR</td>
+      <td>CT-1234567890</td>
+    </tr>
+    </tbody>
+  </table>
+
+<a class="button" href="#">Continue</a>
 }
