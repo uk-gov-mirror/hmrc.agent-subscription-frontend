@@ -18,29 +18,77 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import javax.inject.{Inject, Singleton}
 
+import play.api.data.Form
+import play.api.data.Forms.{mapping, _}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{AnyContent, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentSubscriptionConnector
+import uk.gov.hmrc.agentsubscriptionfrontend.service.SubscriptionService
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 
+import scala.concurrent.Future
+
+case class SubscriptionDetails(utr: String,
+                               knownFactsPostcode: String,
+                               name: String,
+                               email: String,
+                               telephone: String,
+                               addressLine1: String,
+                               addressLine2: String,
+                               addressLine3: Option[String],
+                               postcode: String)
+
 @Singleton
 class SubscriptionController @Inject()
-  (override val messagesApi: MessagesApi, override val authConnector: AuthConnector, val agentSubscriptionConnector: AgentSubscriptionConnector)
+  (override val messagesApi: MessagesApi,
+   override val authConnector: AuthConnector,
+   subscriptionService: SubscriptionService
+  )
   (implicit appConfig: AppConfig)
   extends FrontendController with I18nSupport with AuthActions {
 
-  val showSubscriptionDetails: Action[AnyContent] = AuthorisedWithSubscribingAgent { implicit authContext => implicit request =>
-    Ok(html.subscription_details())
+  private val subscriptionDetails = Form[SubscriptionDetails](
+    mapping(
+      "utr" -> FieldMappings.utr,
+      "knownFactsPostcode" -> FieldMappings.postcode,
+      "name" -> nonEmptyText,
+      "email" -> nonEmptyText,
+      "telephone" -> nonEmptyText,
+      "addressLine1" -> nonEmptyText,
+      "addressLine2" -> nonEmptyText,
+      "addressLine3" -> optional(nonEmptyText),
+      "postcode" -> FieldMappings.postcode
+    )(SubscriptionDetails.apply)(SubscriptionDetails.unapply)
+  )
+
+  def showSubscriptionDetails(utr: String, knownFactsPostcode: String): Action[AnyContent] =
+    AuthorisedWithSubscribingAgent { implicit authContext => implicit request =>
+      Ok(html.subscription_details(subscriptionDetails.fill(SubscriptionDetails(utr, knownFactsPostcode, null, null, null, null, null, None, null))))
   }
 
-  val submitSubscriptionDetails: Action[AnyContent] = AuthorisedWithSubscribingAgent {
+  val submitSubscriptionDetails: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync {
     implicit authContext =>
       implicit request =>
-          Redirect(routes.SubscriptionController.showSubscriptionComplete())
+        subscriptionDetails.bindFromRequest().fold(
+          formWithErrors => {
+            Future successful Ok(html.subscription_details(formWithErrors))
+          },
+          form => subscriptionService.subscribeAgencyToMtd(form) map {
+            case Right(_) => Redirect(routes.SubscriptionController.showSubscriptionComplete())
+            case Left(CONFLICT) => Redirect(routes.CheckAgencyController.showAlreadySubscribed())
+            case Left(FORBIDDEN) => Redirect(routes.SubscriptionController.showSubscriptionFailed())
+            case Left(error) => InternalServerError(s"Unknown error code from agent-subscription $error")
+          })
+  }
+
+
+  val showSubscriptionFailed: Action[AnyContent] = AuthorisedWithSubscribingAgent {
+    implicit authContext =>
+      implicit request =>
+        Ok(html.subscription_failed("Postcodes do not match"))
   }
 
   val showSubscriptionComplete: Action[AnyContent] = AuthorisedWithSubscribingAgent {
