@@ -33,13 +33,7 @@ class AgentSubscriptionConnector @Inject() (@Named("agent-subscription-baseUrl")
 
   def getRegistration(utr: String, postcode: String)(implicit hc: HeaderCarrier): Future[Option[Registration]] = {
     val url = getRegistrationUrlFor(utr, postcode)
-    http.GET[HttpResponse](url).map { response: HttpResponse =>
-      response.status match {
-        case Status.OK => Some(new Registration)
-      }
-    } recover {
-      case _: NotFoundException => None
-    }
+    http.GET[Option[Registration]](url)
   }
 
   def subscribeAgencyToMtd(subscriptionRequest: SubscriptionRequest)(implicit hc: HeaderCarrier): Future[Arn] =

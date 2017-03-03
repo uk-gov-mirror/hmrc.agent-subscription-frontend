@@ -16,4 +16,10 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.models
 
-class Registration
+import play.api.libs.json.{Format, Json}
+
+object Registration {
+  implicit val formats: Format[Registration] = Json.format[Registration]
+}
+
+case class Registration(organisationName: Option[String])

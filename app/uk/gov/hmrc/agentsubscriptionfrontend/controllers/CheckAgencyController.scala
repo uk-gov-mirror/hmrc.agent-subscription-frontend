@@ -88,7 +88,9 @@ class CheckAgencyController @Inject()
                                             (implicit authContext: AuthContext, request: Request[AnyContent]): Future[Result] = {
     agentSubscriptionConnector.getRegistration(knownFacts.utr, knownFacts.postcode) map { maybeRegistration: Option[Registration] =>
       maybeRegistration match {
-        case Some(_) => Redirect(routes.CheckAgencyController.showConfirmYourAgency())
+        case Some(Registration(Some(name))) => Redirect(routes.CheckAgencyController.showConfirmYourAgency())
+                          .flashing("agencyName" -> name, "knownFactsPostcode" -> knownFacts.postcode, "utr" -> knownFacts.utr)
+        case Some(_) => InternalServerError("No organisation name for agency found in ETMP.")
         case None => Redirect(routes.CheckAgencyController.showNoAgencyFound())
       }
     }
@@ -103,6 +105,6 @@ class CheckAgencyController @Inject()
   val showConfirmYourAgency: Action[AnyContent] = AuthorisedWithSubscribingAgent {
     implicit authContext =>
       implicit request =>
-          Ok(html.confirm_your_agency())
+          Ok(html.confirm_your_agency(request.flash.data("agencyName"), request.flash.data("knownFactsPostcode"), request.flash.data("utr")))
   }
 }
