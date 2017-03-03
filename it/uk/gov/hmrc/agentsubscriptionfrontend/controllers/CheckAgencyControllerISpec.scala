@@ -127,14 +127,15 @@ class CheckAgencyControllerISpec extends BaseControllerISpec {
       redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showConfirmYourAgency().url)
     }
 
-    "show an error page when there is no organisation name in the registration response" in {
+    "propagate an exception when there is no organisation name" in {
       AgentSubscriptionStub.withNoOrganisationName(validUtr, validPostcode)
       AuthStub.hasNoEnrolments(subscribingAgent)
       val request = authenticatedRequest
         .withFormUrlEncodedBody("utr" -> validUtr, "postcode" -> validPostcode)
-      val result = await(controller.checkAgencyStatus(request))
-
-      status(result) shouldBe 500
+      val e = intercept[IllegalStateException] {
+        await(controller.checkAgencyStatus(request))
+      }
+      e.getMessage should include(validUtr)
     }
 
   }

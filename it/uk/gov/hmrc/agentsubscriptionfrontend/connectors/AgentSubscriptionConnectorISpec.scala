@@ -23,7 +23,7 @@ class AgentSubscriptionConnectorISpec extends UnitSpec with OneAppPerSuite with 
       AgentSubscriptionStub.withMatchingUtrAndPostcode(utr, "AA1 1AA")
       val result: Option[Registration] = await(connector.getRegistration(utr, "AA1 1AA"))
       result.isDefined shouldBe true
-      result.get.organisationName shouldBe "My Agency"
+      result.get.organisationName shouldBe Some("My Agency")
     }
 
     "URL-path-encode path parameters" in {
