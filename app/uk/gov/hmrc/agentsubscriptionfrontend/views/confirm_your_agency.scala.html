@@ -1,6 +1,6 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes._
-@(agencyName: String, postcode: String, utr: String)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+@(registrationName: String, postcode: String, utr: String)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = "Confirm Your Agency", bodyClasses = None) {
   <h1>Is this your agency?</h1>
@@ -14,7 +14,7 @@
     <tbody>
     <tr>
       <td>Name</td>
-      <td>@agencyName</td>
+      <td>@registrationName</td>
     </tr>
     <tr>
       <td>Postcode</td>
