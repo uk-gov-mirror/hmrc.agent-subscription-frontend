@@ -194,9 +194,9 @@ class CheckAgencyControllerISpec extends BaseControllerISpec {
       val result = await(controller.showConfirmYourAgency(request))
 
       checkHtmlResultWithBodyText("Confirm Your Agency", result)
-      checkHtmlResultWithBodyText(s"<td>$postcode</td>", result)
-      checkHtmlResultWithBodyText(s"<td>$utr</td>", result)
-      checkHtmlResultWithBodyText(s"<td>$registrationName</td>", result)
+      checkHtmlResultWithBodyText(s">$postcode</", result)
+      checkHtmlResultWithBodyText(s">$utr</", result)
+      checkHtmlResultWithBodyText(s">$registrationName</", result)
     }
 
     "show a button which allows the user to return to Check Agency Status page" in {
