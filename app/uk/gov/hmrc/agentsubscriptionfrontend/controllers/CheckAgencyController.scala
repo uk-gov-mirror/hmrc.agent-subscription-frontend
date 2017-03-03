@@ -18,9 +18,8 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import javax.inject.{Inject, Singleton}
 
-import play.api.data.Forms.{mapping, _}
-import play.api.data.validation._
-import play.api.data.{Form, Mapping}
+import play.api.data.Form
+import play.api.data.Forms.mapping
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{AnyContent, Request, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.{AgentRequest, AuthActions}
@@ -90,7 +89,7 @@ class CheckAgencyController @Inject()
       maybeRegistration match {
         case Some(Registration(Some(name))) => Redirect(routes.CheckAgencyController.showConfirmYourAgency())
                           .flashing("registrationName" -> name, "knownFactsPostcode" -> knownFacts.postcode, "utr" -> knownFacts.utr)
-        case Some(_) => InternalServerError("No organisation name for agency found in ETMP.")
+        case Some(_) => throw new IllegalStateException(s"The agency with UTR ${knownFacts.utr} has no organisation name.")
         case None => Redirect(routes.CheckAgencyController.showNoAgencyFound())
       }
     }
