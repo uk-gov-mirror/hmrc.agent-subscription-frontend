@@ -127,6 +127,16 @@ class CheckAgencyControllerISpec extends BaseControllerISpec {
       redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showConfirmYourAgency().url)
     }
 
+    "show an error page when there is no organisation name in the registration response" in {
+      AgentSubscriptionStub.withNoOrganisationName(validUtr, validPostcode)
+      AuthStub.hasNoEnrolments(subscribingAgent)
+      val request = authenticatedRequest
+        .withFormUrlEncodedBody("utr" -> validUtr, "postcode" -> validPostcode)
+      val result = await(controller.checkAgencyStatus(request))
+
+      status(result) shouldBe 500
+    }
+
   }
   "showAlreadySubscribed" should {
 
@@ -187,6 +197,19 @@ class CheckAgencyControllerISpec extends BaseControllerISpec {
       checkHtmlResultWithBodyText(s"<td>$postcode</td>", result)
       checkHtmlResultWithBodyText(s"<td>$utr</td>", result)
       checkHtmlResultWithBodyText(s"<td>$agencyName</td>", result)
+    }
+
+    "show a button which allows the user to return to Check Agency Status page" in {
+      AuthStub.hasNoEnrolments(subscribingAgent)
+      val request = authenticatedRequest.withFlash(
+        "knownFactsPostcode" -> "AA11AA",
+        "utr" -> "0123456789",
+        "agencyName" -> "My Agency"
+      )
+
+      val result = await(controller.showConfirmYourAgency(request))
+
+      checkHtmlResultWithBodyText(routes.CheckAgencyController.showCheckAgencyStatus().url, result)
     }
   }
 

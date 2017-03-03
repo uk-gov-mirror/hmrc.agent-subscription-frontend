@@ -36,6 +36,14 @@ object AgentSubscriptionStub {
                """.stripMargin)))
   }
 
+  def withNoOrganisationName(utr: String, postcode: String): Unit = {
+    stubFor(get(urlEqualTo(s"/agent-subscription/registration/${encodePathSegment(utr)}/postcode/${encodePathSegment(postcode)}"))
+      .willReturn(
+        aResponse()
+          .withStatus(Status.OK)
+          .withBody("{}")))
+  }
+
   def withNonMatchingUtrAndPostcode(utr: String, postcode: String): Unit = {
     stubFor(get(urlEqualTo(s"/agent-subscription/registration/${encodePathSegment(utr)}/postcode/${encodePathSegment(postcode)}"))
       .willReturn(

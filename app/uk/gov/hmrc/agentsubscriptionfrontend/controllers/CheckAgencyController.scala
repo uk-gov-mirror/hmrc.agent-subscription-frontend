@@ -88,8 +88,9 @@ class CheckAgencyController @Inject()
                                             (implicit authContext: AuthContext, request: Request[AnyContent]): Future[Result] = {
     agentSubscriptionConnector.getRegistration(knownFacts.utr, knownFacts.postcode) map { maybeRegistration: Option[Registration] =>
       maybeRegistration match {
-        case Some(r) => Redirect(routes.CheckAgencyController.showConfirmYourAgency())
-                          .flashing("agencyName" -> r.organisationName, "knownFactsPostcode" -> knownFacts.postcode, "utr" -> knownFacts.utr)
+        case Some(Registration(Some(name))) => Redirect(routes.CheckAgencyController.showConfirmYourAgency())
+                          .flashing("agencyName" -> name, "knownFactsPostcode" -> knownFacts.postcode, "utr" -> knownFacts.utr)
+        case Some(_) => InternalServerError("No organisation name for agency found in ETMP.")
         case None => Redirect(routes.CheckAgencyController.showNoAgencyFound())
       }
     }
