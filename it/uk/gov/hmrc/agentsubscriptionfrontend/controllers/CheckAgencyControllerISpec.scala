@@ -171,11 +171,22 @@ class CheckAgencyControllerISpec extends BaseControllerISpec {
     behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showConfirmYourAgency(request))
 
     "display the confirm your agency page if the current user is logged in and has affinity group = Agent" in {
+      val utr = "0123456789"
+      val postcode = "AA11AA"
+      val agencyName = "My Agency"
       AuthStub.hasNoEnrolments(subscribingAgent)
+      val request = authenticatedRequest.withFlash(
+        "knownFactsPostcode" -> postcode,
+        "utr" -> utr,
+        "agencyName" -> agencyName
+      )
 
-      val result = await(controller.showConfirmYourAgency(authenticatedRequest))
+      val result = await(controller.showConfirmYourAgency(request))
 
       checkHtmlResultWithBodyText("Confirm Your Agency", result)
+      checkHtmlResultWithBodyText(s"<td>$postcode</td>", result)
+      checkHtmlResultWithBodyText(s"<td>$utr</td>", result)
+      checkHtmlResultWithBodyText(s"<td>$agencyName</td>", result)
     }
   }
 
