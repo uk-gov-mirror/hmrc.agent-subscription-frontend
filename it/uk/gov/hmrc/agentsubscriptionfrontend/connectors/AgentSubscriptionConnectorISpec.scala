@@ -19,11 +19,20 @@ class AgentSubscriptionConnectorISpec extends UnitSpec with OneAppPerSuite with 
   private val utr = "0123456789"
   "getRegistration" should {
 
-    "return a Registration when agent-subscription returns a 200 response (for a matching UTR and postcode)" in {
-      AgentSubscriptionStub.withMatchingUtrAndPostcode(utr, "AA1 1AA")
+    "return a subscribed Registration when agent-subscription returns a 200 response (for a matching UTR and postcode)" in {
+      AgentSubscriptionStub.withMatchingUtrAndPostcode(utr, "AA1 1AA", isSubscribedToAgentServices = true)
       val result: Option[Registration] = await(connector.getRegistration(utr, "AA1 1AA"))
       result.isDefined shouldBe true
       result.get.organisationName shouldBe Some("My Agency")
+      result.get.isSubscribedToAgentServices shouldBe true
+    }
+
+    "return a not subscribed Registration when agent-subscription returns a 200 response (for a matching UTR and postcode)" in {
+      AgentSubscriptionStub.withMatchingUtrAndPostcode(utr, "AA1 1AA", isSubscribedToAgentServices = false)
+      val result: Option[Registration] = await(connector.getRegistration(utr, "AA1 1AA"))
+      result.isDefined shouldBe true
+      result.get.organisationName shouldBe Some("My Agency")
+      result.get.isSubscribedToAgentServices shouldBe false
     }
 
     "URL-path-encode path parameters" in {

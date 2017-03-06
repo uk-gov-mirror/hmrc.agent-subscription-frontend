@@ -87,7 +87,7 @@ class CheckAgencyController @Inject()
                                             (implicit authContext: AuthContext, request: Request[AnyContent]): Future[Result] = {
     agentSubscriptionConnector.getRegistration(knownFacts.utr, knownFacts.postcode) map { maybeRegistration: Option[Registration] =>
       maybeRegistration match {
-        case Some(Registration(Some(name))) => Redirect(routes.CheckAgencyController.showConfirmYourAgency())
+        case Some(Registration(Some(name), _)) => Redirect(routes.CheckAgencyController.showConfirmYourAgency())
                           .flashing("registrationName" -> name, "knownFactsPostcode" -> knownFacts.postcode, "utr" -> knownFacts.utr)
         case Some(_) => throw new IllegalStateException(s"The agency with UTR ${knownFacts.utr} has no organisation name.")
         case None => Redirect(routes.CheckAgencyController.showNoAgencyFound())
