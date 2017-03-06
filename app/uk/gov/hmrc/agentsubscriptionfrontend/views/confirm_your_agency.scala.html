@@ -1,6 +1,6 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes._
-@(registrationName: String, postcode: String, utr: String)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+@(registrationName: String, postcode: String, utr: String, nextPageUrl: String)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = "Confirm Your Agency", bodyClasses = None) {
   <h1>Is this your agency?</h1>
@@ -28,5 +28,5 @@
   </table>
 
   <a class="button" href="@CheckAgencyController.showCheckAgencyStatus"> Return</a>
-  <a class="button" href="@SubscriptionController.showSubscriptionDetails(utr, postcode)"> Continue</a>
+  <a class="button" href="@nextPageUrl"> Continue</a>
 }

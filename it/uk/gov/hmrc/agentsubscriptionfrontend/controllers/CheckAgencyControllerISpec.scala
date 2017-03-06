@@ -26,6 +26,9 @@ class CheckAgencyControllerISpec extends BaseControllerISpec {
   private val validPostcode = "AA1 1AA"
   private val invalidPostcode = "not a postcode"
 
+  private val notSubscribed = "notSubscribed"
+  private val alreadySubscribed = "alreadySubscribed"
+
   private lazy val controller: CheckAgencyController = app.injector.instanceOf[CheckAgencyController]
 
   "showCheckAgencyStatus" should {
@@ -35,7 +38,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec {
     "display the check agency status page if the current user is logged in and has affinity group = Agent" in {
       AuthStub.hasNoEnrolments(subscribingAgent)
 
-      val result = await(controller.showCheckAgencyStatus(authenticatedRequest))
+      val result = await(controller.showCheckAgencyStatus(authenticatedRequest()))
 
       checkHtmlResultWithBodyText("Check Agency Status", result)
     }
@@ -43,19 +46,19 @@ class CheckAgencyControllerISpec extends BaseControllerISpec {
     "redirect to already subscribed page if user has already subscribed to MTD" in {
       AuthStub.isSubscribedToMtd(subscribingAgent)
 
-      val result = await(controller.showCheckAgencyStatus(authenticatedRequest))
+      val result = await(controller.showCheckAgencyStatus(authenticatedRequest()))
 
       status(result) shouldBe 303
-      redirectLocation(result).head shouldBe routes.CheckAgencyController.showAlreadySubscribed().url
+      redirectLocation(result).get shouldBe routes.CheckAgencyController.showAlreadySubscribed().url
     }
 
     "redirect to unclean credentials page if user has enrolled in any other services" in {
       AuthStub.isEnrolledForNonMtdServices(subscribingAgent)
 
-      val result = await(controller.showCheckAgencyStatus(authenticatedRequest))
+      val result = await(controller.showCheckAgencyStatus(authenticatedRequest()))
 
       status(result) shouldBe 303
-      redirectLocation(result).head shouldBe routes.CheckAgencyController.showHasOtherEnrolments().url
+      redirectLocation(result).get shouldBe routes.CheckAgencyController.showHasOtherEnrolments().url
     }
 
   }
@@ -66,7 +69,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec {
 
     "return a 200 response to redisplay the form with an error message for invalidly-formatted UTR" in {
       AuthStub.hasNoEnrolments(subscribingAgent)
-      val request = authenticatedRequest
+      val request = authenticatedRequest()
         .withFormUrlEncodedBody("utr" -> invalidUtr, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
 
@@ -80,7 +83,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec {
 
     "return a 200 response to redisplay the form with an error message for invalidly-formatted postcode" in {
       AuthStub.hasNoEnrolments(subscribingAgent)
-      val request = authenticatedRequest
+      val request = authenticatedRequest()
         .withFormUrlEncodedBody("utr" -> validUtr, "postcode" -> invalidPostcode)
       val result = await(controller.checkAgencyStatus(request))
 
@@ -94,7 +97,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec {
 
     "return a 200 response to redisplay the form with an error message for empty form parameters" in {
       AuthStub.hasNoEnrolments(subscribingAgent)
-      val request = authenticatedRequest
+      val request = authenticatedRequest()
         .withFormUrlEncodedBody("utr" -> "", "postcode" -> "")
       val result = await(controller.checkAgencyStatus(request))
 
@@ -108,7 +111,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec {
       AuthStub.hasNoEnrolments(subscribingAgent)
       val utr = "0000000000"
       AgentSubscriptionStub.withNonMatchingUtrAndPostcode(utr, validPostcode)
-      val request = authenticatedRequest
+      val request = authenticatedRequest()
         .withFormUrlEncodedBody("utr" -> utr, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
 
@@ -119,7 +122,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec {
     "redirect to confirm agency page for a user who supplies a UTR and post code that agent-subscription finds a matching registration for" in {
       AgentSubscriptionStub.withMatchingUtrAndPostcode(validUtr, validPostcode)
       AuthStub.hasNoEnrolments(subscribingAgent)
-      val request = authenticatedRequest
+      val request = authenticatedRequest()
         .withFormUrlEncodedBody("utr" -> validUtr, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
 
@@ -127,10 +130,34 @@ class CheckAgencyControllerISpec extends BaseControllerISpec {
       redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showConfirmYourAgency().url)
     }
 
+    "flash nextPage=notSubscribed when the business registration found by agent-subscription is not already subscribed" in {
+      AgentSubscriptionStub.withMatchingUtrAndPostcode(validUtr, validPostcode)
+      AuthStub.hasNoEnrolments(subscribingAgent)
+      val request = authenticatedRequest()
+        .withFormUrlEncodedBody("utr" -> validUtr, "postcode" -> validPostcode)
+      val result = await(controller.checkAgencyStatus(request))
+
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showConfirmYourAgency().url)
+      flash(result).get("nextPage") shouldBe Some(notSubscribed)
+    }
+
+    "flash nextPage=alreadySubscribed when the business registration found by agent-subscription is already subscribed" in {
+      AgentSubscriptionStub.withMatchingUtrAndPostcode(validUtr, validPostcode, isSubscribedToAgentServices = true)
+      AuthStub.hasNoEnrolments(subscribingAgent)
+      val request = authenticatedRequest()
+        .withFormUrlEncodedBody("utr" -> validUtr, "postcode" -> validPostcode)
+      val result = await(controller.checkAgencyStatus(request))
+
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showConfirmYourAgency().url)
+      flash(result).get("nextPage") shouldBe Some(alreadySubscribed)
+    }
+
     "propagate an exception when there is no organisation name" in {
       AgentSubscriptionStub.withNoOrganisationName(validUtr, validPostcode)
       AuthStub.hasNoEnrolments(subscribingAgent)
-      val request = authenticatedRequest
+      val request = authenticatedRequest()
         .withFormUrlEncodedBody("utr" -> validUtr, "postcode" -> validPostcode)
       val e = intercept[IllegalStateException] {
         await(controller.checkAgencyStatus(request))
@@ -146,7 +173,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec {
     "display the already subscribed page if the current user is logged in and has affinity group = Agent" in {
       AuthStub.hasNoEnrolments(subscribingAgent)
 
-      val result = await(controller.showAlreadySubscribed(authenticatedRequest))
+      val result = await(controller.showAlreadySubscribed(authenticatedRequest()))
 
       checkHtmlResultWithBodyText("Your agency is already subscribed", result)
     }
@@ -159,11 +186,12 @@ class CheckAgencyControllerISpec extends BaseControllerISpec {
     "display the has other enrolments page if the current user is logged in and has affinity group = Agent" in {
       AuthStub.hasNoEnrolments(subscribingAgent)
 
-      val result = await(controller.showHasOtherEnrolments(authenticatedRequest))
+      val result = await(controller.showHasOtherEnrolments(authenticatedRequest()))
 
       checkHtmlResultWithBodyText("Non-Agent Next Steps", result)
     }
   }
+
   "showNoAgencyFound" should {
 
     behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showNoAgencyFound(request))
@@ -171,7 +199,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec {
     "display the no agency found page if the current user is logged in and has affinity group = Agent" in {
       AuthStub.hasNoEnrolments(subscribingAgent)
 
-      val result = await(controller.showNoAgencyFound(authenticatedRequest))
+      val result = await(controller.showNoAgencyFound(authenticatedRequest()))
 
       checkHtmlResultWithBodyText("No Agency Found", result)
     }
@@ -186,10 +214,11 @@ class CheckAgencyControllerISpec extends BaseControllerISpec {
       val postcode = "AA11AA"
       val registrationName = "My Agency"
       AuthStub.hasNoEnrolments(subscribingAgent)
-      val request = authenticatedRequest.withFlash(
+      val request = authenticatedRequest().withFlash(
         "knownFactsPostcode" -> postcode,
         "utr" -> utr,
-        "registrationName" -> registrationName
+        "registrationName" -> registrationName,
+        "nextPage" -> notSubscribed
       )
 
       val result = await(controller.showConfirmYourAgency(request))
@@ -202,15 +231,42 @@ class CheckAgencyControllerISpec extends BaseControllerISpec {
 
     "show a button which allows the user to return to Check Agency Status page" in {
       AuthStub.hasNoEnrolments(subscribingAgent)
-      val request = authenticatedRequest.withFlash(
+      val request = authenticatedRequest().withFlash(
         "knownFactsPostcode" -> "AA11AA",
         "utr" -> "0123456789",
-        "registrationName" -> "My Agency"
+        "registrationName" -> "My Agency",
+        "nextPage" -> notSubscribed
       )
 
       val result = await(controller.showConfirmYourAgency(request))
 
       checkHtmlResultWithBodyText(routes.CheckAgencyController.showCheckAgencyStatus().url, result)
+    }
+
+    "show a link to the Not Yet Subscribed page if nextPage=notSubscribed" is pending
+
+    "show a link to the Already Subscribed page if nextPage=alreadySubscribed" in {
+      AuthStub.hasNoEnrolments(subscribingAgent)
+      val request = authenticatedRequest().withFlash(
+        "knownFactsPostcode" -> "AA11AA",
+        "utr" -> "0123456789",
+        "registrationName" -> "My Agency",
+        "nextPage" -> alreadySubscribed
+      )
+
+      val result = await(controller.showConfirmYourAgency(request))
+
+      checkHtmlResultWithBodyText(routes.CheckAgencyController.showAlreadySubscribed().url, result)
+    }
+
+    "redirect to the Check Agency Status page if there is no flash scope because the user has returned to a bookmark" in {
+      AuthStub.hasNoEnrolments(subscribingAgent)
+      val request = authenticatedRequest()
+
+      val result = await(controller.showConfirmYourAgency(request))
+
+      status(result) shouldBe 303
+      redirectLocation(result).get shouldBe routes.CheckAgencyController.showCheckAgencyStatus().url
     }
   }
 

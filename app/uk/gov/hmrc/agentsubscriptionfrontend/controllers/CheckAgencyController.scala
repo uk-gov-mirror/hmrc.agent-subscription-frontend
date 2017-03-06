@@ -18,6 +18,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import javax.inject.{Inject, Singleton}
 
+import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms.mapping
 import play.api.i18n.{I18nSupport, MessagesApi}
@@ -87,13 +88,23 @@ class CheckAgencyController @Inject()
                                             (implicit authContext: AuthContext, request: Request[AnyContent]): Future[Result] = {
     agentSubscriptionConnector.getRegistration(knownFacts.utr, knownFacts.postcode) map { maybeRegistration: Option[Registration] =>
       maybeRegistration match {
-        case Some(Registration(Some(name), _)) => Redirect(routes.CheckAgencyController.showConfirmYourAgency())
-                          .flashing("registrationName" -> name, "knownFactsPostcode" -> knownFacts.postcode, "utr" -> knownFacts.utr)
+        case Some(Registration(Some(name), isSubscribedToAgentServices)) => Redirect(routes.CheckAgencyController.showConfirmYourAgency())
+                          .flashing(
+                            "registrationName" -> name,
+                            "knownFactsPostcode" -> knownFacts.postcode,
+                            "utr" -> knownFacts.utr,
+                            "nextPage" -> nextPage(isSubscribedToAgentServices))
         case Some(_) => throw new IllegalStateException(s"The agency with UTR ${knownFacts.utr} has no organisation name.")
         case None => Redirect(routes.CheckAgencyController.showNoAgencyFound())
       }
     }
   }
+
+  private val alreadySubscribed = "alreadySubscribed"
+  private val notSubscribed = "notSubscribed"
+
+  private def nextPage(isSubscribedToAgentServices: Boolean) =
+    if (isSubscribedToAgentServices) alreadySubscribed else notSubscribed
 
   val showNoAgencyFound: Action[AnyContent] = AuthorisedWithSubscribingAgent {
     implicit authContext =>
@@ -101,9 +112,33 @@ class CheckAgencyController @Inject()
           Ok(html.no_agency_found())
   }
 
+  private def lookupNextPageUrl(nextPage: String, utr: String, postcode: String): Option[String] =
+    nextPage match {
+      case `alreadySubscribed` => Some(routes.CheckAgencyController.showAlreadySubscribed().url)
+      //TODO this should be the "Subscription Status-Not Subscribed page" page which is not yet implemented
+      case `notSubscribed` => Some(routes.SubscriptionController.showSubscriptionDetails(utr = utr, knownFactsPostcode = postcode).url)
+      case _ =>
+        Logger.warn(s"""Unknown nextPage: "$nextPage"""")
+        None
+    }
+
   val showConfirmYourAgency: Action[AnyContent] = AuthorisedWithSubscribingAgent {
     implicit authContext =>
       implicit request =>
-          Ok(html.confirm_your_agency(request.flash.data("registrationName"), request.flash.data("knownFactsPostcode"), request.flash.data("utr")))
+        (for {
+          postcode <- request.flash.data.get("knownFactsPostcode")
+          utr <- request.flash.data.get("utr")
+          nextPage <- request.flash.data.get("nextPage")
+          nextPageUrl <- lookupNextPageUrl(nextPage, utr = utr, postcode = postcode)
+        } yield {
+          Ok(html.confirm_your_agency(
+            registrationName = request.flash.data("registrationName"),
+            postcode = postcode,
+            utr = utr,
+            nextPageUrl = nextPageUrl))
+        }) getOrElse {
+          Logger.warn("Missing flash scope or unknown nextPage, redirecting back to check-agency-status")
+          Redirect(routes.CheckAgencyController.showCheckAgencyStatus())
+        }
   }
 }
