@@ -166,18 +166,6 @@ class CheckAgencyControllerISpec extends BaseControllerISpec {
     }
 
   }
-  "showAlreadySubscribed" should {
-
-    behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showAlreadySubscribed(request))
-
-    "display the already subscribed page if the current user is logged in and has affinity group = Agent" in {
-      AuthStub.hasNoEnrolments(subscribingAgent)
-
-      val result = await(controller.showAlreadySubscribed(authenticatedRequest()))
-
-      checkHtmlResultWithBodyText("Your agency is already subscribed", result)
-    }
-  }
 
   "showHasOtherEnrolments" should {
 
@@ -270,4 +258,16 @@ class CheckAgencyControllerISpec extends BaseControllerISpec {
     }
   }
 
+  "showAlreadySubscribed" should {
+
+    behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showAlreadySubscribed(request))
+
+    "display the already subscribed page if the current user is logged in and has affinity group = Agent" in {
+      AuthStub.hasNoEnrolments(subscribingAgent)
+
+      val result = await(controller.showAlreadySubscribed(authenticatedRequest()))
+
+      checkHtmlResultWithBodyText("Your agency is already subscribed", result)
+    }
+  }
 }

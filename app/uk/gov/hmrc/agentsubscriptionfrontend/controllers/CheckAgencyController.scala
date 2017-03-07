@@ -53,10 +53,6 @@ class CheckAgencyController @Inject()
           Future successful Ok(html.check_agency_status(knownFactsForm))
   }
 
-  val showAlreadySubscribed: Action[AnyContent] = AuthorisedWithSubscribingAgent { implicit authContext => implicit request =>
-    Ok(html.already_subscribed())
-  }
-
   val showHasOtherEnrolments: Action[AnyContent] = AuthorisedWithSubscribingAgent { implicit authContext => implicit request =>
     Ok(html.has_other_enrolments())
   }
@@ -140,5 +136,9 @@ class CheckAgencyController @Inject()
           Logger.warn("Missing flash scope or unknown nextPage, redirecting back to check-agency-status")
           Redirect(routes.CheckAgencyController.showCheckAgencyStatus())
         }
+  }
+
+  val showAlreadySubscribed: Action[AnyContent] = AuthorisedWithSubscribingAgent { implicit authContext => implicit request =>
+    Ok(html.already_subscribed())
   }
 }
