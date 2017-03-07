@@ -23,6 +23,7 @@ import play.api.mvc._
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentSubscriptionConnector
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController
+import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{TestAppConfig, TestMessagesApi}
 import uk.gov.hmrc.play.frontend.auth.AuthContext
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
@@ -41,11 +42,12 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
 
       val authConnector = mock[AuthConnector]
       val agentSubscriptionConnector = mock[AgentSubscriptionConnector]
+      val sessionStoreService = mock[SessionStoreService]
       val failure = Upstream5xxResponse("failure in auth", 500, 500)
       when(authConnector.currentAuthority(any[HeaderCarrier])).thenReturn(Future successful Some(authority))
       when(authConnector.getUserDetails(any[AuthContext])(any[HeaderCarrier], any[HttpReads[HttpResponse]])).thenReturn(Future failed failure)
 
-      val controller = new CheckAgencyController(TestMessagesApi.testMessagesApi, authConnector, agentSubscriptionConnector)
+      val controller = new CheckAgencyController(TestMessagesApi.testMessagesApi, authConnector, agentSubscriptionConnector, sessionStoreService)
 
       intercept[Upstream5xxResponse] {
         val eventualResult: Future[Result] = controller.showCheckAgencyStatus(mockRequestWithMockAuthSession)
