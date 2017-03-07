@@ -22,7 +22,7 @@ abstract class BaseControllerISpec extends UnitSpec with OneAppPerSuite with Wir
 
   protected implicit val materializer = app.materializer
 
-  protected def authenticatedRequest = {
+  protected def authenticatedRequest() = {
     val sessionKeys = AuthStub.userIsAuthenticated(subscribingAgent)
     FakeRequest().withSession(sessionKeys: _*)
   }

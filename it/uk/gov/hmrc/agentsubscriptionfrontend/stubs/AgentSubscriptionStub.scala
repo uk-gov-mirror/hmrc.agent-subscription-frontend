@@ -22,26 +22,33 @@ import uk.gov.hmrc.agentsubscriptionfrontend.models.SubscriptionRequest
 import uk.gov.hmrc.play.encoding.UriPathEncoding.encodePathSegment
 
 object AgentSubscriptionStub {
+  private def response(isSubscribedToAgentServices: Boolean) =
+    s"""
+      |{
+      |  "organisationName": "My Agency",
+      |  "isSubscribedToAgentServices": $isSubscribedToAgentServices
+      |}""".stripMargin
 
-  def withMatchingUtrAndPostcode(utr: String, postcode: String): Unit = {
-    stubFor(get(urlEqualTo(s"/agent-subscription/registration/${encodePathSegment(utr)}/postcode/${encodePathSegment(postcode)}"))
-      .willReturn(
-        aResponse()
-          .withStatus(Status.OK)
-            .withBody(
-              s"""
-                 |{
-                 |  "organisationName": "My Agency"
-                 |}
-               """.stripMargin)))
+  private val noOrganisationNameResponse =
+    """
+      |{
+      |  "isSubscribedToAgentServices": false
+      |}""".stripMargin
+
+  def withMatchingUtrAndPostcode(utr: String, postcode: String, isSubscribedToAgentServices: Boolean = false): Unit = {
+    withMatchingUtrAndPostcodeAndBody(utr, postcode, response(isSubscribedToAgentServices))
   }
 
   def withNoOrganisationName(utr: String, postcode: String): Unit = {
+    withMatchingUtrAndPostcodeAndBody(utr, postcode, noOrganisationNameResponse)
+  }
+
+  private def withMatchingUtrAndPostcodeAndBody(utr: String, postcode: String, responseBody: String): Unit = {
     stubFor(get(urlEqualTo(s"/agent-subscription/registration/${encodePathSegment(utr)}/postcode/${encodePathSegment(postcode)}"))
       .willReturn(
         aResponse()
           .withStatus(Status.OK)
-          .withBody("{}")))
+          .withBody(responseBody)))
   }
 
   def withNonMatchingUtrAndPostcode(utr: String, postcode: String): Unit = {
@@ -105,7 +112,6 @@ object AgentSubscriptionStub {
            |    "telephone": "${agency.telephone}",
            |    "email": "${agency.email}"
            |  }
-           |}
-              """.stripMargin))
+           |}""".stripMargin))
   }
 }

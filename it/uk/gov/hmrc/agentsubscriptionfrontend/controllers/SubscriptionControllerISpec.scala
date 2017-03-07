@@ -32,7 +32,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec {
     "populate form with utr and postcode" in {
       AuthStub.hasNoEnrolments(subscribingAgent)
 
-      val result = await(controller.showSubscriptionDetails("utr", "AA1 1AA")(authenticatedRequest))
+      val result = await(controller.showSubscriptionDetails("utr", "AA1 1AA")(authenticatedRequest()))
 
      checkHtmlResultWithBodyText("value=\"utr\"", result)
      checkHtmlResultWithBodyText("value=\"AA1 1AA\"", result)
@@ -195,7 +195,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec {
   }
 
   private def subscriptionDetailsRequest(keyToRemove: String = "", additionalParameters: Seq[(String, String)] = Seq()) =
-    authenticatedRequest.withFormUrlEncodedBody(
+    authenticatedRequest().withFormUrlEncodedBody(
         Seq("utr" -> utr,
             "knownFactsPostcode" -> "AA1 2AA",
             "name" -> "My Agency",
