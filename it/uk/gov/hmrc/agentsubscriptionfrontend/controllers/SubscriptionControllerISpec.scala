@@ -118,9 +118,36 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
       }
 
       "email is omitted" in {
-         AuthStub.hasNoEnrolments(subscribingAgent)
+        AuthStub.hasNoEnrolments(subscribingAgent)
 
         val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("email")))
+
+        status(result) shouldBe 200
+        checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
+      }
+
+      "email has no text in the local part" in {
+        AuthStub.hasNoEnrolments(subscribingAgent)
+
+        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("email", Seq("email" -> "@domain"))))
+
+        status(result) shouldBe 200
+        checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
+      }
+
+      "email has no text in the domain part" in {
+        AuthStub.hasNoEnrolments(subscribingAgent)
+
+        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("email", Seq("email" -> "local@"))))
+
+        status(result) shouldBe 200
+        checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
+      }
+
+      "email does not contain an '@'" in {
+        AuthStub.hasNoEnrolments(subscribingAgent)
+
+        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("email", Seq("email" -> "local"))))
 
         status(result) shouldBe 200
         checkHtmlResultWithBodyText("Subscribe to Agent Services", result)

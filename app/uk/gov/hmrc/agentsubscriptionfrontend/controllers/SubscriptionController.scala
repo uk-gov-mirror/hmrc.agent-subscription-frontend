@@ -56,7 +56,7 @@ class SubscriptionController @Inject()
       "utr" -> FieldMappings.utr,
       "knownFactsPostcode" -> FieldMappings.postcode,
       "name" -> nonEmptyText,
-      "email" -> nonEmptyText,
+      "email" -> email,
       "telephone" -> nonEmptyText,
       "addressLine1" -> nonEmptyText,
       "addressLine2" -> nonEmptyText,
