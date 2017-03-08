@@ -171,6 +171,16 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
       }
 
+      "telephone is invalid" in {
+        AuthStub.hasNoEnrolments(subscribingAgent)
+
+        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("telephone", Seq("telephone" -> "12345"))))
+
+        status(result) shouldBe 200
+        checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
+      }
+
+
       "building and street is omitted" in {
          AuthStub.hasNoEnrolments(subscribingAgent)
 

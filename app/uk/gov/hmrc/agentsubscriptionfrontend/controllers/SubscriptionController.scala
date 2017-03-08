@@ -25,7 +25,7 @@ import play.api.mvc.{AnyContent, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionService}
-import uk.gov.hmrc.agentsubscriptionfrontend.controllers.FieldMappings.{postcode, utr}
+import uk.gov.hmrc.agentsubscriptionfrontend.controllers.FieldMappings._
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
@@ -58,7 +58,7 @@ class SubscriptionController @Inject()
       "knownFactsPostcode" -> postcode,
       "name" -> nonEmptyText(maxLength = 40),
       "email" -> email,
-      "telephone" -> nonEmptyText,
+      "telephone" -> telephoneNumber,
       "addressLine1" -> nonEmptyText(maxLength = 35),
       "addressLine2" -> nonEmptyText,
       "addressLine3" -> optional(nonEmptyText),
