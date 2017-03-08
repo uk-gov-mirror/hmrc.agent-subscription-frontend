@@ -228,7 +228,16 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
       checkHtmlResultWithBodyText(routes.CheckAgencyController.showCheckAgencyStatus().url, result)
     }
 
-    "show a link to the Not Yet Subscribed page if isSubscribedToAgentServices=false" is pending
+    "show a link to the Not Yet Subscribed page if isSubscribedToAgentServices=false" in {
+      AuthStub.hasNoEnrolments(subscribingAgent)
+      sessionStoreService.knownFactsResult = Some(
+        KnownFactsResult(utr = "0123456789", postcode = "AA11AA", organisationName = "My Agency", isSubscribedToAgentServices = false))
+      val request = authenticatedRequest()
+
+      val result = await(controller.showConfirmYourAgency(request))
+
+      checkHtmlResultWithBodyText(routes.CheckAgencyController.showNotSubscribed().url, result)
+    }
 
     "show a link to the Already Subscribed page if isSubscribedToAgentServices=true" in {
       AuthStub.hasNoEnrolments(subscribingAgent)
@@ -261,6 +270,32 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
       val result = await(controller.showAlreadySubscribed(authenticatedRequest()))
 
       checkHtmlResultWithBodyText("Your agency is already subscribed", result)
+    }
+  }
+
+  "showNotSubscribed" should {
+
+    behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showNotSubscribed(request))
+
+    "display the not subscribed page if the current user is logged in and has affinity group = Agent" in {
+      AuthStub.hasNoEnrolments(subscribingAgent)
+      sessionStoreService.knownFactsResult = Some(
+        KnownFactsResult(utr = "0123456789", postcode = "AA11AA", organisationName = "My Agency", isSubscribedToAgentServices = true))
+
+      val result = await(controller.showNotSubscribed(authenticatedRequest()))
+
+      checkHtmlResultWithBodyText("Your agency is NOT subscribed", result)
+      checkHtmlResultWithBodyText("My Agency", result)
+      checkHtmlResultWithBodyText(routes.SubscriptionController.showSubscriptionDetails().url, result)
+    }
+
+    "redirect to the Check Agency Status page if there is no KnownFactsResult in session because the user has returned to a bookmark" in {
+      AuthStub.hasNoEnrolments(subscribingAgent)
+      val request = authenticatedRequest()
+
+      val result = await(controller.showNotSubscribed(request))
+
+      resultShouldBeSessionDataMissing(result)
     }
   }
 }

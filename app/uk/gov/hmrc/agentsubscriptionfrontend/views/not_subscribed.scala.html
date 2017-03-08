@@ -1,0 +1,10 @@
+@import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
+@import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
+@(registrationName: String)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+
+@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = "Agency Status", bodyClasses = None) {
+  <h1>Your agency is NOT subscribed</h1>
+  <p>If you're authorised to act on behalf of <span class="bold">@registrationName</span> you can subscribe the agency now.</p>
+
+  <a class="button" href="@routes.SubscriptionController.showSubscriptionDetails().url"> Continue</a>
+}
