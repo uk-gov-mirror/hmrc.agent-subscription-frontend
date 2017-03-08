@@ -76,7 +76,7 @@ class CheckAgencyController @Inject()
   }
 
   private def checkAgencyStatusGivenValidForm(knownFacts: KnownFacts)
-                                            (implicit authContext: AuthContext, request: Request[AnyContent]): Future[Result] = {
+    (implicit authContext: AuthContext, request: Request[AnyContent]): Future[Result] = {
     agentSubscriptionConnector.getRegistration(knownFacts.utr, knownFacts.postcode) map { maybeRegistration: Option[Registration] =>
       maybeRegistration match {
         case Some(Registration(Some(name), isSubscribedToAgentServices)) =>
@@ -102,8 +102,7 @@ class CheckAgencyController @Inject()
     if (isSubscribedToAgentServices)
       routes.CheckAgencyController.showAlreadySubscribed().url
     else
-      //TODO this should be the "Subscription Status-Not Subscribed page" page which is not yet implemented
-      routes.SubscriptionController.showSubscriptionDetails().url
+      routes.CheckAgencyController.showNotSubscribed().url
 
   val showConfirmYourAgency: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync {
     implicit authContext =>
@@ -121,5 +120,13 @@ class CheckAgencyController @Inject()
 
   val showAlreadySubscribed: Action[AnyContent] = AuthorisedWithSubscribingAgent { implicit authContext => implicit request =>
     Ok(html.already_subscribed())
+  }
+
+  val showNotSubscribed: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync { implicit authContext => implicit request =>
+    sessionStoreService.fetchKnownFactsResult.map(_.map { knownFactsResult =>
+      Ok(html.not_subscribed(registrationName = knownFactsResult.organisationName))
+        }.getOrElse {
+          sessionMissingRedirect()
+        })
   }
 }
