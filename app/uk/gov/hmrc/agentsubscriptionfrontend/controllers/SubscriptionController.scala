@@ -58,7 +58,7 @@ class SubscriptionController @Inject()
       "name" -> nonEmptyText,
       "email" -> email,
       "telephone" -> nonEmptyText,
-      "addressLine1" -> nonEmptyText,
+      "addressLine1" -> nonEmptyText(maxLength = 35),
       "addressLine2" -> nonEmptyText,
       "addressLine3" -> optional(nonEmptyText),
       "postcode" -> FieldMappings.postcode

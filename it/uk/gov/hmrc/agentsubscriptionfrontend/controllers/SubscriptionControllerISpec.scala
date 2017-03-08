@@ -171,6 +171,24 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
       }
 
+      "building and street is whitespace only" in {
+        AuthStub.hasNoEnrolments(subscribingAgent)
+
+        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("addressLine1", Seq("addressLine1" -> "    "))))
+
+        status(result) shouldBe 200
+        checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
+      }
+
+      "building and street should be a maximum of 35 characters" in {
+        AuthStub.hasNoEnrolments(subscribingAgent)
+
+        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("addressLine1", Seq("addressLine1" -> "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii"))))
+
+        status(result) shouldBe 200
+        checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
+      }
+
       "town is omitted" in {
          AuthStub.hasNoEnrolments(subscribingAgent)
 
