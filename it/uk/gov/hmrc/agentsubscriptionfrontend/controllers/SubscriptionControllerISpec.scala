@@ -117,6 +117,15 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         sessionStoreService.removeCalled shouldBe false
       }
 
+      "name is longer than 40 characters" in {
+        AuthStub.hasNoEnrolments(subscribingAgent)
+
+        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("name", Seq("name" -> "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii"))))
+
+        status(result) shouldBe 200
+        checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
+      }
+
       "email is omitted" in {
         AuthStub.hasNoEnrolments(subscribingAgent)
 
@@ -183,7 +192,8 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
       "building and street should be a maximum of 35 characters" in {
         AuthStub.hasNoEnrolments(subscribingAgent)
 
-        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("addressLine1", Seq("addressLine1" -> "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii"))))
+        val result = await(controller.submitSubscriptionDetails(
+            subscriptionDetailsRequest("addressLine1", Seq("addressLine1" -> "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii"))))
 
         status(result) shouldBe 200
         checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
