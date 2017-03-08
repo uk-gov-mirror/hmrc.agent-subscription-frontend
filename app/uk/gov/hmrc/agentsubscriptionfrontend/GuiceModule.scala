@@ -21,16 +21,20 @@ import javax.inject.Provider
 
 import com.google.inject.AbstractModule
 import com.google.inject.name.Names
-import uk.gov.hmrc.agentsubscriptionfrontend.config.{AppConfig, FrontendAppConfig, FrontendAuthConnector, WSHttp}
+import uk.gov.hmrc.agentsubscriptionfrontend.config._
+import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
+import uk.gov.hmrc.http.cache.client.SessionCache
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.http.HttpGet
 
-class GuiceModule extends AbstractModule with ServicesConfig{
+class GuiceModule extends AbstractModule with ServicesConfig {
   override def configure(): Unit = {
     bind(classOf[HttpGet]).toInstance(WSHttp)
     bind(classOf[AppConfig]).to(classOf[FrontendAppConfig])
     bind(classOf[AuthConnector]).to(classOf[FrontendAuthConnector])
+    bind(classOf[SessionCache]).toInstance(AgentSubscriptionSessionCache)
+    bind(classOf[SessionStoreService])
     bindBaseUrl("agent-subscription")
   }
 

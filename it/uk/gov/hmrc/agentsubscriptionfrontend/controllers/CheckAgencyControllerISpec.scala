@@ -16,10 +16,11 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 import play.api.test.Helpers._
+import uk.gov.hmrc.agentsubscriptionfrontend.models.KnownFactsResult
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.{AgentSubscriptionStub, AuthStub}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUsers._
 
-class CheckAgencyControllerISpec extends BaseControllerISpec {
+class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMissingSpec {
 
   private val validUtr = "0123456789"
   private val invalidUtr = "0123456"
@@ -119,7 +120,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec {
       redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showNoAgencyFound().url)
     }
 
-    "redirect to confirm agency page for a user who supplies a UTR and post code that agent-subscription finds a matching registration for" in {
+    "redirect to confirm agency page and store known facts result in the session store when a matching registration is found for the UTR and postcode" in {
       AgentSubscriptionStub.withMatchingUtrAndPostcode(validUtr, validPostcode)
       AuthStub.hasNoEnrolments(subscribingAgent)
       val request = authenticatedRequest()
@@ -128,9 +129,11 @@ class CheckAgencyControllerISpec extends BaseControllerISpec {
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showConfirmYourAgency().url)
+
+      sessionStoreService.knownFactsResult shouldBe Some(KnownFactsResult(validUtr, validPostcode, "My Agency", isSubscribedToAgentServices = false))
     }
 
-    "flash nextPage=notSubscribed when the business registration found by agent-subscription is not already subscribed" in {
+    "store isSubscribedToAgentServices = false in session when the business registration found by agent-subscription is not already subscribed" in {
       AgentSubscriptionStub.withMatchingUtrAndPostcode(validUtr, validPostcode)
       AuthStub.hasNoEnrolments(subscribingAgent)
       val request = authenticatedRequest()
@@ -139,10 +142,10 @@ class CheckAgencyControllerISpec extends BaseControllerISpec {
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showConfirmYourAgency().url)
-      flash(result).get("nextPage") shouldBe Some(notSubscribed)
+      sessionStoreService.knownFactsResult.get.isSubscribedToAgentServices shouldBe false
     }
 
-    "flash nextPage=alreadySubscribed when the business registration found by agent-subscription is already subscribed" in {
+    "store isSubscribedToAgentServices = true in session when the business registration found by agent-subscription is already subscribed" in {
       AgentSubscriptionStub.withMatchingUtrAndPostcode(validUtr, validPostcode, isSubscribedToAgentServices = true)
       AuthStub.hasNoEnrolments(subscribingAgent)
       val request = authenticatedRequest()
@@ -151,7 +154,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec {
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showConfirmYourAgency().url)
-      flash(result).get("nextPage") shouldBe Some(alreadySubscribed)
+      sessionStoreService.knownFactsResult.get.isSubscribedToAgentServices shouldBe true
     }
 
     "propagate an exception when there is no organisation name" in {
@@ -201,13 +204,10 @@ class CheckAgencyControllerISpec extends BaseControllerISpec {
       val utr = "0123456789"
       val postcode = "AA11AA"
       val registrationName = "My Agency"
+      sessionStoreService.knownFactsResult = Some(
+        KnownFactsResult(utr = utr, postcode = postcode, organisationName = registrationName, isSubscribedToAgentServices = false))
       AuthStub.hasNoEnrolments(subscribingAgent)
-      val request = authenticatedRequest().withFlash(
-        "knownFactsPostcode" -> postcode,
-        "utr" -> utr,
-        "registrationName" -> registrationName,
-        "nextPage" -> notSubscribed
-      )
+      val request = authenticatedRequest()
 
       val result = await(controller.showConfirmYourAgency(request))
 
@@ -219,42 +219,35 @@ class CheckAgencyControllerISpec extends BaseControllerISpec {
 
     "show a button which allows the user to return to Check Agency Status page" in {
       AuthStub.hasNoEnrolments(subscribingAgent)
-      val request = authenticatedRequest().withFlash(
-        "knownFactsPostcode" -> "AA11AA",
-        "utr" -> "0123456789",
-        "registrationName" -> "My Agency",
-        "nextPage" -> notSubscribed
-      )
+      sessionStoreService.knownFactsResult = Some(
+        KnownFactsResult(utr = "0123456789", postcode = "AA11AA", organisationName = "My Agency", isSubscribedToAgentServices = false))
+      val request = authenticatedRequest()
 
       val result = await(controller.showConfirmYourAgency(request))
 
       checkHtmlResultWithBodyText(routes.CheckAgencyController.showCheckAgencyStatus().url, result)
     }
 
-    "show a link to the Not Yet Subscribed page if nextPage=notSubscribed" is pending
+    "show a link to the Not Yet Subscribed page if isSubscribedToAgentServices=false" is pending
 
-    "show a link to the Already Subscribed page if nextPage=alreadySubscribed" in {
+    "show a link to the Already Subscribed page if isSubscribedToAgentServices=true" in {
       AuthStub.hasNoEnrolments(subscribingAgent)
-      val request = authenticatedRequest().withFlash(
-        "knownFactsPostcode" -> "AA11AA",
-        "utr" -> "0123456789",
-        "registrationName" -> "My Agency",
-        "nextPage" -> alreadySubscribed
-      )
+      sessionStoreService.knownFactsResult = Some(
+        KnownFactsResult(utr = "0123456789", postcode = "AA11AA", organisationName = "My Agency", isSubscribedToAgentServices = true))
+      val request = authenticatedRequest()
 
       val result = await(controller.showConfirmYourAgency(request))
 
       checkHtmlResultWithBodyText(routes.CheckAgencyController.showAlreadySubscribed().url, result)
     }
 
-    "redirect to the Check Agency Status page if there is no flash scope because the user has returned to a bookmark" in {
+    "redirect to the Check Agency Status page if there is no KnownFactsResult in session because the user has returned to a bookmark" in {
       AuthStub.hasNoEnrolments(subscribingAgent)
       val request = authenticatedRequest()
 
       val result = await(controller.showConfirmYourAgency(request))
 
-      status(result) shouldBe 303
-      redirectLocation(result).get shouldBe routes.CheckAgencyController.showCheckAgencyStatus().url
+      resultShouldBeSessionDataMissing(result)
     }
   }
 

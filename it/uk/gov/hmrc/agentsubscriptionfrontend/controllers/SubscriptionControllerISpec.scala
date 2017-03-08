@@ -17,25 +17,36 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import play.api.test.Helpers._
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{Address, Agency, KnownFacts => ModelKnownFacts, SubscriptionRequest}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{Address, Agency, KnownFactsResult, SubscriptionRequest, KnownFacts => ModelKnownFacts}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.{AgentSubscriptionStub, AuthStub}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUsers._
 
-class SubscriptionControllerISpec extends BaseControllerISpec {
+class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMissingSpec {
   private val utr  = "0123456789"
 
   private lazy val controller: SubscriptionController = app.injector.instanceOf[SubscriptionController]
 
   "showSubscriptionDetails" should {
-    behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showSubscriptionDetails("utr", "AA1 1AA")(request))
+    behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showSubscriptionDetails(request))
 
     "populate form with utr and postcode" in {
       AuthStub.hasNoEnrolments(subscribingAgent)
+      sessionStoreService.knownFactsResult = Some(
+        KnownFactsResult(utr = "utr", postcode = "AA1 1AA", organisationName = "My Agency", isSubscribedToAgentServices = false))
 
-      val result = await(controller.showSubscriptionDetails("utr", "AA1 1AA")(authenticatedRequest()))
+      val result = await(controller.showSubscriptionDetails(authenticatedRequest()))
 
      checkHtmlResultWithBodyText("value=\"utr\"", result)
      checkHtmlResultWithBodyText("value=\"AA1 1AA\"", result)
+    }
+
+    "redirect to the Check Agency Status page if there is no KnownFactsResult in session because the user has returned to a bookmark" in {
+      AuthStub.hasNoEnrolments(subscribingAgent)
+      val request = authenticatedRequest()
+
+      val result = await(controller.showSubscriptionDetails(request))
+
+      resultShouldBeSessionDataMissing(result)
     }
   }
 
@@ -55,6 +66,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec {
 
         status(result) shouldBe 303
         redirectLocation(result).head shouldBe routes.SubscriptionController.showSubscriptionComplete().url
+        sessionStoreService.removeCalled shouldBe true
       }
 
       "county is omitted" in {
@@ -77,6 +89,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec {
 
         status(result) shouldBe 303
         redirectLocation(result).head shouldBe routes.SubscriptionController.showSubscriptionFailed().url
+        sessionStoreService.removeCalled shouldBe true
       }
     }
 
@@ -89,6 +102,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec {
 
         status(result) shouldBe 303
         redirectLocation(result).head shouldBe routes.CheckAgencyController.showAlreadySubscribed().url
+        sessionStoreService.removeCalled shouldBe true
       }
     }
 
@@ -100,6 +114,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec {
 
         status(result) shouldBe 200
         checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
+        sessionStoreService.removeCalled shouldBe false
       }
 
       "email is omitted" in {

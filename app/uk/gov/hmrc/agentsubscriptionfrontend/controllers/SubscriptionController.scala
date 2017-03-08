@@ -24,7 +24,7 @@ import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{AnyContent, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.service.SubscriptionService
+import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
@@ -45,10 +45,11 @@ case class SubscriptionDetails(utr: String,
 class SubscriptionController @Inject()
   (override val messagesApi: MessagesApi,
    override val authConnector: AuthConnector,
-   subscriptionService: SubscriptionService
+   subscriptionService: SubscriptionService,
+   sessionStoreService: SessionStoreService
   )
   (implicit appConfig: AppConfig)
-  extends FrontendController with I18nSupport with AuthActions {
+  extends FrontendController with I18nSupport with AuthActions with SessionDataMissing {
 
   private val subscriptionDetails = Form[SubscriptionDetails](
     mapping(
@@ -64,10 +65,14 @@ class SubscriptionController @Inject()
     )(SubscriptionDetails.apply)(SubscriptionDetails.unapply)
   )
 
-  def showSubscriptionDetails(utr: String, knownFactsPostcode: String): Action[AnyContent] =
-    AuthorisedWithSubscribingAgent { implicit authContext => implicit request =>
-      Ok(html.subscription_details(subscriptionDetails.fill(SubscriptionDetails(utr, knownFactsPostcode, null, null, null, null, null, None, null))))
-  }
+  val showSubscriptionDetails: Action[AnyContent] =
+    AuthorisedWithSubscribingAgentAsync { implicit authContext => implicit request =>
+      sessionStoreService.fetchKnownFactsResult.map(_.map { knownFactsResult =>
+        Ok(html.subscription_details(subscriptionDetails.fill(SubscriptionDetails(knownFactsResult.utr, knownFactsResult.postcode, null, null, null, null, null, None, null))))
+      }.getOrElse {
+        sessionMissingRedirect()
+      })
+    }
 
   val submitSubscriptionDetails: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync {
     implicit authContext =>
@@ -76,11 +81,15 @@ class SubscriptionController @Inject()
           formWithErrors => {
             Future successful Ok(html.subscription_details(formWithErrors))
           },
-          form => subscriptionService.subscribeAgencyToMtd(form) map {
-            case Right(_) => Redirect(routes.SubscriptionController.showSubscriptionComplete())
-            case Left(CONFLICT) => Redirect(routes.CheckAgencyController.showAlreadySubscribed())
-            case Left(FORBIDDEN) => Redirect(routes.SubscriptionController.showSubscriptionFailed())
-            case Left(error) => InternalServerError(s"Unknown error code from agent-subscription $error")
+          form => subscriptionService.subscribeAgencyToMtd(form) flatMap { subscriptionResponse =>
+            sessionStoreService.remove() map { _ =>
+              subscriptionResponse match {
+                case Right(_) => Redirect(routes.SubscriptionController.showSubscriptionComplete())
+                case Left(CONFLICT) => Redirect(routes.CheckAgencyController.showAlreadySubscribed())
+                case Left(FORBIDDEN) => Redirect(routes.SubscriptionController.showSubscriptionFailed())
+                case Left(error) => InternalServerError(s"Unknown error code from agent-subscription $error")
+              }
+            }
           })
   }
 
