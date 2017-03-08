@@ -70,7 +70,7 @@ class SubscriptionController @Inject()
       sessionStoreService.fetchKnownFactsResult.map(_.map { knownFactsResult =>
         Ok(html.subscription_details(subscriptionDetails.fill(SubscriptionDetails(knownFactsResult.utr, knownFactsResult.postcode, null, null, null, null, null, None, null))))
       }.getOrElse {
-        showSessionDataMissing()
+        sessionMissingRedirect()
       })
     }
 

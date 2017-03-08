@@ -22,7 +22,7 @@ import play.api.mvc.{Result, Results}
 trait SessionDataMissing {
   this: Results =>
 
-  def showSessionDataMissing(): Result = {
+  def sessionMissingRedirect(): Result = {
     Logger.warn("No KnownFactsResult in session store, redirecting back to check-agency-status")
     Redirect(routes.CheckAgencyController.showCheckAgencyStatus())
   }

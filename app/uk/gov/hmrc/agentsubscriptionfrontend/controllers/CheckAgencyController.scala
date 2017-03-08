@@ -115,7 +115,7 @@ class CheckAgencyController @Inject()
             utr = knownFactsResult.utr,
             nextPageUrl = lookupNextPageUrl(knownFactsResult.isSubscribedToAgentServices)))
         }.getOrElse {
-          showSessionDataMissing()
+          sessionMissingRedirect()
         })
   }
 
