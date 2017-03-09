@@ -42,7 +42,7 @@ object SubscriptionRequest {
 case class Arn(arn: String)
 
 case class Address(addressLine1: String,
-                   addressLine2: String,
+                   addressLine2: Option[String],
                    addressLine3: Option[String] = None,
                    addressLine4: Option[String] = None,
                    postcode: String,

@@ -71,9 +71,23 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
 
       "county is omitted" in {
         AuthStub.hasNoEnrolments(subscribingAgent)
-        AgentSubscriptionStub.subscriptionSuccess(utr, subscriptionRequest)
+        AgentSubscriptionStub.subscriptionSuccess(utr, subscriptionRequest.copy(
+          agency = subscriptionRequest.agency.copy(
+            address = subscriptionRequest.agency.address.copy(addressLine3 = None))))
 
         val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("addressLine3")))
+
+        status(result) shouldBe 303
+        redirectLocation(result).head shouldBe routes.SubscriptionController.showSubscriptionComplete().url
+      }
+
+      "town is omitted" in {
+        AuthStub.hasNoEnrolments(subscribingAgent)
+        AgentSubscriptionStub.subscriptionSuccess(utr, subscriptionRequest.copy(
+          agency = subscriptionRequest.agency.copy(
+            address = subscriptionRequest.agency.address.copy(addressLine2 = None))))
+
+        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("addressLine2")))
 
         status(result) shouldBe 303
         redirectLocation(result).head shouldBe routes.SubscriptionController.showSubscriptionComplete().url
@@ -199,7 +213,8 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
       }
 
-      "building and street should be a maximum of 35 characters" in {
+
+      "building and street is longer than 35 characters" in {
         AuthStub.hasNoEnrolments(subscribingAgent)
 
         val result = await(controller.submitSubscriptionDetails(
@@ -209,10 +224,21 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
       }
 
-      "town is omitted" in {
-         AuthStub.hasNoEnrolments(subscribingAgent)
+      "town is longer than 35 characters" in {
+        AuthStub.hasNoEnrolments(subscribingAgent)
 
-        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("addressLine2")))
+        val result = await(controller.submitSubscriptionDetails(
+          subscriptionDetailsRequest("addressLine2", Seq("addressLine2" -> "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii"))))
+
+        status(result) shouldBe 200
+        checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
+      }
+
+      "county is longer than 35 characters" in {
+        AuthStub.hasNoEnrolments(subscribingAgent)
+
+        val result = await(controller.submitSubscriptionDetails(
+          subscriptionDetailsRequest("addressLine3", Seq("addressLine3" -> "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii"))))
 
         status(result) shouldBe 200
         checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
@@ -283,6 +309,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
             "telephone" -> "0123 456 7890",
             "addressLine1" -> "1 Some Street",
             "addressLine2" -> "Sometown",
+            "addressLine3" -> "County",
             "postcode" -> "AA1 1AA").filter(_._1 != keyToRemove) ++ additionalParameters: _*
     )
 
@@ -290,7 +317,11 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
     SubscriptionRequest(utr = utr,
       knownFacts = ModelKnownFacts("AA1 2AA"),
       agency = Agency(name = "My Agency",
-        address = Address(addressLine1 = "1 Some Street", addressLine2 = "Sometown", postcode = "AA1 1AA", countryCode = "GB"),
+        address = Address(addressLine1 = "1 Some Street",
+                          addressLine2 = Some("Sometown"),
+                          addressLine3 = Some("County"),
+                          postcode = "AA1 1AA",
+              countryCode = "GB"),
         email = "agency@example.com",
         telephone = "0123 456 7890"))
 
