@@ -24,7 +24,6 @@ package object controllers {
 
   object FieldMappings {
     private val utrConstraint = Constraints.pattern("^\\d{10}$".r, error = "error.utr.invalid")
-    private val telephoneConstraint = Constraints.pattern("[A-Z0-9 )/(\\-*+#]{10,32}".r, error = "error.telephone.invalid")
     private val nonEmptyUtr: Constraint[String] = Constraint[String] { fieldValue: String =>
       Constraints.nonEmpty(fieldValue) match {
         case i: Invalid =>
@@ -51,7 +50,10 @@ package object controllers {
     private val nonEmptyTelephoneNumber: Constraint[String] = Constraint[String] { fieldValue: String =>
       Constraints.nonEmpty(fieldValue) match {
         case i: Invalid => i
-        case Valid => telephoneConstraint(fieldValue)
+        case Valid => (fieldValue.length, fieldValue.replaceAll("[^0-9]", "").length) match {
+          case (length, digitCount) if length > 24 || digitCount < 10 => Invalid(ValidationError("error.telephone.invalid"))
+          case _ => Valid
+        }
       }
     }
 

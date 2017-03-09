@@ -158,19 +158,20 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
         bind("    ").left.value should contain only FormError("testKey", "error.required")
       }
 
-      "fewer than 10 digits" is pending
-      "more than 32 characters" in {
+      "fewer than 10 digits" in {
+        shouldRejectFieldValueAsInvalid("12345         ")
+
+      }
+      "more than 24 characters" in {
         shouldRejectFieldValueAsInvalid("999999999999999999999999999999999")
       }
 
-      "contains invalid characters" in {
-        shouldRejectFieldValueAsInvalid("0123456789$")
-        shouldRejectFieldValueAsInvalid("0123456789%")
-      }
     }
 
     "accept telephone numbers" when {
-      "there are 10 digits" in pending
+      "there are 10 digits" in {
+        shouldAcceptFieldValue("1234567 ext 123")
+      }
 
       "there are valid symbols in the input" in {
         shouldAcceptFieldValue("+441234567890")
