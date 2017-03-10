@@ -25,6 +25,7 @@ import play.api.mvc.{AnyContent, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionService}
+import uk.gov.hmrc.agentsubscriptionfrontend.controllers.FieldMappings._
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
@@ -37,7 +38,7 @@ case class SubscriptionDetails(utr: String,
                                email: String,
                                telephone: String,
                                addressLine1: String,
-                               addressLine2: String,
+                               addressLine2: Option[String],
                                addressLine3: Option[String],
                                postcode: String)
 
@@ -53,22 +54,23 @@ class SubscriptionController @Inject()
 
   private val subscriptionDetails = Form[SubscriptionDetails](
     mapping(
-      "utr" -> FieldMappings.utr,
-      "knownFactsPostcode" -> FieldMappings.postcode,
-      "name" -> nonEmptyText,
-      "email" -> nonEmptyText,
-      "telephone" -> nonEmptyText,
-      "addressLine1" -> nonEmptyText,
-      "addressLine2" -> nonEmptyText,
-      "addressLine3" -> optional(nonEmptyText),
-      "postcode" -> FieldMappings.postcode
+      "utr" -> utr,
+      "knownFactsPostcode" -> postcode,
+      "name" -> nonEmptyText(maxLength = 40),
+      "email" -> email,
+      "telephone" -> telephoneNumber,
+      "addressLine1" -> nonEmptyText(maxLength = 35),
+      "addressLine2" -> optional(nonEmptyText(maxLength = 35)),
+      "addressLine3" -> optional(nonEmptyText(maxLength = 35)),
+      "postcode" -> postcode
     )(SubscriptionDetails.apply)(SubscriptionDetails.unapply)
   )
 
   val showSubscriptionDetails: Action[AnyContent] =
     AuthorisedWithSubscribingAgentAsync { implicit authContext => implicit request =>
       sessionStoreService.fetchKnownFactsResult.map(_.map { knownFactsResult =>
-        Ok(html.subscription_details(subscriptionDetails.fill(SubscriptionDetails(knownFactsResult.utr, knownFactsResult.postcode, null, null, null, null, null, None, null))))
+        Ok(html.subscription_details(subscriptionDetails.fill(
+          SubscriptionDetails(knownFactsResult.utr, knownFactsResult.postcode, null, null, null, null, None, None, null))))
       }.getOrElse {
         sessionMissingRedirect()
       })

@@ -131,4 +131,62 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
       shouldAcceptFieldValue(" A A 1 1 A A ")
     }
   }
+
+  "telephone bind" should {
+    val telephoneMapping = FieldMappings.telephoneNumber.withPrefix("testKey")
+
+    def bind(fieldValue: String) = telephoneMapping.bind(Map("testKey" -> fieldValue))
+
+    def shouldRejectFieldValueAsInvalid(fieldValue: String): Unit = {
+      bind(fieldValue) should matchPattern { case Left(List(FormError("testKey", List("error.telephone.invalid"), _))) => }
+    }
+
+    def shouldAcceptFieldValue(fieldValue: String): Unit = {
+      bind(fieldValue) shouldBe Right(fieldValue)
+    }
+
+    "reject telephone numbers" when {
+      "field is not present" in {
+        telephoneMapping.bind(Map.empty).left.value should contain only FormError("testKey", "error.required")
+      }
+
+      "input is empty" in {
+        bind("").left.value should contain only FormError("testKey", "error.required")
+      }
+
+      "input is only whitespace" in {
+        bind("    ").left.value should contain only FormError("testKey", "error.required")
+      }
+
+      "fewer than 10 digits" in {
+        shouldRejectFieldValueAsInvalid("12345         ")
+
+      }
+      "more than 24 characters" in {
+        shouldRejectFieldValueAsInvalid("999999999999999999999999999999999")
+      }
+
+    }
+
+    "accept telephone numbers" when {
+      "there are 10 digits" in {
+        shouldAcceptFieldValue("1234567 ext 123")
+      }
+
+      "there are valid symbols in the input" in {
+        shouldAcceptFieldValue("+441234567890")
+        shouldAcceptFieldValue("#441234567890")
+        shouldAcceptFieldValue("(44)1234567890")
+        shouldAcceptFieldValue("/-*441234567890")
+      }
+
+      "there is text in the field" in {
+        shouldAcceptFieldValue("0123 456 7890 EXT 123")
+      }
+
+      "there is whitespace in the field" in {
+        shouldAcceptFieldValue("0123 456 7890")
+      }
+    }
+  }
 }

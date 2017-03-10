@@ -18,7 +18,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend
 
 import play.api.data.Forms.text
 import play.api.data.Mapping
-import play.api.data.validation._
+import play.api.data.validation.{Constraint, _}
 
 package object controllers {
 
@@ -33,6 +33,8 @@ package object controllers {
       }
     }
 
+    private val telephoneNumberMaxLength = 24
+    private val minimumTelephoneDigits = 10
     private val postcodeWithoutSpacesRegex = "^[A-Za-z]{1,2}[0-9]{1,2}[A-Za-z]?[0-9][A-Za-z]{2}$".r
     private val nonEmptyPostcode: Constraint[String] = Constraint[String] { fieldValue: String =>
       Constraints.nonEmpty(fieldValue) match {
@@ -47,7 +49,19 @@ package object controllers {
       }
     }
 
+    private val nonEmptyTelephoneNumber: Constraint[String] = Constraint[String] { fieldValue: String =>
+      Constraints.nonEmpty(fieldValue) match {
+        case i: Invalid => i
+        case Valid => (fieldValue.length, fieldValue.replaceAll("[^0-9]", "").length) match {
+          case (length, digitCount) if length > telephoneNumberMaxLength || digitCount < minimumTelephoneDigits =>
+            Invalid(ValidationError("error.telephone.invalid"))
+          case _ => Valid
+        }
+      }
+    }
+
     def utr: Mapping[String] = text verifying nonEmptyUtr
     def postcode: Mapping[String] = text verifying nonEmptyPostcode
+    def telephoneNumber: Mapping[String] = text verifying nonEmptyTelephoneNumber
   }
 }
