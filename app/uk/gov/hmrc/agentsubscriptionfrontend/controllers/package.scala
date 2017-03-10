@@ -33,6 +33,8 @@ package object controllers {
       }
     }
 
+    private val telephoneNumberMaxLength = 24
+    private val minimumTelephoneDigits = 10
     private val postcodeWithoutSpacesRegex = "^[A-Za-z]{1,2}[0-9]{1,2}[A-Za-z]?[0-9][A-Za-z]{2}$".r
     private val nonEmptyPostcode: Constraint[String] = Constraint[String] { fieldValue: String =>
       Constraints.nonEmpty(fieldValue) match {
@@ -51,7 +53,8 @@ package object controllers {
       Constraints.nonEmpty(fieldValue) match {
         case i: Invalid => i
         case Valid => (fieldValue.length, fieldValue.replaceAll("[^0-9]", "").length) match {
-          case (length, digitCount) if length > 24 || digitCount < 10 => Invalid(ValidationError("error.telephone.invalid"))
+          case (length, digitCount) if length > telephoneNumberMaxLength || digitCount < minimumTelephoneDigits =>
+            Invalid(ValidationError("error.telephone.invalid"))
           case _ => Valid
         }
       }
