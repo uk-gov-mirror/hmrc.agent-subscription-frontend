@@ -66,8 +66,7 @@ class SubscriptionController @Inject()
     )(SubscriptionDetails.apply)(SubscriptionDetails.unapply)
   )
 
-  val showSubscriptionDetails: Action[AnyContent] =
-    AuthorisedWithSubscribingAgentAsync { implicit authContext => implicit request =>
+  val showSubscriptionDetails: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync { implicit authContext => implicit request =>
       sessionStoreService.fetchKnownFactsResult.map(_.map { knownFactsResult =>
         Ok(html.subscription_details(subscriptionDetails.fill(
           SubscriptionDetails(knownFactsResult.utr, knownFactsResult.postcode, null, null, null, null, None, None, null))))
@@ -94,7 +93,6 @@ class SubscriptionController @Inject()
             }
           })
   }
-
 
   val showSubscriptionFailed: Action[AnyContent] = AuthorisedWithSubscribingAgent {
     implicit authContext =>

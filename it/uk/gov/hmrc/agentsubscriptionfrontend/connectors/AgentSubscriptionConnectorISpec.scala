@@ -23,7 +23,7 @@ class AgentSubscriptionConnectorISpec extends UnitSpec with OneAppPerSuite with 
       AgentSubscriptionStub.withMatchingUtrAndPostcode(utr, "AA1 1AA", isSubscribedToAgentServices = true)
       val result: Option[Registration] = await(connector.getRegistration(utr, "AA1 1AA"))
       result.isDefined shouldBe true
-      result.get.organisationName shouldBe Some("My Agency")
+      result.get.taxpayerName shouldBe Some("My Agency")
       result.get.isSubscribedToAgentServices shouldBe true
     }
 
@@ -31,7 +31,7 @@ class AgentSubscriptionConnectorISpec extends UnitSpec with OneAppPerSuite with 
       AgentSubscriptionStub.withMatchingUtrAndPostcode(utr, "AA1 1AA", isSubscribedToAgentServices = false)
       val result: Option[Registration] = await(connector.getRegistration(utr, "AA1 1AA"))
       result.isDefined shouldBe true
-      result.get.organisationName shouldBe Some("My Agency")
+      result.get.taxpayerName shouldBe Some("My Agency")
       result.get.isSubscribedToAgentServices shouldBe false
     }
 

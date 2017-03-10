@@ -25,7 +25,7 @@ object AgentSubscriptionStub {
   private def response(isSubscribedToAgentServices: Boolean) =
     s"""
       |{
-      |  "organisationName": "My Agency",
+      |  "taxpayerName": "My Agency",
       |  "isSubscribedToAgentServices": $isSubscribedToAgentServices
       |}""".stripMargin
 
