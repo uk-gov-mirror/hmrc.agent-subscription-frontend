@@ -77,17 +77,18 @@ class CheckAgencyController @Inject()
 
   private def checkAgencyStatusGivenValidForm(knownFacts: KnownFacts)
     (implicit authContext: AuthContext, request: Request[AnyContent]): Future[Result] = {
-    agentSubscriptionConnector.getRegistration(knownFacts.utr, knownFacts.postcode) map { maybeRegistration: Option[Registration] =>
+    agentSubscriptionConnector.getRegistration(knownFacts.utr, knownFacts.postcode) flatMap { maybeRegistration: Option[Registration] =>
       maybeRegistration match {
         case Some(Registration(Some(name), isSubscribedToAgentServices)) =>
           sessionStoreService.cacheKnownFactsResult(KnownFactsResult(
             utr = knownFacts.utr,
             postcode = knownFacts.postcode,
             organisationName = name,
-            isSubscribedToAgentServices = isSubscribedToAgentServices))
-          Redirect(routes.CheckAgencyController.showConfirmYourAgency())
+            isSubscribedToAgentServices = isSubscribedToAgentServices)).map {_ =>
+            Redirect(routes.CheckAgencyController.showConfirmYourAgency())
+          }
         case Some(_) => throw new IllegalStateException(s"The agency with UTR ${knownFacts.utr} has no organisation name.")
-        case None => Redirect(routes.CheckAgencyController.showNoAgencyFound())
+        case None => Future successful Redirect(routes.CheckAgencyController.showNoAgencyFound())
       }
     }
   }
