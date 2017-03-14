@@ -5,6 +5,18 @@
 This is a web frontend service whose domain is Subscriptions to Agent Services 
 following the ROSM (Register Once Subscribe Many) pattern.
 
+
+### Running the tests
+
+    sbt test it:test
+
+
+### Running the app locally
+
+    ./run-local
+    sm --start AGENT_MTD -f
+
+
 ### License
 
 This code is open source software licensed under the [Apache 2.0 License]("http://www.apache.org/licenses/LICENSE-2.0.html")
