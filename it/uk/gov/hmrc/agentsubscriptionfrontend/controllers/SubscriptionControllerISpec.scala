@@ -36,8 +36,8 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
 
       val result = await(controller.showSubscriptionDetails(authenticatedRequest()))
 
-     checkHtmlResultWithBodyText("value=\"utr\"", result)
-     checkHtmlResultWithBodyText("value=\"AA1 1AA\"", result)
+      checkHtmlResultWithBodyText("value=\"utr\"", result)
+      checkHtmlResultWithBodyText("value=\"AA1 1AA\"", result)
     }
 
     "redirect to the Check Agency Status page if there is no KnownFactsResult in session because the user has returned to a bookmark" in {
@@ -52,6 +52,28 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
 
   "showSubscriptionComplete" should {
     behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showSubscriptionComplete(request))
+
+    "display the agency name and ARN" in {
+      val request = authenticatedRequest()
+      AuthStub.hasNoEnrolments(subscribingAgent)
+
+
+      val result = await(controller.showSubscriptionComplete(request.withFlash("arn" -> "ARN0001", "agencyName" -> "My Agency")))
+
+      status(result) shouldBe 200
+      checkHtmlResultWithBodyText("My Agency is subscribed to agent services", result)
+      checkHtmlResultWithBodyText(">ARN0001<", result)
+    }
+
+    "redirect to session missing page if there is nothing in the flash scope" in {
+      val request = authenticatedRequest()
+      AuthStub.hasNoEnrolments(subscribingAgent)
+
+      val result = await(controller.showSubscriptionComplete(request))
+
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showCheckAgencyStatus().url)
+    }
   }
 
   "submitSubscriptionDetails" should {
@@ -67,6 +89,8 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         status(result) shouldBe 303
         redirectLocation(result).head shouldBe routes.SubscriptionController.showSubscriptionComplete().url
         sessionStoreService.removeCalled shouldBe true
+        flash(result).get("agencyName") shouldBe Some("My Agency")
+        flash(result).get("arn") shouldBe Some("ARN00001")
       }
 
       "county is omitted" in {
