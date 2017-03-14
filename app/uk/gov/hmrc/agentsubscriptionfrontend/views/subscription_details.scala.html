@@ -3,14 +3,14 @@
 @import uk.gov.hmrc.play.views.html.helpers.input
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes.SubscriptionController
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionDetails
-@(detailsForm: Form[SubscriptionDetails])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+@(registrationName: String, detailsForm: Form[SubscriptionDetails])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = "Subscribe to Agent Services", bodyClasses = None) {
   <h1 class="form-title heading-large">
     Subscribe to Agent Services
   </h1>
 
-  <p class="text">You are about to subscribe to Agent Services on behalf of <strong class="bold">Redfields Accountancy Limited</strong>.</p>
+  <p class="text">You are about to subscribe to Agent Services on behalf of <strong class="bold">@registrationName</strong>.</p>
 
   @form(
     action = SubscriptionController.submitSubscriptionDetails,

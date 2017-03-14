@@ -24,13 +24,12 @@ import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{AnyContent, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.FieldMappings._
+import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
-
-import scala.concurrent.Future
+import uk.gov.hmrc.play.http.HeaderCarrier
 
 case class SubscriptionDetails(utr: String,
                                knownFactsPostcode: String,
@@ -68,7 +67,7 @@ class SubscriptionController @Inject()
 
   val showSubscriptionDetails: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync { implicit authContext => implicit request =>
       sessionStoreService.fetchKnownFactsResult.map(_.map { knownFactsResult =>
-        Ok(html.subscription_details(subscriptionDetails.fill(
+        Ok(html.subscription_details(knownFactsResult.organisationName, subscriptionDetails.fill(
           SubscriptionDetails(knownFactsResult.utr, knownFactsResult.postcode, null, null, null, null, None, None, null))))
       }.getOrElse {
         sessionMissingRedirect()
@@ -79,9 +78,8 @@ class SubscriptionController @Inject()
     implicit authContext =>
       implicit request =>
         subscriptionDetails.bindFromRequest().fold(
-          formWithErrors => {
-            Future successful Ok(html.subscription_details(formWithErrors))
-          },
+          formWithErrors =>
+            redisplaySubscriptionDetails(formWithErrors),
           form => subscriptionService.subscribeAgencyToMtd(form) flatMap { subscriptionResponse =>
             sessionStoreService.remove() map { _ =>
               subscriptionResponse match {
@@ -94,6 +92,13 @@ class SubscriptionController @Inject()
             }
           })
   }
+
+  private def redisplaySubscriptionDetails(formWithErrors: Form[SubscriptionDetails])(implicit hc: HeaderCarrier, request: Request[_]) =
+    sessionStoreService.fetchKnownFactsResult.map(_.map { knownFactsResult =>
+      Ok(html.subscription_details(knownFactsResult.organisationName, formWithErrors))
+    }.getOrElse {
+      sessionMissingRedirect()
+    })
 
   val showSubscriptionFailed: Action[AnyContent] = AuthorisedWithSubscribingAgent {
     implicit authContext =>
