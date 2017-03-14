@@ -86,7 +86,8 @@ class SubscriptionController @Inject()
           form => subscriptionService.subscribeAgencyToMtd(form) flatMap { subscriptionResponse =>
             sessionStoreService.remove() map { _ =>
               subscriptionResponse match {
-                case Right(_) => Redirect(routes.SubscriptionController.showSubscriptionComplete())
+                case Right(r) => Redirect(routes.SubscriptionController.showSubscriptionComplete())
+                  .flashing("arn" -> r.arn, "agencyName" -> form.name)
                 case Left(CONFLICT) => Redirect(routes.CheckAgencyController.showAlreadySubscribed())
                 case Left(FORBIDDEN) => Redirect(routes.SubscriptionController.showSubscriptionFailed())
                 case Left(error) => InternalServerError(s"Unknown error code from agent-subscription $error")
@@ -104,7 +105,15 @@ class SubscriptionController @Inject()
 
   val showSubscriptionComplete: Action[AnyContent] = AuthorisedWithSubscribingAgent {
     implicit authContext =>
-      implicit request =>
-          Ok(html.subscription_complete())
+      implicit request => {
+        val agencyData = for {
+          agencyName <- request.flash.get("agencyName")
+          arn <- request.flash.get("arn")
+        } yield (agencyName, arn)
+
+        agencyData.map (data =>
+          Ok(html.subscription_complete(data._1, data._2))
+        ) getOrElse sessionMissingRedirect()
+      }
   }
 }
