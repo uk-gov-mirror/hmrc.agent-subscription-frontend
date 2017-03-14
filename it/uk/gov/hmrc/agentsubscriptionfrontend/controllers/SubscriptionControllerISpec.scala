@@ -23,7 +23,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUsers._
 
 class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMissingSpec {
   private val utr  = "0123456789"
-  private val myAgencyKnownFactsResult = KnownFactsResult(utr = "utr", postcode = "AA1 1AA", organisationName = "My Business", isSubscribedToAgentServices = false)
+  private val myAgencyKnownFactsResult = KnownFactsResult(utr = "utr", postcode = "AA1 1AA", taxpayerName = "My Business", isSubscribedToAgentServices = false)
 
   private lazy val controller: SubscriptionController = app.injector.instanceOf[SubscriptionController]
 

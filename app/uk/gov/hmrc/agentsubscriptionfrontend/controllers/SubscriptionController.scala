@@ -67,7 +67,7 @@ class SubscriptionController @Inject()
 
   val showSubscriptionDetails: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync { implicit authContext => implicit request =>
       sessionStoreService.fetchKnownFactsResult.map(_.map { knownFactsResult =>
-        Ok(html.subscription_details(knownFactsResult.organisationName, subscriptionDetails.fill(
+        Ok(html.subscription_details(knownFactsResult.taxpayerName, subscriptionDetails.fill(
           SubscriptionDetails(knownFactsResult.utr, knownFactsResult.postcode, null, null, null, null, None, None, null))))
       }.getOrElse {
         sessionMissingRedirect()
@@ -95,7 +95,7 @@ class SubscriptionController @Inject()
 
   private def redisplaySubscriptionDetails(formWithErrors: Form[SubscriptionDetails])(implicit hc: HeaderCarrier, request: Request[_]) =
     sessionStoreService.fetchKnownFactsResult.map(_.map { knownFactsResult =>
-      Ok(html.subscription_details(knownFactsResult.organisationName, formWithErrors))
+      Ok(html.subscription_details(knownFactsResult.taxpayerName, formWithErrors))
     }.getOrElse {
       sessionMissingRedirect()
     })
