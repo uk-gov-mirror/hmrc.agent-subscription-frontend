@@ -83,7 +83,7 @@ class CheckAgencyController @Inject()
           sessionStoreService.cacheKnownFactsResult(KnownFactsResult(
             utr = knownFacts.utr,
             postcode = knownFacts.postcode,
-            organisationName = name,
+            taxpayerName = name,
             isSubscribedToAgentServices = isSubscribedToAgentServices)).map {_ =>
             Redirect(routes.CheckAgencyController.showConfirmYourAgency())
           }
@@ -110,7 +110,7 @@ class CheckAgencyController @Inject()
       implicit request =>
         sessionStoreService.fetchKnownFactsResult.map(_.map { knownFactsResult =>
           Ok(html.confirm_your_agency(
-            registrationName = knownFactsResult.organisationName,
+            registrationName = knownFactsResult.taxpayerName,
             postcode = knownFactsResult.postcode,
             utr = knownFactsResult.utr,
             nextPageUrl = lookupNextPageUrl(knownFactsResult.isSubscribedToAgentServices)))
@@ -125,7 +125,7 @@ class CheckAgencyController @Inject()
 
   val showNotSubscribed: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync { implicit authContext => implicit request =>
     sessionStoreService.fetchKnownFactsResult.map(_.map { knownFactsResult =>
-      Ok(html.not_subscribed(registrationName = knownFactsResult.organisationName))
+      Ok(html.not_subscribed(registrationName = knownFactsResult.taxpayerName))
         }.getOrElse {
           sessionMissingRedirect()
         })

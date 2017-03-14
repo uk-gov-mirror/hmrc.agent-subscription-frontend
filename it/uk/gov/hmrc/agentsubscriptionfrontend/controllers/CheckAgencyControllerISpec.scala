@@ -41,7 +41,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
 
       val result = await(controller.showCheckAgencyStatus(authenticatedRequest()))
 
-      checkHtmlResultWithBodyText("Check Agency Status", result)
+      checkHtmlResultWithBodyText(result, "Check Agency Status")
     }
 
     "redirect to already subscribed page if user has already subscribed to MTD" in {
@@ -179,7 +179,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
 
       val result = await(controller.showHasOtherEnrolments(authenticatedRequest()))
 
-      checkHtmlResultWithBodyText("Non-Agent Next Steps", result)
+      checkHtmlResultWithBodyText(result, "Non-Agent Next Steps")
     }
   }
 
@@ -192,7 +192,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
 
       val result = await(controller.showNoAgencyFound(authenticatedRequest()))
 
-      checkHtmlResultWithBodyText("No Agency Found", result)
+      checkHtmlResultWithBodyText(result, "No Agency Found")
     }
   }
 
@@ -205,49 +205,48 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
       val postcode = "AA11AA"
       val registrationName = "My Agency"
       sessionStoreService.knownFactsResult = Some(
-        KnownFactsResult(utr = utr, postcode = postcode, organisationName = registrationName, isSubscribedToAgentServices = false))
+        KnownFactsResult(utr = utr, postcode = postcode, taxpayerName = registrationName, isSubscribedToAgentServices = false))
       AuthStub.hasNoEnrolments(subscribingAgent)
       val request = authenticatedRequest()
 
       val result = await(controller.showConfirmYourAgency(request))
 
-      checkHtmlResultWithBodyText("Confirm Your Agency", result)
-      checkHtmlResultWithBodyText(s">$postcode</", result)
-      checkHtmlResultWithBodyText(s">$utr</", result)
-      checkHtmlResultWithBodyText(s">$registrationName</", result)
+      checkHtmlResultWithBodyText(result,
+        "Confirm Your Agency",
+        s">$postcode</", s">$utr</", s">$registrationName</")
     }
 
     "show a button which allows the user to return to Check Agency Status page" in {
       AuthStub.hasNoEnrolments(subscribingAgent)
       sessionStoreService.knownFactsResult = Some(
-        KnownFactsResult(utr = "0123456789", postcode = "AA11AA", organisationName = "My Agency", isSubscribedToAgentServices = false))
+        KnownFactsResult(utr = "0123456789", postcode = "AA11AA", taxpayerName = "My Agency", isSubscribedToAgentServices = false))
       val request = authenticatedRequest()
 
       val result = await(controller.showConfirmYourAgency(request))
 
-      checkHtmlResultWithBodyText(routes.CheckAgencyController.showCheckAgencyStatus().url, result)
+      checkHtmlResultWithBodyText(result, routes.CheckAgencyController.showCheckAgencyStatus().url)
     }
 
     "show a link to the Not Yet Subscribed page if isSubscribedToAgentServices=false" in {
       AuthStub.hasNoEnrolments(subscribingAgent)
       sessionStoreService.knownFactsResult = Some(
-        KnownFactsResult(utr = "0123456789", postcode = "AA11AA", organisationName = "My Agency", isSubscribedToAgentServices = false))
+        KnownFactsResult(utr = "0123456789", postcode = "AA11AA", taxpayerName = "My Agency", isSubscribedToAgentServices = false))
       val request = authenticatedRequest()
 
       val result = await(controller.showConfirmYourAgency(request))
 
-      checkHtmlResultWithBodyText(routes.CheckAgencyController.showNotSubscribed().url, result)
+      checkHtmlResultWithBodyText(result, routes.CheckAgencyController.showNotSubscribed().url)
     }
 
     "show a link to the Already Subscribed page if isSubscribedToAgentServices=true" in {
       AuthStub.hasNoEnrolments(subscribingAgent)
       sessionStoreService.knownFactsResult = Some(
-        KnownFactsResult(utr = "0123456789", postcode = "AA11AA", organisationName = "My Agency", isSubscribedToAgentServices = true))
+        KnownFactsResult(utr = "0123456789", postcode = "AA11AA", taxpayerName = "My Agency", isSubscribedToAgentServices = true))
       val request = authenticatedRequest()
 
       val result = await(controller.showConfirmYourAgency(request))
 
-      checkHtmlResultWithBodyText(routes.CheckAgencyController.showAlreadySubscribed().url, result)
+      checkHtmlResultWithBodyText(result, routes.CheckAgencyController.showAlreadySubscribed().url)
     }
 
     "redirect to the Check Agency Status page if there is no KnownFactsResult in session because the user has returned to a bookmark" in {
@@ -269,7 +268,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
 
       val result = await(controller.showAlreadySubscribed(authenticatedRequest()))
 
-      checkHtmlResultWithBodyText("Your agency is already subscribed", result)
+      checkHtmlResultWithBodyText(result, "Your agency is already subscribed")
     }
   }
 
@@ -280,13 +279,14 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
     "display the not subscribed page if the current user is logged in and has affinity group = Agent" in {
       AuthStub.hasNoEnrolments(subscribingAgent)
       sessionStoreService.knownFactsResult = Some(
-        KnownFactsResult(utr = "0123456789", postcode = "AA11AA", organisationName = "My Agency", isSubscribedToAgentServices = true))
+        KnownFactsResult(utr = "0123456789", postcode = "AA11AA", taxpayerName = "My Agency", isSubscribedToAgentServices = true))
 
       val result = await(controller.showNotSubscribed(authenticatedRequest()))
 
-      checkHtmlResultWithBodyText("Your agency is NOT subscribed", result)
-      checkHtmlResultWithBodyText("My Agency", result)
-      checkHtmlResultWithBodyText(routes.SubscriptionController.showSubscriptionDetails().url, result)
+      checkHtmlResultWithBodyText(result,
+        "Your agency is NOT subscribed",
+        "My Agency",
+        routes.SubscriptionController.showSubscriptionDetails().url)
     }
 
     "redirect to the Check Agency Status page if there is no KnownFactsResult in session because the user has returned to a bookmark" in {
