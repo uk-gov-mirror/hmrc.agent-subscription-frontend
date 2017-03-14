@@ -41,7 +41,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
 
       val result = await(controller.showCheckAgencyStatus(authenticatedRequest()))
 
-      checkHtmlResultWithBodyText("Check Agency Status", result)
+      checkHtmlResultWithBodyText(result, "Check Agency Status")
     }
 
     "redirect to already subscribed page if user has already subscribed to MTD" in {
@@ -179,7 +179,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
 
       val result = await(controller.showHasOtherEnrolments(authenticatedRequest()))
 
-      checkHtmlResultWithBodyText("Non-Agent Next Steps", result)
+      checkHtmlResultWithBodyText(result, "Non-Agent Next Steps")
     }
   }
 
@@ -192,7 +192,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
 
       val result = await(controller.showNoAgencyFound(authenticatedRequest()))
 
-      checkHtmlResultWithBodyText("No Agency Found", result)
+      checkHtmlResultWithBodyText(result, "No Agency Found")
     }
   }
 
@@ -211,10 +211,9 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
 
       val result = await(controller.showConfirmYourAgency(request))
 
-      checkHtmlResultWithBodyText("Confirm Your Agency", result)
-      checkHtmlResultWithBodyText(s">$postcode</", result)
-      checkHtmlResultWithBodyText(s">$utr</", result)
-      checkHtmlResultWithBodyText(s">$registrationName</", result)
+      checkHtmlResultWithBodyText(result,
+        "Confirm Your Agency",
+        s">$postcode</", s">$utr</", s">$registrationName</")
     }
 
     "show a button which allows the user to return to Check Agency Status page" in {
@@ -225,7 +224,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
 
       val result = await(controller.showConfirmYourAgency(request))
 
-      checkHtmlResultWithBodyText(routes.CheckAgencyController.showCheckAgencyStatus().url, result)
+      checkHtmlResultWithBodyText(result, routes.CheckAgencyController.showCheckAgencyStatus().url)
     }
 
     "show a link to the Not Yet Subscribed page if isSubscribedToAgentServices=false" in {
@@ -236,7 +235,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
 
       val result = await(controller.showConfirmYourAgency(request))
 
-      checkHtmlResultWithBodyText(routes.CheckAgencyController.showNotSubscribed().url, result)
+      checkHtmlResultWithBodyText(result, routes.CheckAgencyController.showNotSubscribed().url)
     }
 
     "show a link to the Already Subscribed page if isSubscribedToAgentServices=true" in {
@@ -247,7 +246,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
 
       val result = await(controller.showConfirmYourAgency(request))
 
-      checkHtmlResultWithBodyText(routes.CheckAgencyController.showAlreadySubscribed().url, result)
+      checkHtmlResultWithBodyText(result, routes.CheckAgencyController.showAlreadySubscribed().url)
     }
 
     "redirect to the Check Agency Status page if there is no KnownFactsResult in session because the user has returned to a bookmark" in {
@@ -269,7 +268,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
 
       val result = await(controller.showAlreadySubscribed(authenticatedRequest()))
 
-      checkHtmlResultWithBodyText("Your agency is already subscribed", result)
+      checkHtmlResultWithBodyText(result, "Your agency is already subscribed")
     }
   }
 
@@ -284,9 +283,10 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
 
       val result = await(controller.showNotSubscribed(authenticatedRequest()))
 
-      checkHtmlResultWithBodyText("Your agency is NOT subscribed", result)
-      checkHtmlResultWithBodyText("My Agency", result)
-      checkHtmlResultWithBodyText(routes.SubscriptionController.showSubscriptionDetails().url, result)
+      checkHtmlResultWithBodyText(result,
+        "Your agency is NOT subscribed",
+        "My Agency",
+        routes.SubscriptionController.showSubscriptionDetails().url)
     }
 
     "redirect to the Check Agency Status page if there is no KnownFactsResult in session because the user has returned to a bookmark" in {

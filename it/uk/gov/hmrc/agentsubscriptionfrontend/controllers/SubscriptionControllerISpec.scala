@@ -36,9 +36,10 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
 
       val result = await(controller.showSubscriptionDetails(authenticatedRequest()))
 
-      checkHtmlResultWithBodyText("value=\"utr\"", result)
-      checkHtmlResultWithBodyText("value=\"AA1 1AA\"", result)
-      checkHtmlResultWithBodyText("My Business", result)
+      checkHtmlResultWithBodyText(result,
+        "value=\"utr\"",
+        "value=\"AA1 1AA\"",
+        "My Business")
     }
 
     "redirect to the Check Agency Status page if there is no KnownFactsResult in session because the user has returned to a bookmark" in {
@@ -62,8 +63,9 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
       val result = await(controller.showSubscriptionComplete(request.withFlash("arn" -> "ARN0001", "agencyName" -> "My Agency")))
 
       status(result) shouldBe 200
-      checkHtmlResultWithBodyText("My Agency is subscribed to agent services", result)
-      checkHtmlResultWithBodyText(">ARN0001<", result)
+      checkHtmlResultWithBodyText(result,
+        "My Agency is subscribed to agent services",
+        ">ARN0001<")
     }
 
     "redirect to session missing page if there is nothing in the flash scope" in {
@@ -153,8 +155,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("name")))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
-        checkHtmlResultWithBodyText("My Business", result)
+        checkHtmlResultWithBodyText(result, "Subscribe to Agent Services", "My Business")
         sessionStoreService.removeCalled shouldBe false
       }
 
@@ -165,8 +166,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("name", Seq("name" -> "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii"))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
-        checkHtmlResultWithBodyText("My Business", result)
+        checkHtmlResultWithBodyText(result, "Subscribe to Agent Services", "My Business")
       }
 
       "email is omitted" in {
@@ -176,8 +176,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("email")))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
-        checkHtmlResultWithBodyText("My Business", result)
+        checkHtmlResultWithBodyText(result, "Subscribe to Agent Services", "My Business")
       }
 
       "email has no text in the local part" in {
@@ -187,8 +186,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("email", Seq("email" -> "@domain"))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
-        checkHtmlResultWithBodyText("My Business", result)
+        checkHtmlResultWithBodyText(result, "Subscribe to Agent Services", "My Business")
       }
 
       "email has no text in the domain part" in {
@@ -198,8 +196,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("email", Seq("email" -> "local@"))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
-        checkHtmlResultWithBodyText("My Business", result)
+        checkHtmlResultWithBodyText(result, "Subscribe to Agent Services", "My Business")
       }
 
       "email does not contain an '@'" in {
@@ -209,8 +206,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("email", Seq("email" -> "local"))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
-        checkHtmlResultWithBodyText("My Business", result)
+        checkHtmlResultWithBodyText(result, "Subscribe to Agent Services", "My Business")
       }
 
       "telephone is omitted" in {
@@ -220,8 +216,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("telephone")))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
-        checkHtmlResultWithBodyText("My Business", result)
+        checkHtmlResultWithBodyText(result, "Subscribe to Agent Services", "My Business")
       }
 
       "telephone is invalid" in {
@@ -231,8 +226,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("telephone", Seq("telephone" -> "12345"))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
-        checkHtmlResultWithBodyText("My Business", result)
+        checkHtmlResultWithBodyText(result, "Subscribe to Agent Services", "My Business")
       }
 
 
@@ -243,8 +237,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("addressLine1")))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
-        checkHtmlResultWithBodyText("My Business", result)
+        checkHtmlResultWithBodyText(result, "Subscribe to Agent Services", "My Business")
       }
 
       "building and street is whitespace only" in {
@@ -254,8 +247,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("addressLine1", Seq("addressLine1" -> "    "))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
-        checkHtmlResultWithBodyText("My Business", result)
+        checkHtmlResultWithBodyText(result, "Subscribe to Agent Services", "My Business")
       }
 
 
@@ -267,8 +259,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
             subscriptionDetailsRequest("addressLine1", Seq("addressLine1" -> "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii"))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
-        checkHtmlResultWithBodyText("My Business", result)
+        checkHtmlResultWithBodyText(result, "Subscribe to Agent Services", "My Business")
       }
 
       "town is longer than 35 characters" in {
@@ -279,8 +270,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
           subscriptionDetailsRequest("addressLine2", Seq("addressLine2" -> "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii"))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
-        checkHtmlResultWithBodyText("My Business", result)
+        checkHtmlResultWithBodyText(result, "Subscribe to Agent Services", "My Business")
       }
 
       "county is longer than 35 characters" in {
@@ -291,8 +281,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
           subscriptionDetailsRequest("addressLine3", Seq("addressLine3" -> "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii"))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
-        checkHtmlResultWithBodyText("My Business", result)
+        checkHtmlResultWithBodyText(result, "Subscribe to Agent Services", "My Business")
       }
 
       "postcode is omitted" in {
@@ -302,8 +291,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("postcode")))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
-        checkHtmlResultWithBodyText("My Business", result)
+        checkHtmlResultWithBodyText(result, "Subscribe to Agent Services", "My Business")
       }
 
       "postcode is not valid" in {
@@ -313,8 +301,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("postcode", Seq("postcode" -> "1AA AA1"))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
-        checkHtmlResultWithBodyText("My Business", result)
+        checkHtmlResultWithBodyText(result, "Subscribe to Agent Services", "My Business")
       }
 
       "known facts postcode is omitted" in {
@@ -324,8 +311,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("knownFactsPostcode")))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
-        checkHtmlResultWithBodyText("My Business", result)
+        checkHtmlResultWithBodyText(result, "Subscribe to Agent Services", "My Business")
       }
 
       "known facts postcode is not valid" in {
@@ -335,8 +321,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("knownFactsPostcode", Seq("knownFactsPostcode" -> "1AA AA1"))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
-        checkHtmlResultWithBodyText("My Business", result)
+        checkHtmlResultWithBodyText(result, "Subscribe to Agent Services", "My Business")
       }
 
       "utr is omitted" in {
@@ -346,8 +331,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("utr")))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
-        checkHtmlResultWithBodyText("My Business", result)
+        checkHtmlResultWithBodyText(result, "Subscribe to Agent Services", "My Business")
       }
 
       "utr is not valid" in {
@@ -357,8 +341,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("utr", Seq("utr" -> "012345"))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText("Subscribe to Agent Services", result)
-        checkHtmlResultWithBodyText("My Business", result)
+        checkHtmlResultWithBodyText(result, "Subscribe to Agent Services", "My Business")
       }
     }
   }

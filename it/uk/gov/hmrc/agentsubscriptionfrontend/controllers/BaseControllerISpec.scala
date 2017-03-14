@@ -47,10 +47,10 @@ abstract class BaseControllerISpec extends UnitSpec with OneAppPerSuite with Wir
   }
 
 
-  protected def checkHtmlResultWithBodyText(expectedSubstring: String, result: Result): Unit = {
+  protected def checkHtmlResultWithBodyText(result: Result, expectedSubstrings: String*): Unit = {
     status(result) shouldBe OK
     contentType(result) shouldBe Some("text/html")
     charset(result) shouldBe Some("utf-8")
-    bodyOf(result) should include(expectedSubstring)
+    expectedSubstrings.foreach(s => bodyOf(result) should include(s))
   }
 }
