@@ -28,7 +28,7 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
     def bind(fieldValue: String) = utrMapping.bind(Map("testKey" -> fieldValue))
 
     "accept valid UTRs" in {
-      bind("1234567890") shouldBe Right("1234567890")
+      bind("2000000000") shouldBe Right("2000000000")
     }
 
     "give \"error.required\" error when it is not supplied" in {
@@ -45,15 +45,15 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
 
     "give \"error.utr.invalid\" error" when {
       "it has more than 10 digits" in {
-        bind("12345678901") should matchPattern { case Left(List(FormError("testKey", List("error.utr.invalid"), _))) => }
+        bind("20000000000") should matchPattern { case Left(List(FormError("testKey", List("error.utr.invalid"), _))) => }
       }
 
       "it has fewer than 10 digits" in {
-        bind("123456789") should matchPattern { case Left(List(FormError("testKey", List("error.utr.invalid"), _))) => }
+        bind("200000") should matchPattern { case Left(List(FormError("testKey", List("error.utr.invalid"), _))) => }
       }
 
       "it has non-digit characters" in {
-        bind("123456789Z") should matchPattern { case Left(List(FormError("testKey", List("error.utr.invalid"), _))) => }
+        bind("200000000B") should matchPattern { case Left(List(FormError("testKey", List("error.utr.invalid"), _))) => }
       }
     }
   }
