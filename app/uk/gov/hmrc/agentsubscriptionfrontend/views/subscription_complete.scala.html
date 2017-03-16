@@ -1,5 +1,6 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes.SubscriptionController
+@import uk.gov.hmrc.agentsubscriptionfrontend.config.GGConfig
 @(agencyName: String, arn: String)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = "Subscription confirmed", bodyClasses = None) {
@@ -14,7 +15,7 @@
                 </p>
             </div>
 
-            <a href="index.html" class="button">Sign out</a>
+            <a href="@GGConfig.ggSignOutUrl" class="button">Sign out</a>
         </div>
     </div>
 }
