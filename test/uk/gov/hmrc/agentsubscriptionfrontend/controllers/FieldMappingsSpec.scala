@@ -55,6 +55,10 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
       "it has non-digit characters" in {
         bind("200000000B") should matchPattern { case Left(List(FormError("testKey", List("error.utr.invalid"), _))) => }
       }
+
+      "it has non-alphanumeric characters" in {
+        bind("200000000!") should matchPattern { case Left(List(FormError("testKey", List("error.utr.invalid"), _))) => }
+      }
     }
   }
 
