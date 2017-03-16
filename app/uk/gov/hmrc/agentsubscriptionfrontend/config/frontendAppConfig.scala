@@ -35,14 +35,17 @@ trait StrictConfig{
 }
 
 object GGConfig extends StrictConfig {
+  private lazy val ggBaseUrl = loadConfig("authentication.government-gateway.sign-in.base-url")
   lazy val ggSignInUrl: String = {
-    val ggBaseUrl = loadConfig("authentication.government-gateway.sign-in.base-url")
-    Logger.debug(s"ggBaseUrl = $ggBaseUrl")
     val ggSignInPath = loadConfig("authentication.government-gateway.sign-in.path")
-    val url = s"$ggBaseUrl$ggSignInPath"
-    Logger.debug(s"ggSignInUrl = $url")
-    url
+    s"$ggBaseUrl$ggSignInPath"
   }
+
+  lazy val ggSignOutUrl: String = {
+    val ggSignOutPath = loadConfig("authentication.government-gateway.sign-out.path")
+    s"$ggBaseUrl$ggSignOutPath"
+  }
+
 
   lazy val checkAgencyStatusCallbackUrl: String = loadConfig("authentication.login-callback.url") +
     routes.CheckAgencyController.showCheckAgencyStatus().url
