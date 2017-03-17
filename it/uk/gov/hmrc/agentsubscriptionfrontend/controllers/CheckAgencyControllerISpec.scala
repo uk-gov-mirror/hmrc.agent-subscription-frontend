@@ -22,8 +22,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUsers._
 
 class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMissingSpec {
 
-  private val validUtr = "0123456789"
-  private val invalidUtr = "0123456"
+  private val validUtr = "2000000000"
   private val validPostcode = "AA1 1AA"
   private val invalidPostcode = "not a postcode"
 
@@ -69,6 +68,22 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
     behave like anAgentAffinityGroupOnlyEndpoint(request => controller.checkAgencyStatus(request))
 
     "return a 200 response to redisplay the form with an error message for invalidly-formatted UTR" in {
+      val invalidUtr = "0123456"
+      AuthStub.hasNoEnrolments(subscribingAgent)
+      val request = authenticatedRequest()
+        .withFormUrlEncodedBody("utr" -> invalidUtr, "postcode" -> validPostcode)
+      val result = await(controller.checkAgencyStatus(request))
+
+      status(result) shouldBe OK
+      val responseBody = bodyOf(result)
+      responseBody should include("Check Agency Status")
+      responseBody should include ("Please enter a valid UTR")
+      responseBody should include (invalidUtr)
+      responseBody should include (validPostcode)
+    }
+
+    "return a 200 response to redisplay the form with an error message for UTR failing to pass Modulus11Check" in {
+      val invalidUtr = "2000000001" // Modulus11Check validation fails in this case
       AuthStub.hasNoEnrolments(subscribingAgent)
       val request = authenticatedRequest()
         .withFormUrlEncodedBody("utr" -> invalidUtr, "postcode" -> validPostcode)
@@ -110,10 +125,9 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
 
     "redirect to no-agency-found page when no matching registration found by agent-subscription" in {
       AuthStub.hasNoEnrolments(subscribingAgent)
-      val utr = "0000000000"
-      AgentSubscriptionStub.withNonMatchingUtrAndPostcode(utr, validPostcode)
+      AgentSubscriptionStub.withNonMatchingUtrAndPostcode(validUtr, validPostcode)
       val request = authenticatedRequest()
-        .withFormUrlEncodedBody("utr" -> utr, "postcode" -> validPostcode)
+        .withFormUrlEncodedBody("utr" -> validUtr, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
 
       status(result) shouldBe 303

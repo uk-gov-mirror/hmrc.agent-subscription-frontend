@@ -19,17 +19,29 @@ package uk.gov.hmrc.agentsubscriptionfrontend
 import play.api.data.Forms.text
 import play.api.data.Mapping
 import play.api.data.validation.{Constraint, _}
+import uk.gov.hmrc.domain.Modulus11Check
 
 package object controllers {
 
   object FieldMappings {
     private val utrConstraint = Constraints.pattern("^\\d{10}$".r, error = "error.utr.invalid")
-    private val nonEmptyUtr: Constraint[String] = Constraint[String] { fieldValue: String =>
-      Constraints.nonEmpty(fieldValue) match {
-        case i: Invalid =>
-          i
-        case Valid =>
-          utrConstraint(fieldValue)
+    private val modulus11UtrConstraint: Constraint[String] = Constraint[String] {
+      fieldValue: String =>
+        Constraints.nonEmpty(fieldValue) match {
+          case i: Invalid => i
+          case Valid =>
+            utrConstraint(fieldValue) match {
+              case i: Invalid => i
+              case Valid => if (CheckUTR.isValidUTR(fieldValue)) Valid else Invalid(ValidationError("error.utr.invalid"))
+            }
+        }
+      }
+
+    object CheckUTR extends Modulus11Check {
+      def isValidUTR(utr: String): Boolean = {
+        val suffix: String = utr.substring(1)
+        val checkCharacter: Char = calculateCheckCharacter(suffix)
+        checkCharacter == utr.charAt(0)
       }
     }
 
@@ -60,7 +72,7 @@ package object controllers {
       }
     }
 
-    def utr: Mapping[String] = text verifying nonEmptyUtr
+    def utr: Mapping[String] = text verifying modulus11UtrConstraint
     def postcode: Mapping[String] = text verifying nonEmptyPostcode
     def telephoneNumber: Mapping[String] = text verifying nonEmptyTelephoneNumber
   }
