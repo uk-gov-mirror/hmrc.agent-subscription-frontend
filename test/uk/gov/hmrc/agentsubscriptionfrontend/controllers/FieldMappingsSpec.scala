@@ -82,6 +82,8 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
     "accept valid postcodes" in {
       shouldAcceptFieldValue("AA1 1AA")
       shouldAcceptFieldValue("AA1M 1AA")
+      shouldAcceptFieldValue("A11 1AA")
+      shouldAcceptFieldValue("A1A 1AA")
     }
 
     "give \"error.required\" error when it is not supplied" in {
@@ -116,6 +118,7 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
 
     "accept postcodes with 4 characters in the outbound part" in {
       shouldAcceptFieldValue("AA1A 1AA")
+      shouldAcceptFieldValue("AA11 1AA")
     }
 
     "reject postcodes where the 1st character of the outbound part is a number" in {
