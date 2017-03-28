@@ -3,7 +3,6 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{contentType, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub
-import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUsers._
 
 class StartControllerISpec extends BaseControllerISpec {
 

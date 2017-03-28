@@ -18,6 +18,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.auth
 
 import play.api.mvc._
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
+import uk.gov.hmrc.passcode.authentication.PasscodeAuthentication
 import uk.gov.hmrc.play.frontend.auth.{Actions, AuthContext}
 import uk.gov.hmrc.play.http.HeaderCarrier
 
@@ -26,7 +27,7 @@ import scala.concurrent.Future
 
 case class AgentRequest[A](enrolments: List[Enrolment], request: Request[A]) extends WrappedRequest[A](request)
 
-trait AuthActions extends Actions {
+trait AuthActions extends Actions with PasscodeAuthentication {
   protected type AsyncPlayUserRequest = AuthContext => AgentRequest[AnyContent] => Future[Result]
   protected type PlayUserRequest = AuthContext => AgentRequest[AnyContent] => Result
   private implicit def hc(implicit request: Request[_]): HeaderCarrier = HeaderCarrier.fromHeadersAndSession(request.headers, Some(request.session))
@@ -34,26 +35,30 @@ trait AuthActions extends Actions {
   def AuthorisedWithSubscribingAgent(body: PlayUserRequest): Action[AnyContent] =
     AuthorisedFor(NoOpRegime, pageVisibility = GGConfidence).async {
       implicit authContext => implicit request =>
-        isAgentAffinityGroup() flatMap {
-          case true => enrolments map { e => body(authContext)(AgentRequest(e, request)) }
-          case false => Future successful redirectToNonAgentNextSteps
+        withVerifiedPasscode {
+          isAgentAffinityGroup() flatMap {
+            case true => enrolments map { e => body(authContext)(AgentRequest(e, request)) }
+            case false => Future successful redirectToNonAgentNextSteps
+          }
         }
     }
 
    def AuthorisedWithSubscribingAgentAsync(body: AsyncPlayUserRequest): Action[AnyContent] =
     AuthorisedFor(NoOpRegime, pageVisibility = GGConfidence).async {
       implicit authContext => implicit request =>
-        isAgentAffinityGroup() flatMap {
-          case true => enrolments flatMap { e => body(authContext)(AgentRequest(e, request)) }
-          case false => Future successful redirectToNonAgentNextSteps
+        withVerifiedPasscode {
+          isAgentAffinityGroup() flatMap {
+            case true => enrolments flatMap { e => body(authContext)(AgentRequest(e, request)) }
+            case false => Future successful redirectToNonAgentNextSteps
+          }
         }
     }
 
-  private def enrolments(implicit authContext: AuthContext, hc: HeaderCarrier): Future[List[Enrolment]] =
+  protected def enrolments(implicit authContext: AuthContext, hc: HeaderCarrier): Future[List[Enrolment]] =
     authConnector.getEnrolments[List[Enrolment]](authContext)
 
 
-  private def isAgentAffinityGroup()(implicit authContext: AuthContext, hc: HeaderCarrier): Future[Boolean] =
+  protected def isAgentAffinityGroup()(implicit authContext: AuthContext, hc: HeaderCarrier): Future[Boolean] =
     authConnector.getUserDetails(authContext).map { userDetailsResponse =>
       val affinityGroup = (userDetailsResponse.json \ "affinityGroup").as[String]
       affinityGroup == "Agent"

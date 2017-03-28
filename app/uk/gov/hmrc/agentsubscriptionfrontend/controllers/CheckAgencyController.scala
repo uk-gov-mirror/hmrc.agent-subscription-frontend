@@ -29,6 +29,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentSubscriptionConnect
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{KnownFactsResult, Registration}
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
+import uk.gov.hmrc.passcode.authentication.{PasscodeAuthenticationProvider, PasscodeVerificationConfig}
 import uk.gov.hmrc.play.frontend.auth.AuthContext
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
@@ -37,7 +38,12 @@ import scala.concurrent.Future
 
 @Singleton
 class CheckAgencyController @Inject()
-  (override val messagesApi: MessagesApi, override val authConnector: AuthConnector, val agentSubscriptionConnector: AgentSubscriptionConnector, val sessionStoreService: SessionStoreService)
+  (override val messagesApi: MessagesApi,
+   override val authConnector: AuthConnector,
+   override val config: PasscodeVerificationConfig,
+   override val passcodeAuthenticationProvider: PasscodeAuthenticationProvider,
+   val agentSubscriptionConnector: AgentSubscriptionConnector,
+   val sessionStoreService: SessionStoreService)
   (implicit appConfig: AppConfig)
   extends FrontendController with I18nSupport with AuthActions with SessionDataMissing {
 
