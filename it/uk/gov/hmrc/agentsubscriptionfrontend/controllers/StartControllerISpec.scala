@@ -32,6 +32,12 @@ class StartControllerISpec extends BaseControllerISpec {
 
       bodyOf(result) should include("Subscribe to new agent services")
     }
+
+    "have a 'get help with this page' link" in {
+      val result = await(controller.start(FakeRequest()))
+
+      bodyOf(result) should include("Get help with this page.")
+    }
   }
 
   "showNonAgentNextSteps" should {
