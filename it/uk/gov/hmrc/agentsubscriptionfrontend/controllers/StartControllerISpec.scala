@@ -29,7 +29,7 @@ class StartControllerISpec extends BaseControllerISpec {
     "be available" in {
       val result = await(controller.start(FakeRequest()))
 
-      bodyOf(result) should include("Subscribe to new agent services")
+      bodyOf(result) should include("Create an Agent Services account")
     }
 
     behave like aPageWithFeedbackLinks(request => controller.start(request))

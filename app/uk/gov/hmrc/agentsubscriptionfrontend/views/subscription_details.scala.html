@@ -5,61 +5,47 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionDetails
 @(registrationName: String, detailsForm: Form[SubscriptionDetails])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = "Subscribe to Agent Services", bodyClasses = None) {
-  <h1 class="form-title heading-large">
-    Subscribe to Agent Services
+@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = "Add your agency information", bodyClasses = None) {
+  <h1>
+    Add your agency information
   </h1>
-
-  <p class="text">You are about to subscribe to Agent Services on behalf of <strong class="bold">@registrationName</strong>.</p>
 
   @form(
     action = SubscriptionController.submitSubscriptionDetails,
     'class -> "form js-form") {
-    <div class="form-group">
-      <label class="form-label-bold">Agency name
-        @input(detailsForm("name"), 'class -> "form-control form-control--block")
-      </label>
-    </div>
 
-    <fieldset>
-      <div class="form-group">
-        <label class="form-label-bold">Building and street
-          @input(detailsForm("addressLine1"), 'class -> "form-control form-control--block")
-        </label>
+    <fieldset class="form-group">
+
+      <div class="form-field">
+        @input(detailsForm("name"), '_label -> "Agency name", '_inputClass -> "input--medium input--cleared")
       </div>
 
-      <div class="form-group">
-        <label class="form-label-bold">Town or city
-          @input(detailsForm("addressLine2"), 'class -> "form-control form-control--block")
-        </label>
+      <div class="form-field">
+        @input(detailsForm("addressLine1"), '_label -> "Building and street", '_inputClass -> "input--medium input--cleared")
       </div>
 
-      <div class="form-group">
-        <label class="form-label-bold">County (optional)
-          @input(detailsForm("addressLine3"), 'class -> "form-control form-control--block")
-        </label>
+      <div class="form-field">
+        @input(detailsForm("addressLine2"), '_label -> "Town or city", '_inputClass -> "input--medium input--cleared")
       </div>
 
-      <div class="form-group">
-        <label class="form-label-bold">Postcode
-          @input(detailsForm("postcode"), 'class -> "form-control form-control--block")
-        </label>
+      <div class="form-field">
+        @input(detailsForm("addressLine3"), '_label -> "County (optional)", '_inputClass -> "input--medium input--cleared")
       </div>
 
+      <div class="form-field">
+        @input(detailsForm("postcode"), '_label -> "Postcode", '_inputClass -> "input--small input--cleared")
+      </div>
 
     </fieldset>
 
-    <fieldset>
-      <div class="form-group">
-        <label class="form-label-bold">Email address
-          @input(detailsForm("email"), 'class -> "form-control form-control--block")
-        </label>
-      </div>
-      <div class="form-group">
-        <label class="form-label-bold">Telephone Number
-          @input(detailsForm("telephone"), 'class -> "form-control form-control--block")
-        </label>
-      </div>
+    <fieldset class="form-group">
+
+        <div class="form-field">
+          @input(detailsForm("email"), '_label -> "Business email address", '_inputClass -> "input--medium input--cleared")
+        </div>
+        <div class="form-field">
+          @input(detailsForm("telephone"), '_label -> "Business telephone number", '_inputClass -> "input--medium input--cleared")
+        </div>
 
     </fieldset>
 
@@ -67,7 +53,7 @@
     @input(detailsForm("utr"), '_type -> "hidden")
 
     <div class="form-field">
-      <input class="button" type="submit" id="subscribe" value="Subscribe">
+      <input class="button" type="submit" id="subscribe" value="Create account">
     </div>
   }
 }

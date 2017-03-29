@@ -45,7 +45,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
 
       val result = await(controller.showCheckAgencyStatus(authenticatedRequest()))
 
-      checkHtmlResultWithBodyText(result, "Check Agency Status")
+      checkHtmlResultWithBodyText(result, "Check if your business already has an Agent Services account")
     }
 
     "redirect to already subscribed page if user has already subscribed to MTD" in {
@@ -81,7 +81,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
 
       status(result) shouldBe OK
       val responseBody = bodyOf(result)
-      responseBody should include("Check Agency Status")
+      responseBody should include("Check if your business already has an Agent Services account")
       responseBody should include ("Please enter a valid UTR")
       responseBody should include (invalidUtr)
       responseBody should include (validPostcode)
@@ -96,7 +96,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
 
       status(result) shouldBe OK
       val responseBody = bodyOf(result)
-      responseBody should include("Check Agency Status")
+      responseBody should include("Check if your business already has an Agent Services account")
       responseBody should include ("Please enter a valid UTR")
       responseBody should include (invalidUtr)
       responseBody should include (validPostcode)
@@ -110,7 +110,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
 
       status(result) shouldBe OK
       val responseBody = bodyOf(result)
-      responseBody should include("Check Agency Status")
+      responseBody should include("Check if your business already has an Agent Services account")
       responseBody should include ("Please enter a valid postcode")
       responseBody should include (validUtr)
       responseBody should include (invalidPostcode)
@@ -124,7 +124,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
 
       status(result) shouldBe OK
       val responseBody = bodyOf(result)
-      responseBody should include("Check Agency Status")
+      responseBody should include("Check if your business already has an Agent Services account")
       responseBody should include ("This field is required")
     }
 
@@ -239,7 +239,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
       val result = await(controller.showConfirmYourAgency(request))
 
       checkHtmlResultWithBodyText(result,
-        "Confirm Your Agency",
+        "Is this your business?",
         s">$postcode</", s">$utr</", s">$registrationName</")
     }
 
@@ -311,7 +311,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
       val result = await(controller.showNotSubscribed(authenticatedRequest()))
 
       checkHtmlResultWithBodyText(result,
-        "Your agency is NOT subscribed",
+        "Your business doesn't have an Agent Services account",
         "My Agency",
         routes.SubscriptionController.showSubscriptionDetails().url)
     }

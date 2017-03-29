@@ -2,13 +2,13 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes._
 @(registrationName: String, postcode: String, utr: String, nextPageUrl: String)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = "Confirm Your Agency", bodyClasses = None) {
-  <h1>Is this your agency?</h1>
+@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = "Is this your business?", bodyClasses = None) {
+  <h1>Is this your business?</h1>
 
   <table class="form-group">
     <thead>
     <tr>
-      <th colspan="2">Agency details</th>
+      <th colspan="2"><span class="visuallyhidden">Agency details</span></th>
     </tr>
     </thead>
     <tbody>
@@ -26,7 +26,6 @@
     </tr>
     </tbody>
   </table>
-
-  <a id="return" class="button" href="@CheckAgencyController.showCheckAgencyStatus"> Return</a>
-  <a id="continue" class="button" href="@nextPageUrl"> Continue</a>
+  <a id="continue" class="button" href="@nextPageUrl">Yes</a>
+  <a id="return" class="button--secondary" href="@CheckAgencyController.showCheckAgencyStatus">No</a>
 }
