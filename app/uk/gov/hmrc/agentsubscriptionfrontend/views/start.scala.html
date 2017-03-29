@@ -2,7 +2,7 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes.CheckAgencyController
 @()(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = "Subscribe to new agent services", bodyClasses = None) {
+@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = "Subscribe to new agent services", bodyClasses = None, userIsLoggedIn = false) {
   <h1>Subscribe to new agent services</h1>
   <p>Please contact your agency administrator to get access to Agent Services.</p><p>Use this service to:</p>
 

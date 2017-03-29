@@ -29,6 +29,12 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
 
   "showSubscriptionDetails" should {
     behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showSubscriptionDetails(request))
+    behave like aPageWithFeedbackLinks(request => {
+      AuthStub.hasNoEnrolments(subscribingAgent)
+      sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
+
+      controller.showSubscriptionDetails(request)
+    }, authenticatedRequest())
 
     "populate form with utr and postcode and display registration name" in {
       AuthStub.hasNoEnrolments(subscribingAgent)
@@ -54,11 +60,14 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
 
   "showSubscriptionComplete" should {
     behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showSubscriptionComplete(request))
+    behave like aPageWithFeedbackLinks(request => {
+      AuthStub.hasNoEnrolments(subscribingAgent)
+      controller.showSubscriptionComplete(request)
+    }, authenticatedRequest().withFlash("arn" -> "ARN0001", "agencyName" -> "My Agency"))
 
     "display the agency name and ARN" in {
       val request = authenticatedRequest()
       AuthStub.hasNoEnrolments(subscribingAgent)
-
 
       val result = await(controller.showSubscriptionComplete(request.withFlash("arn" -> "ARN0001", "agencyName" -> "My Agency")))
 
