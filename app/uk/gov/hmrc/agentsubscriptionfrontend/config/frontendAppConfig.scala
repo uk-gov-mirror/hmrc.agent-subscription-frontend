@@ -28,6 +28,8 @@ trait AppConfig {
   val analyticsHost: String
   val reportAProblemPartialUrl: String
   val reportAProblemNonJSUrl: String
+  val betaFeedbackUrl: String
+  val betaFeedbackUnauthenticatedUrl: String
 }
 
 trait StrictConfig{
@@ -58,6 +60,8 @@ class FrontendAppConfig extends AppConfig with StrictConfig with ServicesConfig 
 
   override lazy val analyticsToken: String = loadConfig(s"google-analytics.token")
   override lazy val analyticsHost: String = loadConfig(s"google-analytics.host")
+  override lazy val betaFeedbackUrl = s"$contactHost/contact/beta-feedback?service=$contactFormServiceIdentifier"
+  override lazy val betaFeedbackUnauthenticatedUrl = s"$contactHost/contact/beta-feedback-unauthenticated?service=$contactFormServiceIdentifier"
   override lazy val reportAProblemPartialUrl = s"$contactHost/contact/problem_reports_ajax?service=$contactFormServiceIdentifier"
   override lazy val reportAProblemNonJSUrl = s"$contactHost/contact/problem_reports_nonjs?service=$contactFormServiceIdentifier"
 }

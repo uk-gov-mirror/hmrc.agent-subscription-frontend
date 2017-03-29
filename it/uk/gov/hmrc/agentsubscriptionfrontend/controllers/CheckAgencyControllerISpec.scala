@@ -35,6 +35,11 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
 
     behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showCheckAgencyStatus(request))
 
+    behave like aPageWithFeedbackLinks(request => {
+      AuthStub.hasNoEnrolments(subscribingAgent)
+      controller.showCheckAgencyStatus(request)
+    }, authenticatedRequest())
+
     "display the check agency status page if the current user is logged in and has affinity group = Agent" in {
       AuthStub.hasNoEnrolments(subscribingAgent)
 
@@ -187,6 +192,10 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
   "showHasOtherEnrolments" should {
 
     behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showHasOtherEnrolments(request))
+    behave like aPageWithFeedbackLinks(request => {
+      AuthStub.hasNoEnrolments(subscribingAgent)
+      controller.showHasOtherEnrolments(request)
+    }, authenticatedRequest())
 
     "display the has other enrolments page if the current user is logged in and has affinity group = Agent" in {
       AuthStub.hasNoEnrolments(subscribingAgent)
@@ -200,6 +209,10 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
   "showNoAgencyFound" should {
 
     behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showNoAgencyFound(request))
+    behave like aPageWithFeedbackLinks(request => {
+      AuthStub.hasNoEnrolments(subscribingAgent)
+      controller.showNoAgencyFound(request)
+    }, authenticatedRequest())
 
     "display the no agency found page if the current user is logged in and has affinity group = Agent" in {
       AuthStub.hasNoEnrolments(subscribingAgent)

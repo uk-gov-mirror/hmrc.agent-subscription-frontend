@@ -33,18 +33,13 @@ class StartControllerISpec extends BaseControllerISpec {
       bodyOf(result) should include("Subscribe to new agent services")
     }
 
-    "have a 'get help with this page' link" in {
-      val result = await(controller.start(FakeRequest()))
+    behave like aPageWithFeedbackLinks(request => controller.start(request))
 
-      bodyOf(result) should include("Get help with this page.")
-    }
   }
 
   "showNonAgentNextSteps" should {
     "display the non-agent next steps page if the current user is logged in" in {
-      val sessionKeys = AuthStub.userIsAuthenticated(individual)
-
-      val request = FakeRequest().withSession(sessionKeys: _*)
+      val request = authenticatedRequest()
       val result = await(controller.showNonAgentNextSteps(request))
 
       status(result) shouldBe OK
@@ -62,6 +57,8 @@ class StartControllerISpec extends BaseControllerISpec {
       status(result) shouldBe SEE_OTHER
       redirectLocation(result).head should include("gg/sign-in")
     }
+
+    behave like aPageWithFeedbackLinks(request => controller.showNonAgentNextSteps(request), authenticatedRequest())
   }
 
 }
