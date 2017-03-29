@@ -4,7 +4,7 @@ import com.google.inject.AbstractModule
 import org.scalatestplus.play.OneAppPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.mvc.Result
+import play.api.mvc.{AnyContentAsEmpty, Result}
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{contentType, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
@@ -21,10 +21,13 @@ abstract class BaseControllerISpec extends UnitSpec with OneAppPerSuite with Wir
     new GuiceApplicationBuilder()
       .configure(
         "microservice.services.auth.port" -> wireMockPort,
-        "microservice.services.agent-subscription.port" -> wireMockPort
+        "microservice.services.agent-subscription.port" -> wireMockPort,
+        "passcodeAuthentication.enabled" -> passcodeAuthenticationEnabled
       )
       .overrides(new TestGuiceModule)
   }
+
+  protected def passcodeAuthenticationEnabled: Boolean = false
 
   protected lazy val sessionStoreService = new TestSessionStoreService
 
@@ -41,7 +44,7 @@ abstract class BaseControllerISpec extends UnitSpec with OneAppPerSuite with Wir
 
   protected implicit val materializer = app.materializer
 
-  protected def authenticatedRequest() = {
+  protected def authenticatedRequest(): FakeRequest[AnyContentAsEmpty.type] = {
     val sessionKeys = AuthStub.userIsAuthenticated(subscribingAgent)
     FakeRequest().withSession(sessionKeys: _*)
   }

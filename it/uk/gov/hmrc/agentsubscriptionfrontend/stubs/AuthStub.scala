@@ -71,6 +71,23 @@ object AuthStub {
     sessionKeysForMockAuth(user)
   }
 
+  def passcodeAuthorisationSucceeds(regime: String = "agent-subscription", otacToken: String = "dummy-otac-token"): Seq[(String, String)] = {
+    stubPasscodeAuthorisation(regime, 200)
+
+    Seq(SessionKeys.otacToken -> otacToken)
+  }
+
+  def passcodeAuthorisationFails(regime: String = "agent-subscription"): Unit = {
+    stubPasscodeAuthorisation(regime, 404)
+  }
+
+  private def stubPasscodeAuthorisation(regime: String, status: Int) = {
+    stubFor(get(urlEqualTo(s"/authorise/read/$regime"))
+      .willReturn(
+        aResponse()
+          .withStatus(status)))
+  }
+
   def isSubscribedToMtd(user: SampleUser): Unit = {
     stubFor(get(urlEqualTo(user.enrolmentsLink))
         .willReturn(

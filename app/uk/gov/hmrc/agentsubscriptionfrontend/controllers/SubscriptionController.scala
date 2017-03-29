@@ -27,6 +27,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.FieldMappings._
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
+import uk.gov.hmrc.passcode.authentication.{PasscodeAuthenticationProvider, PasscodeVerificationConfig}
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 import uk.gov.hmrc.play.http.HeaderCarrier
@@ -45,6 +46,8 @@ case class SubscriptionDetails(utr: String,
 class SubscriptionController @Inject()
   (override val messagesApi: MessagesApi,
    override val authConnector: AuthConnector,
+   override val config: PasscodeVerificationConfig,
+   override val passcodeAuthenticationProvider: PasscodeAuthenticationProvider,
    subscriptionService: SubscriptionService,
    sessionStoreService: SessionStoreService
   )

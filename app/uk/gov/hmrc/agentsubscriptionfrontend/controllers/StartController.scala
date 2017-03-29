@@ -23,20 +23,23 @@ import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.NoOpRegime
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
+import uk.gov.hmrc.passcode.authentication.{PasscodeAuthentication, PasscodeAuthenticationProvider, PasscodeVerificationConfig}
 import uk.gov.hmrc.play.frontend.auth.Actions
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 
 class StartController @Inject()(override val messagesApi: MessagesApi,
-                                override val authConnector: AuthConnector)
+                                override val authConnector: AuthConnector,
+                                override val config: PasscodeVerificationConfig,
+                                override val passcodeAuthenticationProvider: PasscodeAuthenticationProvider)
                                (implicit appConfig: AppConfig)
-    extends FrontendController with I18nSupport with Actions {
+    extends FrontendController with I18nSupport with Actions with PasscodeAuthentication {
 
-  val root: Action[AnyContent] = Action { implicit request =>
+  val root: Action[AnyContent] = PasscodeAuthenticatedAction { implicit request =>
     Redirect(routes.StartController.start())
   }
 
-  val start: Action[AnyContent] = Action { implicit request =>
+  val start: Action[AnyContent] = PasscodeAuthenticatedAction { implicit request =>
     Ok(html.start())
   }
 
