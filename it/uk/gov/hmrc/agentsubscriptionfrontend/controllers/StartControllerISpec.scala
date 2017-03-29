@@ -45,7 +45,7 @@ class StartControllerISpec extends BaseControllerISpec {
       status(result) shouldBe OK
       contentType(result) shouldBe Some("text/html")
       charset(result) shouldBe Some("utf-8")
-      bodyOf(result) should include("Affinity Group")
+      bodyOf(result) should include("This isn't an agent account")
     }
 
     "redirect to the company-auth-frontend sign-in page if the current user is not logged in" in {
