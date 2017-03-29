@@ -7,20 +7,22 @@
 
 @(knownFactsForm : Form[KnownFacts])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = "Check Agency Status", bodyClasses = None) {
-  <h1>Check if your agency is already subscribed</h1>
+@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = "Check if your business already has an Agent Services account", bodyClasses = None) {
+  <h1>Check if your business already has an Agent Services account</h1>
 
   @form(
     action = routes.CheckAgencyController.checkAgencyStatus,
     'class -> "form js-form") {
 
+    <p>Enter your business's:</p>
+
     <fieldset class="form-group">
       <div class="form-field">
-          @input(knownFactsForm("utr"), '_label -> "SA or CT UTR", '_inputClass -> "input--medium input--cleared")
+          @input(knownFactsForm("utr"), '_label -> "Self Assessment or Corporation Tax Unique Taxpayer Reference (UTR)", '_inputClass -> "input--medium input--cleared")
       </div>
 
       <div class="form-field">
-          @input(knownFactsForm("postcode"), '_label -> "Registered business postcode", '_inputClass -> "input--small input--cleared")
+          @input(knownFactsForm("postcode"), '_label -> "Registered postcode related to that UTR", '_inputClass -> "input--small input--cleared")
       </div>
 
       <div class="form-field">

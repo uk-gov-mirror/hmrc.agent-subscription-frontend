@@ -2,16 +2,21 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes.CheckAgencyController
 @()(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = "Subscribe to new agent services", bodyClasses = None, userIsLoggedIn = false) {
-  <h1>Subscribe to new agent services</h1>
-  <p>Please contact your agency administrator to get access to Agent Services.</p><p>Use this service to:</p>
+@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = "Create an Agent Services account", bodyClasses = None, userIsLoggedIn = false) {
+
+    <h1>Create an Agent Services account</h1>
+
+    <p>This will give you access to a range of new services through your accounting software.</p>
+
+    <p>You'll soon be able to:</p>
 
     <ul class="list list-bullet">
-        <li>get access to work on behalf of clients in Making Tax Digital (MTD)</li>
-        <li>generate a single new agent reference number (ARN)</li>
-    </uL>
+        <li>link your existing client records to the account</li>
+        <li>access your Making Tax Digital (MTD) Self Assessment client's tax data</li>
+        <li>interact with HMRC online in real time</li>
+    </ul>
 
-    <p>Subscription takes around 5 minutes</p>
+    <p>It takes around 5 minutes to create an account.</p>
 
     <p>
         <a class="button button-start button--get-started" href="@CheckAgencyController.showCheckAgencyStatus" role="button">Start now</a>
@@ -19,18 +24,16 @@
 
     <h2 class="heading-medium">Before you start</h2>
 
-    <p>To subscribe you'll need the following information about your agency:</p>
+    <p>To create this account, you'll need the following information about your business:</p>
 
     <ul class="list list-bullet">
         <li>name</li>
         <li>address</li>
         <li>email address</li>
         <li>phone number</li>
-        <li>the Government Gateway credentials you want to use for MTD clients</li>
-        <li>SA or CT UTR</li>
-    </uL>
+        <li>Self Assessment or Corporation Tax Unique Taxpayer Reference (UTR)</li>
+    </ul>
 
-    <p>You may also need a mobile phone for an additional security check called 2-Step Verification.</p>
+    <p>If you're charging for services as an agent, you must be supervised for <a href="https://www.gov.uk/topic/business-tax/money-laundering-regulations">anti-money laundering</a>.</p>
 
-    <p>The online service is also available in Welsh (Cymraeg)</p>
 }
