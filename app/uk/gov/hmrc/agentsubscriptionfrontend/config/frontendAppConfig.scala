@@ -18,7 +18,6 @@ package uk.gov.hmrc.agentsubscriptionfrontend.config
 
 import javax.inject.Singleton
 
-import play.api.Logger
 import play.api.Play.{configuration, current}
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
 import uk.gov.hmrc.play.config.ServicesConfig
@@ -30,6 +29,7 @@ trait AppConfig {
   val reportAProblemNonJSUrl: String
   val betaFeedbackUrl: String
   val betaFeedbackUnauthenticatedUrl: String
+  val governmentGatewayUrl: String
 }
 
 trait StrictConfig{
@@ -64,4 +64,5 @@ class FrontendAppConfig extends AppConfig with StrictConfig with ServicesConfig 
   override lazy val betaFeedbackUnauthenticatedUrl = s"$contactHost/contact/beta-feedback-unauthenticated?service=$contactFormServiceIdentifier"
   override lazy val reportAProblemPartialUrl = s"$contactHost/contact/problem_reports_ajax?service=$contactFormServiceIdentifier"
   override lazy val reportAProblemNonJSUrl = s"$contactHost/contact/problem_reports_nonjs?service=$contactFormServiceIdentifier"
+  override lazy val governmentGatewayUrl: String = loadConfig("government-gateway.url")
 }

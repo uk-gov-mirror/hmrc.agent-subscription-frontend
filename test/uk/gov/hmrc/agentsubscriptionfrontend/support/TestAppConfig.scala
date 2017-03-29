@@ -29,4 +29,5 @@ object TestAppConfig extends AppConfig {
   override lazy val reportAProblemNonJSUrl = s"$contactHost/contact/problem_reports_nonjs?service=$contactFormServiceIdentifier"
   override lazy val betaFeedbackUrl = s"$contactHost/contact/beta-feedback?service=$contactFormServiceIdentifier"
   override lazy val betaFeedbackUnauthenticatedUrl = s"$contactHost/contact/beta-feedback-unauthenticated?service=$contactFormServiceIdentifier"
+  override lazy val governmentGatewayUrl: String = "http://www.ref.gateway.gov.uk/"
 }

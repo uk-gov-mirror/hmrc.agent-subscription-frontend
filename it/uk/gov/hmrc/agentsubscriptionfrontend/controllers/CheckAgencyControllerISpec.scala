@@ -15,6 +15,7 @@
  */
 
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
+import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentsubscriptionfrontend.models.KnownFactsResult
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.{AgentSubscriptionStub, AuthStub}
@@ -28,6 +29,11 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
 
   private val notSubscribed = "notSubscribed"
   private val alreadySubscribed = "alreadySubscribed"
+
+  private lazy val configuredGovernmentGatewayUrl = "http://configured-government-gateway.gov.uk/"
+
+  override protected def appBuilder: GuiceApplicationBuilder = super.appBuilder
+    .configure("government-gateway.url" -> configuredGovernmentGatewayUrl)
 
   private lazy val controller: CheckAgencyController = app.injector.instanceOf[CheckAgencyController]
 
@@ -198,11 +204,20 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
     }, authenticatedRequest())
 
     "display the has other enrolments page if the current user is logged in and has affinity group = Agent" in {
-      AuthStub.hasNoEnrolments(subscribingAgent)
+      AuthStub.isEnrolledForNonMtdServices(subscribingAgent)
 
       val result = await(controller.showHasOtherEnrolments(authenticatedRequest()))
 
       checkHtmlResultWithBodyText(result, "Create your new account ID and password")
+    }
+
+    "allow the government gateway URL to be configured" in {
+      AuthStub.isEnrolledForNonMtdServices(subscribingAgent)
+
+      val result = await(controller.showHasOtherEnrolments(authenticatedRequest()))
+
+      status(result) shouldBe 200
+      bodyOf(result) should include(configuredGovernmentGatewayUrl)
     }
   }
 
