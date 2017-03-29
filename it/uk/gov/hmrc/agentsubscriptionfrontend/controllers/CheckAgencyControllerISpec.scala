@@ -202,7 +202,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
 
       val result = await(controller.showHasOtherEnrolments(authenticatedRequest()))
 
-      checkHtmlResultWithBodyText(result, "Non-Agent Next Steps")
+      checkHtmlResultWithBodyText(result, "Create your new account ID and password")
     }
   }
 

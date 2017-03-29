@@ -1,8 +1,15 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 @()(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = "Non-Agent Next Steps", bodyClasses = None) {
-  <h1>Non-Agent Next Steps</h1>
-  <p>Go and set up a new GGW cred with Affinity Group 'Agent' and do not use this new cred for any other enrolments.</p>
-  <p>TODO: proper wording (ABP-572)</p>
+@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = "This isn't an agent account", bodyClasses = None) {
+  <h1>This isn't an agent account</h1>
+  <p>Before you can create your Agent Services account, you need to:</p>
+  <ul class="list list-bullet">
+    <li>register for a new Government Gateway account, selecting the ‘Agents’ option</li>
+    <li>use your new account details to log in and create your Agent Services account</li>
+  </ul>
+  <p>Registering should take around 5 minutes.</p>
+  <p>
+    <a class="button" href="http://www.gateway.gov.uk/" role="button">Register now</a>
+  </p>
 }
