@@ -58,7 +58,7 @@ class SubscriptionController @Inject()
     mapping(
       "utr" -> utr,
       "knownFactsPostcode" -> postcode,
-      "name" -> nonEmptyText(maxLength = 40),
+      "name" -> agencyName,
       "email" -> email,
       "telephone" -> telephoneNumber,
       "addressLine1" -> nonEmptyText(maxLength = 35),

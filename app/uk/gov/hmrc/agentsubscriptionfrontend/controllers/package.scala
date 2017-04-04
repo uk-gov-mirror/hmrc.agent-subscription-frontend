@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend
 
-import play.api.data.Forms.text
+import play.api.data.Forms._
 import play.api.data.Mapping
 import play.api.data.validation.{Constraint, _}
 import uk.gov.hmrc.domain.Modulus11Check
@@ -72,8 +72,11 @@ package object controllers {
       }
     }
 
+    private val noAmpersand = Constraints.pattern("[^&]*".r, error = "error.no.ampersand")
+
     def utr: Mapping[String] = text verifying modulus11UtrConstraint
     def postcode: Mapping[String] = text verifying nonEmptyPostcode
     def telephoneNumber: Mapping[String] = text verifying nonEmptyTelephoneNumber
+    def agencyName: Mapping[String] = nonEmptyText(maxLength = 40) verifying noAmpersand
   }
 }

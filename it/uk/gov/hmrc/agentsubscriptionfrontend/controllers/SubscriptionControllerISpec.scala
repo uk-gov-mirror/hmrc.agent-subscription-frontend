@@ -179,6 +179,17 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         sessionStoreService.removeCalled shouldBe false
       }
 
+      "name contains an ampersand" in {
+        AuthStub.hasNoEnrolments(subscribingAgent)
+        sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
+
+        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("name", Seq("name" -> "Agency & Co."))))
+
+        status(result) shouldBe 200
+        checkHtmlResultWithBodyText(result, "Add your agency information", "Agency name cannot contain &quot;&amp;&quot;")
+        sessionStoreService.removeCalled shouldBe false
+      }
+
       "name is longer than 40 characters" in {
         AuthStub.hasNoEnrolments(subscribingAgent)
         sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
