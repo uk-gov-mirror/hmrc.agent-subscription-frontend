@@ -1,3 +1,5 @@
 error.postcode.invalid = Please enter a valid postcode
 error.utr.invalid = Please enter a valid UTR
 error.telephone.invalid = Please enter a valid telephone number
+error.no.ampersand = Agency name cannot contain "&"
+
