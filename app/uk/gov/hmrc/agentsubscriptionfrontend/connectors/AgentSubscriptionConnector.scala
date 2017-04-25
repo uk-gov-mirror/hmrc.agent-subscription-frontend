@@ -21,6 +21,7 @@ import javax.inject.{Inject, Named, Singleton}
 
 import play.api.http.Status
 import play.api.libs.json.JsValue
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{Arn, Registration, SubscriptionRequest}
 import uk.gov.hmrc.play.encoding.UriPathEncoding.encodePathSegment
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext.fromLoggingDetails
@@ -31,7 +32,7 @@ import scala.concurrent.Future
 @Singleton
 class AgentSubscriptionConnector @Inject() (@Named("agent-subscription-baseUrl") baseUrl: URL, http: HttpGet with HttpPost) {
 
-  def getRegistration(utr: String, postcode: String)(implicit hc: HeaderCarrier): Future[Option[Registration]] = {
+  def getRegistration(utr: Utr, postcode: String)(implicit hc: HeaderCarrier): Future[Option[Registration]] = {
     val url = getRegistrationUrlFor(utr, postcode)
     http.GET[Option[Registration]](url)
   }
@@ -43,6 +44,6 @@ class AgentSubscriptionConnector @Inject() (@Named("agent-subscription-baseUrl")
 
   private val subscriptionUrl = new URL(baseUrl, s"/agent-subscription/subscription")
 
-  private def getRegistrationUrlFor(utr: String, postcode: String) =
-    new URL(baseUrl, s"/agent-subscription/registration/${encodePathSegment(utr)}/postcode/${encodePathSegment(postcode)}").toString
+  private def getRegistrationUrlFor(utr: Utr, postcode: String) =
+    new URL(baseUrl, s"/agent-subscription/registration/${encodePathSegment(utr.value)}/postcode/${encodePathSegment(postcode)}").toString
 }

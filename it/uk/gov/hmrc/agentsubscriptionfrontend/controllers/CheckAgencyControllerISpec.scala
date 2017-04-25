@@ -17,13 +17,14 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers._
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.models.KnownFactsResult
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.{AgentSubscriptionStub, AuthStub}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUsers._
 
 class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMissingSpec {
 
-  private val validUtr = "2000000000"
+  private val validUtr = Utr("2000000000")
   private val validPostcode = "AA1 1AA"
   private val invalidPostcode = "not a postcode"
 
@@ -111,14 +112,14 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
     "return a 200 response to redisplay the form with an error message for invalidly-formatted postcode" in {
       AuthStub.hasNoEnrolments(subscribingAgent)
       val request = authenticatedRequest()
-        .withFormUrlEncodedBody("utr" -> validUtr, "postcode" -> invalidPostcode)
+        .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> invalidPostcode)
       val result = await(controller.checkAgencyStatus(request))
 
       status(result) shouldBe OK
       val responseBody = bodyOf(result)
       responseBody should include("Check if your business already has an Agent Services account")
       responseBody should include ("Please enter a valid postcode")
-      responseBody should include (validUtr)
+      responseBody should include (validUtr.value)
       responseBody should include (invalidPostcode)
     }
 
@@ -138,7 +139,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
       AuthStub.hasNoEnrolments(subscribingAgent)
       AgentSubscriptionStub.withNonMatchingUtrAndPostcode(validUtr, validPostcode)
       val request = authenticatedRequest()
-        .withFormUrlEncodedBody("utr" -> validUtr, "postcode" -> validPostcode)
+        .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
 
       status(result) shouldBe 303
@@ -149,7 +150,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
       AgentSubscriptionStub.withMatchingUtrAndPostcode(validUtr, validPostcode)
       AuthStub.hasNoEnrolments(subscribingAgent)
       val request = authenticatedRequest()
-        .withFormUrlEncodedBody("utr" -> validUtr, "postcode" -> validPostcode)
+        .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
 
       status(result) shouldBe 303
@@ -162,7 +163,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
       AgentSubscriptionStub.withMatchingUtrAndPostcode(validUtr, validPostcode)
       AuthStub.hasNoEnrolments(subscribingAgent)
       val request = authenticatedRequest()
-        .withFormUrlEncodedBody("utr" -> validUtr, "postcode" -> validPostcode)
+        .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
 
       status(result) shouldBe 303
@@ -174,7 +175,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
       AgentSubscriptionStub.withMatchingUtrAndPostcode(validUtr, validPostcode, isSubscribedToAgentServices = true)
       AuthStub.hasNoEnrolments(subscribingAgent)
       val request = authenticatedRequest()
-        .withFormUrlEncodedBody("utr" -> validUtr, "postcode" -> validPostcode)
+        .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
 
       status(result) shouldBe 303
@@ -186,11 +187,11 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
       AgentSubscriptionStub.withNoOrganisationName(validUtr, validPostcode)
       AuthStub.hasNoEnrolments(subscribingAgent)
       val request = authenticatedRequest()
-        .withFormUrlEncodedBody("utr" -> validUtr, "postcode" -> validPostcode)
+        .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val e = intercept[IllegalStateException] {
         await(controller.checkAgencyStatus(request))
       }
-      e.getMessage should include(validUtr)
+      e.getMessage should include(validUtr.value)
     }
 
   }
@@ -243,7 +244,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
     behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showConfirmYourAgency(request))
 
     "display the confirm your agency page if the current user is logged in and has affinity group = Agent" in {
-      val utr = "0123456789"
+      val utr = Utr("0123456789")
       val postcode = "AA11AA"
       val registrationName = "My Agency"
       sessionStoreService.knownFactsResult = Some(
@@ -255,13 +256,13 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
 
       checkHtmlResultWithBodyText(result,
         "Is this your business?",
-        s">$postcode</", s">$utr</", s">$registrationName</")
+        s">$postcode</", s">${utr.value}</", s">$registrationName</")
     }
 
     "show a button which allows the user to return to Check Agency Status page" in {
       AuthStub.hasNoEnrolments(subscribingAgent)
       sessionStoreService.knownFactsResult = Some(
-        KnownFactsResult(utr = "0123456789", postcode = "AA11AA", taxpayerName = "My Agency", isSubscribedToAgentServices = false))
+        KnownFactsResult(utr = Utr("0123456789"), postcode = "AA11AA", taxpayerName = "My Agency", isSubscribedToAgentServices = false))
       val request = authenticatedRequest()
 
       val result = await(controller.showConfirmYourAgency(request))
@@ -272,7 +273,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
     "show a link to the Not Yet Subscribed page if isSubscribedToAgentServices=false" in {
       AuthStub.hasNoEnrolments(subscribingAgent)
       sessionStoreService.knownFactsResult = Some(
-        KnownFactsResult(utr = "0123456789", postcode = "AA11AA", taxpayerName = "My Agency", isSubscribedToAgentServices = false))
+        KnownFactsResult(utr = Utr("0123456789"), postcode = "AA11AA", taxpayerName = "My Agency", isSubscribedToAgentServices = false))
       val request = authenticatedRequest()
 
       val result = await(controller.showConfirmYourAgency(request))
@@ -283,7 +284,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
     "show a link to the Already Subscribed page if isSubscribedToAgentServices=true" in {
       AuthStub.hasNoEnrolments(subscribingAgent)
       sessionStoreService.knownFactsResult = Some(
-        KnownFactsResult(utr = "0123456789", postcode = "AA11AA", taxpayerName = "My Agency", isSubscribedToAgentServices = true))
+        KnownFactsResult(utr = Utr("0123456789"), postcode = "AA11AA", taxpayerName = "My Agency", isSubscribedToAgentServices = true))
       val request = authenticatedRequest()
 
       val result = await(controller.showConfirmYourAgency(request))
@@ -321,7 +322,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
     "display the not subscribed page if the current user is logged in and has affinity group = Agent" in {
       AuthStub.hasNoEnrolments(subscribingAgent)
       sessionStoreService.knownFactsResult = Some(
-        KnownFactsResult(utr = "0123456789", postcode = "AA11AA", taxpayerName = "My Agency", isSubscribedToAgentServices = true))
+        KnownFactsResult(utr = Utr("0123456789"), postcode = "AA11AA", taxpayerName = "My Agency", isSubscribedToAgentServices = true))
 
       val result = await(controller.showNotSubscribed(authenticatedRequest()))
 

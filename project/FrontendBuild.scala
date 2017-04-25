@@ -20,7 +20,8 @@ object FrontendBuild extends Build with MicroService {
     "uk.gov.hmrc" %% "play-health" % "2.1.0",
     "uk.gov.hmrc" %% "play-ui" % "7.2.0",
     "uk.gov.hmrc" %% "http-caching-client" % "6.2.0",
-    "uk.gov.hmrc" %% "passcode-verification" % "4.1.0"
+    "uk.gov.hmrc" %% "passcode-verification" % "4.1.0",
+    "uk.gov.hmrc" %% "agent-mtd-identifiers" % "0.4.0"
   )
 
   def test(scope: String = "test") = Seq(

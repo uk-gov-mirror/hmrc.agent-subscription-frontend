@@ -17,8 +17,9 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.models
 
 import play.api.libs.json.Json
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 
-case class KnownFactsResult(utr: String, postcode: String, taxpayerName: String, isSubscribedToAgentServices: Boolean)
+case class KnownFactsResult(utr: Utr, postcode: String, taxpayerName: String, isSubscribedToAgentServices: Boolean)
 
 object KnownFactsResult {
   implicit val format = Json.format[KnownFactsResult]
