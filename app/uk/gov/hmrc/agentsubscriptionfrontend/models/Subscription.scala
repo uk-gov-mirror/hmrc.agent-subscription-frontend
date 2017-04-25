@@ -17,6 +17,7 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.models
 
 import play.api.libs.json.{Format, Json}
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.domain.SimpleObjectReads
 
 object Arn {
@@ -57,7 +58,7 @@ case class Agency(name: String,
 
 case class KnownFacts(postcode: String)
 
-case class SubscriptionRequest(utr: String,
+case class SubscriptionRequest(utr: Utr,
                                knownFacts: KnownFacts,
                                agency: Agency
                               )

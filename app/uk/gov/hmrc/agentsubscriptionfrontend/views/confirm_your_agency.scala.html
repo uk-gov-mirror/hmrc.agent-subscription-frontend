@@ -1,6 +1,7 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes._
-@(registrationName: String, postcode: String, utr: String, nextPageUrl: String)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+@import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+@(registrationName: String, postcode: String, utr: Utr, nextPageUrl: String)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = "Is this your business?", bodyClasses = None) {
   <h1>Is this your business?</h1>
@@ -22,7 +23,7 @@
     </tr>
     <tr>
       <td>UTR</td>
-      <td id="utr">@utr</td>
+      <td id="utr">@{utr.value}</td>
     </tr>
     </tbody>
   </table>

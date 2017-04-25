@@ -18,6 +18,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.stubs
 
 import com.github.tomakehurst.wiremock.client.WireMock._
 import play.api.http.Status
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.models.SubscriptionRequest
 import uk.gov.hmrc.play.encoding.UriPathEncoding.encodePathSegment
 
@@ -35,37 +36,37 @@ object AgentSubscriptionStub {
       |  "isSubscribedToAgentServices": false
       |}""".stripMargin
 
-  def withMatchingUtrAndPostcode(utr: String, postcode: String, isSubscribedToAgentServices: Boolean = false): Unit = {
+  def withMatchingUtrAndPostcode(utr: Utr, postcode: String, isSubscribedToAgentServices: Boolean = false): Unit = {
     withMatchingUtrAndPostcodeAndBody(utr, postcode, response(isSubscribedToAgentServices))
   }
 
-  def withNoOrganisationName(utr: String, postcode: String): Unit = {
+  def withNoOrganisationName(utr: Utr, postcode: String): Unit = {
     withMatchingUtrAndPostcodeAndBody(utr, postcode, noOrganisationNameResponse)
   }
 
-  private def withMatchingUtrAndPostcodeAndBody(utr: String, postcode: String, responseBody: String): Unit = {
-    stubFor(get(urlEqualTo(s"/agent-subscription/registration/${encodePathSegment(utr)}/postcode/${encodePathSegment(postcode)}"))
+  private def withMatchingUtrAndPostcodeAndBody(utr: Utr, postcode: String, responseBody: String): Unit = {
+    stubFor(get(urlEqualTo(s"/agent-subscription/registration/${encodePathSegment(utr.value)}/postcode/${encodePathSegment(postcode)}"))
       .willReturn(
         aResponse()
           .withStatus(Status.OK)
           .withBody(responseBody)))
   }
 
-  def withNonMatchingUtrAndPostcode(utr: String, postcode: String): Unit = {
-    stubFor(get(urlEqualTo(s"/agent-subscription/registration/${encodePathSegment(utr)}/postcode/${encodePathSegment(postcode)}"))
+  def withNonMatchingUtrAndPostcode(utr: Utr, postcode: String): Unit = {
+    stubFor(get(urlEqualTo(s"/agent-subscription/registration/${encodePathSegment(utr.value)}/postcode/${encodePathSegment(postcode)}"))
       .willReturn(
         aResponse()
           .withStatus(Status.NOT_FOUND)))
   }
 
-  def withErrorForUtrAndPostcode(utr: String, postcode: String): Unit = {
-    stubFor(get(urlEqualTo(s"/agent-subscription/registration/${encodePathSegment(utr)}/postcode/${encodePathSegment(postcode)}"))
+  def withErrorForUtrAndPostcode(utr: Utr, postcode: String): Unit = {
+    stubFor(get(urlEqualTo(s"/agent-subscription/registration/${encodePathSegment(utr.value)}/postcode/${encodePathSegment(postcode)}"))
       .willReturn(
         aResponse()
           .withStatus(Status.INTERNAL_SERVER_ERROR)))
   }
 
-  def subscriptionSuccess(utr: String, request: SubscriptionRequest ): Unit = {
+  def subscriptionSuccess(utr: Utr, request: SubscriptionRequest ): Unit = {
     stubFor(subscriptionRequestFor(utr, request)
               .willReturn(aResponse()
                 .withStatus(201)
@@ -77,25 +78,25 @@ object AgentSubscriptionStub {
                      """.stripMargin)))
   }
 
-  def subscriptionConflict(utr: String, request: SubscriptionRequest ): Unit = {
+  def subscriptionConflict(utr: Utr, request: SubscriptionRequest ): Unit = {
     stubFor(subscriptionRequestFor(utr, request)
       .willReturn(aResponse()
         .withStatus(409)))
   }
 
-  def subscriptionForbidden(utr: String, request: SubscriptionRequest ): Unit = {
+  def subscriptionForbidden(utr: Utr, request: SubscriptionRequest ): Unit = {
     stubFor(subscriptionRequestFor(utr, request)
       .willReturn(aResponse()
         .withStatus(403)))
   }
 
-  private def subscriptionRequestFor(utr: String, request: SubscriptionRequest) = {
+  private def subscriptionRequestFor(utr: Utr, request: SubscriptionRequest) = {
     val agency = request.agency
     val address = agency.address
     post(urlEqualTo(s"/agent-subscription/subscription"))
       .withRequestBody(equalToJson(s"""
            |{
-           |  "utr": "${request.utr}",
+           |  "utr": "${request.utr.value}",
            |  "knownFacts": {
            |    "postcode": "${request.knownFacts.postcode}"
            |  },

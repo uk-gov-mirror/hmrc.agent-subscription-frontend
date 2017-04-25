@@ -17,6 +17,7 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.service
 
 import play.api.libs.json.{JsValue, Reads, Writes}
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.models.KnownFactsResult
 import uk.gov.hmrc.http.cache.client.{CacheMap, NoSessionException, SessionCache}
 import uk.gov.hmrc.play.http.logging.SessionId
@@ -35,7 +36,7 @@ class SessionStoreServiceSpec extends UnitSpec {
     "store known facts" in {
       val store = new SessionStoreService(new TestSessionCache())
 
-      val knownFactsResult = KnownFactsResult("9876543210", "AA11AA", "Test organisation name", isSubscribedToAgentServices = true)
+      val knownFactsResult = KnownFactsResult(Utr("9876543210"), "AA11AA", "Test organisation name", isSubscribedToAgentServices = true)
 
       await(store.cacheKnownFactsResult(knownFactsResult))
 
@@ -51,7 +52,7 @@ class SessionStoreServiceSpec extends UnitSpec {
     "remove the underlying storage for the current session when remove is called" in {
       val store = new SessionStoreService(new TestSessionCache())
 
-      val knownFactsResult = KnownFactsResult("9876543210", "AA11AA", "Test organisation name", isSubscribedToAgentServices = true)
+      val knownFactsResult = KnownFactsResult(Utr("9876543210"), "AA11AA", "Test organisation name", isSubscribedToAgentServices = true)
 
       await(store.cacheKnownFactsResult(knownFactsResult))
 

@@ -3,6 +3,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.connectors
 import java.net.URL
 
 import org.scalatestplus.play.OneAppPerSuite
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.config.WSHttp
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub
@@ -16,7 +17,7 @@ class AgentSubscriptionConnectorISpec extends UnitSpec with OneAppPerSuite with 
 
   private lazy val connector: AgentSubscriptionConnector = new AgentSubscriptionConnector(new URL(s"http://localhost:$wireMockPort"), WSHttp)
 
-  private val utr = "0123456789"
+  private val utr = Utr("0123456789")
   "getRegistration" should {
 
     "return a subscribed Registration when agent-subscription returns a 200 response (for a matching UTR and postcode)" in {
@@ -36,8 +37,8 @@ class AgentSubscriptionConnectorISpec extends UnitSpec with OneAppPerSuite with 
     }
 
     "URL-path-encode path parameters" in {
-      AgentSubscriptionStub.withMatchingUtrAndPostcode("01234/56789", "AA1 1AA/&")
-      val result: Option[Registration] = await(connector.getRegistration("01234/56789", "AA1 1AA/&"))
+      AgentSubscriptionStub.withMatchingUtrAndPostcode(Utr("01234/56789"), "AA1 1AA/&")
+      val result: Option[Registration] = await(connector.getRegistration(Utr("01234/56789"), "AA1 1AA/&"))
       result.isDefined shouldBe true
     }
 

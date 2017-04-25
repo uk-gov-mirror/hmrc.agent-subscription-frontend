@@ -17,13 +17,14 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import play.api.test.Helpers._
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{Address, Agency, KnownFactsResult, SubscriptionRequest, KnownFacts => ModelKnownFacts}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.{AgentSubscriptionStub, AuthStub}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUsers._
 
 class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMissingSpec {
-  private val utr  = "2000000000"
-  private val myAgencyKnownFactsResult = KnownFactsResult(utr = "utr", postcode = "AA1 1AA", taxpayerName = "My Business", isSubscribedToAgentServices = false)
+  private val utr  = Utr("2000000000")
+  private val myAgencyKnownFactsResult = KnownFactsResult(utr = Utr("utr"), postcode = "AA1 1AA", taxpayerName = "My Business", isSubscribedToAgentServices = false)
 
   private lazy val controller: SubscriptionController = app.injector.instanceOf[SubscriptionController]
 
@@ -379,7 +380,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
 
   private def subscriptionDetailsRequest(keyToRemove: String = "", additionalParameters: Seq[(String, String)] = Seq()) =
     authenticatedRequest().withFormUrlEncodedBody(
-        Seq("utr" -> utr,
+        Seq("utr" -> utr.value,
             "knownFactsPostcode" -> "AA1 2AA",
             "name" -> "My Agency",
             "email" -> "agency@example.com",

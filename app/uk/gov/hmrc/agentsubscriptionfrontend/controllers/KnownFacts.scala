@@ -16,4 +16,6 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
-case class KnownFacts(utr: String, postcode: String)
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+
+case class KnownFacts(utr: Utr, postcode: String)
