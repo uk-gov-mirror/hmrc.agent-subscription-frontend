@@ -62,9 +62,9 @@ class SubscriptionController @Inject()
       "name" -> agencyName,
       "email" -> email,
       "telephone" -> telephoneNumber,
-      "addressLine1" -> nonEmptyText(maxLength = 35),
-      "addressLine2" -> optional(nonEmptyText(maxLength = 35)),
-      "addressLine3" -> optional(nonEmptyText(maxLength = 35)),
+      "addressLine1" -> addressLine1,
+      "addressLine2" -> addressLine23,
+      "addressLine3" -> addressLine23,
       "postcode" -> postcode
     )(SubscriptionDetails.apply)(SubscriptionDetails.unapply)
   )

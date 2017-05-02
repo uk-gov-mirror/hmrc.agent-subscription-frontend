@@ -109,10 +109,6 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
       shouldRejectFieldValueAsInvalid("AA1 1A%")
     }
 
-    "accept lower case postcodes" in {
-      shouldAcceptFieldValue("aa1 1aa")
-    }
-
     "accept postcodes with 2 characters in the outbound part" in {
       shouldAcceptFieldValue("A1 1AA")
     }
@@ -170,10 +166,6 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
         bind("    ").left.value should contain only FormError("testKey", "error.required")
       }
 
-      "fewer than 10 digits" in {
-        shouldRejectFieldValueAsInvalid("12345         ")
-
-      }
       "more than 24 characters" in {
         shouldRejectFieldValueAsInvalid("999999999999999999999999999999999")
       }
@@ -183,6 +175,10 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
     "accept telephone numbers" when {
       "there are 10 digits" in {
         shouldAcceptFieldValue("1234567 ext 123")
+      }
+
+      "there are 3 digits" in {
+        shouldAcceptFieldValue("123")
       }
 
       "there are valid symbols in the input" in {
@@ -201,4 +197,106 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
       }
     }
   }
+
+  "addressLine1 bind" should {
+    val addressLine1Mapping = FieldMappings.addressLine1.withPrefix("testKey")
+
+    def bind(fieldValue: String) = addressLine1Mapping.bind(Map("testKey" -> fieldValue))
+
+    def shouldRejectFieldValueAsInvalid(fieldValue: String): Unit = {
+      bind(fieldValue) should matchPattern { case Left(List(FormError("testKey", List("error.addressLine1.invalid"), _))) => }
+    }
+
+    def shouldAcceptFieldValue(fieldValue: String): Unit = {
+      bind(fieldValue) shouldBe Right(fieldValue)
+    }
+
+    "reject address Line 1" when {
+      "field is not present" in {
+        addressLine1Mapping.bind(Map.empty).left.value should contain only FormError("testKey", "error.required")
+      }
+
+      "input is empty" in {
+        bind("").left.value should contain(FormError("testKey", "error.required"))
+      }
+
+      "input is only whitespace" in {
+        bind("    ").left.value should contain(FormError("testKey", "error.required"))
+      }
+
+      "more than 35 characters" in {
+        shouldRejectFieldValueAsInvalid("1234567891123456789212345678931234567")
+      }
+
+      "there is an invalid character" in {
+        shouldRejectFieldValueAsInvalid("My Agency street; City~City")
+      }
+    }
+
+    "accept address Line 1" when {
+      "there is text and numbers" in {
+        shouldAcceptFieldValue("99 My Agency address")
+      }
+
+      "there are valid symbols in the input" in {
+        shouldAcceptFieldValue("My Agency address/Street ")
+        shouldAcceptFieldValue("Tester's Agency address/Street")
+      }
+
+      "there is a valid address" in {
+        shouldAcceptFieldValue( "My Agency address")
+      }
+    }
+  }
+
+  "address Line 2 and 3 bind" should {
+    val addressLine23Mapping = FieldMappings.addressLine23.withPrefix("testKey")
+
+    def bind(fieldValue: String) = addressLine23Mapping.bind(Map("testKey" -> fieldValue))
+
+    def shouldRejectFieldValueAsInvalid(fieldValue: String): Unit = {
+      bind(fieldValue) should matchPattern { case Left(List(FormError("testKey", List("error.addressLine.invalid"), _))) => }
+    }
+
+    def shouldAcceptFieldValue(fieldValue: String): Unit = {
+      if (fieldValue.isEmpty) bind(fieldValue) shouldBe Right(None)
+      else bind(fieldValue) shouldBe Right(Some(fieldValue))
+    }
+
+    "reject addressLine 2 and 3" when {
+
+      "input is only whitespace" in {
+        bind("    ").left.value should contain only FormError("testKey", "error.required")
+      }
+
+      "more than 35 characters" in {
+        shouldRejectFieldValueAsInvalid("1234567891123456789212345678931234567")
+      }
+
+      "there is an invalid character" in {
+        shouldRejectFieldValueAsInvalid("My Agency street; City~City")
+      }
+    }
+
+    "accept address Line 2 and 3" when {
+      "there is text and numbers" in {
+        shouldAcceptFieldValue("99 My Agency address")
+      }
+
+      "there are valid symbols in the input" in {
+        shouldAcceptFieldValue("My Agency address/Street ")
+        shouldAcceptFieldValue("Tester's Agency address/Street")
+      }
+
+      "there is a valid address" in {
+        shouldAcceptFieldValue("My Agency address")
+      }
+
+      "field is empty" in {
+        shouldAcceptFieldValue("")
+      }
+    }
+  }
+
+
 }
