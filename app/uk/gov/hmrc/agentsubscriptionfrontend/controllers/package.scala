@@ -26,8 +26,12 @@ package object controllers {
   object FieldMappings {
     private val telephoneNumberMaxLength = 24
     private val addressMaxLength = 35
+    private val agencyNameMaxLength = 40
     private val postcodeWithoutSpacesRegex = "^[A-Z]{1,2}[0-9][0-9A-Z]?\\s?[0-9][A-Z]{2}$|BFPO\\s?[0-9]{1,5}$".r
     private val addressRegex = "^[A-Za-z0-9 \\-,.&'\\/]{1,35}$"
+    private val agencyNameRegex = "^[A-Za-z0-9 \\-,.&'\\/]{1,40}$"
+    private val telephoneNumberRegex = "^[0-9- +()#x ]{1,24}$"
+
     private val nonEmptyPostcode: Constraint[String] = Constraint[String] { fieldValue: String =>
       Constraints.nonEmpty(fieldValue) match {
         case i: Invalid =>
@@ -41,11 +45,13 @@ package object controllers {
       }
     }
 
-    private val nonEmptyTelephoneNumber: Constraint[String] = Constraint[String] { fieldValue: String =>
+    private val TelephoneNumberConstraint: Constraint[String] = Constraint[String] { fieldValue: String =>
       Constraints.nonEmpty(fieldValue) match {
         case i: Invalid => i
-        case Valid => (fieldValue.length, fieldValue.replaceAll("^[^0-9- +()#x ]{1,24}$", "")) match {
-          case (length, digitCount) if length > telephoneNumberMaxLength =>
+        case Valid => fieldValue match {
+          case value if value.length > telephoneNumberMaxLength =>
+            Invalid(ValidationError("error.telephone.invalid"))
+          case value if !value.matches(telephoneNumberRegex) =>
             Invalid(ValidationError("error.telephone.invalid"))
           case _ => Valid
         }
@@ -54,6 +60,16 @@ package object controllers {
 
     private val noAmpersand = Constraints.pattern("[^&]*".r, error = "error.no.ampersand")
 
+    private val agencyNameConstraint: Constraint[String] = Constraint[String] { fieldValue: String =>
+      Constraints.nonEmpty(fieldValue) match {
+        case i: Invalid => i
+        case Valid => fieldValue match {
+          case value if value.length > agencyNameMaxLength => Invalid(ValidationError("error.name.invalid"))
+          case value if !value.matches(agencyNameRegex) => Invalid(ValidationError("error.name.invalid"))
+          case _ => Valid
+        }
+      }
+    }
     private val addressConstraint: Constraint[String] = Constraint[String] { fieldValue: String =>
       Constraints.nonEmpty(fieldValue) match {
         case i: Invalid => i
@@ -78,8 +94,8 @@ package object controllers {
 
     def utr: Mapping[Utr] = nonEmptyText.transform[Utr](Utr.apply,_.value).verifying("error.utr.invalid", utr => Utr.isValid(utr.value))
     def postcode: Mapping[String] = text verifying nonEmptyPostcode
-    def telephoneNumber: Mapping[String] = text verifying nonEmptyTelephoneNumber
-    def agencyName: Mapping[String] = nonEmptyText(maxLength = 40) verifying noAmpersand
+    def telephoneNumber: Mapping[String] = text verifying TelephoneNumberConstraint
+    def agencyName: Mapping[String] = text verifying noAmpersand verifying agencyNameConstraint
     def addressLine1: Mapping[String] = text verifying addressConstraint
     def addressLine23: Mapping[Option[String]] = optional(text verifying address23Constraint)
   }

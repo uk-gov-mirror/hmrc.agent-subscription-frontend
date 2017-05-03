@@ -131,6 +131,11 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
       shouldRejectFieldValueAsInvalid("AA1 AAA")
     }
 
+
+    "reject valid start of postcode but invalid after" in {
+      shouldRejectFieldValueAsInvalid("AA1 AAA PPRRD")
+    }
+
     "accept postcodes without spaces" in {
       shouldAcceptFieldValue("AA11AA")
     }
@@ -170,12 +175,16 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
         shouldRejectFieldValueAsInvalid("999999999999999999999999999999999")
       }
 
+      "valid telephone number then invalid characters" in {
+        shouldRejectFieldValueAsInvalid("0207 567 8554dbvv")
+      }
+
+      "there is text in the field" in {
+        shouldRejectFieldValueAsInvalid("0123 456 7890 EXT 123")
+      }
     }
 
     "accept telephone numbers" when {
-      "there are 10 digits" in {
-        shouldAcceptFieldValue("1234567 ext 123")
-      }
 
       "there are 3 digits" in {
         shouldAcceptFieldValue("123")
@@ -185,11 +194,7 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
         shouldAcceptFieldValue("+441234567890")
         shouldAcceptFieldValue("#441234567890")
         shouldAcceptFieldValue("(44)1234567890")
-        shouldAcceptFieldValue("/-*441234567890")
-      }
-
-      "there is text in the field" in {
-        shouldAcceptFieldValue("0123 456 7890 EXT 123")
+        shouldAcceptFieldValue("++441234567890")
       }
 
       "there is whitespace in the field" in {
@@ -244,7 +249,7 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
       }
 
       "there is a valid address" in {
-        shouldAcceptFieldValue( "My Agency address")
+        shouldAcceptFieldValue("My Agency address")
       }
     }
   }
@@ -298,5 +303,64 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
     }
   }
 
+  "name bind" should {
+
+    val agencyNameMapping = FieldMappings.agencyName.withPrefix("testKey")
+
+    def bind(fieldValue: String) = agencyNameMapping.bind(Map("testKey" -> fieldValue))
+
+    def shouldRejectFieldValueAsInvalid(fieldValue: String): Unit = {
+      bind(fieldValue) should matchPattern { case Left(List(FormError("testKey", List("error.name.invalid"), _))) => }
+    }
+
+    def shouldAcceptFieldValue(fieldValue: String): Unit = {
+      bind(fieldValue) shouldBe Right(fieldValue)
+    }
+
+    "reject Agency name" when {
+
+      "there is an ampersand character" in {
+        bind("My Agency & Co") should matchPattern { case Left(List(FormError("testKey", List("error.no.ampersand"), _))) => }
+        }
+
+      "there is an invalid character" in {
+        shouldRejectFieldValueAsInvalid("My Agency; His Agency #1")
+      }
+
+      "there are more than 40 characters" in {
+        shouldRejectFieldValueAsInvalid("12345678911234567892123456789312345678941234567")
+      }
+
+      "the field is empty" in {
+        shouldRejectFieldValueAsInvalid("12345678911234567892123456789312345678941234567")
+      }
+
+      "input is empty" in {
+        bind("").left.value should contain(FormError("testKey", "error.required"))
+      }
+
+      "input is only whitespace" in {
+        bind("    ").left.value should contain only FormError("testKey", "error.required")
+      }
+
+      "field is not present" in {
+        agencyNameMapping.bind(Map.empty).left.value should contain only FormError("testKey", "error.required")
+      }
+  }
+
+    "accept Agency name" when {
+      "there are valid characters" in {
+        shouldAcceptFieldValue("My Agency")
+        shouldAcceptFieldValue("My/Agency")
+        shouldAcceptFieldValue("My--Agency")
+        shouldAcceptFieldValue("My,Agency")
+        shouldAcceptFieldValue("My Agency's")
+      }
+
+      "there are numbers and letters" in {
+        shouldAcceptFieldValue("The 100 Agency")
+      }
+    }
+}
 
 }

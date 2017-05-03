@@ -189,7 +189,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
 
         status(result) shouldBe 200
         checkHtmlResultWithBodyText(result, "Add your agency information",
-          "This field is mandatory and is limited to 40 alphanumeric characters (A-Z, a-z 0-9 \\-,.)")
+          "Agency name cannot contain "+ "&" + "")
         sessionStoreService.removeCalled shouldBe false
       }
 
@@ -263,21 +263,21 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         checkHtmlResultWithBodyText(result, "Add your agency information")
       }
 
-      "telephone is invalid" in {
-        AuthStub.hasNoEnrolments(subscribingAgent)
-        sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
-
-        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("telephone", Seq("telephone" -> "12345"))))
-
-        status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information", "Please enter a valid telephone number")
-      }
-
       "telephone is invalid with only words" in {
         AuthStub.hasNoEnrolments(subscribingAgent)
         sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
 
         val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("telephone", Seq("telephone" -> "nine"))))
+
+        status(result) shouldBe 200
+        checkHtmlResultWithBodyText(result, "Add your agency information", "Please enter a valid telephone number")
+      }
+
+      "telephone is invalid with numbers and words" in {
+        AuthStub.hasNoEnrolments(subscribingAgent)
+        sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
+
+        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("telephone", Seq("telephone" -> "02073457443fff"))))
 
         status(result) shouldBe 200
         checkHtmlResultWithBodyText(result, "Add your agency information", "Please enter a valid telephone number")
@@ -301,7 +301,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("addressLine1", Seq("addressLine1" -> "    "))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information",  "This field is mandatory and is limited to 35 alphanumeric characters (A-Z, a-z 0-9 \\-,.)")
+        checkHtmlResultWithBodyText(result, "Add your agency information")
       }
 
 
