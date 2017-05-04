@@ -74,17 +74,6 @@ package object controllers {
       Constraints.nonEmpty(fieldValue) match {
         case i: Invalid => i
         case Valid => fieldValue match{
-          case value if value.length > addressMaxLength => Invalid(ValidationError("error.addressLine1.invalid"))
-          case value if !value.matches(addressRegex) => Invalid(ValidationError("error.addressLine1.invalid"))
-          case _ => Valid
-        }
-      }
-    }
-
-    private val address23Constraint: Constraint[String] = Constraint[String] { fieldValue: String =>
-      Constraints.nonEmpty(fieldValue) match {
-        case i: Invalid => i
-        case Valid => fieldValue match{
           case value if value.length > addressMaxLength => Invalid(ValidationError("error.addressLine.invalid"))
           case value if !value.matches(addressRegex) => Invalid(ValidationError("error.addressLine.invalid"))
           case _ => Valid
@@ -92,11 +81,12 @@ package object controllers {
       }
     }
 
+
     def utr: Mapping[Utr] = nonEmptyText.transform[Utr](Utr.apply,_.value).verifying("error.utr.invalid", utr => Utr.isValid(utr.value))
     def postcode: Mapping[String] = text verifying nonEmptyPostcode
     def telephoneNumber: Mapping[String] = text verifying TelephoneNumberConstraint
     def agencyName: Mapping[String] = text verifying noAmpersand verifying agencyNameConstraint
     def addressLine1: Mapping[String] = text verifying addressConstraint
-    def addressLine23: Mapping[Option[String]] = optional(text verifying address23Constraint)
+    def addressLine23: Mapping[Option[String]] = optional(text verifying addressConstraint)
   }
 }

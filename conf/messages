@@ -3,5 +3,4 @@ error.utr.invalid = Please enter a valid UTR
 error.telephone.invalid = Please enter a valid telephone number
 error.no.ampersand = Agency name cannot contain "&"
 error.name.invalid = "This field is mandatory and is limited to 40 alphanumeric characters (A-Z, a-z 0-9 \\-,.)"
-error.addressLine1.invalid = "This field is mandatory and is limited to 35 alphanumeric characters (A-Z, a-z 0-9 \\-,.)"
 error.addressLine.invalid = "This field is mandatory and is limited to 35 alphanumeric characters (A-Z, a-z 0-9 \\-,.)"

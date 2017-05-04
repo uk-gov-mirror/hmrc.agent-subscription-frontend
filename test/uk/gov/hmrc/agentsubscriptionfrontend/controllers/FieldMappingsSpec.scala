@@ -209,7 +209,7 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
     def bind(fieldValue: String) = addressLine1Mapping.bind(Map("testKey" -> fieldValue))
 
     def shouldRejectFieldValueAsInvalid(fieldValue: String): Unit = {
-      bind(fieldValue) should matchPattern { case Left(List(FormError("testKey", List("error.addressLine1.invalid"), _))) => }
+      bind(fieldValue) should matchPattern { case Left(List(FormError("testKey", List("error.addressLine.invalid"), _))) => }
     }
 
     def shouldAcceptFieldValue(fieldValue: String): Unit = {
