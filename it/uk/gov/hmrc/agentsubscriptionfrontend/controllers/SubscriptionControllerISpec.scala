@@ -233,17 +233,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         checkHtmlResultWithBodyText(result, "Add your agency information")
       }
 
-      "telephone is omitted" in {
-         AuthStub.hasNoEnrolments(subscribingAgent)
-        sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
-
-        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("telephone")))
-
-        status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information")
-      }
-
-      "telephone is invalid with numbers and words" in {
+      "telephone is rejected by FieldMappings.telephoneNumber" in {
         AuthStub.hasNoEnrolments(subscribingAgent)
         sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
 
