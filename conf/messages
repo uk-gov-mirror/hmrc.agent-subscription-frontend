@@ -3,4 +3,3 @@ error.utr.invalid = Please enter a valid UTR
 error.telephone.invalid = Please enter a valid telephone number
 error.no.ampersand = Agency name cannot contain "&"
 error.des.text.invalid = This field is limited to alphanumeric characters (A-Z, a-z, 0-9) and the following characters \\-,.)/
-error.maxLength = Maximum amount of characters exceeded

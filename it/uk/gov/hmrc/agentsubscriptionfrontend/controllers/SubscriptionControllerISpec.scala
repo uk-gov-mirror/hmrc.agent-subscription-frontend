@@ -279,11 +279,10 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
 
         val result = await(controller.submitSubscriptionDetails(
-            subscriptionDetailsRequest("addressLine1", Seq("addressLine1" -> "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii"))))
+          subscriptionDetailsRequest("addressLine1", Seq("addressLine1" -> "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii"))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information",
-          "Maximum amount of characters exceeded")
+        checkHtmlResultWithBodyText(result, "Add your agency information")
       }
 
       "building and street is invalid" in {
@@ -306,7 +305,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
           subscriptionDetailsRequest("addressLine2", Seq("addressLine2" -> "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii"))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information","Maximum amount of characters exceeded")
+        checkHtmlResultWithBodyText(result, "Add your agency information")
       }
 
       "town is invalid" in {
@@ -329,7 +328,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
           subscriptionDetailsRequest("addressLine3", Seq("addressLine3" -> "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii"))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information","Maximum amount of characters exceeded")
+        checkHtmlResultWithBodyText(result, "Add your agency information")
       }
 
       "county is invalid" in {
