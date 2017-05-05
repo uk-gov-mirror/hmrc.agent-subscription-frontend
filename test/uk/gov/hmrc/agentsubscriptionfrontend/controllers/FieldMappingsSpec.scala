@@ -17,9 +17,11 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import org.scalatest.EitherValues
-import play.api.data.FormError
+import play.api.data.{FormError, Mapping}
+import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.play.test.UnitSpec
+import play.api.data.Forms._
 
 class FieldMappingsSpec extends UnitSpec with EitherValues {
 
@@ -203,17 +205,73 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
     }
   }
 
+  "desTextConstraint" should {
+
+    val desTextConstraint = FieldMappings.desTextConstraint
+
+    def shouldRejectFieldValueAsInvalid(fieldValue: String): Unit = {
+      desTextConstraint(fieldValue) shouldBe Invalid(ValidationError("error.des.text.invalid"))
+    }
+
+    def shouldRejectFieldValidAsRequired(fieldValue: String): Unit = {
+      desTextConstraint(fieldValue) shouldBe Invalid(ValidationError("error.required"))
+    }
+
+    def shouldAcceptFieldValue(fieldValue: String): Unit = {
+      desTextConstraint(fieldValue) shouldBe Valid
+    }
+
+    "reject text" when {
+
+      "input is empty" in {
+        shouldRejectFieldValidAsRequired("")
+      }
+
+      "input is only whitespace" in {
+        shouldRejectFieldValidAsRequired("     ")
+      }
+
+      "there is an invalid character" in {
+        shouldRejectFieldValueAsInvalid("My Agency street; City~City")
+      }
+    }
+
+    "accept text" when {
+      "there is text and numbers" in {
+        shouldAcceptFieldValue("99 My Agency address")
+      }
+
+      "there are valid symbols in the input" in {
+        shouldAcceptFieldValue("My Agency address/Street ")
+        shouldAcceptFieldValue("Tester's Agency address/Street")
+      }
+
+      "there is a valid address" in {
+        shouldAcceptFieldValue("My Agency address")
+      }
+
+      "there are more than 35 characters" in {
+        shouldAcceptFieldValue("1234567891123456789212345678931234567")
+      }
+    }
+  }
+
   "addressLine1 bind" should {
     val addressLine1Mapping = FieldMappings.addressLine1.withPrefix("testKey")
 
     def bind(fieldValue: String) = addressLine1Mapping.bind(Map("testKey" -> fieldValue))
 
     def shouldRejectFieldValueAsInvalid(fieldValue: String): Unit = {
-      bind(fieldValue) should matchPattern { case Left(List(FormError("testKey", List("error.addressLine.invalid"), _))) => }
+      bind(fieldValue) should matchPattern { case Left(List(FormError("testKey", List("error.des.text.invalid"), _))) => }
+    }
+
+    def shouldRejectFieldValueAsTooLong(fieldValue: String): Unit = {
+      bind(fieldValue) should matchPattern { case Left(List(FormError("testKey", List("error.maxLength"), _))) => }
     }
 
     def shouldAcceptFieldValue(fieldValue: String): Unit = {
-      bind(fieldValue) shouldBe Right(fieldValue)
+      if (fieldValue.isEmpty) bind(fieldValue) shouldBe Right(None)
+      else bind(fieldValue) shouldBe Right(fieldValue)
     }
 
     "reject address Line 1" when {
@@ -229,12 +287,12 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
         bind("    ").left.value should contain(FormError("testKey", "error.required"))
       }
 
-      "more than 35 characters" in {
-        shouldRejectFieldValueAsInvalid("1234567891123456789212345678931234567")
-      }
-
       "there is an invalid character" in {
         shouldRejectFieldValueAsInvalid("My Agency street; City~City")
+      }
+
+      "more than 35 characters" in {
+        shouldRejectFieldValueAsTooLong("1234567891123456789212345678931234567")
       }
     }
 
@@ -260,7 +318,11 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
     def bind(fieldValue: String) = addressLine23Mapping.bind(Map("testKey" -> fieldValue))
 
     def shouldRejectFieldValueAsInvalid(fieldValue: String): Unit = {
-      bind(fieldValue) should matchPattern { case Left(List(FormError("testKey", List("error.addressLine.invalid"), _))) => }
+      bind(fieldValue) should matchPattern { case Left(List(FormError("testKey", List("error.des.text.invalid"), _))) => }
+    }
+
+    def shouldRejectFieldValueAsTooLong(fieldValue: String): Unit = {
+      bind(fieldValue) should matchPattern { case Left(List(FormError("testKey", List("error.maxLength"), _))) => }
     }
 
     def shouldAcceptFieldValue(fieldValue: String): Unit = {
@@ -275,7 +337,7 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
       }
 
       "more than 35 characters" in {
-        shouldRejectFieldValueAsInvalid("1234567891123456789212345678931234567")
+        shouldRejectFieldValueAsTooLong("1234567891123456789212345678931234567")
       }
 
       "there is an invalid character" in {
@@ -310,7 +372,11 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
     def bind(fieldValue: String) = agencyNameMapping.bind(Map("testKey" -> fieldValue))
 
     def shouldRejectFieldValueAsInvalid(fieldValue: String): Unit = {
-      bind(fieldValue) should matchPattern { case Left(List(FormError("testKey", List("error.name.invalid"), _))) => }
+      bind(fieldValue) should matchPattern { case Left(List(FormError("testKey", List("error.des.text.invalid"), _))) => }
+    }
+
+    def shouldRejectFieldValueAsTooLong(fieldValue: String): Unit = {
+      bind(fieldValue) should matchPattern { case Left(List(FormError("testKey", List("error.maxLength"), _))) => }
     }
 
     def shouldAcceptFieldValue(fieldValue: String): Unit = {
@@ -328,11 +394,7 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
       }
 
       "there are more than 40 characters" in {
-        shouldRejectFieldValueAsInvalid("12345678911234567892123456789312345678941234567")
-      }
-
-      "the field is empty" in {
-        shouldRejectFieldValueAsInvalid("12345678911234567892123456789312345678941234567")
+        shouldRejectFieldValueAsTooLong("12345678911234567892123456789312345678941234567")
       }
 
       "input is empty" in {

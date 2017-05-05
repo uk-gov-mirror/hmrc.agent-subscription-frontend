@@ -2,5 +2,5 @@ error.postcode.invalid = Please enter a valid postcode
 error.utr.invalid = Please enter a valid UTR
 error.telephone.invalid = Please enter a valid telephone number
 error.no.ampersand = Agency name cannot contain "&"
-error.name.invalid = "This field is mandatory and is limited to 40 alphanumeric characters (A-Z, a-z 0-9 \\-,.)"
-error.addressLine.invalid = "This field is mandatory and is limited to 35 alphanumeric characters (A-Z, a-z 0-9 \\-,.)"
+error.des.text.invalid = This field is limited to alphanumeric characters (A-Z, a-z, 0-9) and the following characters \\-,.)/
+error.maxLength = Maximum amount of characters exceeded

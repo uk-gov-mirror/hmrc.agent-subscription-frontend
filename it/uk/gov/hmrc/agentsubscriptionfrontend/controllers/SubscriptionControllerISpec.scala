@@ -24,7 +24,8 @@ import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUsers._
 
 class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMissingSpec {
   private val utr  = Utr("2000000000")
-  private val myAgencyKnownFactsResult = KnownFactsResult(utr = Utr("utr"), postcode = "AA1 1AA", taxpayerName = "My Business", isSubscribedToAgentServices = false)
+  private val myAgencyKnownFactsResult = KnownFactsResult(utr =
+    Utr("utr"), postcode = "AA1 1AA", taxpayerName = "My Business", isSubscribedToAgentServices = false)
   private val invalidAddress = "Invalid road %@"
 
   private lazy val controller: SubscriptionController = app.injector.instanceOf[SubscriptionController]
@@ -181,28 +182,6 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         sessionStoreService.removeCalled shouldBe false
       }
 
-      "name contains an ampersand" in {
-        AuthStub.hasNoEnrolments(subscribingAgent)
-        sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
-
-        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("name", Seq("name" -> "Agency & Co."))))
-
-        status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information",
-          "Agency name cannot contain "+ "&" + "")
-        sessionStoreService.removeCalled shouldBe false
-      }
-
-      "name is longer than 40 characters" in {
-        AuthStub.hasNoEnrolments(subscribingAgent)
-        sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
-
-        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("name", Seq("name" -> "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii"))))
-
-        status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information", "This field is mandatory and is limited to 40 alphanumeric characters (A-Z, a-z 0-9 \\-,.)")
-      }
-
       "name contains invalid characters" in {
         AuthStub.hasNoEnrolments(subscribingAgent)
         sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
@@ -210,7 +189,8 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("name", Seq("name" -> "InvalidAgencyName!@"))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information", "This field is mandatory and is limited to 40 alphanumeric characters (A-Z, a-z 0-9 \\-,.)")
+        checkHtmlResultWithBodyText(result, "Add your agency information",
+          "This field is limited to alphanumeric characters (A-Z, a-z, 0-9) and the following characters \\-,.)/")
       }
 
       "email is omitted" in {
@@ -263,16 +243,6 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         checkHtmlResultWithBodyText(result, "Add your agency information")
       }
 
-      "telephone is invalid with only words" in {
-        AuthStub.hasNoEnrolments(subscribingAgent)
-        sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
-
-        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("telephone", Seq("telephone" -> "nine"))))
-
-        status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information", "Please enter a valid telephone number")
-      }
-
       "telephone is invalid with numbers and words" in {
         AuthStub.hasNoEnrolments(subscribingAgent)
         sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
@@ -282,7 +252,6 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         status(result) shouldBe 200
         checkHtmlResultWithBodyText(result, "Add your agency information", "Please enter a valid telephone number")
       }
-
 
       "building and street is omitted" in {
          AuthStub.hasNoEnrolments(subscribingAgent)
@@ -313,7 +282,8 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
             subscriptionDetailsRequest("addressLine1", Seq("addressLine1" -> "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii"))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information",  "This field is mandatory and is limited to 35 alphanumeric characters (A-Z, a-z 0-9 \\-,.)")
+        checkHtmlResultWithBodyText(result, "Add your agency information",
+          "Maximum amount of characters exceeded")
       }
 
       "building and street is invalid" in {
@@ -324,7 +294,8 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
           subscriptionDetailsRequest("addressLine1", Seq("addressLine1" -> invalidAddress))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information",  "This field is mandatory and is limited to 35 alphanumeric characters (A-Z, a-z 0-9 \\-,.)")
+        checkHtmlResultWithBodyText(result, "Add your agency information",
+          "This field is limited to alphanumeric characters (A-Z, a-z, 0-9) and the following characters \\-,.)/")
       }
 
       "town is longer than 35 characters" in {
@@ -335,7 +306,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
           subscriptionDetailsRequest("addressLine2", Seq("addressLine2" -> "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii"))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information","This field is mandatory and is limited to 35 alphanumeric characters (A-Z, a-z 0-9 \\-,.)")
+        checkHtmlResultWithBodyText(result, "Add your agency information","Maximum amount of characters exceeded")
       }
 
       "town is invalid" in {
@@ -346,7 +317,8 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
           subscriptionDetailsRequest("addressLine2", Seq("addressLine2" -> invalidAddress))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information","This field is mandatory and is limited to 35 alphanumeric characters (A-Z, a-z 0-9 \\-,.)")
+        checkHtmlResultWithBodyText(result, "Add your agency information",
+          "This field is limited to alphanumeric characters (A-Z, a-z, 0-9) and the following characters \\-,.)/")
       }
 
       "county is longer than 35 characters" in {
@@ -357,7 +329,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
           subscriptionDetailsRequest("addressLine3", Seq("addressLine3" -> "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii"))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information","This field is mandatory and is limited to 35 alphanumeric characters (A-Z, a-z 0-9 \\-,.)")
+        checkHtmlResultWithBodyText(result, "Add your agency information","Maximum amount of characters exceeded")
       }
 
       "county is invalid" in {
@@ -368,7 +340,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
           subscriptionDetailsRequest("addressLine3", Seq("addressLine3" -> invalidAddress))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information","This field is mandatory and is limited to 35 alphanumeric characters (A-Z, a-z 0-9 \\-,.)")
+        checkHtmlResultWithBodyText(result, "This field is limited to alphanumeric characters (A-Z, a-z, 0-9) and the following characters \\-,.)/")
       }
 
       "postcode is omitted" in {
