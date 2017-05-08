@@ -171,17 +171,6 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
     }
 
     "redisplay form" when {
-      "name is omitted" in {
-        AuthStub.hasNoEnrolments(subscribingAgent)
-        sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
-
-        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("name")))
-
-        status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information")
-        sessionStoreService.removeCalled shouldBe false
-      }
-
       "name contains invalid characters" in {
         AuthStub.hasNoEnrolments(subscribingAgent)
         sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
@@ -193,15 +182,6 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
           "This field is limited to alphanumeric characters (A-Z, a-z, 0-9) and the following characters \\-,.)/")
       }
 
-      "email is omitted" in {
-        AuthStub.hasNoEnrolments(subscribingAgent)
-        sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
-
-        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("email")))
-
-        status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information")
-      }
 
       "email has no text in the local part" in {
         AuthStub.hasNoEnrolments(subscribingAgent)
@@ -210,37 +190,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("email", Seq("email" -> "@domain"))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information")
-      }
-
-      "email has no text in the domain part" in {
-        AuthStub.hasNoEnrolments(subscribingAgent)
-        sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
-
-        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("email", Seq("email" -> "local@"))))
-
-        status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information")
-      }
-
-      "email does not contain an '@'" in {
-        AuthStub.hasNoEnrolments(subscribingAgent)
-        sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
-
-        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("email", Seq("email" -> "local"))))
-
-        status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information")
-      }
-
-      "telephone is omitted" in {
-         AuthStub.hasNoEnrolments(subscribingAgent)
-        sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
-
-        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("telephone")))
-
-        status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information")
+        checkHtmlResultWithBodyText(result, "Add your agency information","Enter a valid email address.")
       }
 
       "telephone is invalid with numbers and words" in {
@@ -253,37 +203,6 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         checkHtmlResultWithBodyText(result, "Add your agency information", "Please enter a valid telephone number")
       }
 
-      "building and street is omitted" in {
-         AuthStub.hasNoEnrolments(subscribingAgent)
-        sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
-
-        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("addressLine1")))
-
-        status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information")
-      }
-
-      "building and street is whitespace only" in {
-        AuthStub.hasNoEnrolments(subscribingAgent)
-        sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
-
-        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("addressLine1", Seq("addressLine1" -> "    "))))
-
-        status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information")
-      }
-
-
-      "building and street is longer than 35 characters" in {
-        AuthStub.hasNoEnrolments(subscribingAgent)
-        sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
-
-        val result = await(controller.submitSubscriptionDetails(
-          subscriptionDetailsRequest("addressLine1", Seq("addressLine1" -> "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii"))))
-
-        status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information")
-      }
 
       "building and street is invalid" in {
         AuthStub.hasNoEnrolments(subscribingAgent)
@@ -295,17 +214,6 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         status(result) shouldBe 200
         checkHtmlResultWithBodyText(result, "Add your agency information",
           "This field is limited to alphanumeric characters (A-Z, a-z, 0-9) and the following characters \\-,.)/")
-      }
-
-      "town is longer than 35 characters" in {
-        AuthStub.hasNoEnrolments(subscribingAgent)
-        sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
-
-        val result = await(controller.submitSubscriptionDetails(
-          subscriptionDetailsRequest("addressLine2", Seq("addressLine2" -> "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii"))))
-
-        status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information")
       }
 
       "town is invalid" in {
@@ -320,17 +228,6 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
           "This field is limited to alphanumeric characters (A-Z, a-z, 0-9) and the following characters \\-,.)/")
       }
 
-      "county is longer than 35 characters" in {
-        AuthStub.hasNoEnrolments(subscribingAgent)
-        sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
-
-        val result = await(controller.submitSubscriptionDetails(
-          subscriptionDetailsRequest("addressLine3", Seq("addressLine3" -> "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii"))))
-
-        status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information")
-      }
-
       "county is invalid" in {
         AuthStub.hasNoEnrolments(subscribingAgent)
         sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
@@ -342,15 +239,6 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         checkHtmlResultWithBodyText(result, "This field is limited to alphanumeric characters (A-Z, a-z, 0-9) and the following characters \\-,.)/")
       }
 
-      "postcode is omitted" in {
-        AuthStub.hasNoEnrolments(subscribingAgent)
-        sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
-
-        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("postcode")))
-
-        status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information")
-      }
 
       "postcode is not valid" in {
         AuthStub.hasNoEnrolments(subscribingAgent)
@@ -362,16 +250,6 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         checkHtmlResultWithBodyText(result, "Add your agency information", "Please enter a valid postcode")
       }
 
-      "known facts postcode is omitted" in {
-        AuthStub.hasNoEnrolments(subscribingAgent)
-        sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
-
-        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("knownFactsPostcode")))
-
-        status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information")
-      }
-
       "known facts postcode is not valid" in {
         AuthStub.hasNoEnrolments(subscribingAgent)
         sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
@@ -379,17 +257,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("knownFactsPostcode", Seq("knownFactsPostcode" -> "1AA AA1"))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information")
-      }
-
-      "utr is omitted" in {
-        AuthStub.hasNoEnrolments(subscribingAgent)
-        sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
-
-        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("utr")))
-
-        status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information")
+        checkHtmlResultWithBodyText(result, "Add your agency information","Please enter a valid postcode")
       }
 
       "utr is not valid" in {
@@ -399,7 +267,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("utr", Seq("utr" -> "012345"))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information")
+        checkHtmlResultWithBodyText(result, "Add your agency information","Please enter a valid UTR")
       }
     }
   }
