@@ -182,6 +182,35 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
           "This field is limited to alphanumeric characters (A-Z, a-z, 0-9) and the following characters \\-,.)/")
       }
 
+      "email is omitted" in {
+        AuthStub.hasNoEnrolments(subscribingAgent)
+        sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
+
+        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("email")))
+
+        status(result) shouldBe 200
+        checkHtmlResultWithBodyText(result, "Add your agency information")
+      }
+
+      "email has no text in the domain part" in {
+        AuthStub.hasNoEnrolments(subscribingAgent)
+        sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
+
+        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("email", Seq("email" -> "local@"))))
+
+        status(result) shouldBe 200
+        checkHtmlResultWithBodyText(result, "Add your agency information")
+      }
+
+      "email does not contain an '@'" in {
+        AuthStub.hasNoEnrolments(subscribingAgent)
+        sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
+
+        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("email", Seq("email" -> "local"))))
+
+        status(result) shouldBe 200
+        checkHtmlResultWithBodyText(result, "Add your agency information")
+      }
 
       "email has no text in the local part" in {
         AuthStub.hasNoEnrolments(subscribingAgent)
