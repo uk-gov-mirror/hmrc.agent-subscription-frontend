@@ -18,15 +18,16 @@ package uk.gov.hmrc.agentsubscriptionfrontend
 
 import play.api.data.Forms._
 import play.api.data.Mapping
-import play.api.data.validation.{Constraint, _}
+import play.api.data.validation.{Constraint, Constraints, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 
 package object controllers {
 
   object FieldMappings {
-    private val telephoneNumberMaxLength = 24
-    private val minimumTelephoneDigits = 10
-    private val postcodeWithoutSpacesRegex = "^[A-Za-z]{1,2}[0-9]{1,2}[A-Za-z]?[0-9][A-Za-z]{2}$".r
+    private val postcodeWithoutSpacesRegex = "^[A-Z]{1,2}[0-9][0-9A-Z]?\\s?[0-9][A-Z]{2}$|BFPO\\s?[0-9]{1,5}$".r
+    private val telephoneNumberRegex = "^[0-9- +()#x ]*$"
+    private val desTextRegex = "^[A-Za-z0-9 \\-,.&'\\/]*$"
+
     private val nonEmptyPostcode: Constraint[String] = Constraint[String] { fieldValue: String =>
       Constraints.nonEmpty(fieldValue) match {
         case i: Invalid =>
@@ -40,11 +41,11 @@ package object controllers {
       }
     }
 
-    private val nonEmptyTelephoneNumber: Constraint[String] = Constraint[String] { fieldValue: String =>
+    private val telephoneNumberConstraint: Constraint[String] = Constraint[String] { fieldValue: String =>
       Constraints.nonEmpty(fieldValue) match {
         case i: Invalid => i
-        case Valid => (fieldValue.length, fieldValue.replaceAll("[^0-9]", "").length) match {
-          case (length, digitCount) if length > telephoneNumberMaxLength || digitCount < minimumTelephoneDigits =>
+        case Valid => fieldValue match {
+          case value if !value.matches(telephoneNumberRegex) =>
             Invalid(ValidationError("error.telephone.invalid"))
           case _ => Valid
         }
@@ -53,9 +54,21 @@ package object controllers {
 
     private val noAmpersand = Constraints.pattern("[^&]*".r, error = "error.no.ampersand")
 
+    private[controllers] val desTextConstraint: Constraint[String] = Constraint[String] { fieldValue: String =>
+      Constraints.nonEmpty(fieldValue) match {
+        case i: Invalid => i
+        case Valid => fieldValue match {
+          case value if !value.matches(desTextRegex) => Invalid(ValidationError("error.des.text.invalid"))
+          case _ => Valid
+        }
+      }
+    }
+
     def utr: Mapping[Utr] = nonEmptyText.transform[Utr](Utr.apply,_.value).verifying("error.utr.invalid", utr => Utr.isValid(utr.value))
     def postcode: Mapping[String] = text verifying nonEmptyPostcode
-    def telephoneNumber: Mapping[String] = text verifying nonEmptyTelephoneNumber
-    def agencyName: Mapping[String] = nonEmptyText(maxLength = 40) verifying noAmpersand
+    def telephoneNumber: Mapping[String] = text(maxLength = 24) verifying telephoneNumberConstraint
+    def agencyName: Mapping[String] = text(maxLength = 40) verifying noAmpersand verifying desTextConstraint
+    def addressLine1: Mapping[String] = text(maxLength = 35) verifying desTextConstraint
+    def addressLine23: Mapping[Option[String]] = optional(text(maxLength = 35) verifying desTextConstraint)
   }
 }
