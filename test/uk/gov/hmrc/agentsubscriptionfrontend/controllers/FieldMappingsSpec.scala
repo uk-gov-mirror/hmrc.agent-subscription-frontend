@@ -147,13 +147,17 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
     }
   }
 
-  "telephone bind" should {
+  "telephoneNumber bind" should {
     val telephoneMapping = FieldMappings.telephoneNumber.withPrefix("testKey")
 
     def bind(fieldValue: String) = telephoneMapping.bind(Map("testKey" -> fieldValue))
 
     def shouldRejectFieldValueAsInvalid(fieldValue: String): Unit = {
       bind(fieldValue) should matchPattern { case Left(List(FormError("testKey", List("error.telephone.invalid"), _))) => }
+    }
+
+    def shouldRejectFieldValueAsTooLong(fieldValue: String): Unit = {
+      bind(fieldValue) should matchPattern { case Left(List(FormError("testKey", List("error.maxLength"), _))) => }
     }
 
     def shouldAcceptFieldValue(fieldValue: String): Unit = {
@@ -174,7 +178,7 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
       }
 
       "more than 24 characters" in {
-        shouldRejectFieldValueAsInvalid("999999999999999999999999999999999")
+        shouldRejectFieldValueAsTooLong("999999999999999999999999999999999")
       }
 
       "valid telephone number then invalid characters" in {
@@ -365,7 +369,7 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
     }
   }
 
-  "name bind" should {
+  "agencyName bind" should {
 
     val agencyNameMapping = FieldMappings.agencyName.withPrefix("testKey")
 

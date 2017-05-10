@@ -232,7 +232,6 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         checkHtmlResultWithBodyText(result, "Add your agency information", "Please enter a valid telephone number")
       }
 
-
       "building and street is invalid" in {
         AuthStub.hasNoEnrolments(subscribingAgent)
         sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
@@ -267,7 +266,6 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         status(result) shouldBe 200
         checkHtmlResultWithBodyText(result, "This field is limited to alphanumeric characters (A-Z, a-z, 0-9) and the following characters \\-,.)/")
       }
-
 
       "postcode is not valid" in {
         AuthStub.hasNoEnrolments(subscribingAgent)
