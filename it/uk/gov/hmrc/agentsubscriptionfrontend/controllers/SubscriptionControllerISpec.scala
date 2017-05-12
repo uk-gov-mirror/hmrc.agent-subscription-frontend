@@ -179,7 +179,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
 
         status(result) shouldBe 200
         checkHtmlResultWithBodyText(result, "Add your agency information",
-          "This field is limited to alphanumeric characters (A-Z, a-z, 0-9) and the following characters \\-,.)/")
+          "This field is limited to alphanumeric characters (A-Z, a-z, 0-9) and the following characters -,./")
       }
 
       "email is omitted" in {
@@ -241,7 +241,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
 
         status(result) shouldBe 200
         checkHtmlResultWithBodyText(result, "Add your agency information",
-          "This field is limited to alphanumeric characters (A-Z, a-z, 0-9) and the following characters \\-,.)/")
+          "This field is limited to alphanumeric characters (A-Z, a-z, 0-9) and the following characters -,./")
       }
 
       "town is invalid" in {
@@ -253,7 +253,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
 
         status(result) shouldBe 200
         checkHtmlResultWithBodyText(result, "Add your agency information",
-          "This field is limited to alphanumeric characters (A-Z, a-z, 0-9) and the following characters \\-,.)/")
+          "This field is limited to alphanumeric characters (A-Z, a-z, 0-9) and the following characters -,./")
       }
 
       "county is invalid" in {
@@ -264,7 +264,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
           subscriptionDetailsRequest("addressLine3", Seq("addressLine3" -> invalidAddress))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "This field is limited to alphanumeric characters (A-Z, a-z, 0-9) and the following characters \\-,.)/")
+        checkHtmlResultWithBodyText(result, "This field is limited to alphanumeric characters (A-Z, a-z, 0-9) and the following characters -,./")
       }
 
       "postcode is not valid" in {
