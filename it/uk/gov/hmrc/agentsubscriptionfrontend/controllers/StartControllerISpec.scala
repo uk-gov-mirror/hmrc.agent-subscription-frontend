@@ -72,4 +72,12 @@ class StartControllerISpec extends BaseControllerISpec {
     behave like aPageWithFeedbackLinks(request => controller.showNonAgentNextSteps(request), authenticatedRequest())
   }
 
+  "returnAfterGGCredsCreated" should {
+    "redirect to check-agency-status page" in {
+      val result = await(controller.returnAfterGGCredsCreated(FakeRequest()))
+
+      status(result) shouldBe 303
+      redirectLocation(result).head should include ("/check-agency-status")
+    }
+  }
 }
