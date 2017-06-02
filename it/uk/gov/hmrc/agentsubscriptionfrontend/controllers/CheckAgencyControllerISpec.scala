@@ -37,6 +37,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
     .configure("government-gateway.url" -> configuredGovernmentGatewayUrl)
 
   private lazy val controller: CheckAgencyController = app.injector.instanceOf[CheckAgencyController]
+  behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showConfirmYourAgency(request))
 
   "showCheckAgencyStatus" should {
 
@@ -56,21 +57,33 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
     }
 
     "redirect to already subscribed page if user has already subscribed to MTD" in {
+
+      val utr = Utr("0123456789")
+      val postcode = "AA11AA"
+      val registrationName = "My Agency"
+      sessionStoreService.knownFactsResult = Some(
+        KnownFactsResult(utr = utr, postcode = postcode, taxpayerName = registrationName, isSubscribedToAgentServices = true))
       AuthStub.isSubscribedToMtd(subscribingAgent)
 
-      val result = await(controller.showCheckAgencyStatus(authenticatedRequest()))
+      val request = authenticatedRequest()
 
-      status(result) shouldBe 303
-      redirectLocation(result).get shouldBe routes.CheckAgencyController.showAlreadySubscribed().url
+      val result = await(controller.showConfirmYourAgency(request))
+      bodyOf(result) should include (routes.CheckAgencyController.showAlreadySubscribed().url)
     }
 
     "redirect to unclean credentials page if user has enrolled in any other services" in {
+
+      val utr = Utr("0123456789")
+      val postcode = "AA11AA"
+      val registrationName = "My Agency"
+      sessionStoreService.knownFactsResult = Some(
+        KnownFactsResult(utr = utr, postcode = postcode, taxpayerName = registrationName, isSubscribedToAgentServices = false))
       AuthStub.isEnrolledForNonMtdServices(subscribingAgent)
 
-      val result = await(controller.showCheckAgencyStatus(authenticatedRequest()))
+      val request = authenticatedRequest()
 
-      status(result) shouldBe 303
-      redirectLocation(result).get shouldBe routes.CheckAgencyController.showHasOtherEnrolments().url
+      val result = await(controller.showConfirmYourAgency(request))
+      bodyOf(result) should include (routes.CheckAgencyController.showHasOtherEnrolments().url)
     }
 
   }
@@ -279,17 +292,6 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
       val result = await(controller.showConfirmYourAgency(request))
 
       checkHtmlResultWithBodyText(result, routes.CheckAgencyController.showNotSubscribed().url)
-    }
-
-    "show a link to the Already Subscribed page if isSubscribedToAgentServices=true" in {
-      AuthStub.hasNoEnrolments(subscribingAgent)
-      sessionStoreService.knownFactsResult = Some(
-        KnownFactsResult(utr = Utr("0123456789"), postcode = "AA11AA", taxpayerName = "My Agency", isSubscribedToAgentServices = true))
-      val request = authenticatedRequest()
-
-      val result = await(controller.showConfirmYourAgency(request))
-
-      checkHtmlResultWithBodyText(result, routes.CheckAgencyController.showAlreadySubscribed().url)
     }
 
     "redirect to the Check Agency Status page if there is no KnownFactsResult in session because the user has returned to a bookmark" in {

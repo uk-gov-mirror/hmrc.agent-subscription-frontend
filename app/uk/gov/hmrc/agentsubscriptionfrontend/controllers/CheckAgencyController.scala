@@ -59,13 +59,8 @@ class CheckAgencyController @Inject()
   }
 
   val showCheckAgencyStatus: Action[AnyContent] = AuthorisedWithSubscribingAgent {
-    implicit authContext =>
-      implicit request =>
-        (hasMtdEnrolment, hasEnrolments) match {
-          case (true, _) => Redirect(routes.CheckAgencyController.showAlreadySubscribed())
-          case (_, true) => Redirect(routes.CheckAgencyController.showHasOtherEnrolments())
-          case (false, false) => Ok(html.check_agency_status(knownFactsForm))
-        }
+    implicit authContext => implicit request =>
+      Ok(html.check_agency_status(knownFactsForm))
   }
 
   private def hasMtdEnrolment(implicit request: AgentRequest[_]): Boolean = request.enrolments.exists(_.key == "HMRC-AS-AGENT")
@@ -119,7 +114,11 @@ class CheckAgencyController @Inject()
             registrationName = knownFactsResult.taxpayerName,
             postcode = knownFactsResult.postcode,
             utr = knownFactsResult.utr,
-            nextPageUrl = lookupNextPageUrl(knownFactsResult.isSubscribedToAgentServices)))
+            nextPageUrl = (hasMtdEnrolment, hasEnrolments) match {
+              case (true, _) => routes.CheckAgencyController.showAlreadySubscribed().url
+              case (_, true) => routes.CheckAgencyController.showHasOtherEnrolments().url
+              case (false, false) => routes.CheckAgencyController.showNotSubscribed().url
+            }))
         }.getOrElse {
           sessionMissingRedirect()
         })
