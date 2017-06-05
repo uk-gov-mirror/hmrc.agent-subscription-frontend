@@ -37,7 +37,6 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
     .configure("government-gateway.url" -> configuredGovernmentGatewayUrl)
 
   private lazy val controller: CheckAgencyController = app.injector.instanceOf[CheckAgencyController]
-  behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showConfirmYourAgency(request))
 
   "showCheckAgencyStatus" should {
 
