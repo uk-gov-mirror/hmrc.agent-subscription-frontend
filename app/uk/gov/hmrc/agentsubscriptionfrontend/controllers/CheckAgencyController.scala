@@ -100,12 +100,6 @@ class CheckAgencyController @Inject()
           Ok(html.no_agency_found())
   }
 
-  private def lookupNextPageUrl(isSubscribedToAgentServices: Boolean): String =
-    if (isSubscribedToAgentServices)
-      routes.CheckAgencyController.showAlreadySubscribed().url
-    else
-      routes.CheckAgencyController.showNotSubscribed().url
-
   val showConfirmYourAgency: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync {
     implicit authContext =>
       implicit request =>

@@ -31,6 +31,10 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
   private val notSubscribed = "notSubscribed"
   private val alreadySubscribed = "alreadySubscribed"
 
+  val utr = Utr("0123456789")
+  val postcode = "AA11AA"
+  val registrationName = "My Agency"
+
   private lazy val configuredGovernmentGatewayUrl = "http://configured-government-gateway.gov.uk/"
 
   override protected def appBuilder: GuiceApplicationBuilder = super.appBuilder
@@ -57,9 +61,6 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
 
     "redirect to already subscribed page if user has already subscribed to MTD" in {
 
-      val utr = Utr("0123456789")
-      val postcode = "AA11AA"
-      val registrationName = "My Agency"
       sessionStoreService.knownFactsResult = Some(
         KnownFactsResult(utr = utr, postcode = postcode, taxpayerName = registrationName, isSubscribedToAgentServices = true))
       AuthStub.isSubscribedToMtd(subscribingAgent)
@@ -72,9 +73,6 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
 
     "redirect to unclean credentials page if user has enrolled in any other services" in {
 
-      val utr = Utr("0123456789")
-      val postcode = "AA11AA"
-      val registrationName = "My Agency"
       sessionStoreService.knownFactsResult = Some(
         KnownFactsResult(utr = utr, postcode = postcode, taxpayerName = registrationName, isSubscribedToAgentServices = false))
       AuthStub.isEnrolledForNonMtdServices(subscribingAgent)
