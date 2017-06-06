@@ -31,6 +31,7 @@ trait AuthActions extends Actions with PasscodeAuthentication {
   protected type AsyncPlayUserRequest = AuthContext => AgentRequest[AnyContent] => Future[Result]
   protected type PlayUserRequest = AuthContext => AgentRequest[AnyContent] => Result
   private implicit def hc(implicit request: Request[_]): HeaderCarrier = HeaderCarrier.fromHeadersAndSession(request.headers, Some(request.session))
+  val emptyEnrolments:List[Enrolment] = List(Enrolment(""))
 
   def AuthorisedWithSubscribingAgent(body: PlayUserRequest): Action[AnyContent] =
     AuthorisedFor(NoOpRegime, pageVisibility = GGConfidence).async {
@@ -38,6 +39,17 @@ trait AuthActions extends Actions with PasscodeAuthentication {
         withVerifiedPasscode {
           isAgentAffinityGroup() flatMap {
             case true => enrolments map { e => body(authContext)(AgentRequest(e, request)) }
+            case false => Future successful redirectToNonAgentNextSteps
+          }
+        }
+    }
+
+  def AuthorisedAgentWithEmptyEnrolment(body: PlayUserRequest): Action[AnyContent] =
+    AuthorisedFor(NoOpRegime, pageVisibility = GGConfidence).async {
+      implicit authContext => implicit request =>
+        withVerifiedPasscode {
+          isAgentAffinityGroup() flatMap {
+            case true => Future(body(authContext)(AgentRequest(emptyEnrolments,request)))
             case false => Future successful redirectToNonAgentNextSteps
           }
         }
