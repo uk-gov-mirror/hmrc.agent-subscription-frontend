@@ -54,7 +54,7 @@ class CheckAgencyController @Inject()
     )(KnownFacts.apply)(KnownFacts.unapply)
   )
 
-  val showHasOtherEnrolments: Action[AnyContent] = AuthorisedWithSubscribingAgent { implicit authContext => implicit request =>
+  val showHasOtherEnrolments: Action[AnyContent] = AuthorisedAgentWithEmptyEnrolment { implicit authContext => implicit request =>
     Ok(html.has_other_enrolments())
   }
 
