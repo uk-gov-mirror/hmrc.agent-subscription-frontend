@@ -63,8 +63,11 @@ class CheckAgencyController @Inject()
       Ok(html.check_agency_status(knownFactsForm))
   }
 
-  private def hasMtdEnrolment(implicit request: AgentRequest[_]): Boolean = request.enrolments.exists(_.key == "HMRC-AS-AGENT")
-  private def hasEnrolments(implicit request: AgentRequest[_]): Boolean = request.enrolments.nonEmpty
+  private def lookupNextPageUrl(isSubscribedToAgentServices: Boolean): String =
+    if (isSubscribedToAgentServices)
+      routes.CheckAgencyController.showAlreadySubscribed().url
+    else
+      routes.CheckAgencyController.showNotSubscribed().url
 
   val checkAgencyStatus: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync { implicit authContext: AuthContext =>
     implicit request =>
@@ -108,11 +111,7 @@ class CheckAgencyController @Inject()
             registrationName = knownFactsResult.taxpayerName,
             postcode = knownFactsResult.postcode,
             utr = knownFactsResult.utr,
-            nextPageUrl = (hasMtdEnrolment, hasEnrolments) match {
-              case (true, _) => routes.CheckAgencyController.showAlreadySubscribed().url
-              case (_, true) => routes.CheckAgencyController.showHasOtherEnrolments().url
-              case (false, false) => routes.CheckAgencyController.showNotSubscribed().url
-            }))
+            nextPageUrl = lookupNextPageUrl(knownFactsResult.isSubscribedToAgentServices)))
         }.getOrElse {
           sessionMissingRedirect()
         })

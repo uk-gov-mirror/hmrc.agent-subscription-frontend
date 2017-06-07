@@ -23,21 +23,37 @@ import uk.gov.hmrc.agentsubscriptionfrontend.stubs.{AgentSubscriptionStub, AuthS
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUsers._
 
 class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMissingSpec {
-  private val utr  = Utr("2000000000")
+  private val utr = Utr("2000000000")
   private val myAgencyKnownFactsResult = KnownFactsResult(utr =
     Utr("utr"), postcode = "AA1 1AA", taxpayerName = "My Business", isSubscribedToAgentServices = false)
   private val invalidAddress = "Invalid road %@"
 
   private lazy val controller: SubscriptionController = app.injector.instanceOf[SubscriptionController]
 
+
   "showSubscriptionDetails" should {
     behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showSubscriptionDetails(request))
-    behave like aPageWithFeedbackLinks(request => {
-      AuthStub.hasNoEnrolments(subscribingAgent)
-      sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
 
-      controller.showSubscriptionDetails(request)
-    }, authenticatedRequest())
+    "redirect to unclean credentials page if user has enrolled in any other services" in {
+
+      sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
+      AuthStub.isEnrolledForNonMtdServices(subscribingAgent)
+
+      val result = await(controller.showSubscriptionDetails(authenticatedRequest()))
+      status(result) shouldBe 303
+      result.header.headers("Location") should include("/agent-subscription/has-other-enrolments")
+    }
+
+    "show description details page of user has not enrolled and has clean creds" in {
+
+      sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
+      AuthStub.hasNoEnrolments(subscribingAgent)
+
+      val request = authenticatedRequest()
+
+      val result = await(controller.showSubscriptionDetails(request))
+      bodyOf(result) should include(routes.SubscriptionController.showSubscriptionDetails().url)
+    }
 
     "populate form with utr and postcode" in {
       AuthStub.hasNoEnrolments(subscribingAgent)
@@ -219,7 +235,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("email", Seq("email" -> "@domain"))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information","Enter a valid email address.")
+        checkHtmlResultWithBodyText(result, "Add your agency information", "Enter a valid email address.")
       }
 
       "telephone is invalid with numbers and words" in {
@@ -284,7 +300,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("knownFactsPostcode", Seq("knownFactsPostcode" -> "1AA AA1"))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information","Please enter a valid postcode")
+        checkHtmlResultWithBodyText(result, "Add your agency information", "Please enter a valid postcode")
       }
 
       "utr is not valid" in {
@@ -294,22 +310,22 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("utr", Seq("utr" -> "012345"))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information","Please enter a valid UTR")
+        checkHtmlResultWithBodyText(result, "Add your agency information", "Please enter a valid UTR")
       }
     }
   }
 
   private def subscriptionDetailsRequest(keyToRemove: String = "", additionalParameters: Seq[(String, String)] = Seq()) =
     authenticatedRequest().withFormUrlEncodedBody(
-        Seq("utr" -> utr.value,
-            "knownFactsPostcode" -> "AA1 2AA",
-            "name" -> "My Agency",
-            "email" -> "agency@example.com",
-            "telephone" -> "0123 456 7890",
-            "addressLine1" -> "1 Some Street",
-            "addressLine2" -> "Sometown",
-            "addressLine3" -> "County",
-            "postcode" -> "AA1 1AA").filter(_._1 != keyToRemove) ++ additionalParameters: _*
+      Seq("utr" -> utr.value,
+        "knownFactsPostcode" -> "AA1 2AA",
+        "name" -> "My Agency",
+        "email" -> "agency@example.com",
+        "telephone" -> "0123 456 7890",
+        "addressLine1" -> "1 Some Street",
+        "addressLine2" -> "Sometown",
+        "addressLine3" -> "County",
+        "postcode" -> "AA1 1AA").filter(_._1 != keyToRemove) ++ additionalParameters: _*
     )
 
   private val subscriptionRequest =
@@ -317,10 +333,10 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
       knownFacts = ModelKnownFacts("AA1 2AA"),
       agency = Agency(name = "My Agency",
         address = Address(addressLine1 = "1 Some Street",
-                          addressLine2 = Some("Sometown"),
-                          addressLine3 = Some("County"),
-                          postcode = "AA1 1AA",
-              countryCode = "GB"),
+          addressLine2 = Some("Sometown"),
+          addressLine3 = Some("County"),
+          postcode = "AA1 1AA",
+          countryCode = "GB"),
         email = "agency@example.com",
         telephone = "0123 456 7890"))
 
