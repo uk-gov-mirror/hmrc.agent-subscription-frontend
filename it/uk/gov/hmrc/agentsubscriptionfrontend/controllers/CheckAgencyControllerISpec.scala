@@ -15,6 +15,7 @@
  */
 
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
+
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
@@ -58,31 +59,6 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
 
       checkHtmlResultWithBodyText(result, "Check if your business already has an Agent Services account")
     }
-
-    "redirect to already subscribed page if user has already subscribed to MTD" in {
-
-      sessionStoreService.knownFactsResult = Some(
-        KnownFactsResult(utr = utr, postcode = postcode, taxpayerName = registrationName, isSubscribedToAgentServices = true))
-      AuthStub.isSubscribedToMtd(subscribingAgent)
-
-      val request = authenticatedRequest()
-
-      val result = await(controller.showConfirmYourAgency(request))
-      bodyOf(result) should include (routes.CheckAgencyController.showAlreadySubscribed().url)
-    }
-
-    "redirect to unclean credentials page if user has enrolled in any other services" in {
-
-      sessionStoreService.knownFactsResult = Some(
-        KnownFactsResult(utr = utr, postcode = postcode, taxpayerName = registrationName, isSubscribedToAgentServices = false))
-      AuthStub.isEnrolledForNonMtdServices(subscribingAgent)
-
-      val request = authenticatedRequest()
-
-      val result = await(controller.showConfirmYourAgency(request))
-      bodyOf(result) should include (routes.CheckAgencyController.showHasOtherEnrolments().url)
-    }
-
   }
 
   "checkAgencyStatus" should {
@@ -99,9 +75,9 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
       status(result) shouldBe OK
       val responseBody = bodyOf(result)
       responseBody should include("Check if your business already has an Agent Services account")
-      responseBody should include ("Please enter a valid UTR")
-      responseBody should include (invalidUtr)
-      responseBody should include (validPostcode)
+      responseBody should include("Please enter a valid UTR")
+      responseBody should include(invalidUtr)
+      responseBody should include(validPostcode)
     }
 
     "return a 200 response to redisplay the form with an error message for UTR failing to pass Modulus11Check" in {
@@ -114,9 +90,9 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
       status(result) shouldBe OK
       val responseBody = bodyOf(result)
       responseBody should include("Check if your business already has an Agent Services account")
-      responseBody should include ("Please enter a valid UTR")
-      responseBody should include (invalidUtr)
-      responseBody should include (validPostcode)
+      responseBody should include("Please enter a valid UTR")
+      responseBody should include(invalidUtr)
+      responseBody should include(validPostcode)
     }
 
     "return a 200 response to redisplay the form with an error message for invalidly-formatted postcode" in {
@@ -128,9 +104,9 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
       status(result) shouldBe OK
       val responseBody = bodyOf(result)
       responseBody should include("Check if your business already has an Agent Services account")
-      responseBody should include ("Please enter a valid postcode")
-      responseBody should include (validUtr.value)
-      responseBody should include (invalidPostcode)
+      responseBody should include("Please enter a valid postcode")
+      responseBody should include(validUtr.value)
+      responseBody should include(invalidPostcode)
     }
 
     "return a 200 response to redisplay the form with an error message for empty form parameters" in {
@@ -142,7 +118,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
       status(result) shouldBe OK
       val responseBody = bodyOf(result)
       responseBody should include("Check if your business already has an Agent Services account")
-      responseBody should include ("This field is required")
+      responseBody should include("This field is required")
     }
 
     "redirect to no-agency-found page when no matching registration found by agent-subscription" in {

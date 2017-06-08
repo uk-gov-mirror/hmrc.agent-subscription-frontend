@@ -23,7 +23,7 @@ import play.api.data.Forms.{mapping, _}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{AnyContent, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
-import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
+import uk.gov.hmrc.agentsubscriptionfrontend.auth.{AgentRequest, AuthActions}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.FieldMappings._
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionService}
@@ -32,6 +32,8 @@ import uk.gov.hmrc.passcode.authentication.{PasscodeAuthenticationProvider, Pass
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 import uk.gov.hmrc.play.http.HeaderCarrier
+
+import scala.concurrent.Future
 
 case class SubscriptionDetails(utr: Utr,
                                knownFactsPostcode: String,
@@ -45,14 +47,14 @@ case class SubscriptionDetails(utr: Utr,
 
 @Singleton
 class SubscriptionController @Inject()
-  (override val messagesApi: MessagesApi,
-   override val authConnector: AuthConnector,
-   override val config: PasscodeVerificationConfig,
-   override val passcodeAuthenticationProvider: PasscodeAuthenticationProvider,
-   subscriptionService: SubscriptionService,
-   sessionStoreService: SessionStoreService
-  )
-  (implicit appConfig: AppConfig)
+(override val messagesApi: MessagesApi,
+ override val authConnector: AuthConnector,
+ override val config: PasscodeVerificationConfig,
+ override val passcodeAuthenticationProvider: PasscodeAuthenticationProvider,
+ subscriptionService: SubscriptionService,
+ sessionStoreService: SessionStoreService
+)
+(implicit appConfig: AppConfig)
   extends FrontendController with I18nSupport with AuthActions with SessionDataMissing {
 
   private val subscriptionDetails = Form[SubscriptionDetails](
@@ -69,14 +71,21 @@ class SubscriptionController @Inject()
     )(SubscriptionDetails.apply)(SubscriptionDetails.unapply)
   )
 
-  val showSubscriptionDetails: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync { implicit authContext => implicit request =>
-      sessionStoreService.fetchKnownFactsResult.map(_.map { knownFactsResult =>
-        Ok(html.subscription_details(knownFactsResult.taxpayerName, subscriptionDetails.fill(
-          SubscriptionDetails(knownFactsResult.utr, knownFactsResult.postcode, null, null, null, null, None, None, null))))
-      }.getOrElse {
-        sessionMissingRedirect()
-      })
-    }
+  private def hasEnrolments(implicit request: AgentRequest[_]): Boolean = request.enrolments.nonEmpty
+
+  val showSubscriptionDetails: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync { implicit authContext =>
+    implicit request =>
+      hasEnrolments match {
+        case true => Future(Redirect(routes.CheckAgencyController.showHasOtherEnrolments()))
+        case false => sessionStoreService.fetchKnownFactsResult.map(_.map { knownFactsResult =>
+          Ok(html.subscription_details(knownFactsResult.taxpayerName, subscriptionDetails.fill(
+            SubscriptionDetails(knownFactsResult.utr, knownFactsResult.postcode, null, null, null, null, None, None, null))))
+        }.getOrElse {
+          sessionMissingRedirect()
+        })
+      }
+  }
+
 
   val submitSubscriptionDetails: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync {
     implicit authContext =>
@@ -118,7 +127,7 @@ class SubscriptionController @Inject()
           arn <- request.flash.get("arn")
         } yield (agencyName, arn)
 
-        agencyData.map (data =>
+        agencyData.map(data =>
           Ok(html.subscription_complete(data._1, data._2))
         ) getOrElse sessionMissingRedirect()
       }
