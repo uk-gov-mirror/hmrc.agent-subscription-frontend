@@ -38,13 +38,13 @@ import scala.concurrent.Future
 
 @Singleton
 class CheckAgencyController @Inject()
-  (override val messagesApi: MessagesApi,
-   override val authConnector: AuthConnector,
-   override val config: PasscodeVerificationConfig,
-   override val passcodeAuthenticationProvider: PasscodeAuthenticationProvider,
-   val agentSubscriptionConnector: AgentSubscriptionConnector,
-   val sessionStoreService: SessionStoreService)
-  (implicit appConfig: AppConfig)
+(override val messagesApi: MessagesApi,
+ override val authConnector: AuthConnector,
+ override val config: PasscodeVerificationConfig,
+ override val passcodeAuthenticationProvider: PasscodeAuthenticationProvider,
+ val agentSubscriptionConnector: AgentSubscriptionConnector,
+ val sessionStoreService: SessionStoreService)
+(implicit appConfig: AppConfig)
   extends FrontendController with I18nSupport with AuthActions with SessionDataMissing {
 
   private val knownFactsForm = Form[KnownFacts](
@@ -54,22 +54,21 @@ class CheckAgencyController @Inject()
     )(KnownFacts.apply)(KnownFacts.unapply)
   )
 
-  val showHasOtherEnrolments: Action[AnyContent] = AuthorisedWithSubscribingAgent { implicit authContext => implicit request =>
-    Ok(html.has_other_enrolments())
+  val showHasOtherEnrolments: Action[AnyContent] = AuthorisedWithSubscribingAgent { implicit authContext =>
+    implicit request =>
+      Ok(html.has_other_enrolments())
   }
 
   val showCheckAgencyStatus: Action[AnyContent] = AuthorisedWithSubscribingAgent {
     implicit authContext =>
       implicit request =>
-        (hasMtdEnrolment, hasEnrolments) match {
-          case (true, _) => Redirect(routes.CheckAgencyController.showAlreadySubscribed())
-          case (_, true) => Redirect(routes.CheckAgencyController.showHasOtherEnrolments())
-          case (false, false) => Ok(html.check_agency_status(knownFactsForm))
+        hasMtdEnrolment match {
+          case true => Redirect(routes.CheckAgencyController.showAlreadySubscribed())
+          case false => Ok(html.check_agency_status(knownFactsForm))
         }
   }
 
   private def hasMtdEnrolment(implicit request: AgentRequest[_]): Boolean = request.enrolments.exists(_.key == "HMRC-AS-AGENT")
-  private def hasEnrolments(implicit request: AgentRequest[_]): Boolean = request.enrolments.nonEmpty
 
   val checkAgencyStatus: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync { implicit authContext: AuthContext =>
     implicit request =>
@@ -82,7 +81,7 @@ class CheckAgencyController @Inject()
   }
 
   private def checkAgencyStatusGivenValidForm(knownFacts: KnownFacts)
-    (implicit authContext: AuthContext, request: Request[AnyContent]): Future[Result] = {
+                                             (implicit authContext: AuthContext, request: Request[AnyContent]): Future[Result] = {
     agentSubscriptionConnector.getRegistration(knownFacts.utr, knownFacts.postcode) flatMap { maybeRegistration: Option[Registration] =>
       maybeRegistration match {
         case Some(Registration(Some(name), isSubscribedToAgentServices)) =>
@@ -90,7 +89,7 @@ class CheckAgencyController @Inject()
             utr = knownFacts.utr,
             postcode = knownFacts.postcode,
             taxpayerName = name,
-            isSubscribedToAgentServices = isSubscribedToAgentServices)).map {_ =>
+            isSubscribedToAgentServices = isSubscribedToAgentServices)).map { _ =>
             Redirect(routes.CheckAgencyController.showConfirmYourAgency())
           }
         case Some(_) => throw new IllegalStateException(s"The agency with UTR ${knownFacts.utr} has no organisation name.")
@@ -102,7 +101,7 @@ class CheckAgencyController @Inject()
   val showNoAgencyFound: Action[AnyContent] = AuthorisedWithSubscribingAgent {
     implicit authContext =>
       implicit request =>
-          Ok(html.no_agency_found())
+        Ok(html.no_agency_found())
   }
 
   private def lookupNextPageUrl(isSubscribedToAgentServices: Boolean): String =
@@ -125,15 +124,17 @@ class CheckAgencyController @Inject()
         })
   }
 
-  val showAlreadySubscribed: Action[AnyContent] = AuthorisedWithSubscribingAgent { implicit authContext => implicit request =>
-    Ok(html.already_subscribed())
+  val showAlreadySubscribed: Action[AnyContent] = AuthorisedWithSubscribingAgent { implicit authContext =>
+    implicit request =>
+      Ok(html.already_subscribed())
   }
 
-  val showNotSubscribed: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync { implicit authContext => implicit request =>
-    sessionStoreService.fetchKnownFactsResult.map(_.map { knownFactsResult =>
-      Ok(html.not_subscribed(registrationName = knownFactsResult.taxpayerName))
-        }.getOrElse {
-          sessionMissingRedirect()
-        })
+  val showNotSubscribed: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync { implicit authContext =>
+    implicit request =>
+      sessionStoreService.fetchKnownFactsResult.map(_.map { knownFactsResult =>
+        Ok(html.not_subscribed(registrationName = knownFactsResult.taxpayerName))
+      }.getOrElse {
+        sessionMissingRedirect()
+      })
   }
 }
