@@ -59,6 +59,8 @@ class CheckAgencyController @Inject()
       Ok(html.has_other_enrolments())
   }
 
+  private def hasMtdEnrolment(implicit request: AgentRequest[_]): Boolean = request.enrolments.exists(_.key == "HMRC-AS-AGENT")
+
   val showCheckAgencyStatus: Action[AnyContent] = AuthorisedWithSubscribingAgent {
     implicit authContext =>
       implicit request =>
@@ -68,7 +70,29 @@ class CheckAgencyController @Inject()
         }
   }
 
-  private def hasMtdEnrolment(implicit request: AgentRequest[_]): Boolean = request.enrolments.exists(_.key == "HMRC-AS-AGENT")
+  private def lookupNextPageUrl(isSubscribedToAgentServices: Boolean): String =
+    if (isSubscribedToAgentServices)
+      routes.CheckAgencyController.showAlreadySubscribed().url
+    else
+      routes.CheckAgencyController.showNotSubscribed().url
+
+
+/*=======
+  val showHasOtherEnrolments: Action[AnyContent] = AuthorisedAgentWithEmptyEnrolment { implicit authContext => implicit request =>
+    Ok(html.has_other_enrolments())
+  }
+
+  val showCheckAgencyStatus: Action[AnyContent] = AuthorisedWithSubscribingAgent {
+    implicit authContext => implicit request =>
+      Ok(html.check_agency_status(knownFactsForm))
+  }
+
+  private def lookupNextPageUrl(isSubscribedToAgentServices: Boolean): String =
+    if (isSubscribedToAgentServices)
+      routes.CheckAgencyController.showAlreadySubscribed().url
+    else
+      routes.CheckAgencyController.showNotSubscribed().url
+>>>>>>> master*/
 
   val checkAgencyStatus: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync { implicit authContext: AuthContext =>
     implicit request =>
@@ -103,12 +127,6 @@ class CheckAgencyController @Inject()
       implicit request =>
         Ok(html.no_agency_found())
   }
-
-  private def lookupNextPageUrl(isSubscribedToAgentServices: Boolean): String =
-    if (isSubscribedToAgentServices)
-      routes.CheckAgencyController.showAlreadySubscribed().url
-    else
-      routes.CheckAgencyController.showNotSubscribed().url
 
   val showConfirmYourAgency: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync {
     implicit authContext =>

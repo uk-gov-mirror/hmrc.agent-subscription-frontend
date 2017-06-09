@@ -49,6 +49,6 @@ class StartController @Inject()(override val messagesApi: MessagesApi,
   }
 
   val returnAfterGGCredsCreated:  Action[AnyContent] = PasscodeAuthenticatedAction { implicit request =>
-    Redirect(routes.CheckAgencyController.showCheckAgencyStatus())
+    Redirect(routes.StartController.start())
   }
 }

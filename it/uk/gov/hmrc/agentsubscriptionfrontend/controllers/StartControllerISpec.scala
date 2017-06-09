@@ -77,7 +77,7 @@ class StartControllerISpec extends BaseControllerISpec {
       val result = await(controller.returnAfterGGCredsCreated(FakeRequest()))
 
       status(result) shouldBe 303
-      redirectLocation(result).head should include ("/check-agency-status")
+      redirectLocation(result).head should include ("/start")
     }
   }
 }

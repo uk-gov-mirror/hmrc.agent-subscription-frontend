@@ -15,6 +15,7 @@
  */
 
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
+
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
@@ -30,6 +31,10 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
 
   private val notSubscribed = "notSubscribed"
   private val alreadySubscribed = "alreadySubscribed"
+
+  val utr = Utr("0123456789")
+  val postcode = "AA11AA"
+  val registrationName = "My Agency"
 
   private lazy val configuredGovernmentGatewayUrl = "http://configured-government-gateway.gov.uk/"
 
@@ -54,25 +59,6 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
 
       checkHtmlResultWithBodyText(result, "Check if your business already has an Agent Services account")
     }
-
-    "redirect to already subscribed page if user has already subscribed to MTD" in {
-      AuthStub.isSubscribedToMtd(subscribingAgent)
-
-      val result = await(controller.showCheckAgencyStatus(authenticatedRequest()))
-
-      status(result) shouldBe 303
-      redirectLocation(result).get shouldBe routes.CheckAgencyController.showAlreadySubscribed().url
-    }
-
-    "redirect to unclean credentials page if user has enrolled in any other services" in {
-      AuthStub.isEnrolledForNonMtdServices(subscribingAgent)
-
-      val result = await(controller.showCheckAgencyStatus(authenticatedRequest()))
-
-      status(result) shouldBe 303
-      redirectLocation(result).get shouldBe routes.CheckAgencyController.showHasOtherEnrolments().url
-    }
-
   }
 
   "checkAgencyStatus" should {
@@ -89,9 +75,9 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
       status(result) shouldBe OK
       val responseBody = bodyOf(result)
       responseBody should include("Check if your business already has an Agent Services account")
-      responseBody should include ("Please enter a valid UTR")
-      responseBody should include (invalidUtr)
-      responseBody should include (validPostcode)
+      responseBody should include("Please enter a valid UTR")
+      responseBody should include(invalidUtr)
+      responseBody should include(validPostcode)
     }
 
     "return a 200 response to redisplay the form with an error message for UTR failing to pass Modulus11Check" in {
@@ -104,9 +90,9 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
       status(result) shouldBe OK
       val responseBody = bodyOf(result)
       responseBody should include("Check if your business already has an Agent Services account")
-      responseBody should include ("Please enter a valid UTR")
-      responseBody should include (invalidUtr)
-      responseBody should include (validPostcode)
+      responseBody should include("Please enter a valid UTR")
+      responseBody should include(invalidUtr)
+      responseBody should include(validPostcode)
     }
 
     "return a 200 response to redisplay the form with an error message for invalidly-formatted postcode" in {
@@ -118,9 +104,9 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
       status(result) shouldBe OK
       val responseBody = bodyOf(result)
       responseBody should include("Check if your business already has an Agent Services account")
-      responseBody should include ("Please enter a valid postcode")
-      responseBody should include (validUtr.value)
-      responseBody should include (invalidPostcode)
+      responseBody should include("Please enter a valid postcode")
+      responseBody should include(validUtr.value)
+      responseBody should include(invalidPostcode)
     }
 
     "return a 200 response to redisplay the form with an error message for empty form parameters" in {
@@ -132,7 +118,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
       status(result) shouldBe OK
       val responseBody = bodyOf(result)
       responseBody should include("Check if your business already has an Agent Services account")
-      responseBody should include ("This field is required")
+      responseBody should include("This field is required")
     }
 
     "redirect to no-agency-found page when no matching registration found by agent-subscription" in {
@@ -279,17 +265,6 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
       val result = await(controller.showConfirmYourAgency(request))
 
       checkHtmlResultWithBodyText(result, routes.CheckAgencyController.showNotSubscribed().url)
-    }
-
-    "show a link to the Already Subscribed page if isSubscribedToAgentServices=true" in {
-      AuthStub.hasNoEnrolments(subscribingAgent)
-      sessionStoreService.knownFactsResult = Some(
-        KnownFactsResult(utr = Utr("0123456789"), postcode = "AA11AA", taxpayerName = "My Agency", isSubscribedToAgentServices = true))
-      val request = authenticatedRequest()
-
-      val result = await(controller.showConfirmYourAgency(request))
-
-      checkHtmlResultWithBodyText(result, routes.CheckAgencyController.showAlreadySubscribed().url)
     }
 
     "redirect to the Check Agency Status page if there is no KnownFactsResult in session because the user has returned to a bookmark" in {
