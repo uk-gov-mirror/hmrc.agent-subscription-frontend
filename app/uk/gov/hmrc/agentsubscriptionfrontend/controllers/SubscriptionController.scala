@@ -86,7 +86,6 @@ class SubscriptionController @Inject()
       }
   }
 
-
   val submitSubscriptionDetails: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync {
     implicit authContext =>
       implicit request =>
