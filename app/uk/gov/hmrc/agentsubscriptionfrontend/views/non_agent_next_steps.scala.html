@@ -1,4 +1,5 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
+@import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes.SignedOutController
 @()(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = "This isn't an agent account", bodyClasses = None) {
@@ -10,6 +11,6 @@
   </ul>
   <p>Registering should take around 5 minutes.</p>
   <p>
-    <a class="button" href="@appConfig.governmentGatewayUrl" role="button">Register now</a>
+    <a class="button" href="@SignedOutController.signOut" role="button">Register now</a>
   </p>
 }

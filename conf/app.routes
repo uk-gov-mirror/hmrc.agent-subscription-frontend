@@ -18,3 +18,5 @@ POST    /subscription-details           uk.gov.hmrc.agentsubscriptionfrontend.co
 
 GET    /subscription-complete           uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showSubscriptionComplete
 GET    /subscription-failed             uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showSubscriptionFailed
+
+GET    /signed-out                      uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.signOut
