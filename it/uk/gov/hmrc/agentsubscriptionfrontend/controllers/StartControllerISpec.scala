@@ -56,7 +56,7 @@ class StartControllerISpec extends BaseControllerISpec {
       val result = await(controller.showNonAgentNextSteps(authenticatedRequest()))
 
       status(result) shouldBe 200
-      bodyOf(result) should include(configuredGovernmentGatewayUrl)
+      bodyOf(result) should include("/signed-out")
     }
 
     "redirect to the company-auth-frontend sign-in page if the current user is not logged in" in {

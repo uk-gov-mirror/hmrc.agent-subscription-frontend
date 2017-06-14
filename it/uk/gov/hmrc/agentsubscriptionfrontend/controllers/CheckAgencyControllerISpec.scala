@@ -204,7 +204,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
       val result = await(controller.showHasOtherEnrolments(authenticatedRequest()))
 
       status(result) shouldBe 200
-      bodyOf(result) should include(configuredGovernmentGatewayUrl)
+      bodyOf(result) should include("/signed-out")
     }
   }
 
