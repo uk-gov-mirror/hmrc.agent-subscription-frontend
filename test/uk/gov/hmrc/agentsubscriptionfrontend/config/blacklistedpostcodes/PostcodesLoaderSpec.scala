@@ -17,6 +17,7 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.config.blacklistedpostcodes
 
 import org.scalatest.mock.MockitoSugar
+import uk.gov.hmrc.agentsubscriptionfrontend.config.blacklistedpostcodes.PostcodesLoader.PostcodeLoaderException
 import uk.gov.hmrc.play.test.UnitSpec
 
 
@@ -35,18 +36,18 @@ class PostcodesLoaderSpec extends UnitSpec with MockitoSugar {
     }
 
     "return exception if file path is empty" in {
-      val exception = intercept[Exception] {
+      val exception = intercept[PostcodeLoaderException] {
         PostcodesLoader.load("")
       }
 
-      exception.getMessage should include("Unknown error code from agent-subscription while loading postcode")
+      exception.getMessage should include("Unknown error code from agent-subscription while loading postcodes:  (No such file or directory)")
     }
 
     "return exception if an invalid postcode file is loaded" in {
       val invalidFilePath =
         getClass().getClassLoader().getResource("invalid_box_postcodes.csv").getPath
 
-      val exception = intercept[Exception] {
+      val exception = intercept[PostcodeLoaderException] {
         PostcodesLoader.load(invalidFilePath)
       }
 
