@@ -42,9 +42,9 @@ package object controllers {
     }
 
     private def blacklistedPostcode(postcodes: Seq[String]): Constraint[String] = Constraint[String] { fieldValue: String =>
-      val inValidPostCode = postcodes.exists(_.trim == fieldValue.trim)
+      val invalidPostcode = postcodes.exists(_.trim == fieldValue.trim)
 
-      if (inValidPostCode)
+      if (invalidPostcode)
         Invalid(ValidationError("error.postcode.blacklisted"))
       else
         Valid

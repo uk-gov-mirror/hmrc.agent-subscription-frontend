@@ -20,7 +20,6 @@ import org.scalatest.mock.MockitoSugar
 import uk.gov.hmrc.agentsubscriptionfrontend.config.blacklistedpostcodes.PostcodesLoader.PostcodeLoaderException
 import uk.gov.hmrc.play.test.UnitSpec
 
-
 class PostcodesLoaderSpec extends UnitSpec with MockitoSugar {
   private val header = "PostCode"
 
@@ -54,5 +53,4 @@ class PostcodesLoaderSpec extends UnitSpec with MockitoSugar {
       exception.getMessage should include("Invalid entries found in the blacklisted postcodes file: AB10 1ZTInvalid-post-code,AB11 6NWInvalid-post-code")
     }
   }
-
 }

@@ -24,8 +24,7 @@ object PostcodesLoader {
 
   def load(path: String) = Try {
     val header = 1
-    val items =
-      scala.io.Source.fromFile(new File(path))
+    val items = scala.io.Source.fromFile(new File(path))
     items.getLines().drop(header).toSeq
   } match {
     case Success(postcodes) =>
