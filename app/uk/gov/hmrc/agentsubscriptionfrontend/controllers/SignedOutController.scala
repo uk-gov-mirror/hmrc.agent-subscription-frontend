@@ -16,16 +16,16 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
-import javax.inject.Inject
+import javax.inject.{Inject, Named}
 
 import play.api.mvc.Action
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 
 import scala.concurrent.Future.successful
 
-class SignedOutController @Inject() extends FrontendController {
+class SignedOutController @Inject()(@Named("logoutRedirectUrl") logOutUrl: String) extends FrontendController {
 
   def signOut = Action.async { implicit request =>
-    successful(Redirect(routes.StartController.start(), 303).withNewSession)
+    successful(Redirect(logOutUrl, 303).withNewSession)
   }
 }
