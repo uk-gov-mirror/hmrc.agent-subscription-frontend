@@ -7,6 +7,8 @@ import play.api.test.Helpers._
 class SignOutControllerISpec extends BaseControllerISpec {
   private lazy val controller: SignedOutController = app.injector.instanceOf[SignedOutController]
 
+  private lazy val logoutRedirectUrl = "/government-gateway-registration-frontend/choose-your-account"
+
   private val fakeRequest = FakeRequest()
 
   "context signed out" should {
@@ -14,7 +16,7 @@ class SignOutControllerISpec extends BaseControllerISpec {
       val result = await(controller.signOut(fakeRequest))
 
       status(result) shouldBe 303
-      redirectLocation(result).head should include("/start")
+      redirectLocation(result).head should include(logoutRedirectUrl)
     }
   }
 }
