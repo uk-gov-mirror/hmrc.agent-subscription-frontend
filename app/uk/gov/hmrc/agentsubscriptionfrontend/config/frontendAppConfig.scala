@@ -31,7 +31,7 @@ trait AppConfig {
   val betaFeedbackUrl: String
   val betaFeedbackUnauthenticatedUrl: String
   val governmentGatewayUrl: String
-  val blacklistedPostcodes: Seq[String]
+  val blacklistedPostcodes: Set[String]
 }
 
 trait StrictConfig{
@@ -67,5 +67,6 @@ class FrontendAppConfig extends AppConfig with StrictConfig with ServicesConfig 
   override lazy val reportAProblemPartialUrl = s"$contactHost/contact/problem_reports_ajax?service=$contactFormServiceIdentifier"
   override lazy val reportAProblemNonJSUrl = s"$contactHost/contact/problem_reports_nonjs?service=$contactFormServiceIdentifier"
   override lazy val governmentGatewayUrl: String = loadConfig("government-gateway.url")
-  override lazy val blacklistedPostcodes: Seq[String] = PostcodesLoader.load("/po_box_postcodes_abp_49.csv")
+  override lazy val blacklistedPostcodes: Set[String] =
+    PostcodesLoader.load("/po_box_postcodes_abp_49.csv").map(x => x.toUpperCase.replace(" ", "")).toSet
 }
