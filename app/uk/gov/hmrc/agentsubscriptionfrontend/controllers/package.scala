@@ -41,18 +41,14 @@ package object controllers {
       }
     }
 
-    private def blacklistedPostcode(postcodes: Seq[String]): Constraint[String] = Constraint[String] { fieldValue: String =>
-      def formattedPostcode(x: String) = x.toUpperCase.replace(" ", "")
-
-      val invalidPostcode = postcodes.exists(x => formattedPostcode(x) == formattedPostcode(fieldValue))
-
-      if (invalidPostcode)
+    private def blacklistedPostcode(blacklistedPostcodes: Set[String]): Constraint[String] = Constraint[String] { fieldValue: String =>
+      if (blacklistedPostcodes.contains(fieldValue.toUpperCase.replace(" ", "")))
         Invalid(ValidationError("error.postcode.blacklisted"))
       else
         Valid
     }
 
-    private val telephoneNumberConstraint: Constraint[String] = Constraint[String] { fieldValue: String =>
+    private val telephoneNumber: Constraint[String] = Constraint[String] { fieldValue: String =>
       Constraints.nonEmpty(fieldValue) match {
         case i: Invalid => i
         case Valid => fieldValue match {
@@ -65,7 +61,7 @@ package object controllers {
 
     private val noAmpersand = Constraints.pattern("[^&]*".r, error = "error.no.ampersand")
 
-    private[controllers] val desTextConstraint: Constraint[String] = Constraint[String] { fieldValue: String =>
+    private[controllers] val desText: Constraint[String] = Constraint[String] { fieldValue: String =>
       Constraints.nonEmpty(fieldValue) match {
         case i: Invalid => i
         case Valid => fieldValue match {
@@ -77,10 +73,10 @@ package object controllers {
 
     def utr: Mapping[Utr] = nonEmptyText.transform[Utr](Utr.apply,_.value).verifying("error.utr.invalid", utr => Utr.isValid(utr.value))
     def postcode: Mapping[String] = text verifying nonEmptyPostcode
-    def postcode(entries: Seq[String]): Mapping[String] = postcode verifying blacklistedPostcode(entries)
-    def telephoneNumber: Mapping[String] = text(maxLength = 24) verifying telephoneNumberConstraint
-    def agencyName: Mapping[String] = text(maxLength = 40) verifying noAmpersand verifying desTextConstraint
-    def addressLine1: Mapping[String] = text(maxLength = 35) verifying desTextConstraint
-    def addressLine23: Mapping[Option[String]] = optional(text(maxLength = 35) verifying desTextConstraint)
+    def postcode(entries: Set[String]): Mapping[String] = postcode verifying blacklistedPostcode(entries)
+    def telephone: Mapping[String] = text(maxLength = 24) verifying telephoneNumber
+    def agencyName: Mapping[String] = text(maxLength = 40) verifying noAmpersand verifying desText
+    def addressLine1: Mapping[String] = text(maxLength = 35) verifying desText
+    def addressLine23: Mapping[Option[String]] = optional(text(maxLength = 35) verifying desText)
   }
 }
