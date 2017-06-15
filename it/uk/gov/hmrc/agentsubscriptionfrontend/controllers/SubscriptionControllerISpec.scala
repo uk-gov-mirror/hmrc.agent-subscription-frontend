@@ -307,6 +307,16 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         checkHtmlResultWithBodyText(result, "Add your agency information", "This postcode is blocked and cannot be used")
       }
 
+      "postcode without whitepsaces is blacklisted" in {
+        AuthStub.hasNoEnrolments(subscribingAgent)
+        sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
+
+        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("postcode", Seq("postcode" -> "AB101ZT"))))
+
+        status(result) shouldBe 200
+        checkHtmlResultWithBodyText(result, "Add your agency information", "This postcode is blocked and cannot be used")
+      }
+
       "known facts postcode is not valid" in {
         AuthStub.hasNoEnrolments(subscribingAgent)
         sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)

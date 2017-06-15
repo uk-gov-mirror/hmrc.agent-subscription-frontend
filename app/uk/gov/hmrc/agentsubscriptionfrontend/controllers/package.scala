@@ -42,7 +42,7 @@ package object controllers {
     }
 
     private def blacklistedPostcode(postcodes: Seq[String]): Constraint[String] = Constraint[String] { fieldValue: String =>
-      def formattedPostcode(x: String) = x.trim.toUpperCase.replace(" ", "")
+      def formattedPostcode(x: String) = x.toUpperCase.replace(" ", "")
 
       val invalidPostcode = postcodes.exists(x => formattedPostcode(x) == formattedPostcode(fieldValue))
 
