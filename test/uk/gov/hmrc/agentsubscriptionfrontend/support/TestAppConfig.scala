@@ -30,4 +30,21 @@ object TestAppConfig extends AppConfig {
   override lazy val betaFeedbackUrl = s"$contactHost/contact/beta-feedback?service=$contactFormServiceIdentifier"
   override lazy val betaFeedbackUnauthenticatedUrl = s"$contactHost/contact/beta-feedback-unauthenticated?service=$contactFormServiceIdentifier"
   override lazy val governmentGatewayUrl: String = "http://www.ref.gateway.gov.uk/"
+
+  override lazy val blacklistedPostcodes: Set[String] = Set(
+    "AB10 1DU",
+    "AB10 1GS",
+    "AB10 1TW",
+    "AB10 1WS",
+    "AB10 1YR",
+    "AB10 1ZG",
+    "AB101ZTT",
+    "AB10 1ZX",
+    "AB10 6YH",
+    "AB10 7YA",
+    "AB11 5YD",
+    "AB11 5YL",
+    "AB11 5ZH",
+    "AB11 6NW"
+  )
 }

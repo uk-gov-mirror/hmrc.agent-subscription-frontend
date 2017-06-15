@@ -148,7 +148,7 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
   }
 
   "telephoneNumber bind" should {
-    val telephoneMapping = FieldMappings.telephoneNumber.withPrefix("testKey")
+    val telephoneMapping = FieldMappings.telephone.withPrefix("testKey")
 
     def bind(fieldValue: String) = telephoneMapping.bind(Map("testKey" -> fieldValue))
 
@@ -211,7 +211,7 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
 
   "desTextConstraint" should {
 
-    val desTextConstraint = FieldMappings.desTextConstraint
+    val desTextConstraint = FieldMappings.desText
 
     def shouldRejectFieldValueAsInvalid(fieldValue: String): Unit = {
       desTextConstraint(fieldValue) shouldBe Invalid(ValidationError("error.des.text.invalid"))

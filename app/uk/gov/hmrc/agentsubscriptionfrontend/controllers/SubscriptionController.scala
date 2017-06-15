@@ -63,11 +63,11 @@ class SubscriptionController @Inject()
       "knownFactsPostcode" -> postcode,
       "name" -> agencyName,
       "email" -> email,
-      "telephone" -> telephoneNumber,
+      "telephone" -> telephone,
       "addressLine1" -> addressLine1,
       "addressLine2" -> addressLine23,
       "addressLine3" -> addressLine23,
-      "postcode" -> postcode
+      "postcode" -> postcode(appConfig.blacklistedPostcodes)
     )(SubscriptionDetails.apply)(SubscriptionDetails.unapply)
   )
 

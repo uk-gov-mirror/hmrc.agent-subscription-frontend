@@ -293,6 +293,46 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         checkHtmlResultWithBodyText(result, "Add your agency information", "Please enter a valid postcode")
       }
 
+      "postcode is blacklisted" in {
+        AuthStub.hasNoEnrolments(subscribingAgent)
+        sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
+
+        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("postcode", Seq("postcode" -> "AB10 1ZT"))))
+
+        status(result) shouldBe 200
+        checkHtmlResultWithBodyText(result, "Add your agency information", "This postcode is blocked and cannot be used")
+      }
+
+      "postcode with whitespaces is blacklisted" in {
+        AuthStub.hasNoEnrolments(subscribingAgent)
+        sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
+
+        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("postcode", Seq("postcode" -> " AB10    1ZT "))))
+
+        status(result) shouldBe 200
+        checkHtmlResultWithBodyText(result, "Add your agency information", "This postcode is blocked and cannot be used")
+      }
+
+      "postcode with lowercase characters is blacklisted" in {
+        AuthStub.hasNoEnrolments(subscribingAgent)
+        sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
+
+        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("postcode", Seq("postcode" -> "Ab10 1zt"))))
+
+        status(result) shouldBe 200
+        checkHtmlResultWithBodyText(result, "Add your agency information", "This postcode is blocked and cannot be used")
+      }
+
+      "postcode without whitepsaces is blacklisted" in {
+        AuthStub.hasNoEnrolments(subscribingAgent)
+        sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
+
+        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("postcode", Seq("postcode" -> "AB101ZT"))))
+
+        status(result) shouldBe 200
+        checkHtmlResultWithBodyText(result, "Add your agency information", "This postcode is blocked and cannot be used")
+      }
+
       "known facts postcode is not valid" in {
         AuthStub.hasNoEnrolments(subscribingAgent)
         sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
