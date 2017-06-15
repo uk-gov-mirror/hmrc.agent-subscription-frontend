@@ -16,15 +16,17 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.config.blacklistedpostcodes
 
-import java.io.File
 import scala.util.{Failure, Success, Try}
 
 object PostcodesLoader {
   private val postcodeWithoutSpacesRegex = "^[A-Z]{1,2}[0-9][0-9A-Z]?\\s?[0-9][A-Z]{2}$|BFPO\\s?[0-9]{1,5}$".r
 
   def load(path: String) = Try {
+    require(path.nonEmpty, "Postcodes file path cannot be empty")
+    require(path.endsWith(".csv"), "Postcodes file should be a csv file")
+
     val header = 1
-    val items = scala.io.Source.fromFile(new File(path))
+    val items = scala.io.Source.fromInputStream(PostcodesLoader.getClass.getResourceAsStream(path), "utf-8")
     items.getLines().drop(header).toSeq
   } match {
     case Success(postcodes) =>

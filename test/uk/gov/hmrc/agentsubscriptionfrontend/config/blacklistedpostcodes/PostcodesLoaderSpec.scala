@@ -25,7 +25,7 @@ class PostcodesLoaderSpec extends UnitSpec with MockitoSugar {
 
   "PostcodesLoader" should {
     "load all postcodes from the csv file" in {
-      val result = PostcodesLoader.load("po_box_postcodes_abp_49.csv")
+      val result = PostcodesLoader.load("/po_box_postcodes_abp_49.csv")
 
       result.size should not be 0
       result.headOption should not be Some(header)
@@ -39,15 +39,20 @@ class PostcodesLoaderSpec extends UnitSpec with MockitoSugar {
         PostcodesLoader.load("")
       }
 
-      exception.getMessage should include("Unknown error code from agent-subscription while loading postcodes:  (No such file or directory)")
+      exception.getMessage should include("Postcodes file path cannot be empty")
+    }
+
+    "return exception if file path is not csv" in {
+      val exception = intercept[PostcodeLoaderException] {
+        PostcodesLoader.load("/test.txt")
+      }
+
+      exception.getMessage should include("Postcodes file should be a csv file")
     }
 
     "return exception if an invalid postcode file is loaded" in {
-      val invalidFilePath =
-        getClass().getClassLoader().getResource("invalid_box_postcodes.csv").getPath
-
       val exception = intercept[PostcodeLoaderException] {
-        PostcodesLoader.load(invalidFilePath)
+        PostcodesLoader.load("/invalid_box_postcodes.csv")
       }
 
       exception.getMessage should include("Invalid entries found in the blacklisted postcodes file: AB10 1ZTInvalid-post-code,AB11 6NWInvalid-post-code")
