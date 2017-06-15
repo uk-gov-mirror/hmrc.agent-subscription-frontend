@@ -41,6 +41,17 @@ package object controllers {
       }
     }
 
+    private def blacklistedPostcode(postcodes: Seq[String]): Constraint[String] = Constraint[String] { fieldValue: String =>
+      def formattedPostcode(x: String) = x.toUpperCase.replace(" ", "")
+
+      val invalidPostcode = postcodes.exists(x => formattedPostcode(x) == formattedPostcode(fieldValue))
+
+      if (invalidPostcode)
+        Invalid(ValidationError("error.postcode.blacklisted"))
+      else
+        Valid
+    }
+
     private val telephoneNumberConstraint: Constraint[String] = Constraint[String] { fieldValue: String =>
       Constraints.nonEmpty(fieldValue) match {
         case i: Invalid => i
@@ -66,6 +77,7 @@ package object controllers {
 
     def utr: Mapping[Utr] = nonEmptyText.transform[Utr](Utr.apply,_.value).verifying("error.utr.invalid", utr => Utr.isValid(utr.value))
     def postcode: Mapping[String] = text verifying nonEmptyPostcode
+    def postcode(entries: Seq[String]): Mapping[String] = postcode verifying blacklistedPostcode(entries)
     def telephoneNumber: Mapping[String] = text(maxLength = 24) verifying telephoneNumberConstraint
     def agencyName: Mapping[String] = text(maxLength = 40) verifying noAmpersand verifying desTextConstraint
     def addressLine1: Mapping[String] = text(maxLength = 35) verifying desTextConstraint

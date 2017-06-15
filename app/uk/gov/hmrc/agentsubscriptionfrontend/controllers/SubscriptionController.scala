@@ -67,7 +67,7 @@ class SubscriptionController @Inject()
       "addressLine1" -> addressLine1,
       "addressLine2" -> addressLine23,
       "addressLine3" -> addressLine23,
-      "postcode" -> postcode
+      "postcode" -> postcode(appConfig.blacklistedPostcodes)
     )(SubscriptionDetails.apply)(SubscriptionDetails.unapply)
   )
 
