@@ -6,6 +6,7 @@ This is a web frontend service whose domain is Subscriptions to Agent Services
 following the ROSM (Register Once Subscribe Many) pattern.
 
 
+
 ### Running the tests
 
     sbt test it:test
