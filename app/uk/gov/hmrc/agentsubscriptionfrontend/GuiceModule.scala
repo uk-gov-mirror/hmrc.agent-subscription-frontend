@@ -57,6 +57,9 @@ class GuiceModule(environment: Environment, configuration: Configuration) extend
 
   private class ConfigPropertyProvider(propertyName: String) extends Provider[String] {
     override lazy val get = getConfString(propertyName, throw new RuntimeException(s"No configuration value found for '$propertyName'"))
-  }
 
+    def getConfString(confKey: String, defString: => String) = {
+      runModeConfiguration.getString(s"$env.$confKey").getOrElse(defString)
+    }
+  }
 }
