@@ -34,13 +34,13 @@ class SubscriptionService @Inject() (agentSubscriptionConnector: AgentSubscripti
     val request = SubscriptionRequest(subscriptionDetails.utr, KnownFacts(subscriptionDetails.knownFactsPostcode), Agency(
       name = subscriptionDetails.name,
       email = subscriptionDetails.email,
-      telephone = subscriptionDetails.telephone,
-      address = Address(addressLine1 = subscriptionDetails.addressLine1,
+      telephone = subscriptionDetails.telephone)
+      /*address = Address(addressLine1 = subscriptionDetails.addressLine1,
         addressLine2 = subscriptionDetails.addressLine2,
         addressLine3 = subscriptionDetails.addressLine3,
         postcode = subscriptionDetails.postcode,
-        countryCode = "GB")
-    ))
+        countryCode = "GB")*/
+    )
 
     agentSubscriptionConnector.subscribeAgencyToMtd(request) map { x =>
       Right(x)

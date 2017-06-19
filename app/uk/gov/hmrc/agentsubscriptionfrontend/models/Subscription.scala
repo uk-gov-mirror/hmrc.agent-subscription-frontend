@@ -47,18 +47,15 @@ case class Address(addressLine1: String,
                    addressLine3: Option[String] = None,
                    addressLine4: Option[String] = None,
                    postcode: String,
-                   countryCode: String
-                  )
+                   countryCode: String)
 
 case class Agency(name: String,
-                  address: Address,
+                  //address: Address,
                   telephone: String,
-                  email: String
-                 )
+                  email: String)
 
 case class KnownFacts(postcode: String)
 
 case class SubscriptionRequest(utr: Utr,
                                knownFacts: KnownFacts,
-                               agency: Agency
-                              )
+                               agency: Agency)
