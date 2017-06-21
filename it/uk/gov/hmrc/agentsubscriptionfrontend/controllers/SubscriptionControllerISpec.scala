@@ -91,8 +91,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
 
       status(result) shouldBe 200
       checkHtmlResultWithBodyText(result,
-        "You've successfully created an Agent Services account for My Agency",
-        ">ARN0001<")
+        "We've sent an email to My Agency with your account details")
     }
 
     "redirect to session missing page if there is nothing in the flash scope" in {
@@ -226,26 +225,6 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
 
         status(result) shouldBe 200
         checkHtmlResultWithBodyText(result, "Add your agency information")
-      }
-
-      "email has no text in the local part" in {
-        AuthStub.hasNoEnrolments(subscribingAgent)
-        sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
-
-        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("email", Seq("email" -> "@domain"))))
-
-        status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information", "Enter a valid email address.")
-      }
-
-      "telephone is invalid with numbers and words" in {
-        AuthStub.hasNoEnrolments(subscribingAgent)
-        sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
-
-        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("telephone", Seq("telephone" -> "02073457443fff"))))
-
-        status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information", "Please enter a valid telephone number")
       }
 
       "building and street is invalid" in {

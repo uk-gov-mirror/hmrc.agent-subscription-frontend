@@ -57,7 +57,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
 
       val result = await(controller.showCheckAgencyStatus(authenticatedRequest()))
 
-      checkHtmlResultWithBodyText(result, "Check if your business already has an Agent Services account")
+      checkHtmlResultWithBodyText(result, "Check for duplicate Agent Services accounts")
     }
   }
 
@@ -74,7 +74,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
 
       status(result) shouldBe OK
       val responseBody = bodyOf(result)
-      responseBody should include("Check if your business already has an Agent Services account")
+      responseBody should include("Check for duplicate Agent Services accounts")
       responseBody should include("Please enter a valid UTR")
       responseBody should include(invalidUtr)
       responseBody should include(validPostcode)
@@ -89,7 +89,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
 
       status(result) shouldBe OK
       val responseBody = bodyOf(result)
-      responseBody should include("Check if your business already has an Agent Services account")
+      responseBody should include("Check for duplicate Agent Services accounts")
       responseBody should include("Please enter a valid UTR")
       responseBody should include(invalidUtr)
       responseBody should include(validPostcode)
@@ -103,7 +103,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
 
       status(result) shouldBe OK
       val responseBody = bodyOf(result)
-      responseBody should include("Check if your business already has an Agent Services account")
+      responseBody should include("Check for duplicate Agent Services accounts")
       responseBody should include("Please enter a valid postcode")
       responseBody should include(validUtr.value)
       responseBody should include(invalidPostcode)
@@ -117,7 +117,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
 
       status(result) shouldBe OK
       val responseBody = bodyOf(result)
-      responseBody should include("Check if your business already has an Agent Services account")
+      responseBody should include("Check for duplicate Agent Services accounts")
       responseBody should include("This field is required")
     }
 

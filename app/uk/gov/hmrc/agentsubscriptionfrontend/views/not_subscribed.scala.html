@@ -2,9 +2,9 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
 @(registrationName: String)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = "Your business doesn't have an Agent Services account", bodyClasses = None) {
+@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = "You can create an Agent Services account", bodyClasses = None) {
   <h1>Your business doesn't have an Agent Services account</h1>
-  <p>If you're authorised to act on behalf of <strong class="bold">@registrationName</strong>, you can subscribe the agency now.</p>
+  <p>We've checked <strong class="bold">@registrationName</strong> and it doesn't have an Agent Services account. If you're authorised to act for <strong class="bold">@registrationName</strong>, you can continue.</p>
 
-  <a id="continue" class="button" href="@routes.SubscriptionController.showSubscriptionDetails().url">Continue</a>
+  <a id="continue" class="button" href="@routes.SubscriptionController.showSubscriptionDetails().url">Create account</a>
 }

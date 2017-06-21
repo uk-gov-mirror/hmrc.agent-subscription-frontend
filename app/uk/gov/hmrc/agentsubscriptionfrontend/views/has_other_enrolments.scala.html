@@ -2,10 +2,10 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes.SignedOutController
 @()(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = "Create your new account ID and password", bodyClasses = None) {
+@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = "Create your new Agent Services account", bodyClasses = None) {
   <h1>Create your new account ID and password</h1>
-  <p>You'll do this through the Government Gateway.</p>
+  <p>You need to use Government Gateway to do this.</p>
   <p>
-    <a class="button" href="@SignedOutController.signOut" role="button">Continue</a>
+    <a class="button" href="@SignedOutController.signOut" role="button">Go to Government Gateway</a>
   </p>
 }
