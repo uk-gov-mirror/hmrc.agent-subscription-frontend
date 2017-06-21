@@ -1,0 +1,65 @@
+/*
+ * Copyright 2017 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package uk.gov.hmrc.agentsubscriptionfrontend.connectors
+
+import java.net.URL
+import javax.inject.{Inject, Named, Singleton}
+
+import org.slf4j.LoggerFactory
+import play.api.http.HeaderNames.LOCATION
+import play.api.libs.json.{JsObject, JsValue, Json}
+import play.api.mvc.Call
+import uk.gov.hmrc.agentsubscriptionfrontend.models.Address
+import uk.gov.hmrc.play.config.ServicesConfig
+import uk.gov.hmrc.play.http.{HeaderCarrier, HttpGet, HttpPost, HttpResponse}
+
+import scala.concurrent.{ExecutionContext, Future}
+import scala.util.control.NoStackTrace
+
+@Singleton
+class AddressLookUpConnector @Inject()(@Named("address-lookup-frontend-baseUrl") baseUrl: URL, http: HttpGet with HttpPost) extends ServicesConfig {
+
+  lazy val log = LoggerFactory.getLogger(classOf[AddressLookUpConnector])
+  val addressLookupContinueUrl = getConfString("address-lookup-frontend.new-address-callback.url", "")
+
+  def initJourney(call: Call, journeyName: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[String] = {
+    val continueJson = Json.obj("continueUrl" -> s"$addressLookupContinueUrl${call.url}")
+
+    http.POST[JsObject, HttpResponse](createUrl(journeyName), continueJson) map { resp =>
+      resp.header(LOCATION).getOrElse {
+        throw new ALFLocationHeaderNotSetException
+      }
+    }
+  }
+
+
+  def getAddressDetails(id: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Address] = {
+    import Address._
+
+    http.GET[Address](confirmJourneyUrl(id))
+  }
+
+  private def confirmJourneyUrl(id: String) = {
+    new URL(baseUrl, s"/api/confirmed?id=$id").toString
+  }
+
+  private def createUrl(journeyName: String): String = {
+    new URL(baseUrl, s"/api/init/$journeyName").toString
+  }
+}
+
+class ALFLocationHeaderNotSetException extends NoStackTrace

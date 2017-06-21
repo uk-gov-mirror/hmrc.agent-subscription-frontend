@@ -27,19 +27,19 @@ import uk.gov.hmrc.play.http.{HeaderCarrier, Upstream4xxResponse}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class SubscriptionService @Inject() (agentSubscriptionConnector: AgentSubscriptionConnector) {
+class SubscriptionService @Inject()(agentSubscriptionConnector: AgentSubscriptionConnector) {
 
   def subscribeAgencyToMtd(subscriptionDetails: SubscriptionDetails)
                           (implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[Int, Arn]] = {
     val request = SubscriptionRequest(subscriptionDetails.utr, KnownFacts(subscriptionDetails.knownFactsPostcode), Agency(
       name = subscriptionDetails.name,
       email = subscriptionDetails.email,
-      telephone = subscriptionDetails.telephone)
-      /*address = Address(addressLine1 = subscriptionDetails.addressLine1,
+      telephone = subscriptionDetails.telephone,
+      address = Address(addressLine1 = subscriptionDetails.addressLine1,
         addressLine2 = subscriptionDetails.addressLine2,
         addressLine3 = subscriptionDetails.addressLine3,
         postcode = subscriptionDetails.postcode,
-        countryCode = "GB")*/
+        countryCode = "GB"))
     )
 
     agentSubscriptionConnector.subscribeAgencyToMtd(request) map { x =>

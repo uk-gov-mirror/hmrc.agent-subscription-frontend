@@ -16,46 +16,63 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.models
 
-import play.api.libs.json.{Format, Json}
+import play.api.libs.json.{OFormat, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.domain.SimpleObjectReads
+
+case class Arn(arn: String)
 
 object Arn {
   implicit val arnReads = new SimpleObjectReads[Arn]("arn", Arn.apply)
 }
 
-object Address {
-  implicit val format: Format[Address] = Json.format[Address]
-}
-
-object Agency {
-  implicit val format: Format[Agency] = Json.format[Agency]
-}
-
-object KnownFacts {
-  implicit val format: Format[KnownFacts] = Json.format[KnownFacts]
-}
-
-object SubscriptionRequest {
-  implicit val format: Format[SubscriptionRequest] = Json.format[SubscriptionRequest]
-}
-
-case class Arn(arn: String)
-
 case class Address(addressLine1: String,
-                   addressLine2: Option[String],
+                   addressLine2: Option[String] = None,
                    addressLine3: Option[String] = None,
                    addressLine4: Option[String] = None,
                    postcode: String,
                    countryCode: String)
 
+object Address {
+
+  implicit val format: OFormat[Address] = {
+    implicit val formatAddressValue = Json.format[Address]
+
+    implicit val reads: Reads[Address] = Reads(json => {
+      val addressLines = (json \ "address").as[JsObject]
+      val lineMap = (addressLines \ "lines").as[List[String]]
+      val postcode = (addressLines \ "postcode").as[String]
+      val countryCode = (addressLines \ "country" \ "code").as[String]
+
+      JsSuccess(Address(lineMap(0), Some(lineMap(1)), Some(lineMap(2)),
+        Some(lineMap(3)), postcode, countryCode))
+    }
+    )
+
+    OFormat[Address](reads, formatAddressValue)
+  }
+
+}
+
 case class Agency(name: String,
-                  //address: Address,
+                  address: Address,
                   telephone: String,
                   email: String)
 
+object Agency {
+  implicit val format: Format[Agency] = Json.format[Agency]
+}
+
 case class KnownFacts(postcode: String)
+
+object KnownFacts {
+  implicit val format: Format[KnownFacts] = Json.format[KnownFacts]
+}
 
 case class SubscriptionRequest(utr: Utr,
                                knownFacts: KnownFacts,
                                agency: Agency)
+
+object SubscriptionRequest {
+  implicit val format: Format[SubscriptionRequest] = Json.format[SubscriptionRequest]
+}
