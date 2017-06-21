@@ -19,5 +19,14 @@ class SignOutControllerISpec extends BaseControllerISpec {
       redirectLocation(result).head should include(logoutRedirectUrl)
     }
   }
+
+  "start survey" should {
+    "redirect to the survey page" in {
+      val result = await(controller.startSurvey(fakeRequest))
+
+      status(result) shouldBe 303
+      redirectLocation(result).head should include("feedback-survey")
+    }
+  }
 }
 

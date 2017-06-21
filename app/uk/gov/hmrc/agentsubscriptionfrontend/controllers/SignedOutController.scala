@@ -24,9 +24,14 @@ import uk.gov.hmrc.play.frontend.controller.FrontendController
 import scala.concurrent.Future.successful
 
 @Singleton
-class SignedOutController @Inject()(@Named("logoutRedirectUrl") logOutUrl: String) extends FrontendController {
+class SignedOutController @Inject()(@Named("logoutRedirectUrl") logOutUrl: String, @Named("surveyRedirectUrl") surveyUrl: String)
+  extends FrontendController {
 
   def signOut = Action.async { implicit request =>
     successful(Redirect(logOutUrl, 303).withNewSession)
+  }
+
+  def startSurvey = Action.async { implicit request =>
+    successful(Redirect(surveyUrl, 303).withNewSession)
   }
 }
