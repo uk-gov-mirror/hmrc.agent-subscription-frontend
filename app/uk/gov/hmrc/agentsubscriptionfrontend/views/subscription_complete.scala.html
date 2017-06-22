@@ -4,15 +4,20 @@
 @(agencyName: String, arn: String)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = "You've successfully created an Agent Services account", bodyClasses = None) {
-    <div class="grid-row">
-        <div class="column-two-thirds">
+<div class="grid-row">
+    <div class="column-two-thirds">
 
-           <p><strong>We've sent an email to @agencyName with your account details</strong>.</p>
-
-
-            <a href="" class="button">Add clients</a>
-            <a href="" class="button">Go to dashboard</a>
-            <a href="@GGConfig.ggSignOutUrl" class="button">Sign out</a>
+        <div class="transaction-banner--complete">
+            <h1 class="bold-large">You've successfully created an Agent Services account for @agencyName</h1>
+            <p>
+                Your account number is: <br>
+                <strong class="heading-medium">@arn</strong>
+            </p>
         </div>
+
+        <p><strong>You must save this number for your business's records.</strong>. HMRC won't show you this number again, or send you a copy.</p>
+
+        <a href="@GGConfig.ggSignOutUrl" class="button">Sign out</a>
     </div>
+</div>
 }
