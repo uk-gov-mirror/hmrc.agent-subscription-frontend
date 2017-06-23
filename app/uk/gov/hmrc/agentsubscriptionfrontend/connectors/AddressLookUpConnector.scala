@@ -19,9 +19,8 @@ package uk.gov.hmrc.agentsubscriptionfrontend.connectors
 import java.net.URL
 import javax.inject.{Inject, Named, Singleton}
 
-import org.slf4j.LoggerFactory
 import play.api.http.HeaderNames.LOCATION
-import play.api.libs.json.{JsObject, JsValue, Json}
+import play.api.libs.json.{JsObject, Json}
 import play.api.mvc.Call
 import uk.gov.hmrc.agentsubscriptionfrontend.models.Address
 import uk.gov.hmrc.play.config.ServicesConfig
@@ -32,20 +31,17 @@ import scala.util.control.NoStackTrace
 
 @Singleton
 class AddressLookUpConnector @Inject()(@Named("address-lookup-frontend-baseUrl") baseUrl: URL, http: HttpGet with HttpPost) extends ServicesConfig {
-
-  lazy val log = LoggerFactory.getLogger(classOf[AddressLookUpConnector])
-  val addressLookupContinueUrl = getConfString("address-lookup-frontend.new-address-callback.url", "")
+  private val addressLookupContinueUrl = getConfString("address-lookup-frontend.new-address-callback.url", "")
 
   def initJourney(call: Call, journeyName: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[String] = {
     val continueJson = Json.obj("continueUrl" -> s"$addressLookupContinueUrl${call.url}")
 
-    http.POST[JsObject, HttpResponse](createUrl(journeyName), continueJson) map { resp =>
+    http.POST[JsObject, HttpResponse](initJourneyUrl(journeyName), continueJson) map { resp =>
       resp.header(LOCATION).getOrElse {
         throw new ALFLocationHeaderNotSetException
       }
     }
   }
-
 
   def getAddressDetails(id: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Address] = {
     import Address._
@@ -57,7 +53,7 @@ class AddressLookUpConnector @Inject()(@Named("address-lookup-frontend-baseUrl")
     new URL(baseUrl, s"/api/confirmed?id=$id").toString
   }
 
-  private def createUrl(journeyName: String): String = {
+  private def initJourneyUrl(journeyName: String): String = {
     new URL(baseUrl, s"/api/init/$journeyName").toString
   }
 }

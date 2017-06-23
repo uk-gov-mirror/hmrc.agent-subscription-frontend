@@ -14,9 +14,9 @@ GET     /already-subscribed             uk.gov.hmrc.agentsubscriptionfrontend.co
 GET     /has-other-enrolments           uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.showHasOtherEnrolments
 
 GET     /subscription-details           uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showSubscriptionDetails
-#POST    /subscription-details           uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.submitSubscriptionDetails
 POST    /subscription-details           uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.getAddressDetails
 GET     /get-address/                   uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.submit(id: String ?= "")
+GET    /edit-details/                   uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.beginJourney(id: String ?= "")
 
 GET    /subscription-complete           uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showSubscriptionComplete
 GET    /subscription-failed             uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showSubscriptionFailed

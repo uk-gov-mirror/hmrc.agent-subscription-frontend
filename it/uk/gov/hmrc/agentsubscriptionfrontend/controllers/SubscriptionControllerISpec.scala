@@ -377,7 +377,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         address = Address(addressLine1 = "1 Some Street",
           addressLine2 = Some("Sometown"),
           addressLine3 = Some("County"),
-          postcode = "AA1 1AA",
+          postcode = Some("AA1 1AA"),
           countryCode = "GB"),
         email = "agency@example.com",
         telephone = "0123 456 7890"))

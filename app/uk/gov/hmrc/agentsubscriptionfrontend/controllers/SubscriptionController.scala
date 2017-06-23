@@ -16,8 +16,9 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
-import javax.inject.{Inject, Named, Singleton}
+import javax.inject.{Inject, Singleton}
 
+import cats.data.Validated.{Invalid, Valid}
 import play.api.data.Form
 import play.api.data.Forms.{mapping, _}
 import play.api.i18n.{I18nSupport, MessagesApi}
@@ -38,6 +39,13 @@ import uk.gov.hmrc.play.http.HeaderCarrier
 
 import scala.concurrent.Future
 
+case class InitialDetails(utr: Utr,
+                          knownFactsPostcode: String,
+                          name: String,
+                          email: String,
+                          telephone: String)
+
+
 case class SubscriptionDetails(utr: Utr,
                                knownFactsPostcode: String,
                                name: String,
@@ -51,21 +59,12 @@ case class SubscriptionDetails(utr: Utr,
 object SubscriptionDetails {
   implicit val format: Format[SubscriptionDetails] = Json.format[SubscriptionDetails]
 
-
   implicit def mapper(initDetails: InitialDetails, address: Address): SubscriptionDetails = {
     SubscriptionDetails(initDetails.utr, initDetails.knownFactsPostcode, initDetails.name,
       initDetails.email, initDetails.telephone, address.addressLine1, address.addressLine2,
-      address.addressLine3, address.postcode)
+      address.addressLine3, address.postcode.getOrElse(""))
   }
-
 }
-
-case class InitialDetails(utr: Utr,
-                          knownFactsPostcode: String,
-                          name: String,
-                          email: String,
-                          telephone: String)
-
 
 @Singleton
 class SubscriptionController @Inject()
@@ -82,21 +81,7 @@ class SubscriptionController @Inject()
 
   private var initialDetails: Option[InitialDetails] = None
 
-  //private var subscriptionDetails: Option[SubscriptionDetails] = None
-  /*private val subscriptionDetails = Form[SubscriptionDetails](
-    mapping(
-      "utr" -> utr,
-      "knownFactsPostcode" -> postcode,
-      "name" -> agencyName,
-      "email" -> email,
-      "telephone" -> telephone,
-      "addressLine1" -> addressLine1,
-      "addressLine2" -> addressLine23,
-      "addressLine3" -> addressLine23,
-      "postcode" -> postcode(appConfig.blacklistedPostcodes
-      )
-    )(SubscriptionDetails.apply)(SubscriptionDetails.unapply)
-  )*/
+  private val blacklistedPostCodes: Set[String] = appConfig.blacklistedPostcodes
 
   private val sampleSubscriptionDetails = Form[InitialDetails](
     mapping(
@@ -128,21 +113,37 @@ class SubscriptionController @Inject()
       implicit request =>
 
         import SubscriptionDetails._
+        import Address._
 
-        addressLookUpConnector.getAddressDetails(id).map(address =>
-          mapper(initialDetails.get, address)) flatMap { subscriptionDetails =>
-          subscriptionService.subscribeAgencyToMtd(subscriptionDetails) flatMap { subscriptionResponse =>
-            sessionStoreService.remove() map { _ =>
-              subscriptionResponse match {
-                case Right(r) => Redirect(routes.SubscriptionController.showSubscriptionComplete())
-                  .flashing("arn" -> r.arn, "agencyName" -> subscriptionDetails.name)
-                case Left(CONFLICT) => Redirect(routes.CheckAgencyController.showAlreadySubscribed())
-                case Left(FORBIDDEN) => Redirect(routes.SubscriptionController.showSubscriptionFailed())
-                case Left(error) => InternalServerError(s"Unknown error code from agent-subscription $error")
+        addressLookUpConnector.getAddressDetails(id).flatMap { address =>
+          validate(address, blacklistedPostCodes) match {
+            case Invalid(errors) =>
+
+              Future {
+                Ok(uk.gov.hmrc.agentsubscriptionfrontend.views.html.journey_failed(id, errors.foldLeft("")(_ ++ _)))
               }
-            }
+            case Valid(()) =>
+
+              subscriptionService.subscribeAgencyToMtd(mapper(initialDetails.get, address)) flatMap { subscriptionResponse =>
+                sessionStoreService.remove() map { _ =>
+                  subscriptionResponse match {
+                    case Right(r) => Redirect(routes.SubscriptionController.showSubscriptionComplete())
+                      .flashing("arn" -> r.arn, "agencyName" -> mapper(initialDetails.get, address).name)
+                    case Left(CONFLICT) => Redirect(routes.CheckAgencyController.showAlreadySubscribed())
+                    case Left(FORBIDDEN) => Redirect(routes.SubscriptionController.showSubscriptionFailed())
+                    case Left(error) => InternalServerError(s"Unknown error code from agent-subscription $error")
+                  }
+                }
+              }
           }
         }
+  }
+
+  def beginJourney(id: String): Action[AnyContent] = AuthorisedWithSubscribingAgentAsync {
+    implicit authContext =>
+      implicit request =>
+
+        addressLookUpConnector.initJourney(routes.SubscriptionController.submit(), "j0").map { x => Redirect(x) }
   }
 
   val getAddressDetails: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync {
@@ -152,6 +153,7 @@ class SubscriptionController @Inject()
           formWithErrors =>
             redisplaySubscriptionDetails(formWithErrors),
           form =>
+
             addressLookUpConnector.initJourney(routes.SubscriptionController.submit(), "j0").map { x =>
               initialDetails = Some(InitialDetails(form.utr, form.knownFactsPostcode, form.name,
                 form.email, form.telephone))

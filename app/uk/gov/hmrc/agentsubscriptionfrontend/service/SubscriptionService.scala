@@ -38,7 +38,7 @@ class SubscriptionService @Inject()(agentSubscriptionConnector: AgentSubscriptio
       address = Address(addressLine1 = subscriptionDetails.addressLine1,
         addressLine2 = subscriptionDetails.addressLine2,
         addressLine3 = subscriptionDetails.addressLine3,
-        postcode = subscriptionDetails.postcode,
+        postcode = Some(subscriptionDetails.postcode),
         countryCode = "GB"))
     )
 

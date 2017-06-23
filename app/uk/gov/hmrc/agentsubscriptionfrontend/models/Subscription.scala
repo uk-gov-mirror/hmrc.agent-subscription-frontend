@@ -16,42 +16,14 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.models
 
-import play.api.libs.json.{OFormat, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.domain.SimpleObjectReads
+import play.api.libs.json._
 
 case class Arn(arn: String)
 
 object Arn {
   implicit val arnReads = new SimpleObjectReads[Arn]("arn", Arn.apply)
-}
-
-case class Address(addressLine1: String,
-                   addressLine2: Option[String] = None,
-                   addressLine3: Option[String] = None,
-                   addressLine4: Option[String] = None,
-                   postcode: String,
-                   countryCode: String)
-
-object Address {
-
-  implicit val format: OFormat[Address] = {
-    implicit val formatAddressValue = Json.format[Address]
-
-    implicit val reads: Reads[Address] = Reads(json => {
-      val addressLines = (json \ "address").as[JsObject]
-      val lineMap = (addressLines \ "lines").as[List[String]]
-      val postcode = (addressLines \ "postcode").as[String]
-      val countryCode = (addressLines \ "country" \ "code").as[String]
-
-      JsSuccess(Address(lineMap(0), Some(lineMap(1)), Some(lineMap(2)),
-        Some(lineMap(3)), postcode, countryCode))
-    }
-    )
-
-    OFormat[Address](reads, formatAddressValue)
-  }
-
 }
 
 case class Agency(name: String,
