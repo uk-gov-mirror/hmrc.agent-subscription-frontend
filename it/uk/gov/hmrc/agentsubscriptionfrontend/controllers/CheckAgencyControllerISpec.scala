@@ -195,7 +195,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
 
       val result = await(controller.showHasOtherEnrolments(authenticatedRequest()))
 
-      checkHtmlResultWithBodyText(result, "Create your new account ID and password")
+      checkHtmlResultWithBodyText(result, "Create your new Agent Services account")
     }
 
     "allow the government gateway URL to be configured" in {
@@ -302,7 +302,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
       val result = await(controller.showNotSubscribed(authenticatedRequest()))
 
       checkHtmlResultWithBodyText(result,
-        "Your business doesn't have an Agent Services account",
+        "it doesn't have an Agent Services account",
         "My Agency",
         routes.SubscriptionController.showSubscriptionDetails().url)
     }
