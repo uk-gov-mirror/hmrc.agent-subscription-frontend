@@ -43,6 +43,7 @@ class GuiceModule(environment: Environment, configuration: Configuration) extend
     bind(classOf[SessionStoreService])
     bindBaseUrl("agent-subscription")
     bindConfigProperty("logoutRedirectUrl")
+    bindConfigProperty("surveyRedirectUrl")
   }
 
   private def bindBaseUrl(serviceName: String) =

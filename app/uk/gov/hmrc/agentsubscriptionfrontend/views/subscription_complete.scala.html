@@ -1,6 +1,5 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-@import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes.SubscriptionController
-@import uk.gov.hmrc.agentsubscriptionfrontend.config.GGConfig
+@import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes.SignedOutController
 @(agencyName: String, arn: String)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = "You've successfully created an Agent Services account", bodyClasses = None) {
@@ -17,7 +16,8 @@
 
         <p><strong>You must save this number for your business's records.</strong>You'll need it later. HMRC won't show you this number again.</p>
 
-        <a href="@GGConfig.ggSignOutUrl" class="button">Sign out</a>
+            <a href="@SignedOutController.startSurvey" class="button">Sign out</a>
+        </div>
     </div>
 </div>
 }

@@ -104,7 +104,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
       redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showCheckAgencyStatus().url)
     }
 
-    "contain a sign-out link" in {
+    "contain a link to the survey" in {
       val request = authenticatedRequest()
       AuthStub.hasNoEnrolments(subscribingAgent)
 
@@ -112,7 +112,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
       val result = await(controller.showSubscriptionComplete(request.withFlash("arn" -> "ARN0001", "agencyName" -> "My Agency")))
 
       status(result) shouldBe 200
-      checkHtmlResultWithBodyText(result, "href=\"http://localhost:9025/gg/sign-out\"")
+      checkHtmlResultWithBodyText(result, "href=\"/agent-subscription/start-survey\"")
 
     }
   }
