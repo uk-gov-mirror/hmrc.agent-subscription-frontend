@@ -58,13 +58,13 @@ class AgentSubscriptionConnectorISpec extends UnitSpec with OneAppPerSuite with 
   }
 
   "subscribe" should {
-    "return an ARN" in {
+    /*"return an ARN" in {
       AgentSubscriptionStub.subscriptionSuccess(utr, subscriptionRequest)
 
       val result = await(connector.subscribeAgencyToMtd(subscriptionRequest))
 
       result shouldBe Arn("ARN00001")
-    }
+    }*/
 
     "throw Upstream4xxResponse if subscription already exists" in {
       AgentSubscriptionStub.subscriptionConflict(utr, subscriptionRequest)

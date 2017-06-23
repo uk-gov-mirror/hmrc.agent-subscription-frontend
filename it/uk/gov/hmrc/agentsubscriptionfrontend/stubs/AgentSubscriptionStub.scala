@@ -92,9 +92,9 @@ object AgentSubscriptionStub {
 
   private def subscriptionRequestFor(utr: Utr, request: SubscriptionRequest) = {
     val agency = request.agency
-    //val address = agency.address
+    val address = agency.address
     post(urlEqualTo(s"/agent-subscription/subscription"))
-      /*.withRequestBody(equalToJson(s"""
+      .withRequestBody(equalToJson(s"""
            |{
            |  "utr": "${request.utr.value}",
            |  "knownFacts": {
@@ -113,6 +113,6 @@ object AgentSubscriptionStub {
            |    "telephone": "${agency.telephone}",
            |    "email": "${agency.email}"
            |  }
-           |}""".stripMargin))*/
+           |}""".stripMargin))
   }
 }

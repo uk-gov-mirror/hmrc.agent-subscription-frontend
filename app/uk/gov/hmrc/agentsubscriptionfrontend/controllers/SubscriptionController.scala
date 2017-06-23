@@ -83,7 +83,7 @@ class SubscriptionController @Inject()
 
   private val blacklistedPostCodes: Set[String] = appConfig.blacklistedPostcodes
 
-  private val sampleSubscriptionDetails = Form[InitialDetails](
+  private val subscriptionDetails = Form[InitialDetails](
     mapping(
       "utr" -> utr,
       "knownFactsPostcode" -> postcode,
@@ -100,7 +100,7 @@ class SubscriptionController @Inject()
       hasEnrolments match {
         case true => Future(Redirect(routes.CheckAgencyController.showHasOtherEnrolments()))
         case false => sessionStoreService.fetchKnownFactsResult.map(_.map { knownFactsResult =>
-          Ok(html.subscription_details(knownFactsResult.taxpayerName, sampleSubscriptionDetails.fill(// , null, None, None, null
+          Ok(html.subscription_details(knownFactsResult.taxpayerName, subscriptionDetails.fill(// , null, None, None, null
             InitialDetails(knownFactsResult.utr, knownFactsResult.postcode, null, null, null))))
         }.getOrElse {
           sessionMissingRedirect()
@@ -149,7 +149,7 @@ class SubscriptionController @Inject()
   val getAddressDetails: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync {
     implicit authContext =>
       implicit request =>
-        sampleSubscriptionDetails.bindFromRequest().fold(
+        subscriptionDetails.bindFromRequest().fold(
           formWithErrors =>
             redisplaySubscriptionDetails(formWithErrors),
           form =>

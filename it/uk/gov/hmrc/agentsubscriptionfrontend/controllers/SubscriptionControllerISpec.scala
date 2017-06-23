@@ -118,15 +118,15 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
     }
   }
 
-  /*"submitSubscriptionDetails" should {
-    behave like anAgentAffinityGroupOnlyEndpoint(request => controller.submitSubscriptionDetails(request))
+  "submitSubscriptionDetails" should {
+    behave like anAgentAffinityGroupOnlyEndpoint(request => controller.getAddressDetails(request))
 
     "redirect to subscription complete" when {
       "all fields are supplied" in {
         AuthStub.hasNoEnrolments(subscribingAgent)
         AgentSubscriptionStub.subscriptionSuccess(utr, subscriptionRequest)
 
-        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest()))
+        val result = await(controller.getAddressDetails(subscriptionDetailsRequest()))
 
         status(result) shouldBe 303
         redirectLocation(result).head shouldBe routes.SubscriptionController.showSubscriptionComplete().url
@@ -142,7 +142,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         //    address = subscriptionRequest.agency.address.copy(addressLine3 = None)
         )))
 
-        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("addressLine3")))
+        val result = await(controller.getAddressDetails(subscriptionDetailsRequest("addressLine3")))
 
         status(result) shouldBe 303
         redirectLocation(result).head shouldBe routes.SubscriptionController.showSubscriptionComplete().url
@@ -155,7 +155,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         //    address = subscriptionRequest.agency.address.copy(addressLine2 = None)
           )))
 
-        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("addressLine2")))
+        val result = await(controller.getAddressDetails(subscriptionDetailsRequest("addressLine2")))
 
         status(result) shouldBe 303
         redirectLocation(result).head shouldBe routes.SubscriptionController.showSubscriptionComplete().url
@@ -167,7 +167,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         AuthStub.hasNoEnrolments(subscribingAgent)
         AgentSubscriptionStub.subscriptionForbidden(utr, subscriptionRequest)
 
-        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest()))
+        val result = await(controller.getAddressDetails(subscriptionDetailsRequest()))
 
         status(result) shouldBe 303
         redirectLocation(result).head shouldBe routes.SubscriptionController.showSubscriptionFailed().url
@@ -180,7 +180,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         AuthStub.hasNoEnrolments(subscribingAgent)
         AgentSubscriptionStub.subscriptionConflict(utr, subscriptionRequest)
 
-        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest()))
+        val result = await(controller.getAddressDetails(subscriptionDetailsRequest()))
 
         status(result) shouldBe 303
         redirectLocation(result).head shouldBe routes.CheckAgencyController.showAlreadySubscribed().url
@@ -193,7 +193,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         AuthStub.hasNoEnrolments(subscribingAgent)
         sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
 
-        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("name", Seq("name" -> "InvalidAgencyName!@"))))
+        val result = await(controller.getAddressDetails(subscriptionDetailsRequest("name", Seq("name" -> "InvalidAgencyName!@"))))
 
         status(result) shouldBe 200
         checkHtmlResultWithBodyText(result, "Add your agency information",
@@ -204,7 +204,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         AuthStub.hasNoEnrolments(subscribingAgent)
         sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
 
-        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("email")))
+        val result = await(controller.getAddressDetails(subscriptionDetailsRequest("email")))
 
         status(result) shouldBe 200
         checkHtmlResultWithBodyText(result, "Add your agency information")
@@ -214,7 +214,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         AuthStub.hasNoEnrolments(subscribingAgent)
         sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
 
-        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("email", Seq("email" -> "local@"))))
+        val result = await(controller.getAddressDetails(subscriptionDetailsRequest("email", Seq("email" -> "local@"))))
 
         status(result) shouldBe 200
         checkHtmlResultWithBodyText(result, "Add your agency information")
@@ -224,7 +224,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         AuthStub.hasNoEnrolments(subscribingAgent)
         sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
 
-        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("email", Seq("email" -> "local"))))
+        val result = await(controller.getAddressDetails(subscriptionDetailsRequest("email", Seq("email" -> "local"))))
 
         status(result) shouldBe 200
         checkHtmlResultWithBodyText(result, "Add your agency information")
@@ -234,7 +234,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         AuthStub.hasNoEnrolments(subscribingAgent)
         sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
 
-        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("email", Seq("email" -> "@domain"))))
+        val result = await(controller.getAddressDetails(subscriptionDetailsRequest("email", Seq("email" -> "@domain"))))
 
         status(result) shouldBe 200
         checkHtmlResultWithBodyText(result, "Add your agency information", "Enter a valid email address.")
@@ -244,7 +244,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         AuthStub.hasNoEnrolments(subscribingAgent)
         sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
 
-        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("telephone", Seq("telephone" -> "02073457443fff"))))
+        val result = await(controller.getAddressDetails(subscriptionDetailsRequest("telephone", Seq("telephone" -> "02073457443fff"))))
 
         status(result) shouldBe 200
         checkHtmlResultWithBodyText(result, "Add your agency information", "Please enter a valid telephone number")
@@ -254,7 +254,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         AuthStub.hasNoEnrolments(subscribingAgent)
         sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
 
-        val result = await(controller.submitSubscriptionDetails(
+        val result = await(controller.getAddressDetails(
           subscriptionDetailsRequest("addressLine1", Seq("addressLine1" -> invalidAddress))))
 
         status(result) shouldBe 200
@@ -266,7 +266,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         AuthStub.hasNoEnrolments(subscribingAgent)
         sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
 
-        val result = await(controller.submitSubscriptionDetails(
+        val result = await(controller.getAddressDetails(
           subscriptionDetailsRequest("addressLine2", Seq("addressLine2" -> invalidAddress))))
 
         status(result) shouldBe 200
@@ -278,7 +278,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         AuthStub.hasNoEnrolments(subscribingAgent)
         sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
 
-        val result = await(controller.submitSubscriptionDetails(
+        val result = await(controller.getAddressDetails(
           subscriptionDetailsRequest("addressLine3", Seq("addressLine3" -> invalidAddress))))
 
         status(result) shouldBe 200
@@ -289,7 +289,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         AuthStub.hasNoEnrolments(subscribingAgent)
         sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
 
-        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("postcode", Seq("postcode" -> "1AA AA1"))))
+        val result = await(controller.getAddressDetails(subscriptionDetailsRequest("postcode", Seq("postcode" -> "1AA AA1"))))
 
         status(result) shouldBe 200
         checkHtmlResultWithBodyText(result, "Add your agency information", "Please enter a valid postcode")
@@ -299,7 +299,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         AuthStub.hasNoEnrolments(subscribingAgent)
         sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
 
-        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("postcode", Seq("postcode" -> "AB10 1ZT"))))
+        val result = await(controller.getAddressDetails(subscriptionDetailsRequest("postcode", Seq("postcode" -> "AB10 1ZT"))))
 
         status(result) shouldBe 200
         checkHtmlResultWithBodyText(result, "Add your agency information", "This postcode is blocked and cannot be used")
@@ -309,7 +309,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         AuthStub.hasNoEnrolments(subscribingAgent)
         sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
 
-        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("postcode", Seq("postcode" -> " AB10    1ZT "))))
+        val result = await(controller.getAddressDetails(subscriptionDetailsRequest("postcode", Seq("postcode" -> " AB10    1ZT "))))
 
         status(result) shouldBe 200
         checkHtmlResultWithBodyText(result, "Add your agency information", "This postcode is blocked and cannot be used")
@@ -319,7 +319,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         AuthStub.hasNoEnrolments(subscribingAgent)
         sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
 
-        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("postcode", Seq("postcode" -> "Ab10 1zt"))))
+        val result = await(controller.getAddressDetails(subscriptionDetailsRequest("postcode", Seq("postcode" -> "Ab10 1zt"))))
 
         status(result) shouldBe 200
         checkHtmlResultWithBodyText(result, "Add your agency information", "This postcode is blocked and cannot be used")
@@ -329,7 +329,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         AuthStub.hasNoEnrolments(subscribingAgent)
         sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
 
-        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("postcode", Seq("postcode" -> "AB101ZT"))))
+        val result = await(controller.getAddressDetails(subscriptionDetailsRequest("postcode", Seq("postcode" -> "AB101ZT"))))
 
         status(result) shouldBe 200
         checkHtmlResultWithBodyText(result, "Add your agency information", "This postcode is blocked and cannot be used")
@@ -339,7 +339,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         AuthStub.hasNoEnrolments(subscribingAgent)
         sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
 
-        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("knownFactsPostcode", Seq("knownFactsPostcode" -> "1AA AA1"))))
+        val result = await(controller.getAddressDetails(subscriptionDetailsRequest("knownFactsPostcode", Seq("knownFactsPostcode" -> "1AA AA1"))))
 
         status(result) shouldBe 200
         checkHtmlResultWithBodyText(result, "Add your agency information", "Please enter a valid postcode")
@@ -349,13 +349,13 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         AuthStub.hasNoEnrolments(subscribingAgent)
         sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
 
-        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("utr", Seq("utr" -> "012345"))))
+        val result = await(controller.getAddressDetails(subscriptionDetailsRequest("utr", Seq("utr" -> "012345"))))
 
         status(result) shouldBe 200
         checkHtmlResultWithBodyText(result, "Add your agency information", "Please enter a valid UTR")
       }
     }
-  }*/
+  }
 
   private def subscriptionDetailsRequest(keyToRemove: String = "", additionalParameters: Seq[(String, String)] = Seq()) =
     authenticatedRequest().withFormUrlEncodedBody(
