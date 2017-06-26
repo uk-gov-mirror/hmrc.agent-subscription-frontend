@@ -91,8 +91,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
 
       status(result) shouldBe 200
       checkHtmlResultWithBodyText(result,
-        "You've successfully created an Agent Services account for My Agency",
-        ">ARN0001<")
+        "You must save this number for your business's records")
     }
 
     "redirect to session missing page if there is nothing in the flash scope" in {
@@ -194,7 +193,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("name", Seq("name" -> "InvalidAgencyName!@"))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information",
+        checkHtmlResultWithBodyText(result, "Add your agency address",
           "This field is limited to alphanumeric characters (A-Z, a-z, 0-9) and the following characters -,./")
       }
 
@@ -205,7 +204,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("email")))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information")
+        checkHtmlResultWithBodyText(result, "Add your agency address")
       }
 
       "email has no text in the domain part" in {
@@ -215,7 +214,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("email", Seq("email" -> "local@"))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information")
+        checkHtmlResultWithBodyText(result, "Add your agency address")
       }
 
       "email does not contain an '@'" in {
@@ -225,27 +224,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("email", Seq("email" -> "local"))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information")
-      }
-
-      "email has no text in the local part" in {
-        AuthStub.hasNoEnrolments(subscribingAgent)
-        sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
-
-        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("email", Seq("email" -> "@domain"))))
-
-        status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information", "Enter a valid email address.")
-      }
-
-      "telephone is invalid with numbers and words" in {
-        AuthStub.hasNoEnrolments(subscribingAgent)
-        sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
-
-        val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("telephone", Seq("telephone" -> "02073457443fff"))))
-
-        status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information", "Please enter a valid telephone number")
+        checkHtmlResultWithBodyText(result, "Add your agency address")
       }
 
       "building and street is invalid" in {
@@ -256,7 +235,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
           subscriptionDetailsRequest("addressLine1", Seq("addressLine1" -> invalidAddress))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information",
+        checkHtmlResultWithBodyText(result, "Add your agency address",
           "This field is limited to alphanumeric characters (A-Z, a-z, 0-9) and the following characters -,./")
       }
 
@@ -268,7 +247,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
           subscriptionDetailsRequest("addressLine2", Seq("addressLine2" -> invalidAddress))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information",
+        checkHtmlResultWithBodyText(result, "Add your agency address",
           "This field is limited to alphanumeric characters (A-Z, a-z, 0-9) and the following characters -,./")
       }
 
@@ -290,7 +269,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("postcode", Seq("postcode" -> "1AA AA1"))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information", "Please enter a valid postcode")
+        checkHtmlResultWithBodyText(result, "Add your agency address", "Please enter a valid postcode")
       }
 
       "postcode is blacklisted" in {
@@ -300,7 +279,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("postcode", Seq("postcode" -> "AB10 1ZT"))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information", "This postcode is blocked and cannot be used")
+        checkHtmlResultWithBodyText(result, "Add your agency address", "This postcode is blocked and cannot be used")
       }
 
       "postcode with whitespaces is blacklisted" in {
@@ -310,7 +289,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("postcode", Seq("postcode" -> " AB10    1ZT "))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information", "This postcode is blocked and cannot be used")
+        checkHtmlResultWithBodyText(result, "Add your agency address", "This postcode is blocked and cannot be used")
       }
 
       "postcode with lowercase characters is blacklisted" in {
@@ -320,7 +299,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("postcode", Seq("postcode" -> "Ab10 1zt"))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information", "This postcode is blocked and cannot be used")
+        checkHtmlResultWithBodyText(result, "Add your agency address", "This postcode is blocked and cannot be used")
       }
 
       "postcode without whitepsaces is blacklisted" in {
@@ -330,7 +309,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("postcode", Seq("postcode" -> "AB101ZT"))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information", "This postcode is blocked and cannot be used")
+        checkHtmlResultWithBodyText(result, "Add your agency address", "This postcode is blocked and cannot be used")
       }
 
       "known facts postcode is not valid" in {
@@ -340,7 +319,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("knownFactsPostcode", Seq("knownFactsPostcode" -> "1AA AA1"))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information", "Please enter a valid postcode")
+        checkHtmlResultWithBodyText(result, "Add your agency address", "Please enter a valid postcode")
       }
 
       "utr is not valid" in {
@@ -350,7 +329,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.submitSubscriptionDetails(subscriptionDetailsRequest("utr", Seq("utr" -> "012345"))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency information", "Please enter a valid UTR")
+        checkHtmlResultWithBodyText(result, "Add your agency address", "Please enter a valid UTR")
       }
     }
   }
