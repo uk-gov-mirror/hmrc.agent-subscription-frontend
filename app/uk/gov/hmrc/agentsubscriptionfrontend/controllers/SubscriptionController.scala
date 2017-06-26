@@ -79,6 +79,7 @@ class SubscriptionController @Inject()
 (implicit appConfig: AppConfig)
   extends FrontendController with I18nSupport with AuthActions with SessionDataMissing {
 
+  private val JourneyName: String = appConfig.journeyName
   private var initialDetails: Option[InitialDetails] = None
 
   private val blacklistedPostCodes: Set[String] = appConfig.blacklistedPostcodes
@@ -100,7 +101,7 @@ class SubscriptionController @Inject()
       hasEnrolments match {
         case true => Future(Redirect(routes.CheckAgencyController.showHasOtherEnrolments()))
         case false => sessionStoreService.fetchKnownFactsResult.map(_.map { knownFactsResult =>
-          Ok(html.subscription_details(knownFactsResult.taxpayerName, subscriptionDetails.fill(// , null, None, None, null
+          Ok(html.subscription_details(knownFactsResult.taxpayerName, subscriptionDetails.fill(
             InitialDetails(knownFactsResult.utr, knownFactsResult.postcode, null, null, null))))
         }.getOrElse {
           sessionMissingRedirect()
@@ -143,7 +144,7 @@ class SubscriptionController @Inject()
     implicit authContext =>
       implicit request =>
 
-        addressLookUpConnector.initJourney(routes.SubscriptionController.submit(), "j0").map { x => Redirect(x) }
+        addressLookUpConnector.initJourney(routes.SubscriptionController.submit(), JourneyName).map { x => Redirect(x) }
   }
 
   val getAddressDetails: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync {
@@ -153,8 +154,7 @@ class SubscriptionController @Inject()
           formWithErrors =>
             redisplaySubscriptionDetails(formWithErrors),
           form =>
-
-            addressLookUpConnector.initJourney(routes.SubscriptionController.submit(), "j0").map { x =>
+            addressLookUpConnector.initJourney(routes.SubscriptionController.submit(), JourneyName).map { x =>
               initialDetails = Some(InitialDetails(form.utr, form.knownFactsPostcode, form.name,
                 form.email, form.telephone))
               Redirect(x)
