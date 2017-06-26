@@ -44,6 +44,7 @@ class GuiceModule(environment: Environment, configuration: Configuration) extend
     bindBaseUrl("agent-subscription")
     bindBaseUrl("address-lookup-frontend")
     bindConfigProperty("logoutRedirectUrl")
+    bindConfigProperty("surveyRedirectUrl")
   }
 
   private def bindBaseUrl(serviceName: String) =

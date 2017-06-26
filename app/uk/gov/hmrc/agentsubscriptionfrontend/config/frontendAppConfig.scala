@@ -19,9 +19,9 @@ package uk.gov.hmrc.agentsubscriptionfrontend.config
 import javax.inject.Singleton
 
 import play.api.Play.{configuration, current}
+import uk.gov.hmrc.agentsubscriptionfrontend.config.blacklistedpostcodes.PostcodesLoader
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
 import uk.gov.hmrc.play.config.ServicesConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.config.blacklistedpostcodes.PostcodesLoader
 
 trait AppConfig {
   val analyticsToken: String
@@ -45,12 +45,6 @@ object GGConfig extends StrictConfig {
     val ggSignInPath = loadConfig("authentication.government-gateway.sign-in.path")
     s"$ggBaseUrl$ggSignInPath"
   }
-
-  lazy val ggSignOutUrl: String = {
-    val ggSignOutPath = loadConfig("authentication.government-gateway.sign-out.path")
-    s"$ggBaseUrl$ggSignOutPath"
-  }
-
 
   lazy val checkAgencyStatusCallbackUrl: String = loadConfig("authentication.login-callback.url") +
     routes.CheckAgencyController.showCheckAgencyStatus().url

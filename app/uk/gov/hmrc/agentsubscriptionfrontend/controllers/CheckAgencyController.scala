@@ -18,7 +18,6 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import javax.inject.{Inject, Singleton}
 
-import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms.mapping
 import play.api.i18n.{I18nSupport, MessagesApi}
