@@ -14,7 +14,7 @@
     action = routes.CheckAgencyController.checkAgencyStatus,
     'class -> "form js-form") {
 
-    <p>Your business can only have one Agent Services account. To make sure you're not doubling up, enter the:</p>
+    <p>Your business can only have one Agent Services account.</p>
 
     <fieldset class="form-group">
       <div class="form-field">
@@ -22,7 +22,7 @@
       </div>
 
       <div class="form-field">
-          @input(knownFactsForm("postcode"), '_label -> "postcode related to that UTR or reference", '_inputClass -> "input--small input--cleared")
+          @input(knownFactsForm("postcode"), '_label -> "Postcode related to that UTR or reference", '_inputClass -> "input--small input--cleared")
       </div>
 
       <div class="form-field">
