@@ -43,21 +43,21 @@ trait AddressLookupFrontendStubs {
     )
   }
 
-  def givenAddressLookupReturnsAddress(addressId: String): Unit = {
+  def givenAddressLookupReturnsAddress(addressId: String, town: String = "Sometown", county: String = "County", postcode: String = "AA1 1AA"): Unit = {
     stubFor(get(urlEqualTo(s"/api/confirmed?id=$addressId"))
       .willReturn(
         aResponse()
           .withStatus(200)
           .withBody(
-            """
+            s"""
               |{
               |"address":{
               |    "lines" : [
               |        "1 Some Street"
               |    ],
-              |    "town" : "Sometown",
-              |    "county" : "County",
-              |    "postcode" : "AA1 1AA",
+              |    "town" : "$town",
+              |    "county" : "$county",
+              |    "postcode" : "$postcode",
               |    "subdivision" :
               |    {
               |        "code" : "GB-ENG",

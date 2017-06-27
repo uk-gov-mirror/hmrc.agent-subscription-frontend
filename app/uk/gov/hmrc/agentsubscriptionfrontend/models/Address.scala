@@ -20,6 +20,7 @@ import cats.data.Validated
 import cats.data.Validated.{Invalid, Valid}
 import cats.kernel.Monoid
 import play.api.libs.json.{OFormat, _}
+import uk.gov.hmrc.agentsubscriptionfrontend.config.blacklistedpostcodes.PostcodesLoader
 
 case class Address(addressLine1: String,
                    addressLine2: Option[String] = None,
@@ -63,15 +64,15 @@ object Address {
   }
 
   private def validateRegex(postcode: Option[String]): ValidatedType = {
-    postcode.map(str => postCodeRegex.unapplySeq(str.replace(" ", "")))
+    postcode.map(str => postCodeRegex.unapplySeq(str.trim))
       .map(_ => Valid(()))
       .getOrElse(Invalid(Set(s"Postcode $postcode doesn't match")))
   }
 
   def validateBlacklist(postcode: Option[String], blacklistedPostCodes: Set[String]): ValidatedType = {
     postcode.map(str =>
-      blacklistedPostCodes.contains(str) match {
-        case true  => Invalid(Set(s"Postcode ${postcode.getOrElse("")} is blacklisted"))
+      blacklistedPostCodes.contains(PostcodesLoader.formatPostcode(str)) match {
+        case true  => Invalid(Set("This postcode is blocked and cannot be used"))
         case false => Valid(())
       }).getOrElse(Invalid(Set(s"Postcode is empty")))
 

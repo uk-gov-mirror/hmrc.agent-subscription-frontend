@@ -31,7 +31,7 @@ object PostcodesLoader {
   } match {
     case Success(postcodes) =>
       val invalidPostcodes =
-        postcodes.filter(x => postcodeWithoutSpacesRegex.unapplySeq(x.replace(" ", "")).isEmpty)
+        postcodes.filter(x => postcodeWithoutSpacesRegex.unapplySeq(formatPostcode(x)).isEmpty)
 
       if (invalidPostcodes.isEmpty)
         postcodes
@@ -40,6 +40,8 @@ object PostcodesLoader {
     case Failure(ex) =>
       throw new PostcodeLoaderException(ex.getMessage)
   }
+
+  def formatPostcode(p: String) = p.replace(" ", "").toUpperCase
 
   final class PostcodeLoaderException(message: String) extends
     Exception(s"Unknown error code from agent-subscription while loading postcodes: $message")
