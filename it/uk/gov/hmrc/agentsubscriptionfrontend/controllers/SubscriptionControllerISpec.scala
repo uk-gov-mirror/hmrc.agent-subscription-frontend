@@ -16,13 +16,14 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
+import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{Address, Agency, KnownFactsResult, SubscriptionRequest, KnownFacts => ModelKnownFacts}
-import uk.gov.hmrc.agentsubscriptionfrontend.stubs.{AgentSubscriptionStub, AuthStub}
+import uk.gov.hmrc.agentsubscriptionfrontend.stubs.{AddressLookupFrontendStubs, AgentSubscriptionStub, AuthStub}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUsers._
 
-class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMissingSpec {
+class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMissingSpec with AddressLookupFrontendStubs {
   private val utr = Utr("2000000000")
   private val myAgencyKnownFactsResult = KnownFactsResult(utr =
     Utr("utr"), postcode = "AA1 1AA", taxpayerName = "My Business", isSubscribedToAgentServices = false)
@@ -126,13 +127,20 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         AuthStub.hasNoEnrolments(subscribingAgent)
         AgentSubscriptionStub.subscriptionSuccess(utr, subscriptionRequest)
 
-        val result = await(controller.getAddressDetails(subscriptionDetailsRequest()))
+        givenAddressLookupInit("j0","/api/dummy/callback")
 
+        val result = await(controller.getAddressDetails(subscriptionDetailsRequest()))
         status(result) shouldBe 303
-        redirectLocation(result).head shouldBe routes.SubscriptionController.showSubscriptionComplete().url
+        redirectLocation(result).head shouldBe "/api/dummy/callback"
+
+        givenAddressLookupReturnsAddress("addr1")
+        val result2 = await(controller.submit("addr1")(authenticatedRequest()))
+
+        status(result2) shouldBe 303
+        redirectLocation(result2).head shouldBe routes.SubscriptionController.showSubscriptionComplete().url
         sessionStoreService.removeCalled shouldBe true
-        flash(result).get("agencyName") shouldBe Some("My Agency")
-        flash(result).get("arn") shouldBe Some("ARN00001")
+        flash(result2).get("agencyName") shouldBe Some("My Agency")
+        flash(result2).get("arn") shouldBe Some("ARN00001")
       }
 
       "county is omitted" in {
