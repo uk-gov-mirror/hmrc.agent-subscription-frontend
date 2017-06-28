@@ -42,6 +42,7 @@ class GuiceModule(environment: Environment, configuration: Configuration) extend
     bind(classOf[SessionCache]).toInstance(AgentSubscriptionSessionCache)
     bind(classOf[SessionStoreService])
     bindBaseUrl("agent-subscription")
+    bindBaseUrl("address-lookup-frontend")
     bindConfigProperty("logoutRedirectUrl")
     bindConfigProperty("surveyRedirectUrl")
   }

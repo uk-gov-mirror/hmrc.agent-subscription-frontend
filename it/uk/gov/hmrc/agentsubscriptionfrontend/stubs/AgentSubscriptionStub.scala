@@ -107,7 +107,7 @@ object AgentSubscriptionStub {
            |      ${address.addressLine2.map(l => s""""addressLine2":"$l",""") getOrElse ""}
            |      ${address.addressLine3.map(l => s""""addressLine3":"$l",""") getOrElse ""}
            |      ${address.addressLine4.map(l => s""""addressLine4":"$l",""") getOrElse ""}
-           |      "postcode": "${address.postcode}",
+           |      "postcode": "${address.postcode getOrElse ""}",
            |      "countryCode": "${address.countryCode}"
            |    },
            |    "telephone": "${agency.telephone}",

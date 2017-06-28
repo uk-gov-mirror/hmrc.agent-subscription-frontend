@@ -16,49 +16,35 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.models
 
-import play.api.libs.json.{Format, Json}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.domain.SimpleObjectReads
+import play.api.libs.json._
+
+case class Arn(arn: String)
 
 object Arn {
   implicit val arnReads = new SimpleObjectReads[Arn]("arn", Arn.apply)
 }
 
-object Address {
-  implicit val format: Format[Address] = Json.format[Address]
-}
+case class Agency(name: String,
+                  address: Address,
+                  telephone: String,
+                  email: String)
 
 object Agency {
   implicit val format: Format[Agency] = Json.format[Agency]
 }
 
+case class KnownFacts(postcode: String)
+
 object KnownFacts {
   implicit val format: Format[KnownFacts] = Json.format[KnownFacts]
 }
 
+case class SubscriptionRequest(utr: Utr,
+                               knownFacts: KnownFacts,
+                               agency: Agency)
+
 object SubscriptionRequest {
   implicit val format: Format[SubscriptionRequest] = Json.format[SubscriptionRequest]
 }
-
-case class Arn(arn: String)
-
-case class Address(addressLine1: String,
-                   addressLine2: Option[String],
-                   addressLine3: Option[String] = None,
-                   addressLine4: Option[String] = None,
-                   postcode: String,
-                   countryCode: String
-                  )
-
-case class Agency(name: String,
-                  address: Address,
-                  telephone: String,
-                  email: String
-                 )
-
-case class KnownFacts(postcode: String)
-
-case class SubscriptionRequest(utr: Utr,
-                               knownFacts: KnownFacts,
-                               agency: Agency
-                              )
