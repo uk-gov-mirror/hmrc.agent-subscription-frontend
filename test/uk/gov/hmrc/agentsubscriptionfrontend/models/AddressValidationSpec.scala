@@ -20,11 +20,12 @@ import cats.data.Validated.{Invalid, Valid}
 import org.scalatest.{FlatSpec, Matchers}
 import org.slf4j.LoggerFactory
 import play.api.libs.json._
+import uk.gov.hmrc.agentsubscriptionfrontend.config.blacklistedpostcodes.PostcodesLoader
 
 class AddressValidationSpec extends FlatSpec with Matchers {
   lazy val log = LoggerFactory.getLogger(classOf[AddressValidationSpec])
 
-  private val blacklistedPostCodes: Set[String] = Set("BB1 1BB", "CC1 1CC", "DD1 1DD")
+  private val blacklistedPostCodes: Set[String] = Set("BB1 1BB", "CC1 1CC", "DD1 1DD").map(PostcodesLoader.formatPostcode)
 
   private val jsValue = (value: String) => Json.parse(
     s"""{
@@ -54,7 +55,7 @@ class AddressValidationSpec extends FlatSpec with Matchers {
     val entity = jsValue(postcode).as[Address]
 
     val validationResult = Address.validate(entity, blacklistedPostCodes)
-    validationResult shouldBe Invalid(Set(s"Postcode $postcode is blacklisted"))
+    validationResult shouldBe Invalid(Set("This postcode is blocked and cannot be used"))
   }
 
   "Address Validation" should "be Successful for Postcode matching in Regex" in {
