@@ -125,7 +125,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         AuthStub.hasNoEnrolments(subscribingAgent)
         AgentSubscriptionStub.subscriptionSuccess(utr, subscriptionRequest())
 
-        givenAddressLookupInit("j0", "/api/dummy/callback")
+        givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
 
         val result = await(controller.getAddressDetails(subscriptionDetailsRequest()))
         status(result) shouldBe 303
@@ -145,7 +145,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         AuthStub.hasNoEnrolments(subscribingAgent)
         AgentSubscriptionStub.subscriptionSuccess(utr, subscriptionRequest(county = ""))
 
-        givenAddressLookupInit("j0", "/api/dummy/callback")
+        givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
         val result = await(controller.getAddressDetails(subscriptionDetailsRequest()))
         status(result) shouldBe 303
         redirectLocation(result).head shouldBe "/api/dummy/callback"
@@ -164,7 +164,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         AuthStub.hasNoEnrolments(subscribingAgent)
         AgentSubscriptionStub.subscriptionSuccess(utr, subscriptionRequest(town = ""))
 
-        givenAddressLookupInit("j0", "/api/dummy/callback")
+        givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
         val result = await(controller.getAddressDetails(subscriptionDetailsRequest()))
         status(result) shouldBe 303
         redirectLocation(result).head shouldBe "/api/dummy/callback"
@@ -182,7 +182,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         AuthStub.hasNoEnrolments(subscribingAgent)
         AgentSubscriptionStub.subscriptionForbidden(utr, subscriptionRequest())
 
-        givenAddressLookupInit("j0", "/api/dummy/callback")
+        givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
         val result0 = await(controller.getAddressDetails(subscriptionDetailsRequest()))
         status(result0) shouldBe 303
         redirectLocation(result0).head shouldBe "/api/dummy/callback"
@@ -201,7 +201,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         AuthStub.hasNoEnrolments(subscribingAgent)
         AgentSubscriptionStub.subscriptionConflict(utr, subscriptionRequest())
 
-        givenAddressLookupInit("j0", "/api/dummy/callback")
+        givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
         val result0 = await(controller.getAddressDetails(subscriptionDetailsRequest()))
         status(result0) shouldBe 303
         redirectLocation(result0).head shouldBe "/api/dummy/callback"
@@ -281,7 +281,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         AuthStub.hasNoEnrolments(subscribingAgent)
         sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
 
-        givenAddressLookupInit("j0", "/api/dummy/callback")
+        givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
         val result0 = await(controller.getAddressDetails(subscriptionDetailsRequest()))
         status(result0) shouldBe 303
         redirectLocation(result0).head shouldBe "/api/dummy/callback"
@@ -297,7 +297,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         AuthStub.hasNoEnrolments(subscribingAgent)
         sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
 
-        givenAddressLookupInit("j0", "/api/dummy/callback")
+        givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
         val result0 = await(controller.getAddressDetails(subscriptionDetailsRequest()))
         status(result0) shouldBe 303
         redirectLocation(result0).head shouldBe "/api/dummy/callback"
@@ -313,7 +313,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         AuthStub.hasNoEnrolments(subscribingAgent)
         sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
 
-        givenAddressLookupInit("j0", "/api/dummy/callback")
+        givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
         val result0 = await(controller.getAddressDetails(subscriptionDetailsRequest()))
         status(result0) shouldBe 303
         redirectLocation(result0).head shouldBe "/api/dummy/callback"
@@ -329,7 +329,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         AuthStub.hasNoEnrolments(subscribingAgent)
         sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
 
-        givenAddressLookupInit("j0", "/api/dummy/callback")
+        givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
         val result0 = await(controller.getAddressDetails(subscriptionDetailsRequest()))
         status(result0) shouldBe 303
         redirectLocation(result0).head shouldBe "/api/dummy/callback"
