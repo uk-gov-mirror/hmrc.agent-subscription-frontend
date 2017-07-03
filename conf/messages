@@ -4,3 +4,14 @@ error.utr.invalid = Please enter a valid UTR
 error.telephone.invalid = Please enter a valid telephone number
 error.no.ampersand = Agency name cannot contain "&"
 error.des.text.invalid = This field is limited to alphanumeric characters (A-Z, a-z, 0-9) and the following characters -,./
+
+confirmYourAgency.title=Is this the agent business you''re creating an account for?
+
+subscriptionDetails.title=Add your agent business''s details
+subscriptionDetails.businessName.label=Agent business name
+subscriptionDetails.email.label=Business email address
+subscriptionDetails.telephone.label=Business telephone number
+
+noAgencyFound.title=There is no agent business linked to this account
+
+button.startAgain=Try again
