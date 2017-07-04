@@ -138,4 +138,6 @@ object Address {
     OFormat[Address](reads, formatAddressValue)
   }
 
+  val renderErrors: PostCodeError => String = (errors: PostCodeError) => errors.foldLeft("")(_+", "+_).substring(1)
+
 }
