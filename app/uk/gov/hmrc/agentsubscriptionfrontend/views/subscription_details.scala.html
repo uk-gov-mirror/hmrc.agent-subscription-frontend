@@ -5,10 +5,9 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.InitialDetails
 @(registrationName: String, detailsForm: Form[InitialDetails])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = "Add your agency address", bodyClasses = None) {
-<h1>
-    Add your agency address
-</h1>
+@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = Messages("subscriptionDetails.title"), bodyClasses = None) {
+
+<h1>@Messages("subscriptionDetails.title")</h1>
 
   @form(
     action = SubscriptionController.getAddressDetails,
@@ -17,16 +16,16 @@
 <fieldset class="form-group">
 
     <div class="form-field">
-        @input(detailsForm("name"), '_label -> "Agency name", '_inputClass -> "input--medium input--cleared")
+        @input(detailsForm("name"), '_label -> Messages("subscriptionDetails.businessName.label"), '_inputClass -> "input--medium input--cleared")
     </div>
 
 
       <div class="form-field">
-        @input(detailsForm("email"), '_label -> "Business email address", '_inputClass -> "input--medium input--cleared")
+        @input(detailsForm("email"), '_label -> Messages("subscriptionDetails.email.label"), '_inputClass -> "input--medium input--cleared")
       </div>
 
       <div class="form-field">
-       @input(detailsForm("telephone"), '_label -> "Business telephone number", '_inputClass -> "input--medium input--cleared")
+       @input(detailsForm("telephone"), '_label -> Messages("subscriptionDetails.telephone.label"), '_inputClass -> "input--medium input--cleared")
       </div>
 
 
