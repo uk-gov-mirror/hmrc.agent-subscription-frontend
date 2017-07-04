@@ -64,5 +64,5 @@ class FrontendAppConfig extends AppConfig with StrictConfig with ServicesConfig 
   override lazy val governmentGatewayUrl: String = loadConfig("government-gateway.url")
   override lazy val blacklistedPostcodes: Set[String] =
     PostcodesLoader.load("/po_box_postcodes_abp_49.csv").map(x => x.toUpperCase.replace(" ", "")).toSet
-  override val journeyName = getConfString("address-lookup-frontend.journeyName", "")
+  override lazy val journeyName = getConfString("address-lookup-frontend.journeyName", "")
 }
