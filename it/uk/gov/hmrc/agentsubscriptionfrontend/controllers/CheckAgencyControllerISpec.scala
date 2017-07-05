@@ -221,7 +221,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
 
       val result = await(controller.showNoAgencyFound(authenticatedRequest()))
 
-      checkHtmlResultWithBodyText(result, "No Agency Found")
+      checkHtmlResultWithBodyText(result, htmlEscapedMessage("noAgencyFound.title"))
     }
   }
 
@@ -241,7 +241,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
       val result = await(controller.showConfirmYourAgency(request))
 
       checkHtmlResultWithBodyText(result,
-        "Is this your business?",
+        htmlEscapedMessage("confirmYourAgency.title"),
         s">$postcode</", s">${utr.value}</", s">$registrationName</")
     }
 

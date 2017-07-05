@@ -3,10 +3,12 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 import com.google.inject.AbstractModule
 import org.scalatestplus.play.OneAppPerSuite
 import play.api.Application
+import play.api.i18n.{Lang, Messages, MessagesApi}
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.{AnyContentAsEmpty, Result}
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{contentType, _}
+import play.twirl.api.HtmlFormat
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUsers._
@@ -57,4 +59,9 @@ abstract class BaseControllerISpec extends UnitSpec with OneAppPerSuite with Wir
     charset(result) shouldBe Some("utf-8")
     expectedSubstrings.foreach(s => bodyOf(result) should include(s))
   }
+
+  private val messagesApi = app.injector.instanceOf[MessagesApi]
+  private implicit val messages: Messages = messagesApi.preferred(Seq.empty[Lang])
+
+  protected def htmlEscapedMessage(key: String): String = HtmlFormat.escape(Messages(key)).toString
 }
