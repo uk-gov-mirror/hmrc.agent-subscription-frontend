@@ -104,7 +104,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
       status(result) shouldBe OK
       val responseBody = bodyOf(result)
       responseBody should include("Check for duplicate Agent Services accounts")
-      responseBody should include("Please enter a valid postcode")
+      responseBody should include("You have entered an invalid postcode")
       responseBody should include(validUtr.value)
       responseBody should include(invalidPostcode)
     }

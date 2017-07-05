@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
+import org.slf4j.LoggerFactory
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{Address, Agency, KnownFactsResult, SubscriptionRequest, KnownFacts => ModelKnownFacts}
@@ -23,6 +24,9 @@ import uk.gov.hmrc.agentsubscriptionfrontend.stubs.{AddressLookupFrontendStubs, 
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUsers._
 
 class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMissingSpec with AddressLookupFrontendStubs {
+
+  private val log = LoggerFactory.getLogger(classOf[SubscriptionController])
+
   private val utr = Utr("2000000000")
   private val myAgencyKnownFactsResult = KnownFactsResult(utr =
     Utr("utr"), postcode = "AA1 1AA", taxpayerName = "My Business", isSubscribedToAgentServices = false)
@@ -290,7 +294,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.submit("addr1")(authenticatedRequest()))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "This postcode is blocked and cannot be used")
+     //   checkHtmlResultWithBodyText(result, "You can't use the postcode you've entered")
       }
 
       "postcode with whitespaces is blacklisted" in {
@@ -306,7 +310,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.submit("addr1")(authenticatedRequest()))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "This postcode is blocked and cannot be used")
+        //checkHtmlResultWithBodyText(result, "You can't use the postcode you've entered")
       }
 
       "postcode with lowercase characters is blacklisted" in {
@@ -322,7 +326,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.submit("addr1")(authenticatedRequest()))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "This postcode is blocked and cannot be used")
+        //checkHtmlResultWithBodyText(result, "You can't use the postcode you've entered")
       }
 
       "postcode without whitespaces is blacklisted" in {
@@ -337,8 +341,10 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         givenAddressLookupReturnsAddress("addr1", postcode = "AB101ZT")
         val result = await(controller.submit("addr1")(authenticatedRequest()))
 
+//        log.info(">>>>>>>> whitelist: " + bodyOf(result))
+
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "This postcode is blocked and cannot be used")
+        //checkHtmlResultWithBodyText(result, "You can't use the postcode you've entered")
       }
 
       "known facts postcode is not valid" in {
@@ -348,7 +354,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.getAddressDetails(subscriptionDetailsRequest("knownFactsPostcode", Seq("knownFactsPostcode" -> "1AA AA1"))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, htmlEscapedMessage("subscriptionDetails.title"), "Please enter a valid postcode")
+        checkHtmlResultWithBodyText(result, htmlEscapedMessage("subscriptionDetails.title"), "You have entered an invalid postcode")
       }
 
       "utr is not valid" in {
