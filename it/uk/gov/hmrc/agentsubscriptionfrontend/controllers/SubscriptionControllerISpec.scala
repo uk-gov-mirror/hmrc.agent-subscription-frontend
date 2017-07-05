@@ -223,7 +223,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.getAddressDetails(subscriptionDetailsRequest("name", Seq("name" -> "InvalidAgencyName!@"))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency address",
+        checkHtmlResultWithBodyText(result, htmlEscapedMessage("subscriptionDetails.title"),
           "This field is limited to alphanumeric characters (A-Z, a-z, 0-9) and the following characters -,./")
       }
 
@@ -234,7 +234,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.getAddressDetails(subscriptionDetailsRequest("email")))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency address")
+        checkHtmlResultWithBodyText(result, htmlEscapedMessage("subscriptionDetails.title"))
       }
 
       "email has no text in the domain part" in {
@@ -244,7 +244,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.getAddressDetails(subscriptionDetailsRequest("email", Seq("email" -> "local@"))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency address")
+        checkHtmlResultWithBodyText(result, htmlEscapedMessage("subscriptionDetails.title"))
       }
 
       "email does not contain an '@'" in {
@@ -254,7 +254,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.getAddressDetails(subscriptionDetailsRequest("email", Seq("email" -> "local"))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency address")
+        checkHtmlResultWithBodyText(result, htmlEscapedMessage("subscriptionDetails.title"))
       }
 
       "email has no text in the local part" in {
@@ -264,7 +264,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.getAddressDetails(subscriptionDetailsRequest("email", Seq("email" -> "@domain"))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency address", "Enter a valid email address.")
+        checkHtmlResultWithBodyText(result, htmlEscapedMessage("subscriptionDetails.title"), "Enter a valid email address.")
       }
 
       "telephone is invalid with numbers and words" in {
@@ -274,7 +274,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.getAddressDetails(subscriptionDetailsRequest("telephone", Seq("telephone" -> "02073457443fff"))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency address", "Please enter a valid telephone number")
+        checkHtmlResultWithBodyText(result, htmlEscapedMessage("subscriptionDetails.title"), "Please enter a valid telephone number")
       }
 
       "postcode is blacklisted" in {
@@ -348,7 +348,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.getAddressDetails(subscriptionDetailsRequest("knownFactsPostcode", Seq("knownFactsPostcode" -> "1AA AA1"))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency address", "Please enter a valid postcode")
+        checkHtmlResultWithBodyText(result, htmlEscapedMessage("subscriptionDetails.title"), "Please enter a valid postcode")
       }
 
       "utr is not valid" in {
@@ -358,7 +358,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.getAddressDetails(subscriptionDetailsRequest("utr", Seq("utr" -> "012345"))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "Add your agency address", "Please enter a valid UTR")
+        checkHtmlResultWithBodyText(result, htmlEscapedMessage("subscriptionDetails.title"), "Please enter a valid UTR")
       }
     }
   }
