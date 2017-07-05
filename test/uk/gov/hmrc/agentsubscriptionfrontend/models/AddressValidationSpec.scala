@@ -45,7 +45,7 @@ class AddressValidationSpec extends FlatSpec with Matchers {
     val entity = jsValue(address).as[Address]
 
     val validationResult = Address.validate(entity, blacklistedPostCodes)
-    validationResult shouldBe Invalid(Set(s"Postcode is empty"))
+    validationResult shouldBe Invalid(Set("You haven't entered a postcode"))
   }
 
   "Address Validation" should "fail for Blacklisted PostCode" in {
@@ -55,7 +55,7 @@ class AddressValidationSpec extends FlatSpec with Matchers {
     val entity = jsValue(address).as[Address]
 
     val validationResult = Address.validate(entity, blacklistedPostCodes)
-    validationResult shouldBe Invalid(Set("This postcode is blocked and cannot be used"))
+    validationResult shouldBe Invalid(Set("You can't use the postcode you've entered"))
   }
 
   "Address Validation" should "be Successful for Postcode matching in Regex" in {
@@ -112,6 +112,6 @@ class AddressValidationSpec extends FlatSpec with Matchers {
     val validationResult = Address.validate(entity, blacklistedPostCodes)
     validationResult shouldBe Invalid(Set(s"Length of line ${entity.addressLine1} must be up to 35",
       s"Length of line ${entity.addressLine2.getOrElse("")} must be up to 35",
-      "This postcode is blocked and cannot be used"))
+      "You can't use the postcode you've entered"))
   }
 }

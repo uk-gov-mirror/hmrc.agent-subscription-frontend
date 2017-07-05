@@ -29,7 +29,7 @@ case class Address(addressLine1: String,
                    postcode: Option[String],
                    countryCode: String)
 
-object Address {
+object Address{
 
   type PostCodeError = Set[String]
   type ValidatedType = Validated[PostCodeError, Unit]
@@ -78,24 +78,24 @@ object Address {
 
   private def nonEmpty(postcode: Option[String]): ValidatedType = {
     postcode match {
-      case Some("") => Invalid(Set(s"Postcode is empty"))
+      case Some("") => Invalid(Set("You haven't entered a postcode"))
       case Some(_) => Valid(())
-      case None => Invalid(Set(s"Postcode is empty"))
+      case None => Invalid(Set("You haven't entered a postcode"))
     }
   }
 
   private def validateRegex(postcode: Option[String]): ValidatedType = {
     postcode.map(str => postCodeRegex.unapplySeq(str.trim))
       .map(_ => Valid(()))
-      .getOrElse(Invalid(Set(s"Postcode $postcode doesn't match")))
+      .getOrElse(Invalid(Set("You have entered an invalid postcode")))
   }
 
   def validateBlacklist(postcode: Option[String], blacklistedPostCodes: Set[String]): ValidatedType = {
     postcode.map(str =>
       blacklistedPostCodes.contains(PostcodesLoader.formatPostcode(str)) match {
-        case true => Invalid(Set("This postcode is blocked and cannot be used"))
+        case true => Invalid(Set("You can't use the postcode you've entered"))
         case false => Valid(())
-      }).getOrElse(Invalid(Set(s"Postcode is empty")))
+      }).getOrElse(Invalid(Set("You haven't entered a postcode")))
   }
 
 
