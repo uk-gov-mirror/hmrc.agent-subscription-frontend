@@ -29,21 +29,25 @@ case class Address(addressLine1: String,
                    postcode: Option[String],
                    countryCode: String)
 
-object Address {
+object Address{
 
   type PostCodeError = Set[String]
   type ValidatedType = Validated[PostCodeError, Unit]
+  type ValidatedAddress = Validated[String, String]
 
   private val postCodeRegex = "^[A-Z]{1,2}[0-9][0-9A-Z]?\\s?[0-9][A-Z]{2}$|BFPO\\s?[0-9]{1,5}$".r
+  private val desTextRegex = "^[A-Za-z0-9 \\-,.&'\\/]*$"
+  private val maxLength = 35
 
   object ValidatedType {
     implicit val validationResultMonoid = new Monoid[ValidatedType] {
       def empty: ValidatedType = Valid(())
 
       def combine(x: ValidatedType, y: ValidatedType): ValidatedType = (x, y) match {
+        case (Invalid(a), Invalid(b)) => Invalid(a ++ b)
         case (Valid(()), Valid(())) => Valid(())
-        case (i@Invalid(_), _)      => i
-        case (_, i@Invalid(_))      => i
+        case (i@Invalid(_), _) => i
+        case (_, i@Invalid(_)) => i
       }
     }
   }
@@ -51,30 +55,47 @@ object Address {
   def validate(address: Address, blacklistedPostCodes: Set[String]): ValidatedType = {
     import ValidatedType._
 
-    Monoid[ValidatedType].combineAll(List(nonEmpty(address.postcode),
+    Monoid[ValidatedType].combineAll(List(validateLine(address.addressLine1), validateLine(address.addressLine2.getOrElse("")),
+      validateLine(address.addressLine3.getOrElse("")), nonEmpty(address.postcode),
       validateRegex(address.postcode), validateBlacklist(address.postcode, blacklistedPostCodes)))
+  }
+
+  private def validateLine(line: String): ValidatedType = {
+    validateLength(line, maxLength)
+      .andThen(str =>
+        validateDesRegex(str))
+      .leftMap(error => Set(error))
+      .andThen(str => Valid(()))
+  }
+
+  private def validateLength(line: String, maxLength: Int): ValidatedAddress = {
+    if (line.length < maxLength) Valid(line) else Invalid(s"Length of line $line must be up to 35")
+  }
+
+  private def validateDesRegex(line: String): ValidatedAddress = {
+    if (line.matches(desTextRegex)) Valid(line) else Invalid(s"Wrong regex of line $line")
   }
 
   private def nonEmpty(postcode: Option[String]): ValidatedType = {
     postcode match {
-      case Some("") => Invalid(Set(s"Postcode is empty"))
-      case Some(_)  => Valid(())
-      case None     => Invalid(Set(s"Postcode is empty"))
+      case Some("") => Invalid(Set("You haven't entered a postcode"))
+      case Some(_) => Valid(())
+      case None => Invalid(Set("You haven't entered a postcode"))
     }
   }
 
   private def validateRegex(postcode: Option[String]): ValidatedType = {
     postcode.map(str => postCodeRegex.unapplySeq(str.trim))
       .map(_ => Valid(()))
-      .getOrElse(Invalid(Set(s"Postcode $postcode doesn't match")))
+      .getOrElse(Invalid(Set("You have entered an invalid postcode")))
   }
 
   def validateBlacklist(postcode: Option[String], blacklistedPostCodes: Set[String]): ValidatedType = {
     postcode.map(str =>
       blacklistedPostCodes.contains(PostcodesLoader.formatPostcode(str)) match {
-        case true  => Invalid(Set("This postcode is blocked and cannot be used"))
+        case true => Invalid(Set("You can't use the postcode you've entered"))
         case false => Valid(())
-      }).getOrElse(Invalid(Set(s"Postcode is empty")))
+      }).getOrElse(Invalid(Set("You haven't entered a postcode")))
   }
 
 
@@ -91,8 +112,8 @@ object Address {
 
       def merge(a: Option[String], b: Option[String]): Option[String] = (a, b) match {
         case (Some(s1), Some(s2)) => Some(s1 + " " + s2)
-        case (None, s)            => s
-        case (s, None)            => s
+        case (None, s) => s
+        case (s, None) => s
       }
 
       addresses.size match {
@@ -116,5 +137,7 @@ object Address {
 
     OFormat[Address](reads, formatAddressValue)
   }
+
+  val renderErrors: PostCodeError => String = (errors: PostCodeError) => errors.foldLeft("")(_+", "+_).substring(1)
 
 }

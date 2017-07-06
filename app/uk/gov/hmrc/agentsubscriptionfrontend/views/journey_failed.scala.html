@@ -1,11 +1,13 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes.SubscriptionController
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 
-@(id: String, message : String)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+@(id: String, message: String)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = "Create your new account ID and password", bodyClasses = None) {
 
 <p>@message</p>
+
 <p>
+
     <a class="button" href="@SubscriptionController.beginJourney(id)" role="button">Continue Journey</a>
 </p>
 }

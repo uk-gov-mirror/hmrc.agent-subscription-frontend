@@ -290,7 +290,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.submit("addr1")(authenticatedRequest()))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "This postcode is blocked and cannot be used")
+        checkHtmlResultWithBodyText(result, htmlEscapedMessage("error.postcode.blacklisted"))
       }
 
       "postcode with whitespaces is blacklisted" in {
@@ -306,7 +306,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.submit("addr1")(authenticatedRequest()))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "This postcode is blocked and cannot be used")
+        checkHtmlResultWithBodyText(result, htmlEscapedMessage("error.postcode.blacklisted"))
       }
 
       "postcode with lowercase characters is blacklisted" in {
@@ -322,7 +322,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.submit("addr1")(authenticatedRequest()))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "This postcode is blocked and cannot be used")
+        checkHtmlResultWithBodyText(result, htmlEscapedMessage("error.postcode.blacklisted"))
       }
 
       "postcode without whitespaces is blacklisted" in {
@@ -337,8 +337,9 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         givenAddressLookupReturnsAddress("addr1", postcode = "AB101ZT")
         val result = await(controller.submit("addr1")(authenticatedRequest()))
 
+
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, "This postcode is blocked and cannot be used")
+        checkHtmlResultWithBodyText(result, htmlEscapedMessage("error.postcode.blacklisted"))
       }
 
       "known facts postcode is not valid" in {
@@ -348,7 +349,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.getAddressDetails(subscriptionDetailsRequest("knownFactsPostcode", Seq("knownFactsPostcode" -> "1AA AA1"))))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, htmlEscapedMessage("subscriptionDetails.title"), "Please enter a valid postcode")
+        checkHtmlResultWithBodyText(result, htmlEscapedMessage("subscriptionDetails.title"), "You have entered an invalid postcode")
       }
 
       "utr is not valid" in {
