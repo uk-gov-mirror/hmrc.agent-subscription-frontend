@@ -69,6 +69,17 @@ class AddressValidationSpec extends FlatSpec with Matchers {
     validationResult shouldBe Valid(())
   }
 
+  "Address Validation" should "pass for address line1 length exactly 35 chars" in {
+    val address = Address("12345678901234567890123456789012345", Some(""),
+      Some("Ipswich"),
+      Some("Ipswich 4"), Some("GT5 7WW"), "GB")
+
+    val entity = jsValue(address).as[Address]
+
+    val validationResult = Address.validate(entity, blacklistedPostCodes)
+    validationResult shouldBe Valid(())
+  }
+
   "Address Validation" should "fail for address line1 length greater than 35 characters" in {
     val address = Address("9 King Road 9 King Road 9 King Road 9 King Road", Some(""),
       Some("Ipswich"),
