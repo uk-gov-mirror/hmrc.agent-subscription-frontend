@@ -121,7 +121,7 @@ class SubscriptionController @Inject()
             case Invalid(errors) =>
 
               Future {
-                Ok(uk.gov.hmrc.agentsubscriptionfrontend.views.html.journey_failed(id, renderErrors(errors)))
+                Ok(uk.gov.hmrc.agentsubscriptionfrontend.views.html.des_will_not_accept_address(id, renderErrors(errors)))
               }
             case Valid(()) =>
 
