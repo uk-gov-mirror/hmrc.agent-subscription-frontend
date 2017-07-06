@@ -68,7 +68,7 @@ object Address{
   }
 
   private def validateLength(line: String, maxLength: Int): ValidatedAddress = {
-    if (line.length < maxLength) Valid(line) else Invalid(ValidationError("error.address.maxLength", 35, line))
+    if (line.length <= maxLength) Valid(line) else Invalid(ValidationError("error.address.maxLength", 35, line))
   }
 
   private def validateDesRegex(line: String): ValidatedAddress = {
