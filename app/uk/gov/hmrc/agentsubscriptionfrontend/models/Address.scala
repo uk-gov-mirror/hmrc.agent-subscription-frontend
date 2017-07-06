@@ -19,6 +19,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.models
 import cats.data.Validated
 import cats.data.Validated.{Invalid, Valid}
 import cats.kernel.Monoid
+import play.api.data.validation.ValidationError
 import play.api.libs.json.{OFormat, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.blacklistedpostcodes.PostcodesLoader
 
@@ -30,10 +31,8 @@ case class Address(addressLine1: String,
                    countryCode: String)
 
 object Address{
-
-  type PostCodeError = Set[String]
-  type ValidatedType = Validated[PostCodeError, Unit]
-  type ValidatedAddress = Validated[String, String]
+  type ValidatedType = Validated[Set[ValidationError], Unit]
+  type ValidatedAddress = Validated[ValidationError, String]
 
   private val postCodeRegex = "^[A-Z]{1,2}[0-9][0-9A-Z]?\\s?[0-9][A-Z]{2}$|BFPO\\s?[0-9]{1,5}$".r
   private val desTextRegex = "^[A-Za-z0-9 \\-,.&'\\/]*$"
@@ -69,33 +68,33 @@ object Address{
   }
 
   private def validateLength(line: String, maxLength: Int): ValidatedAddress = {
-    if (line.length < maxLength) Valid(line) else Invalid(s"Length of line $line must be up to 35")
+    if (line.length < maxLength) Valid(line) else Invalid(ValidationError("error.address.maxLength", 35, line))
   }
 
   private def validateDesRegex(line: String): ValidatedAddress = {
-    if (line.matches(desTextRegex)) Valid(line) else Invalid(s"Wrong regex of line $line")
+    if (line.matches(desTextRegex)) Valid(line) else Invalid(ValidationError("error.des.text.invalid.withInput", line))
   }
 
   private def nonEmpty(postcode: Option[String]): ValidatedType = {
     postcode match {
-      case Some("") => Invalid(Set("You haven't entered a postcode"))
+      case Some("") => Invalid(Set(ValidationError("error.postcode.empty")))
       case Some(_) => Valid(())
-      case None => Invalid(Set("You haven't entered a postcode"))
+      case None => Invalid(Set(ValidationError("error.postcode.empty")))
     }
   }
 
   private def validateRegex(postcode: Option[String]): ValidatedType = {
     postcode.map(str => postCodeRegex.unapplySeq(str.trim))
       .map(_ => Valid(()))
-      .getOrElse(Invalid(Set("You have entered an invalid postcode")))
+      .getOrElse(Invalid(Set(ValidationError("error.postcode.invalid"))))
   }
 
   def validateBlacklist(postcode: Option[String], blacklistedPostCodes: Set[String]): ValidatedType = {
     postcode.map(str =>
       blacklistedPostCodes.contains(PostcodesLoader.formatPostcode(str)) match {
-        case true => Invalid(Set("You can't use the postcode you've entered"))
+        case true => Invalid(Set(ValidationError("error.postcode.blacklisted")))
         case false => Valid(())
-      }).getOrElse(Invalid(Set("You haven't entered a postcode")))
+      }).getOrElse(Invalid(Set(ValidationError("error.postcode.empty"))))
   }
 
 
@@ -138,6 +137,6 @@ object Address{
     OFormat[Address](reads, formatAddressValue)
   }
 
-  val renderErrors: PostCodeError => String = (errors: PostCodeError) => errors.foldLeft("")(_+", "+_).substring(1)
+  val renderErrors: Set[ValidationError] => String = (errors: Set[ValidationError]) => errors.foldLeft("")(_+", "+_).substring(1)
 
 }
