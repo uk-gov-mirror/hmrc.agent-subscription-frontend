@@ -63,5 +63,5 @@ abstract class BaseControllerISpec extends UnitSpec with OneAppPerSuite with Wir
   private val messagesApi = app.injector.instanceOf[MessagesApi]
   private implicit val messages: Messages = messagesApi.preferred(Seq.empty[Lang])
 
-  def htmlEscapedMessage(key: String): String = HtmlFormat.escape(Messages(key)).toString
+  protected def htmlEscapedMessage(key: String): String = HtmlFormat.escape(Messages(key)).toString
 }

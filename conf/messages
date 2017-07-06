@@ -1,5 +1,5 @@
 error.postcode.invalid = You have entered an invalid postcode
-error.postcode.blacklisted = You can't use the postcode you've entered
+error.postcode.blacklisted = You can''t use the postcode you''ve entered
 error.utr.invalid = Please enter a valid UTR
 error.telephone.invalid = Please enter a valid telephone number
 error.no.ampersand = Agency name cannot contain "&"

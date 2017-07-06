@@ -290,7 +290,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.submit("addr1")(authenticatedRequest()))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, htmlEscapedMessage("You can't use the postcode you've entered"))
+        checkHtmlResultWithBodyText(result, htmlEscapedMessage("error.postcode.blacklisted"))
       }
 
       "postcode with whitespaces is blacklisted" in {
@@ -306,7 +306,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.submit("addr1")(authenticatedRequest()))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, htmlEscapedMessage("You can't use the postcode you've entered"))
+        checkHtmlResultWithBodyText(result, htmlEscapedMessage("error.postcode.blacklisted"))
       }
 
       "postcode with lowercase characters is blacklisted" in {
@@ -322,7 +322,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         val result = await(controller.submit("addr1")(authenticatedRequest()))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, htmlEscapedMessage("You can't use the postcode you've entered"))
+        checkHtmlResultWithBodyText(result, htmlEscapedMessage("error.postcode.blacklisted"))
       }
 
       "postcode without whitespaces is blacklisted" in {
@@ -339,7 +339,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
 
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, htmlEscapedMessage("You can't use the postcode you've entered"))
+        checkHtmlResultWithBodyText(result, htmlEscapedMessage("error.postcode.blacklisted"))
       }
 
       "known facts postcode is not valid" in {
