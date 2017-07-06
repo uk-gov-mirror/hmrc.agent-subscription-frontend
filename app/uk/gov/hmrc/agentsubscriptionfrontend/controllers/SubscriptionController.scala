@@ -21,7 +21,8 @@ import javax.inject.{Inject, Singleton}
 import cats.data.Validated.{Invalid, Valid}
 import play.api.data.Form
 import play.api.data.Forms.{mapping, _}
-import play.api.i18n.{I18nSupport, MessagesApi}
+import play.api.data.validation.ValidationError
+import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.libs.json._
 import play.api.mvc.{AnyContent, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
@@ -83,6 +84,9 @@ class SubscriptionController @Inject()
   private var initialDetails: Option[InitialDetails] = None
 
   private val blacklistedPostCodes: Set[String] = appConfig.blacklistedPostcodes
+
+  val renderErrors: Set[ValidationError] => String = (errors: Set[ValidationError]) => errors.map(valError =>
+    Messages(valError.message, valError.args: _*)).foldLeft("")(_ + ", " + _).substring(1)
 
   private val subscriptionDetails = Form[InitialDetails](
     mapping(

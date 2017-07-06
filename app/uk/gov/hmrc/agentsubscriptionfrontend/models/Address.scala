@@ -136,7 +136,4 @@ object Address{
 
     OFormat[Address](reads, formatAddressValue)
   }
-
-  val renderErrors: Set[ValidationError] => String = (errors: Set[ValidationError]) => errors.foldLeft("")(_+", "+_).substring(1)
-
 }
