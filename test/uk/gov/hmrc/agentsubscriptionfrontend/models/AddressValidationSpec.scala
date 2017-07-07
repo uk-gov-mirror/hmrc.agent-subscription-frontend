@@ -1,19 +1,3 @@
-/*
- * Copyright 2017 HM Revenue & Customs
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package uk.gov.hmrc.agentsubscriptionfrontend.models
 
 import cats.data.Validated.{Invalid, Valid}
@@ -29,8 +13,10 @@ class AddressValidationSpec extends FlatSpec with Matchers {
     s"""{
                               	"auditRef": "093b7e77-81c4-4663-a580-fa9383775a24",
                               	"address": {
-                              		"lines": ["${address.addressLine1}", "${address.addressLine2.getOrElse("")}",
-       		"${address.addressLine3.getOrElse("")}", "${address.addressLine4.getOrElse("")}"],
+                              		"lines": ["${address.addressLine1}",
+                              		          "${address.addressLine2.getOrElse("")}",
+       		                                  "${address.addressLine3.getOrElse("")}",
+       		                                  "${address.addressLine4.getOrElse("")}"],
                               		"postcode": "${address.postcode.getOrElse("")}",
                               		"country": {
                               			"code": "${address.countryCode}",

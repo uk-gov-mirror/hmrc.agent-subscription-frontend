@@ -20,6 +20,9 @@ import cats.data.Validated
 import cats.data.Validated.{Invalid, Valid}
 import cats.kernel.Monoid
 import play.api.data.validation.ValidationError
+import play.api.Play.current
+import play.api.i18n.Messages
+import play.api.i18n.Messages.Implicits._
 import play.api.libs.json.{OFormat, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.blacklistedpostcodes.PostcodesLoader
 
@@ -30,7 +33,7 @@ case class Address(addressLine1: String,
                    postcode: Option[String],
                    countryCode: String)
 
-object Address{
+object Address {
   type ValidatedType = Validated[Set[ValidationError], Unit]
   type ValidatedAddress = Validated[ValidationError, String]
 
@@ -136,4 +139,7 @@ object Address{
 
     OFormat[Address](reads, formatAddressValue)
   }
+
+  def renderErrors(errors: Set[ValidationError]): String = errors.map(valError =>
+    Messages(valError.message, valError.args: _*)).foldLeft("")(_ + ", " + _).substring(1)
 }
