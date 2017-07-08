@@ -140,6 +140,8 @@ object Address {
     OFormat[Address](reads, formatAddressValue)
   }
 
-  def renderErrors(errors: Set[ValidationError]): String = errors.map(valError =>
-    Messages(valError.message, valError.args: _*)).foldLeft("")(_ + ", " + _).substring(1)
+  def renderErrors(errors: Set[ValidationError]): String = errors
+    .map(valError => Messages(valError.message, valError.args: _*))
+    .reduceOption(_ + ", " + _)
+    .getOrElse("")
 }

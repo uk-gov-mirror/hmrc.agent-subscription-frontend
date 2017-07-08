@@ -1,3 +1,19 @@
+/*
+ * Copyright 2017 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package uk.gov.hmrc.agentsubscriptionfrontend.models
 
 import uk.gov.hmrc.agentsubscriptionfrontend.models.Address._
@@ -11,7 +27,7 @@ class MessagesValidationSpec extends PlaySpec with OneAppPerSuite {
       val validationErrors = Set(ValidationError("error.postcode.invalid"), ValidationError("error.postcode.blacklisted"))
       val result: String = renderErrors(validationErrors)
 
-      result mustEqual " You have entered an invalid postcode, You can't use the postcode you've entered"
+      result mustEqual "You have entered an invalid postcode, You can't use the postcode you've entered"
     }
 
     "concatenate invalid and maxLength error messages" in {
@@ -21,7 +37,7 @@ class MessagesValidationSpec extends PlaySpec with OneAppPerSuite {
         ValidationError("error.address.maxLength", maxLength, addressLine))
       val result: String = renderErrors(validationErrors)
 
-      result mustEqual s" You have entered an invalid postcode, Length of line $addressLine must be up to $maxLength"
+      result mustEqual s"You have entered an invalid postcode, Length of line $addressLine must be up to $maxLength"
     }
 
     "concatenate invalid and maxLength error messages for 2 lines" in {
@@ -34,9 +50,17 @@ class MessagesValidationSpec extends PlaySpec with OneAppPerSuite {
         ValidationError("error.address.maxLength", maxLength, addressLine2))
       val result: String = renderErrors(validationErrors)
 
-      result mustEqual s" You have entered an invalid postcode, " +
+      result mustEqual s"You have entered an invalid postcode, " +
         s"Length of line $addressLine1 must be up to $maxLength, " +
         s"Length of line $addressLine2 must be up to $maxLength"
     }
+
+    "not throw an exeption when there are no errors" in {
+      val validationErrors = Set.empty[ValidationError]
+      val result: String = renderErrors(validationErrors)
+
+      result mustEqual ""
+    }
+
   }
 }
