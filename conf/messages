@@ -1,9 +1,12 @@
 error.postcode.invalid = You have entered an invalid postcode
 error.postcode.blacklisted = You can''t use the postcode you''ve entered
+error.postcode.empty = You haven''t entered a postcode
+error.address.maxLength = Length of line {1} must be up to {0}
 error.utr.invalid = Please enter a valid UTR
 error.telephone.invalid = Please enter a valid telephone number
 error.no.ampersand = Agency name cannot contain "&"
 error.des.text.invalid = This field is limited to alphanumeric characters (A-Z, a-z, 0-9) and the following characters -,./
+error.des.text.invalid.withInput = This field {0} is limited to alphanumeric characters (A-Z, a-z, 0-9) and the following characters -,./
 
 confirmYourAgency.title=Is this the agent business you''re creating an account for?
 

@@ -18,6 +18,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.models
 
 import cats.data.Validated.{Invalid, Valid}
 import org.scalatest.{FlatSpec, Matchers}
+import play.api.data.validation.ValidationError
 import play.api.libs.json._
 import uk.gov.hmrc.agentsubscriptionfrontend.config.blacklistedpostcodes.PostcodesLoader
 
@@ -28,8 +29,10 @@ class AddressValidationSpec extends FlatSpec with Matchers {
     s"""{
                               	"auditRef": "093b7e77-81c4-4663-a580-fa9383775a24",
                               	"address": {
-                              		"lines": ["${address.addressLine1}", "${address.addressLine2.getOrElse("")}",
-       		"${address.addressLine3.getOrElse("")}", "${address.addressLine4.getOrElse("")}"],
+                              		"lines": ["${address.addressLine1}",
+                              		          "${address.addressLine2.getOrElse("")}",
+       		                                  "${address.addressLine3.getOrElse("")}",
+       		                                  "${address.addressLine4.getOrElse("")}"],
                               		"postcode": "${address.postcode.getOrElse("")}",
                               		"country": {
                               			"code": "${address.countryCode}",
@@ -45,7 +48,7 @@ class AddressValidationSpec extends FlatSpec with Matchers {
     val entity = jsValue(address).as[Address]
 
     val validationResult = Address.validate(entity, blacklistedPostCodes)
-    validationResult shouldBe Invalid(Set("You haven't entered a postcode"))
+    validationResult shouldBe Invalid(Set(ValidationError("error.postcode.empty")))
   }
 
   "Address Validation" should "fail for Blacklisted PostCode" in {
@@ -55,7 +58,7 @@ class AddressValidationSpec extends FlatSpec with Matchers {
     val entity = jsValue(address).as[Address]
 
     val validationResult = Address.validate(entity, blacklistedPostCodes)
-    validationResult shouldBe Invalid(Set("You can't use the postcode you've entered"))
+    validationResult shouldBe Invalid(Set(ValidationError("error.postcode.blacklisted")))
   }
 
   "Address Validation" should "be Successful for Postcode matching in Regex" in {
@@ -87,7 +90,8 @@ class AddressValidationSpec extends FlatSpec with Matchers {
     val entity = jsValue(address).as[Address]
 
     val validationResult = Address.validate(entity, blacklistedPostCodes)
-    validationResult shouldBe Invalid(Set(s"Length of line ${entity.addressLine1} must be up to 35"))
+    validationResult shouldBe Invalid(Set(ValidationError("error.address.maxLength", 35, entity.addressLine1)))
+    // s"Length of line ${entity.addressLine1} must be up to 35"
   }
 
   "Address Validation" should "fail for address line2 length greater than 35 characters" in {
@@ -98,7 +102,28 @@ class AddressValidationSpec extends FlatSpec with Matchers {
     val entity = jsValue(address).as[Address]
 
     val validationResult = Address.validate(entity, blacklistedPostCodes)
-    validationResult shouldBe Invalid(Set(s"Length of line ${entity.addressLine2.getOrElse("")} must be up to 35"))
+    validationResult shouldBe Invalid(Set(ValidationError("error.address.maxLength", 35, entity.addressLine2.get)))
+  }
+
+  "Address Validation" should "fail for address line2 violating DES regex" in {
+    val address = Address("9 King Road ", Some("<>'"),
+      Some("Ipswich"),
+      Some("Ipswich 4"), Some("GT5 7WW"), "GB")
+
+
+    val validationResult = Address.validate(address, blacklistedPostCodes)
+    validationResult shouldBe Invalid(Set(ValidationError("error.des.text.invalid.withInput", address.addressLine2.get)))
+  }
+
+  "Address Validation" should "fail for address line2 violating DES regex and max length for line1" in {
+    val address = Address("9 King Road 9 King Road 9 King Road 9 King Road", Some("<>'"),
+      Some("Ipswich"),
+      Some("Ipswich 4"), Some("GT5 7WW"), "GB")
+
+
+    val validationResult = Address.validate(address, blacklistedPostCodes)
+    validationResult shouldBe Invalid(Set(ValidationError("error.des.text.invalid.withInput", address.addressLine2.get),
+      ValidationError("error.address.maxLength", 35, address.addressLine1)))
   }
 
   "Address Validation" should "fail for address line1 and line2 length greater than 35 characters" in {
@@ -109,8 +134,8 @@ class AddressValidationSpec extends FlatSpec with Matchers {
     val entity = jsValue(address).as[Address]
 
     val validationResult = Address.validate(entity, blacklistedPostCodes)
-    validationResult shouldBe Invalid(Set(s"Length of line ${entity.addressLine1} must be up to 35",
-      s"Length of line ${entity.addressLine2.getOrElse("")} must be up to 35"))
+    validationResult shouldBe Invalid(Set(ValidationError("error.address.maxLength", 35, entity.addressLine1),
+      ValidationError("error.address.maxLength", 35, entity.addressLine2.get)))
   }
 
   "Address Parallel Validation" should "fail for address line1 and line2 length greater than 35 characters and blacklisted postcode" in {
@@ -121,8 +146,8 @@ class AddressValidationSpec extends FlatSpec with Matchers {
     val entity = jsValue(address).as[Address]
 
     val validationResult = Address.validate(entity, blacklistedPostCodes)
-    validationResult shouldBe Invalid(Set(s"Length of line ${entity.addressLine1} must be up to 35",
-      s"Length of line ${entity.addressLine2.getOrElse("")} must be up to 35",
-      "You can't use the postcode you've entered"))
+    validationResult shouldBe Invalid(Set(ValidationError("error.address.maxLength", 35, entity.addressLine1),
+      ValidationError("error.address.maxLength", 35, entity.addressLine2.get),
+      ValidationError("error.postcode.blacklisted")))
   }
 }
