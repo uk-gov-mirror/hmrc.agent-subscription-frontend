@@ -11,6 +11,10 @@ error.des.text.invalid.withInput = This field {0} is limited to alphanumeric cha
 
 ##Confirm your agency
 confirmYourAgency.title=Is this the agent business you''re creating an account for?
+confirmYourAgency.table.caption=Agency details
+confirmYourAgency.table.th.name=Name
+confirmYourAgency.table.th.postcode=Postcode
+confirmYourAgency.table.th.utr=UTR
 
 ##Subscription details
 subscriptionDetails.title=Add your agent business''s details
@@ -34,3 +38,5 @@ checkAgencyStatus.label.postcode=Postcode related to that UTR or reference
 #Common
 button.startAgain=Try again
 button.continue=Continue
+button.yes=Yes
+button.no=No
