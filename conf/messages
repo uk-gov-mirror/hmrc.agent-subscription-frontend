@@ -51,6 +51,13 @@ invalidAddress.button.changeAddress=Change Address
 hasOtherEnrolments.title=Create your new Agent Services account
 hasOtherEnrolments.p1=To do this your agency needs a new Government Gateway ID.
 
+#Non agent
+nonAgent.title=This isn''t an agent account
+nonAgent.p1=Before you can create your Agent Services account, you need to:
+nonAgent.l1=register for a new Government Gateway account, selecting the ‘Agents’ option
+nonAgent.l2=use your new account details to log in and create your Agent Services account
+nonAgent.p2=Registering should take around 5 minutes.
+
 #Common
 button.startAgain=Try again
 button.continue=Continue
@@ -58,3 +65,4 @@ button.yes=Yes
 button.no=No
 button.createAccount=Create account
 button.goToGg=Go to Government Gateway
+button.register=Register now

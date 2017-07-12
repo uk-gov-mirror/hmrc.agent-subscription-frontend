@@ -2,15 +2,19 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes.SignedOutController
 @()(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = "This isn't an agent account", bodyClasses = None) {
-  <h1>This isn't an agent account</h1>
-  <p>Before you can create your Agent Services account, you need to:</p>
-  <ul class="list list-bullet">
-    <li>register for a new Government Gateway account, selecting the ‘Agents’ option</li>
-    <li>use your new account details to log in and create your Agent Services account</li>
-  </ul>
-  <p>Registering should take around 5 minutes.</p>
-  <p>
-    <a class="button" href="@SignedOutController.signOut" role="button">Register now</a>
-  </p>
+@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = Messages("nonAgent.title"), bodyClasses = None) {
+    <header class="page-header">
+        <h1>@Messages("nonAgent.title")</h1>
+    </header>
+
+    <p>@Messages("nonAgent.p1")</p>
+
+    <ul class="list list-bullet">
+        <li>@Messages("nonAgent.l1")</li>
+        <li>@Messages("nonAgent.l2")</li>
+    </ul>
+
+    <p>@Messages("nonAgent.p2")</p>
+
+    <p><a class="button" href="@SignedOutController.signOut" role="button" id="buttonRegisterNow">@Messages("button.register")</a></p>
 }
