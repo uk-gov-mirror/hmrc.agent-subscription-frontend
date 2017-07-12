@@ -39,6 +39,9 @@ checkAgencyStatus.label.postcode=Postcode related to that UTR or reference
 notSubscribed.title=You can create an Agent Services account
 notSubscribed.p1=We''ve checked <strong class="bold">{0}</strong> and it doesn''t have an Agent Services account.
 
+#Subscription failed
+subscription.failed.title=Subscription failed
+
 #Common
 button.startAgain=Try again
 button.continue=Continue
