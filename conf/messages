@@ -35,8 +35,13 @@ checkAgencyStatus.p1=Your business can only have one Agent Services account.
 checkAgencyStatus.label.utr=Self Assessment UTR or Corporation Tax reference
 checkAgencyStatus.label.postcode=Postcode related to that UTR or reference
 
+#Not subscribed
+notSubscribed.title=You can create an Agent Services account
+notSubscribed.p1=We''ve checked <strong class="bold">{0}</strong> and it doesn''t have an Agent Services account.
+
 #Common
 button.startAgain=Try again
 button.continue=Continue
 button.yes=Yes
 button.no=No
+button.createAccount=Create account
