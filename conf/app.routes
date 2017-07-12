@@ -22,4 +22,4 @@ GET    /subscription-complete           uk.gov.hmrc.agentsubscriptionfrontend.co
 GET    /subscription-failed             uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showSubscriptionFailed
 
 GET    /signed-out                      uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.signOut
-GET    /start-survey                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.startSurvey
+GET    /start-survey                    uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.startSurvey
