@@ -49,7 +49,7 @@ class StartControllerISpec extends BaseControllerISpec {
       status(result) shouldBe OK
       contentType(result) shouldBe Some("text/html")
       charset(result) shouldBe Some("utf-8")
-      bodyOf(result) should include("This isn't an agent account")
+      bodyOf(result) should include(htmlEscapedMessage("This isn't an agent account"))
     }
 
     "allow the government gateway URL to be configured" in {
