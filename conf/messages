@@ -47,9 +47,14 @@ invalidAddress.title=Invalid Address
 invalidAddress.p1=Sorry, the address is not in a format that our system can accept. Please change the address to fix the problems described below:
 invalidAddress.button.changeAddress=Change Address
 
+#Has other enrolments
+hasOtherEnrolments.title=Create your new Agent Services account
+hasOtherEnrolments.p1=To do this your agency needs a new Government Gateway ID.
+
 #Common
 button.startAgain=Try again
 button.continue=Continue
 button.yes=Yes
 button.no=No
 button.createAccount=Create account
+button.goToGg=Go to Government Gateway
