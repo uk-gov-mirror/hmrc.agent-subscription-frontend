@@ -1,7 +1,10 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 @()(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = "Your agency is already subscribed", bodyClasses = None) {
-  <h1>Your agency is already subscribed</h1>
-  <p>Please contact your agency administrator to get access to Agent Services.</p>
+@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = Messages("alreadySubscribed.title"), bodyClasses = None) {
+  <header class="page-header">
+      <h1>@Messages("alreadySubscribed.title")</h1>
+  </header>
+
+  <p>@Messages("alreadySubscribed.p1")</p>
 }

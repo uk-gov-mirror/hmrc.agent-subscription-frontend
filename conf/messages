@@ -21,5 +21,9 @@ subscriptionDetails.telephone.label=Business telephone number
 #No agency found
 noAgencyFound.title=There is no agent business linked to this account
 
+#Already subscribed
+alreadySubscribed.title=Your agency is already subscribed
+alreadySubscribed.p1=Please contact your agency administrator to get access to Agent Services.
+
 #Common
 button.startAgain=Try again
