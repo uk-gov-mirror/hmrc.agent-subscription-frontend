@@ -25,5 +25,12 @@ noAgencyFound.title=There is no agent business linked to this account
 alreadySubscribed.title=Your agency is already subscribed
 alreadySubscribed.p1=Please contact your agency administrator to get access to Agent Services.
 
+#Check agency status
+checkAgencyStatus.title=Check for duplicate Agent Services accounts
+checkAgencyStatus.p1=Your business can only have one Agent Services account.
+checkAgencyStatus.label.utr=Self Assessment UTR or Corporation Tax reference
+checkAgencyStatus.label.postcode=Postcode related to that UTR or reference
+
 #Common
 button.startAgain=Try again
+button.continue=Continue
