@@ -42,6 +42,11 @@ notSubscribed.p1=We''ve checked <strong class="bold">{0}</strong> and it doesn''
 #Subscription failed
 subscription.failed.title=Subscription failed
 
+#Invalid address
+invalidAddress.title=Invalid Address
+invalidAddress.p1=Sorry, the address is not in a format that our system can accept. Please change the address to fix the problems described below:
+invalidAddress.button.changeAddress=Change Address
+
 #Common
 button.startAgain=Try again
 button.continue=Continue
