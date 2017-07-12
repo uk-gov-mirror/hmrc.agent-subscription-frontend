@@ -58,6 +58,11 @@ nonAgent.l1=register for a new Government Gateway account, selecting the ‘Agen
 nonAgent.l2=use your new account details to log in and create your Agent Services account
 nonAgent.p2=Registering should take around 5 minutes.
 
+#Subscription complete
+subscriptionComplete.title=You''ve successfully created an Agent Services account for {0}
+subscriptionComplete.accountName=Your account number is:
+subscriptionComplete.p1=<strong>You must save this number for your agency''s records.</strong> You''ll need it later. HMRC won''t show you this number again.
+
 #Common
 button.startAgain=Try again
 button.continue=Continue
@@ -66,3 +71,4 @@ button.no=No
 button.createAccount=Create account
 button.goToGg=Go to Government Gateway
 button.register=Register now
+button.signOut=Sign out
