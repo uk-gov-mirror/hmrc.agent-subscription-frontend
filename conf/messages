@@ -1,3 +1,4 @@
+##Errors
 error.postcode.invalid = You have entered an invalid postcode
 error.postcode.blacklisted = You can''t use the postcode you''ve entered
 error.postcode.empty = You haven''t entered a postcode
@@ -8,13 +9,66 @@ error.no.ampersand = Agency name cannot contain "&"
 error.des.text.invalid = This field is limited to alphanumeric characters (A-Z, a-z, 0-9) and the following characters -,./
 error.des.text.invalid.withInput = This field {0} is limited to alphanumeric characters (A-Z, a-z, 0-9) and the following characters -,./
 
+##Confirm your agency
 confirmYourAgency.title=Is this the agent business you''re creating an account for?
+confirmYourAgency.caption=Agency details
+confirmYourAgency.heading.businessName=Name
+confirmYourAgency.heading.postcode=Postcode
+confirmYourAgency.heading.utr=UTR
 
+##Subscription details
 subscriptionDetails.title=Add your agent business''s details
 subscriptionDetails.businessName.label=Agent business name
 subscriptionDetails.email.label=Business email address
 subscriptionDetails.telephone.label=Business telephone number
 
+#No agency found
 noAgencyFound.title=There is no agent business linked to this account
 
+#Already subscribed
+alreadySubscribed.title=Your agency is already subscribed
+alreadySubscribed.p1=Please contact your agency administrator to get access to Agent Services.
+
+#Check agency status
+checkAgencyStatus.title=Check for duplicate Agent Services accounts
+checkAgencyStatus.p1=Your business can only have one Agent Services account.
+checkAgencyStatus.label.utr=Self Assessment UTR or Corporation Tax reference
+checkAgencyStatus.label.postcode=Postcode related to that UTR or reference
+
+#Not subscribed
+notSubscribed.title=You can create an Agent Services account
+notSubscribed.p1=We''ve checked <strong class="bold">{0}</strong> and it doesn''t have an Agent Services account.
+
+#Subscription failed
+subscription.failed.title=Subscription failed
+
+#Invalid address
+invalidAddress.title=Invalid Address
+invalidAddress.p1=Sorry, the address is not in a format that our system can accept. Please change the address to fix the problems described below:
+invalidAddress.button.changeAddress=Change Address
+
+#Has other enrolments
+hasOtherEnrolments.title=Create your new Agent Services account
+hasOtherEnrolments.p1=To do this your agency needs a new Government Gateway ID.
+
+#Non agent
+nonAgent.title=This isn''t an agent account
+nonAgent.p1=Before you can create your Agent Services account, you need to:
+nonAgent.l1=register for a new Government Gateway account, selecting the ‘Agents’ option
+nonAgent.l2=use your new account details to log in and create your Agent Services account
+nonAgent.p2=Registering should take around 5 minutes.
+
+#Subscription complete
+subscriptionComplete.title=You''ve successfully created an Agent Services account for {0}
+subscriptionComplete.accountName=Your account number is:
+subscriptionComplete.p1=<strong>You must save this number for your agency''s records.</strong> You''ll need it later. HMRC won''t show you this number again.
+
+#Common
 button.startAgain=Try again
+button.continue=Continue
+button.yes=Yes
+button.no=No
+button.createAccount=Create account
+button.goToGg=Go to Government Gateway
+button.register=Register now
+button.signOut=Sign out

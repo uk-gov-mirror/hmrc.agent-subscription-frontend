@@ -2,12 +2,15 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 
 @(id: String, message: String)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = "Create your new account ID and password", bodyClasses = None) {
+@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = Messages("invalidAddress.title"), bodyClasses = None) {
 
-  <h1>Invalid Address</h1>
-  <p>Sorry, the address is not in a format that our system can accept. Please change the address to fix the problems described below:</p>
+    <header class="page-header">
+        <h1>@Messages("invalidAddress.title")</h1>
+    </header>
 
-  <p>@message</p>
+    <p>@Messages("invalidAddress.p1")</p>
 
-  <a class="button" href="@SubscriptionController.beginJourney(id)" role="button">Change Address</a>
+    <p>@message</p>
+
+    <a class="button" href="@SubscriptionController.beginJourney(id)" role="button">@Messages("invalidAddress.button.changeAddress")</a>
 }

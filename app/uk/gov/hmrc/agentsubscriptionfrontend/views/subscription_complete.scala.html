@@ -2,22 +2,17 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes.SignedOutController
 @(agencyName: String, arn: String)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = "You've successfully created an Agent Services account", bodyClasses = None) {
-<div class="grid-row">
-    <div class="column-two-thirds">
+@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = Messages("subscriptionComplete.title", agencyName), bodyClasses = None) {
 
-        <div class="transaction-banner--complete">
-            <h1 class="bold-large">You've successfully created an Agent Services account for @agencyName</h1>
-            <p>
-                Your account number is: <br>
-                <strong class="heading-medium">@arn</strong>
-            </p>
-        </div>
-
-        <p><strong>You must save this number for your agency's records.</strong> You'll need it later. HMRC won't show you this number again.</p>
-
-            <a href="@SignedOutController.startSurvey" class="button">Sign out</a>
-        </div>
+    <div class="transaction-banner--complete">
+        <h1 class="transaction-banner__heading">@Messages("subscriptionComplete.title", agencyName)</h1>
+        <p>
+            @Messages("subscriptionComplete.accountName")<br>
+            <strong class="heading-medium">@arn</strong>
+        </p>
     </div>
-</div>
+
+    <p class="panel-indent">@Html(Messages("subscriptionComplete.p1"))</p>
+
+    <a href="@SignedOutController.startSurvey" class="button" id="buttonSignOut">@Messages("button.signOut")</a>
 }

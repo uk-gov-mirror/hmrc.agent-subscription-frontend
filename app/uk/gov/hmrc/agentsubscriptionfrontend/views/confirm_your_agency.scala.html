@@ -4,29 +4,28 @@
 @(registrationName: String, postcode: String, utr: Utr, nextPageUrl: String)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = Messages("confirmYourAgency.title"), bodyClasses = None) {
-  <h1>@Messages("confirmYourAgency.title")</h1>
+    <header class="page-header">
+        <h1>@Messages("confirmYourAgency.title")</h1>
+    </header>
 
-  <table class="form-group">
-    <thead>
-    <tr>
-      <th colspan="2"><span class="visuallyhidden">Agency details</span></th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr>
-      <td>Name</td>
-      <td id="registration-name">@registrationName</td>
-    </tr>
-    <tr>
-      <td>Postcode</td>
-      <td id="postcode">@postcode</td>
-    </tr>
-    <tr>
-      <td>UTR</td>
-      <td id="utr">@{utr.value}</td>
-    </tr>
-    </tbody>
-  </table>
-  <a id="continue" class="button" href="@nextPageUrl">Yes</a>
-  <a id="return" class="button--secondary" href="@CheckAgencyController.showCheckAgencyStatus">No</a>
+    <table class="form-group">
+        <caption class="visuallyhidden">@Messages("confirmYourAgency.caption")</caption>
+        <tbody>
+            <tr>
+                <th>@Messages("confirmYourAgency.heading.businessName")</th>
+                <td id="registration-name">@registrationName</td>
+            </tr>
+            <tr>
+                <th>@Messages("confirmYourAgency.heading.postcode")</th>
+                <td id="postcode">@postcode</td>
+            </tr>
+            <tr>
+                <th>@Messages("confirmYourAgency.heading.utr")</th>
+                <td id="utr">@{utr.value}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <a id="continue" class="button" href="@nextPageUrl">@Messages("button.yes")</a>
+    <a id="return" class="button--secondary" href="@CheckAgencyController.showCheckAgencyStatus">@Messages("button.no")</a>
 }
