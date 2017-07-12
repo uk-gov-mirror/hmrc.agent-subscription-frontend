@@ -7,36 +7,50 @@
 
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = Messages("subscriptionDetails.title"), bodyClasses = None) {
 
-<h1>@Messages("subscriptionDetails.title")</h1>
+    <header class="page-header">
+        <h1>@Messages("subscriptionDetails.title")</h1>
+    </header>
 
-  @form(
-    action = SubscriptionController.getAddressDetails,
-    'class -> "form js-form") {
+    @form(
+        action = SubscriptionController.getAddressDetails,
+        'class -> "form js-form") {
 
-<fieldset class="form-group">
+            <fieldset class="form-field-group">
 
-    <div class="form-field">
-        @input(detailsForm("name"), '_label -> Messages("subscriptionDetails.businessName.label"), '_inputClass -> "input--medium input--cleared")
-    </div>
+                <div class="form-field">
+                    @input(
+                        detailsForm("name"),
+                        '_label -> Messages("subscriptionDetails.businessName.label"),
+                        '_inputClass -> "input--medium input--cleared",
+                        '_labelClass -> "bold"
+                    )
+                </div>
 
+                <div class="form-field">
+                    @input(
+                        detailsForm("email"),
+                        '_label -> Messages("subscriptionDetails.email.label"),
+                        '_inputClass -> "input--medium input--cleared",
+                        '_labelClass -> "bold"
+                    )
+                </div>
 
-      <div class="form-field">
-        @input(detailsForm("email"), '_label -> Messages("subscriptionDetails.email.label"), '_inputClass -> "input--medium input--cleared")
-      </div>
+                <div class="form-field">
+                    @input(
+                        detailsForm("telephone"),
+                        '_label -> Messages("subscriptionDetails.telephone.label"),
+                        '_inputClass -> "input--medium input--cleared",
+                        '_labelClass -> "bold"
+                    )
+                </div>
 
-      <div class="form-field">
-       @input(detailsForm("telephone"), '_label -> Messages("subscriptionDetails.telephone.label"), '_inputClass -> "input--medium input--cleared")
-      </div>
+            </fieldset>
 
+            @input(detailsForm("knownFactsPostcode"), '_type -> "hidden")
+            @input(detailsForm("utr"), '_type -> "hidden")
 
-
-</fieldset>
-
-@input(detailsForm("knownFactsPostcode"), '_type -> "hidden")
-@input(detailsForm("utr"), '_type -> "hidden")
-
-<div class="form-field">
-    <input class="button" type="submit" id="subscribe" value="Continue">
-</div>
-}
+            <div class="form-field">
+                <button class="button" type="submit" id="subscribe">@Messages("button.continue")</button>
+            </div>
+    }
 }
