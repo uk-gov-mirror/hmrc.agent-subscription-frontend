@@ -57,6 +57,35 @@ object SampleUsers {
     """.stripMargin
   )
 
+  private val subscribingAgentOid2 = "1234567899"
+  private val subscribingAgentUserDetailsLink2: String = s"/user-details/id/$subscribingAgentOid2"
+  def subscribingAgent2(implicit wireMockBaseUrl: WireMockBaseUrl) = SampleUser(
+    s"""
+       |{
+       |  "uri": "/auth/oid/$subscribingAgentOid2",
+       |  "userDetailsLink": "$subscribingAgentUserDetailsLink2",
+       |  "loggedInAt": "2015-01-19T11:10:33.921Z",
+       |  "credentials": {
+       |    "gatewayId": "cred-id-12340",
+       |    "idaPids": []
+       |  },
+       |  "accounts": {
+       |    "version": 1
+       |  },
+       |  "lastUpdated": "2015-01-19T11:11:33.923Z",
+       |  "credentialStrength": "weak",
+       |  "confidenceLevel": 50,
+       |  "enrolments": "/auth/oid/$subscribingAgentOid2/enrolments",
+       |  "legacyOid": "$subscribingAgentOid2"
+       |}
+    """.stripMargin,
+    userDetailsJson = s"""
+                         |{
+                         |  "affinityGroup": "Agent"
+                         |}
+    """.stripMargin
+  )
+
   private val individualOid = "234567891"
   private val individualUserDetailsLink: String = s"/user-details/id/$individualOid"
   def individual(implicit wireMockBaseUrl: WireMockBaseUrl) = SampleUser(

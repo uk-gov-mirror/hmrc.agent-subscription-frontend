@@ -141,6 +141,33 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         flash(result2).get("arn") shouldBe Some("ARN00001")
       }
 
+      "all fields are supplied by concurrent users" in {
+        AuthStub.hasNoEnrolments(subscribingAgent)
+        AgentSubscriptionStub.subscriptionSuccess(utr, subscriptionRequest())
+
+        givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
+
+        val result = await(controller.getAddressDetails(subscriptionDetailsRequest()))
+        status(result) shouldBe 303
+        redirectLocation(result).head shouldBe "/api/dummy/callback"
+
+        AuthStub.hasNoEnrolments(subscribingAgent2)
+        AgentSubscriptionStub.subscriptionSuccess(utr, subscriptionRequest2())
+
+        val result2 = await(controller.getAddressDetails(subscriptionDetailsRequest2()))
+        status(result2) shouldBe 303
+        redirectLocation(result).head shouldBe "/api/dummy/callback"
+
+        givenAddressLookupReturnsAddress("addr1")
+        val result3 = await(controller.submit("addr1")(authenticatedRequest()))
+
+        status(result3) shouldBe 303
+        redirectLocation(result3).head shouldBe routes.SubscriptionController.showSubscriptionComplete().url
+        sessionStoreService.removeCalled shouldBe true
+        flash(result3).get("agencyName") shouldBe Some("My Agency")
+        flash(result3).get("arn") shouldBe Some("ARN00001")
+      }
+
       "county is omitted" in {
         AuthStub.hasNoEnrolments(subscribingAgent)
         AgentSubscriptionStub.subscriptionSuccess(utr, subscriptionRequest(county = ""))
@@ -400,5 +427,29 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
           countryCode = "GB"),
         email = "agency@example.com",
         telephone = "0123 456 7890"))
+
+  private def subscriptionDetailsRequest2(keyToRemove: String = "", additionalParameters: Seq[(String, String)] = Seq()) =
+    authenticatedRequest().withFormUrlEncodedBody(
+      Seq(
+        "utr" -> utr.value,
+        "knownFactsPostcode" -> "BA1 2AA",
+        "name" -> "My Agency 2",
+        "email" -> "agency2@example.com",
+        "telephone" -> "0123 456 7899"
+      )
+        .filter(_._1 != keyToRemove) ++ additionalParameters: _*
+    )
+
+  private def subscriptionRequest2(town: String = "Sometown", county: String = "County", postcode: String = "AA1 1AA") =
+    SubscriptionRequest(utr = utr,
+      knownFacts = ModelKnownFacts("BA1 2AA"),
+      agency = Agency(name = "My Agency 2",
+        address = Address(addressLine1 = "1 Some Street",
+          addressLine2 = Some(town),
+          addressLine3 = Some(county),
+          postcode = Some(postcode),
+          countryCode = "GB"),
+        email = "agency2@example.com",
+        telephone = "0123 456 7899"))
 
 }
