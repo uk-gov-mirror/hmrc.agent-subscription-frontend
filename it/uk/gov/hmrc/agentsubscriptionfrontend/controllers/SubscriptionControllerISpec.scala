@@ -141,44 +141,6 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         flash(result2).get("arn") shouldBe Some("ARN00001")
       }
 
-      "all fields are supplied by concurrent users" in {
-        AuthStub.hasNoEnrolments(subscribingAgent)
-        AgentSubscriptionStub.subscriptionSuccess(utr, subscriptionRequest())
-
-        givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
-
-        val result = await(controller.getAddressDetails(subscriptionDetailsRequest()))
-        status(result) shouldBe 303
-        redirectLocation(result).head shouldBe "/api/dummy/callback"
-
-        AuthStub.hasNoEnrolments(subscribingAgent2)
-        AgentSubscriptionStub.subscriptionSuccess(utr, subscriptionRequest2(), "ARN00002")
-
-        val result2 = await(controller.getAddressDetails(subscriptionDetailsRequest2()))
-        status(result2) shouldBe 303
-        redirectLocation(result).head shouldBe "/api/dummy/callback"
-
-        givenAddressLookupReturnsAddress("addr1")
-        val result3 = await(controller.submit("addr1")(authenticatedRequest()))
-
-        status(result3) shouldBe 303
-        redirectLocation(result3).head shouldBe routes.SubscriptionController.showSubscriptionComplete().url
-
-        sessionStoreService.allSessionsRemoved shouldBe false
-        flash(result3).get("agencyName") shouldBe Some("My Agency")
-        flash(result3).get("arn") shouldBe Some("ARN00001")
-
-        givenAddressLookupReturnsAddress("addr2")
-        val result4 = await(controller.submit("addr2")(authenticatedRequest(user = subscribingAgent2)))
-
-        status(result4) shouldBe 303
-        redirectLocation(result4).head shouldBe routes.SubscriptionController.showSubscriptionComplete().url
-
-        sessionStoreService.allSessionsRemoved shouldBe true
-        flash(result4).get("agencyName") shouldBe Some("My Agency 2")
-        flash(result4).get("arn") shouldBe Some("ARN00002")
-      }
-
       "county is omitted" in {
         AuthStub.hasNoEnrolments(subscribingAgent)
         AgentSubscriptionStub.subscriptionSuccess(utr, subscriptionRequest(county = ""))
@@ -215,6 +177,44 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         status(result2) shouldBe 303
         redirectLocation(result2).head shouldBe routes.SubscriptionController.showSubscriptionComplete().url
       }
+    }
+
+    "not mix up data from concurrent users" in {
+      AuthStub.hasNoEnrolments(subscribingAgent)
+      AgentSubscriptionStub.subscriptionSuccess(utr, subscriptionRequest())
+
+      givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
+
+      val user1Result1 = await(controller.getAddressDetails(subscriptionDetailsRequest()))
+      status(user1Result1) shouldBe 303
+      redirectLocation(user1Result1).head shouldBe "/api/dummy/callback"
+
+      AuthStub.hasNoEnrolments(subscribingAgent2)
+      AgentSubscriptionStub.subscriptionSuccess(utr, subscriptionRequest2(), "ARN00002")
+
+      val user2Result1 = await(controller.getAddressDetails(subscriptionDetailsRequest2()))
+      status(user2Result1) shouldBe 303
+      redirectLocation(user1Result1).head shouldBe "/api/dummy/callback"
+
+      givenAddressLookupReturnsAddress("addr1")
+      val user1Result2 = await(controller.submit("addr1")(authenticatedRequest()))
+
+      status(user1Result2) shouldBe 303
+      redirectLocation(user1Result2).head shouldBe routes.SubscriptionController.showSubscriptionComplete().url
+
+      sessionStoreService.allSessionsRemoved shouldBe false
+      flash(user1Result2).get("agencyName") shouldBe Some("My Agency")
+      flash(user1Result2).get("arn") shouldBe Some("ARN00001")
+
+      givenAddressLookupReturnsAddress("addr2")
+      val user2Result2 = await(controller.submit("addr2")(authenticatedRequest(user = subscribingAgent2)))
+
+      status(user2Result2) shouldBe 303
+      redirectLocation(user2Result2).head shouldBe routes.SubscriptionController.showSubscriptionComplete().url
+
+      sessionStoreService.allSessionsRemoved shouldBe true
+      flash(user2Result2).get("agencyName") shouldBe Some("My Agency 2")
+      flash(user2Result2).get("arn") shouldBe Some("ARN00002")
     }
 
     "redirect to subscription failed" when {
