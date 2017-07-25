@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.support
 
-import uk.gov.hmrc.agentsubscriptionfrontend.models.KnownFactsResult
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{InitialDetails, KnownFactsResult}
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.play.http.HeaderCarrier
 
@@ -26,17 +26,27 @@ class TestSessionStoreService extends SessionStoreService(null) {
   var knownFactsResult: Option[KnownFactsResult] = None
   var removeCalled: Boolean = false
 
+  var initialDetails: Option[InitialDetails] = None
+
   def reset(): Unit = {
     knownFactsResult = None
+    initialDetails = None
     removeCalled = false
   }
 
   override def fetchKnownFactsResult(implicit hc: HeaderCarrier): Future[Option[KnownFactsResult]] = Future successful knownFactsResult
 
   override def cacheKnownFactsResult(knownFactsResult: KnownFactsResult)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
-    Future {
+    Future.successful(
       this.knownFactsResult = Some(knownFactsResult)
-    }
+    )
+
+  override def fetchInitialDetails(implicit hc: HeaderCarrier): Future[Option[InitialDetails]] = Future.successful(initialDetails)
+
+  override def cacheInitialDetails(details: InitialDetails)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
+    Future.successful(
+      this.initialDetails = Some(details)
+    )
 
   override def remove()(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
     Future {

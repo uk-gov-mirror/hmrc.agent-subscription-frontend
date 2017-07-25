@@ -342,6 +342,19 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
         checkHtmlResultWithBodyText(result, htmlEscapedMessage("error.postcode.blacklisted"))
       }
 
+      "initial details are missing" in {
+        AuthStub.hasNoEnrolments(subscribingAgent)
+        sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)
+        sessionStoreService.initialDetails = None
+
+        givenAddressLookupReturnsAddress("addr1")
+        val result = await(controller.submit("addr1")(authenticatedRequest()))
+
+        status(result) shouldBe 303
+        redirectLocation(result).head shouldBe routes.SubscriptionController.showSubscriptionDetails().url
+        sessionStoreService.removeCalled shouldBe true
+      }
+
       "known facts postcode is not valid" in {
         AuthStub.hasNoEnrolments(subscribingAgent)
         sessionStoreService.knownFactsResult = Some(myAgencyKnownFactsResult)

@@ -18,7 +18,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.service
 
 import javax.inject.{Inject, Singleton}
 
-import uk.gov.hmrc.agentsubscriptionfrontend.models.KnownFactsResult
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{InitialDetails, KnownFactsResult}
 import uk.gov.hmrc.http.cache.client.SessionCache
 import uk.gov.hmrc.play.http.HeaderCarrier
 
@@ -32,6 +32,12 @@ class SessionStoreService @Inject() (sessionCache: SessionCache) {
 
   def cacheKnownFactsResult(knownFactsResult: KnownFactsResult)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
     sessionCache.cache("knownFactsResult", knownFactsResult).map(_ => ())
+
+  def fetchInitialDetails(implicit hc: HeaderCarrier): Future[Option[InitialDetails]] =
+    sessionCache.fetchAndGetEntry[InitialDetails]("initialDetails")
+
+  def cacheInitialDetails(details: InitialDetails)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
+    sessionCache.cache("initialDetails", details).map(_ => ())
 
   def remove()(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
     sessionCache.remove().map(_ => ())
