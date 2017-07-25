@@ -135,7 +135,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
     "redirect to confirm agency page and store known facts result in the session store when a matching registration is found for the UTR and postcode" in {
       AgentSubscriptionStub.withMatchingUtrAndPostcode(validUtr, validPostcode)
       AuthStub.hasNoEnrolments(subscribingAgent)
-      implicit implicit val request = authenticatedRequest()
+      implicit val request = authenticatedRequest()
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
 
