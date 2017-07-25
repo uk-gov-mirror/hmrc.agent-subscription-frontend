@@ -14,7 +14,7 @@ trait EndpointBehaviours {
   type PlayRequest = Request[AnyContent] => Result
   private implicit val materializer = app.materializer
 
-  protected def authenticatedRequest(): FakeRequest[AnyContentAsEmpty.type]
+  protected def authenticatedRequest(user: SampleUser = subscribingAgent): FakeRequest[AnyContentAsEmpty.type]
 
   protected def anAgentAffinityGroupOnlyEndpoint(doRequest: PlayRequest): Unit = {
     "redirect to the company-auth-frontend sign-in page if the current user is not logged in" in {
@@ -65,7 +65,7 @@ trait EndpointBehaviours {
 
       AuthStub.passcodeAuthorisationFails()
 
-      val request = authenticatedRequest()
+      implicit val request = authenticatedRequest()
       val result = await(doRequest(request))
 
       status(result) shouldBe 303
@@ -77,7 +77,7 @@ trait EndpointBehaviours {
 
       val sessionKeys = AuthStub.passcodeAuthorisationSucceeds()
 
-      val request = authenticatedRequest().withSession(sessionKeys: _*)
+      implicit val request = authenticatedRequest().withSession(sessionKeys: _*)
       val result = await(doRequest(request))
 
       redirectLocation(result) match {

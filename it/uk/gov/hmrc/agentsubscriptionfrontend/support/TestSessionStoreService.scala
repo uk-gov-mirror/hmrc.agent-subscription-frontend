@@ -23,34 +23,51 @@ import uk.gov.hmrc.play.http.HeaderCarrier
 import scala.concurrent.{ExecutionContext, Future}
 
 class TestSessionStoreService extends SessionStoreService(null) {
-  var knownFactsResult: Option[KnownFactsResult] = None
-  var removeCalled: Boolean = false
 
-  var initialDetails: Option[InitialDetails] = None
+  class Session (
+    var knownFactsResult: Option[KnownFactsResult] = None,
+    var initialDetails: Option[InitialDetails] = None
+  )
 
-  def reset(): Unit = {
-    knownFactsResult = None
-    initialDetails = None
-    removeCalled = false
+  private val sessions = collection.mutable.Map[String,Session]()
+
+  private def sessionKey(implicit hc: HeaderCarrier): String = hc.userId match {
+      case None => "default"
+      case Some(userId) => userId.toString
+    }
+
+  def currentSession(implicit hc: HeaderCarrier): Session = {
+    sessions.getOrElseUpdate(sessionKey, new Session())
   }
 
-  override def fetchKnownFactsResult(implicit hc: HeaderCarrier): Future[Option[KnownFactsResult]] = Future successful knownFactsResult
+  def clear():Unit = {
+    sessions.clear()
+  }
+
+  def allSessionsRemoved: Boolean = {
+    sessions.isEmpty
+  }
+
+  override def fetchKnownFactsResult(implicit hc: HeaderCarrier): Future[Option[KnownFactsResult]] = {
+    Future successful currentSession.knownFactsResult
+  }
 
   override def cacheKnownFactsResult(knownFactsResult: KnownFactsResult)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
     Future.successful(
-      this.knownFactsResult = Some(knownFactsResult)
+      currentSession.knownFactsResult = Some(knownFactsResult)
     )
 
-  override def fetchInitialDetails(implicit hc: HeaderCarrier): Future[Option[InitialDetails]] = Future.successful(initialDetails)
+  override def fetchInitialDetails(implicit hc: HeaderCarrier): Future[Option[InitialDetails]] = {
+    Future successful currentSession.initialDetails
+  }
 
   override def cacheInitialDetails(details: InitialDetails)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
     Future.successful(
-      this.initialDetails = Some(details)
+      currentSession.initialDetails = Some(details)
     )
 
   override def remove()(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
     Future {
-      reset()
-      removeCalled = true
+      sessions.remove(sessionKey)
     }
 }

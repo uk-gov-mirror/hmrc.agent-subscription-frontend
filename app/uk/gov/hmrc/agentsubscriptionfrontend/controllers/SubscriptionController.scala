@@ -75,8 +75,6 @@ class SubscriptionController @Inject()
   private val JourneyName: String = appConfig.journeyName
   private val blacklistedPostCodes: Set[String] = appConfig.blacklistedPostcodes
 
-  private val MISSING_SESSION_DATA = 1000 // Error code used when the session data is missing for initial details
-
   private val subscriptionDetails = Form[InitialDetails](
     mapping(
       "utr" -> utr,
@@ -86,6 +84,10 @@ class SubscriptionController @Inject()
       "telephone" -> telephone
     )(InitialDetails.apply)(InitialDetails.unapply)
   )
+
+  private sealed trait SubscriptionFailed extends Product with Serializable
+  private final case class SubscriptionReturnedHttpError(httpStatusCode: Int) extends SubscriptionFailed
+  private final case object MissingSessionData extends SubscriptionFailed
 
   private def hasEnrolments(implicit request: AgentRequest[_]): Boolean = request.enrolments.nonEmpty
 
@@ -109,11 +111,12 @@ class SubscriptionController @Inject()
         import Address._
         import SubscriptionDetails._
 
-        def subscribe(details: InitialDetails, address: Address): Future[Either[Int, (Arn, String)]] = {
+        def subscribe(details: InitialDetails,
+                      address: Address): Future[Either[SubscriptionFailed, (Arn, String)]] = {
           val subscriptionDetails = mapper(details, address)
           subscriptionService.subscribeAgencyToMtd(subscriptionDetails) map {
             case Right(arn) => Right((arn, subscriptionDetails.name))
-            case Left(x) => Left(x)
+            case Left(x) => Left(SubscriptionReturnedHttpError(x))
           }
         }
 
@@ -128,7 +131,7 @@ class SubscriptionController @Inject()
                 detailsOpt <- sessionStoreService.fetchInitialDetails
                 subscriptionResponse <- detailsOpt match {
                   case Some(details) => subscribe(details, address)
-                  case None => Future.successful(Left(MISSING_SESSION_DATA))
+                  case None => Future.successful(Left(MissingSessionData))
                 }
                 _ <- sessionStoreService.remove()
               } yield subscriptionResponse
@@ -136,9 +139,9 @@ class SubscriptionController @Inject()
               subscriptionResponse.map {
                 case Right((arn, agencyName)) => Redirect(routes.SubscriptionController.showSubscriptionComplete())
                   .flashing("arn" -> arn.arn, "agencyName" -> agencyName)
-                case Left(CONFLICT) => Redirect(routes.CheckAgencyController.showAlreadySubscribed())
-                case Left(FORBIDDEN) => Redirect(routes.SubscriptionController.showSubscriptionFailed())
-                case Left(MISSING_SESSION_DATA) => Redirect(routes.SubscriptionController.showSubscriptionDetails())
+                case Left(SubscriptionReturnedHttpError(CONFLICT)) => Redirect(routes.CheckAgencyController.showAlreadySubscribed())
+                case Left(SubscriptionReturnedHttpError(FORBIDDEN)) => Redirect(routes.SubscriptionController.showSubscriptionFailed())
+                case Left(MissingSessionData) => sessionMissingRedirect()
                 case Left(error) => InternalServerError(s"Unknown error code from agent-subscription $error")
               }
           }
