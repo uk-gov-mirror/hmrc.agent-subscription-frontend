@@ -43,7 +43,7 @@ class StartControllerISpec extends BaseControllerISpec {
 
   "showNonAgentNextSteps" should {
     "display the non-agent next steps page if the current user is logged in" in {
-      val request = authenticatedRequest()
+      implicit val request = authenticatedRequest()
       val result = await(controller.showNonAgentNextSteps(request))
 
       status(result) shouldBe OK

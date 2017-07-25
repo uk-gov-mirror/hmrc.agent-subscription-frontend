@@ -18,7 +18,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.service
 
 import play.api.libs.json.{JsValue, Reads, Writes}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
-import uk.gov.hmrc.agentsubscriptionfrontend.models.KnownFactsResult
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{InitialDetails, KnownFactsResult}
 import uk.gov.hmrc.http.cache.client.{CacheMap, NoSessionException, SessionCache}
 import uk.gov.hmrc.play.http.logging.SessionId
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
@@ -47,6 +47,22 @@ class SessionStoreServiceSpec extends UnitSpec {
       val store = new SessionStoreService(new TestSessionCache())
 
       await(store.fetchKnownFactsResult) shouldBe None
+    }
+
+    "store initial details" in {
+      val store = new SessionStoreService(new TestSessionCache())
+
+      val details = InitialDetails(Utr("9876543210"), "AA11AA", "My Agency", "agency@example.com", "0123 456 7890")
+
+      await(store.cacheInitialDetails(details))
+
+      await(store.fetchInitialDetails) shouldBe Some(details)
+    }
+
+    "return None when no initial details have been stored" in {
+      val store = new SessionStoreService(new TestSessionCache())
+
+      await(store.fetchInitialDetails) shouldBe None
     }
 
     "remove the underlying storage for the current session when remove is called" in {

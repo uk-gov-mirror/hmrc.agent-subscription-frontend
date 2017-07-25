@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentsubscriptionfrontend.controllers
+package uk.gov.hmrc.agentsubscriptionfrontend.models
 
-import play.api.Logger
-import play.api.mvc.{Result, Results}
+import play.api.libs.json.Json
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 
-trait SessionDataMissing {
-  this: Results =>
+case class InitialDetails(utr: Utr,
+                          knownFactsPostcode: String,
+                          name: String,
+                          email: String,
+                          telephone: String)
 
-  def sessionMissingRedirect(): Result = {
-    Logger.warn("No KnownFactsResult and/or InitialDetails in session store, redirecting back to check-agency-status")
-    Redirect(routes.CheckAgencyController.showCheckAgencyStatus())
-  }
+object InitialDetails {
+  implicit val format = Json.format[InitialDetails]
 }

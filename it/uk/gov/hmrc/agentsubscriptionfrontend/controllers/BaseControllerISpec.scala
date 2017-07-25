@@ -12,7 +12,8 @@ import play.twirl.api.HtmlFormat
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUsers._
-import uk.gov.hmrc.agentsubscriptionfrontend.support.{EndpointBehaviours, TestSessionStoreService, WireMockSupport}
+import uk.gov.hmrc.agentsubscriptionfrontend.support.{EndpointBehaviours, SampleUser, TestSessionStoreService, WireMockSupport}
+import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 
 abstract class BaseControllerISpec extends UnitSpec with OneAppPerSuite with WireMockSupport with EndpointBehaviours {
@@ -42,13 +43,13 @@ abstract class BaseControllerISpec extends UnitSpec with OneAppPerSuite with Wir
 
   override protected def beforeEach(): Unit = {
     super.beforeEach()
-    sessionStoreService.reset()
+    sessionStoreService.clear()
   }
 
   protected implicit val materializer = app.materializer
 
-  protected def authenticatedRequest(): FakeRequest[AnyContentAsEmpty.type] = {
-    val sessionKeys = AuthStub.userIsAuthenticated(subscribingAgent)
+  protected def authenticatedRequest(user: SampleUser = subscribingAgent): FakeRequest[AnyContentAsEmpty.type] = {
+    val sessionKeys = AuthStub.userIsAuthenticated(user)
     FakeRequest().withSession(sessionKeys: _*)
   }
 
@@ -64,4 +65,9 @@ abstract class BaseControllerISpec extends UnitSpec with OneAppPerSuite with Wir
   private implicit val messages: Messages = messagesApi.preferred(Seq.empty[Lang])
 
   protected def htmlEscapedMessage(key: String): String = HtmlFormat.escape(Messages(key)).toString
+
+  implicit def hc(implicit request: FakeRequest[_]): HeaderCarrier = HeaderCarrier.fromHeadersAndSession(request.headers, Some(request.session))
+
 }
+
+

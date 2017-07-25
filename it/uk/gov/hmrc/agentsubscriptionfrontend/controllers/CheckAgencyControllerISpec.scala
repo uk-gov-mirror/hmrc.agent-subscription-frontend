@@ -68,7 +68,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
     "return a 200 response to redisplay the form with an error message for invalidly-formatted UTR" in {
       val invalidUtr = "0123456"
       AuthStub.hasNoEnrolments(subscribingAgent)
-      val request = authenticatedRequest()
+      implicit val request = authenticatedRequest()
         .withFormUrlEncodedBody("utr" -> invalidUtr, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
 
@@ -83,7 +83,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
     "return a 200 response to redisplay the form with an error message for UTR failing to pass Modulus11Check" in {
       val invalidUtr = "2000000001" // Modulus11Check validation fails in this case
       AuthStub.hasNoEnrolments(subscribingAgent)
-      val request = authenticatedRequest()
+      implicit val request = authenticatedRequest()
         .withFormUrlEncodedBody("utr" -> invalidUtr, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
 
@@ -97,7 +97,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
 
     "return a 200 response to redisplay the form with an error message for invalidly-formatted postcode" in {
       AuthStub.hasNoEnrolments(subscribingAgent)
-      val request = authenticatedRequest()
+      implicit val request = authenticatedRequest()
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> invalidPostcode)
       val result = await(controller.checkAgencyStatus(request))
 
@@ -111,7 +111,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
 
     "return a 200 response to redisplay the form with an error message for empty form parameters" in {
       AuthStub.hasNoEnrolments(subscribingAgent)
-      val request = authenticatedRequest()
+      implicit val request = authenticatedRequest()
         .withFormUrlEncodedBody("utr" -> "", "postcode" -> "")
       val result = await(controller.checkAgencyStatus(request))
 
@@ -124,7 +124,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
     "redirect to no-agency-found page when no matching registration found by agent-subscription" in {
       AuthStub.hasNoEnrolments(subscribingAgent)
       AgentSubscriptionStub.withNonMatchingUtrAndPostcode(validUtr, validPostcode)
-      val request = authenticatedRequest()
+      implicit val request = authenticatedRequest()
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
 
@@ -135,44 +135,44 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
     "redirect to confirm agency page and store known facts result in the session store when a matching registration is found for the UTR and postcode" in {
       AgentSubscriptionStub.withMatchingUtrAndPostcode(validUtr, validPostcode)
       AuthStub.hasNoEnrolments(subscribingAgent)
-      val request = authenticatedRequest()
+      implicit val request = authenticatedRequest()
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showConfirmYourAgency().url)
 
-      sessionStoreService.knownFactsResult shouldBe Some(KnownFactsResult(validUtr, validPostcode, "My Agency", isSubscribedToAgentServices = false))
+      sessionStoreService.currentSession.knownFactsResult shouldBe Some(KnownFactsResult(validUtr, validPostcode, "My Agency", isSubscribedToAgentServices = false))
     }
 
     "store isSubscribedToAgentServices = false in session when the business registration found by agent-subscription is not already subscribed" in {
       AgentSubscriptionStub.withMatchingUtrAndPostcode(validUtr, validPostcode)
       AuthStub.hasNoEnrolments(subscribingAgent)
-      val request = authenticatedRequest()
+      implicit val request = authenticatedRequest()
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showConfirmYourAgency().url)
-      sessionStoreService.knownFactsResult.get.isSubscribedToAgentServices shouldBe false
+      sessionStoreService.currentSession.knownFactsResult.get.isSubscribedToAgentServices shouldBe false
     }
 
     "store isSubscribedToAgentServices = true in session when the business registration found by agent-subscription is already subscribed" in {
       AgentSubscriptionStub.withMatchingUtrAndPostcode(validUtr, validPostcode, isSubscribedToAgentServices = true)
       AuthStub.hasNoEnrolments(subscribingAgent)
-      val request = authenticatedRequest()
+      implicit val request = authenticatedRequest()
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showConfirmYourAgency().url)
-      sessionStoreService.knownFactsResult.get.isSubscribedToAgentServices shouldBe true
+      sessionStoreService.currentSession.knownFactsResult.get.isSubscribedToAgentServices shouldBe true
     }
 
     "propagate an exception when there is no organisation name" in {
       AgentSubscriptionStub.withNoOrganisationName(validUtr, validPostcode)
       AuthStub.hasNoEnrolments(subscribingAgent)
-      val request = authenticatedRequest()
+      implicit val request = authenticatedRequest()
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val e = intercept[IllegalStateException] {
         await(controller.checkAgencyStatus(request))
@@ -233,10 +233,11 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
       val utr = Utr("0123456789")
       val postcode = "AA11AA"
       val registrationName = "My Agency"
-      sessionStoreService.knownFactsResult = Some(
+
+      implicit val request = authenticatedRequest()
+      sessionStoreService.currentSession.knownFactsResult = Some(
         KnownFactsResult(utr = utr, postcode = postcode, taxpayerName = registrationName, isSubscribedToAgentServices = false))
       AuthStub.hasNoEnrolments(subscribingAgent)
-      val request = authenticatedRequest()
 
       val result = await(controller.showConfirmYourAgency(request))
 
@@ -247,9 +248,9 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
 
     "show a button which allows the user to return to Check Agency Status page" in {
       AuthStub.hasNoEnrolments(subscribingAgent)
-      sessionStoreService.knownFactsResult = Some(
-        KnownFactsResult(utr = Utr("0123456789"), postcode = "AA11AA", taxpayerName = "My Agency", isSubscribedToAgentServices = false))
-      val request = authenticatedRequest()
+      implicit val request = authenticatedRequest()
+      sessionStoreService.currentSession.knownFactsResult = Some(
+      KnownFactsResult(utr = Utr("0123456789"), postcode = "AA11AA", taxpayerName = "My Agency", isSubscribedToAgentServices = false))
 
       val result = await(controller.showConfirmYourAgency(request))
 
@@ -258,9 +259,9 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
 
     "show a link to the Not Yet Subscribed page if isSubscribedToAgentServices=false" in {
       AuthStub.hasNoEnrolments(subscribingAgent)
-      sessionStoreService.knownFactsResult = Some(
-        KnownFactsResult(utr = Utr("0123456789"), postcode = "AA11AA", taxpayerName = "My Agency", isSubscribedToAgentServices = false))
-      val request = authenticatedRequest()
+      implicit val request = authenticatedRequest()
+      sessionStoreService.currentSession.knownFactsResult = Some(
+      KnownFactsResult(utr = Utr("0123456789"), postcode = "AA11AA", taxpayerName = "My Agency", isSubscribedToAgentServices = false))
 
       val result = await(controller.showConfirmYourAgency(request))
 
@@ -269,7 +270,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
 
     "redirect to the Check Agency Status page if there is no KnownFactsResult in session because the user has returned to a bookmark" in {
       AuthStub.hasNoEnrolments(subscribingAgent)
-      val request = authenticatedRequest()
+      implicit val request = authenticatedRequest()
 
       val result = await(controller.showConfirmYourAgency(request))
 
@@ -296,10 +297,11 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
 
     "display the not subscribed page if the current user is logged in and has affinity group = Agent" in {
       AuthStub.hasNoEnrolments(subscribingAgent)
-      sessionStoreService.knownFactsResult = Some(
+      implicit val request = authenticatedRequest()
+      sessionStoreService.currentSession.knownFactsResult = Some(
         KnownFactsResult(utr = Utr("0123456789"), postcode = "AA11AA", taxpayerName = "My Agency", isSubscribedToAgentServices = true))
 
-      val result = await(controller.showNotSubscribed(authenticatedRequest()))
+      val result = await(controller.showNotSubscribed(request))
 
       checkHtmlResultWithBodyText(result,
         "it doesn't have an Agent Services account",
@@ -309,7 +311,7 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
 
     "redirect to the Check Agency Status page if there is no KnownFactsResult in session because the user has returned to a bookmark" in {
       AuthStub.hasNoEnrolments(subscribingAgent)
-      val request = authenticatedRequest()
+      implicit val request = authenticatedRequest()
 
       val result = await(controller.showNotSubscribed(request))
 

@@ -29,7 +29,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.auth.{AgentRequest, AuthActions}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AddressLookUpConnector
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.FieldMappings._
-import uk.gov.hmrc.agentsubscriptionfrontend.models.Address
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{Address, Arn, InitialDetails}
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.passcode.authentication.{PasscodeAuthenticationProvider, PasscodeVerificationConfig}
@@ -38,13 +38,6 @@ import uk.gov.hmrc.play.frontend.controller.FrontendController
 import uk.gov.hmrc.play.http.HeaderCarrier
 
 import scala.concurrent.Future
-
-case class InitialDetails(utr: Utr,
-                          knownFactsPostcode: String,
-                          name: String,
-                          email: String,
-                          telephone: String)
-
 
 case class SubscriptionDetails(utr: Utr,
                                knownFactsPostcode: String,
@@ -80,8 +73,6 @@ class SubscriptionController @Inject()
   extends FrontendController with I18nSupport with AuthActions with SessionDataMissing {
 
   private val JourneyName: String = appConfig.journeyName
-  private var initialDetails: Option[InitialDetails] = None
-
   private val blacklistedPostCodes: Set[String] = appConfig.blacklistedPostcodes
 
   private val subscriptionDetails = Form[InitialDetails](
@@ -93,6 +84,10 @@ class SubscriptionController @Inject()
       "telephone" -> telephone
     )(InitialDetails.apply)(InitialDetails.unapply)
   )
+
+  private sealed trait SubscriptionFailed extends Product with Serializable
+  private final case class SubscriptionReturnedHttpError(httpStatusCode: Int) extends SubscriptionFailed
+  private final case object MissingSessionData extends SubscriptionFailed
 
   private def hasEnrolments(implicit request: AgentRequest[_]): Boolean = request.enrolments.nonEmpty
 
@@ -113,28 +108,41 @@ class SubscriptionController @Inject()
     implicit authContext =>
       implicit request =>
 
-        import SubscriptionDetails._
         import Address._
+        import SubscriptionDetails._
+
+        def subscribe(details: InitialDetails,
+                      address: Address): Future[Either[SubscriptionFailed, (Arn, String)]] = {
+          val subscriptionDetails = mapper(details, address)
+          subscriptionService.subscribeAgencyToMtd(subscriptionDetails) map {
+            case Right(arn) => Right((arn, subscriptionDetails.name))
+            case Left(x) => Left(SubscriptionReturnedHttpError(x))
+          }
+        }
 
         addressLookUpConnector.getAddressDetails(id).flatMap { address =>
           validate(address, blacklistedPostCodes) match {
             case Invalid(errors) =>
-
-              Future {
+              Future.successful(
                 Ok(uk.gov.hmrc.agentsubscriptionfrontend.views.html.des_will_not_accept_address(id, renderErrors(errors)))
-              }
+              )
             case Valid(()) =>
-
-              subscriptionService.subscribeAgencyToMtd(mapper(initialDetails.get, address)) flatMap { subscriptionResponse =>
-                sessionStoreService.remove() map { _ =>
-                  subscriptionResponse match {
-                    case Right(r) => Redirect(routes.SubscriptionController.showSubscriptionComplete())
-                      .flashing("arn" -> r.arn, "agencyName" -> mapper(initialDetails.get, address).name)
-                    case Left(CONFLICT) => Redirect(routes.CheckAgencyController.showAlreadySubscribed())
-                    case Left(FORBIDDEN) => Redirect(routes.SubscriptionController.showSubscriptionFailed())
-                    case Left(error) => InternalServerError(s"Unknown error code from agent-subscription $error")
-                  }
+              val subscriptionResponse = for {
+                detailsOpt <- sessionStoreService.fetchInitialDetails
+                subscriptionResponse <- detailsOpt match {
+                  case Some(details) => subscribe(details, address)
+                  case None => Future.successful(Left(MissingSessionData))
                 }
+                _ <- sessionStoreService.remove()
+              } yield subscriptionResponse
+
+              subscriptionResponse.map {
+                case Right((arn, agencyName)) => Redirect(routes.SubscriptionController.showSubscriptionComplete())
+                  .flashing("arn" -> arn.arn, "agencyName" -> agencyName)
+                case Left(SubscriptionReturnedHttpError(CONFLICT)) => Redirect(routes.CheckAgencyController.showAlreadySubscribed())
+                case Left(SubscriptionReturnedHttpError(FORBIDDEN)) => Redirect(routes.SubscriptionController.showSubscriptionFailed())
+                case Left(MissingSessionData) => sessionMissingRedirect()
+                case Left(error) => InternalServerError(s"Unknown error code from agent-subscription $error")
               }
           }
         }
@@ -155,7 +163,7 @@ class SubscriptionController @Inject()
             redisplaySubscriptionDetails(formWithErrors),
           form =>
             addressLookUpConnector.initJourney(routes.SubscriptionController.submit(), JourneyName).map { x =>
-              initialDetails = Some(InitialDetails(form.utr, form.knownFactsPostcode, form.name,
+              sessionStoreService.cacheInitialDetails(InitialDetails(form.utr, form.knownFactsPostcode, form.name,
                 form.email, form.telephone))
               Redirect(x)
             }

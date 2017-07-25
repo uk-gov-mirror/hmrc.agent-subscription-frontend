@@ -66,14 +66,14 @@ object AgentSubscriptionStub {
           .withStatus(Status.INTERNAL_SERVER_ERROR)))
   }
 
-  def subscriptionSuccess(utr: Utr, request: SubscriptionRequest ): Unit = {
+  def subscriptionSuccess(utr: Utr, request: SubscriptionRequest, arn: String = "ARN00001" ): Unit = {
     stubFor(subscriptionRequestFor(utr, request)
               .willReturn(aResponse()
                 .withStatus(201)
                   .withBody(
                     s"""
                        |{
-                       |  "arn": "ARN00001"
+                       |  "arn": "$arn"
                        |}
                      """.stripMargin)))
   }
