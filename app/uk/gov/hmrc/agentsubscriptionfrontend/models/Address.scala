@@ -105,12 +105,12 @@ object Address {
     implicit val formatAddressValue = Json.format[Address]
 
     implicit val reads: Reads[Address] = Reads(json => {
-      val addressLines = (json \ "address").as[JsObject]
-      val addresses = (addressLines \ "lines").as[List[String]]
-      val county = (addressLines \ "county").asOpt[String]
-      val town = (addressLines \ "town").asOpt[String]
-      val postcode = (addressLines \ "postcode").asOpt[String]
-      val countryCode = (addressLines \ "country" \ "code").as[String]
+      val address = (json \ "address").as[JsObject]
+      val addressLines = (address \ "lines").as[List[String]]
+      val county = (address \ "county").asOpt[String]
+      val town = (address \ "town").asOpt[String]
+      val postcode = (address \ "postcode").asOpt[String]
+      val countryCode = (address \ "country" \ "code").as[String]
 
       def merge(a: Option[String], b: Option[String]): Option[String] = (a, b) match {
         case (Some(s1), Some(s2)) => Some(s1 + " " + s2)
@@ -118,18 +118,18 @@ object Address {
         case (s, None) => s
       }
 
-      addresses.size match {
+      addressLines.size match {
         case 4 => JsSuccess(
-          Address(addresses.head, merge(merge(Some(addresses(1)), Some(addresses(2))),
-            Some(addresses(3))), town, county, postcode, countryCode))
+          Address(addressLines.head, merge(merge(Some(addressLines(1)), Some(addressLines(2))),
+            Some(addressLines(3))), town, county, postcode, countryCode))
 
-        case 3 => JsSuccess(Address(addresses.head, merge(Some(addresses(1)), Some(addresses(2))),
+        case 3 => JsSuccess(Address(addressLines.head, merge(Some(addressLines(1)), Some(addressLines(2))),
           town, county, postcode, countryCode))
 
-        case 2 => JsSuccess(Address(addresses.head, Some(addresses(1)), town,
+        case 2 => JsSuccess(Address(addressLines.head, Some(addressLines(1)), town,
           county, postcode, countryCode))
 
-        case 1 => JsSuccess(Address(addresses.head, town, county,
+        case 1 => JsSuccess(Address(addressLines.head, town, county,
           None, postcode, countryCode))
 
         case _ => JsError(s"Address is empty from ADDRESS_LOOKUP service, $json")
