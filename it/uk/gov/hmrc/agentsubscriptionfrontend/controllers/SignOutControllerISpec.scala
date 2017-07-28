@@ -42,14 +42,14 @@ class SignOutControllerISpec extends BaseControllerISpec {
 
       val result = await(controller.redirectToSos(request))
       val id = await(repo.find("knownFactsResult.utr" -> "9876543210").map(_.headOption.map(_.id))).get
-      redirectLocation(result).head should include (s"continue=http%3A%2F%2F%2Fagent-subscription%2Freturn-after-gg-creds-created%3Fid%3D$id")
+      redirectLocation(result).head should include (s"continue=%2Freturn-after-gg-creds-created%3Fid%3D$id")
     }
 
     "not include an ID in the SOS redirect URL when KnownFactsResults are not yet known" in {
       implicit val request = authenticatedRequest()
 
       val result = await(controller.redirectToSos(request))
-      redirectLocation(result).head should include (s"continue=http%3A%2F%2F%2Fagent-subscription%2Freturn-after-gg-creds-created")
+      redirectLocation(result).head should include (s"continue=%2Freturn-after-gg-creds-created")
     }
   }
 
