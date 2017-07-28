@@ -36,7 +36,7 @@ class SignedOutController @Inject()(@Named("surveyRedirectUrl") surveyUrl: Strin
   def redirectToSos = Action.async { implicit request =>
 
     def returnAfterGGCredsCreatedUrl(query: String) =
-      URLEncoder.encode(s"${routes.StartController.returnAfterGGCredsCreated().absoluteURL()}$query", "UTF-8")
+      URLEncoder.encode(s"/return-after-gg-creds-created$query", "UTF-8")
 
     for {
       knownFactOpt <- sessionStoreService.fetchKnownFactsResult
