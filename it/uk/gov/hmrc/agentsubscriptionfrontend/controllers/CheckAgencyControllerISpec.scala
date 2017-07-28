@@ -197,15 +197,6 @@ class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMis
 
       checkHtmlResultWithBodyText(result, "Create your new Agent Services account")
     }
-
-    "allow the government gateway URL to be configured" in {
-      AuthStub.isEnrolledForNonMtdServices(subscribingAgent)
-
-      val result = await(controller.showHasOtherEnrolments(authenticatedRequest()))
-
-      status(result) shouldBe 200
-      bodyOf(result) should include("/signed-out")
-    }
   }
 
   "showNoAgencyFound" should {

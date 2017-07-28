@@ -12,11 +12,11 @@ import play.twirl.api.HtmlFormat
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUsers._
-import uk.gov.hmrc.agentsubscriptionfrontend.support.{EndpointBehaviours, SampleUser, TestSessionStoreService, WireMockSupport}
 import uk.gov.hmrc.play.http.HeaderCarrier
+import uk.gov.hmrc.agentsubscriptionfrontend.support.{EndpointBehaviours, MongoApp, SampleUser, TestSessionStoreService, WireMockSupport}
 import uk.gov.hmrc.play.test.UnitSpec
 
-abstract class BaseControllerISpec extends UnitSpec with OneAppPerSuite with WireMockSupport with EndpointBehaviours {
+abstract class BaseControllerISpec extends UnitSpec with OneAppPerSuite with MongoApp with WireMockSupport with EndpointBehaviours {
 
   override implicit lazy val app: Application = appBuilder.build()
 
@@ -28,6 +28,7 @@ abstract class BaseControllerISpec extends UnitSpec with OneAppPerSuite with Wir
         "microservice.services.address-lookup-frontend.port" -> wireMockPort,
         "passcodeAuthentication.enabled" -> passcodeAuthenticationEnabled
       )
+      .configure(mongoConfiguration)
       .overrides(new TestGuiceModule)
   }
 

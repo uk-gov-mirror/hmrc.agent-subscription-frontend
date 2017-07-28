@@ -16,22 +16,41 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
+import java.net.URLEncoder
 import javax.inject.{Inject, Named, Singleton}
 
-import play.api.mvc.Action
+import play.api.mvc.{Action, Results}
+import uk.gov.hmrc.agentsubscriptionfrontend.repository.KnownFactsResultMongoRepository
+import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 
-import scala.concurrent.Future.successful
+import scala.concurrent.Future
 
 @Singleton
-class SignedOutController @Inject()(@Named("logoutRedirectUrl") logOutUrl: String, @Named("surveyRedirectUrl") surveyUrl: String)
+class SignedOutController @Inject()(@Named("surveyRedirectUrl") surveyUrl: String,
+                                    @Named("sosRedirectUrl") sosUrl: String,
+                                    knownFactsResultMongoRepository: KnownFactsResultMongoRepository,
+                                    sessionStoreService: SessionStoreService)
   extends FrontendController {
 
-  def signOut = Action.async { implicit request =>
-    successful(Redirect(logOutUrl, 303).withNewSession)
+  def redirectToSos = Action.async { implicit request =>
+
+    def returnAfterGGCredsCreatedUrl(query: String) =
+      URLEncoder.encode(s"${routes.StartController.returnAfterGGCredsCreated().absoluteURL()}$query", "UTF-8")
+
+    for {
+      knownFactOpt <- sessionStoreService.fetchKnownFactsResult
+      id <- knownFactOpt match {
+        case Some(x) => knownFactsResultMongoRepository.create(x).map(Option.apply)
+        case None => Future.successful(None)
+      }
+    } yield {
+      val continueUrl = returnAfterGGCredsCreatedUrl(id.map(i => s"?id=$i").getOrElse(""))
+      Results.SeeOther(s"$sosUrl&continue=$continueUrl").withNewSession
+    }
   }
 
-  def startSurvey = Action.async { implicit request =>
-    successful(Redirect(surveyUrl, 303).withNewSession)
+  def startSurvey = Action { implicit request =>
+    Results.SeeOther(surveyUrl).withNewSession
   }
 }
