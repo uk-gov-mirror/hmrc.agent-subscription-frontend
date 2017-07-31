@@ -29,7 +29,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.auth.{AgentRequest, AuthActions}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AddressLookUpConnector
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.FieldMappings._
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{Address, Arn, InitialDetails}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AddressLookupAddress, Arn, DesAddress, InitialDetails}
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.passcode.authentication.{PasscodeAuthenticationProvider, PasscodeVerificationConfig}
@@ -52,7 +52,7 @@ case class SubscriptionDetails(utr: Utr,
 object SubscriptionDetails {
   implicit val format: Format[SubscriptionDetails] = Json.format[SubscriptionDetails]
 
-  implicit def mapper(initDetails: InitialDetails, address: Address): SubscriptionDetails = {
+  implicit def mapper(initDetails: InitialDetails, address: AddressLookupAddress): SubscriptionDetails = {
     SubscriptionDetails(initDetails.utr, initDetails.knownFactsPostcode, initDetails.name,
       initDetails.email, initDetails.telephone, address.addressLine1, address.addressLine2,
       address.addressLine3, address.postcode.getOrElse(""))
@@ -108,11 +108,11 @@ class SubscriptionController @Inject()
     implicit authContext =>
       implicit request =>
 
-        import Address._
+        import AddressLookupAddress._
         import SubscriptionDetails._
 
         def subscribe(details: InitialDetails,
-                      address: Address): Future[Either[SubscriptionFailed, (Arn, String)]] = {
+                      address: AddressLookupAddress): Future[Either[SubscriptionFailed, (Arn, String)]] = {
           val subscriptionDetails = mapper(details, address)
           subscriptionService.subscribeAgencyToMtd(subscriptionDetails) map {
             case Right(arn) => Right((arn, subscriptionDetails.name))
@@ -126,7 +126,7 @@ class SubscriptionController @Inject()
               Future.successful(
                 Ok(uk.gov.hmrc.agentsubscriptionfrontend.views.html.des_will_not_accept_address(id, renderErrors(errors)))
               )
-            case Valid(()) =>
+            case Valid(_) =>
               val subscriptionResponse = for {
                 detailsOpt <- sessionStoreService.fetchInitialDetails
                 subscriptionResponse <- detailsOpt match {

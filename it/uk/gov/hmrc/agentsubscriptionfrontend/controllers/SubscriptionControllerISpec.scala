@@ -18,7 +18,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{Address, Agency, KnownFactsResult, SubscriptionRequest, KnownFacts => ModelKnownFacts}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AddressLookupAddress, Agency, KnownFactsResult, SubscriptionRequest, KnownFacts => ModelKnownFacts}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.{AddressLookupFrontendStubs, AgentSubscriptionStub, AuthStub}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUsers._
 
@@ -450,7 +450,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
     SubscriptionRequest(utr = utr,
       knownFacts = ModelKnownFacts("AA1 2AA"),
       agency = Agency(name = "My Agency",
-        address = Address(addressLine1 = "1 Some Street",
+        address = AddressLookupAddress(addressLine1 = "1 Some Street",
           addressLine2 = Some(town),
           addressLine3 = Some(county),
           postcode = Some(postcode),
@@ -474,7 +474,7 @@ class SubscriptionControllerISpec extends BaseControllerISpec with SessionDataMi
     SubscriptionRequest(utr = utr,
       knownFacts = ModelKnownFacts("BA1 2AA"),
       agency = Agency(name = "My Agency 2",
-        address = Address(addressLine1 = "1 Some Street",
+        address = AddressLookupAddress(addressLine1 = "1 Some Street",
           addressLine2 = Some(town),
           addressLine3 = Some(county),
           postcode = Some(postcode),

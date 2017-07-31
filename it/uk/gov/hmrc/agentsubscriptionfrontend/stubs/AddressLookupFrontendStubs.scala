@@ -19,7 +19,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.stubs
 import com.github.tomakehurst.wiremock.client.WireMock._
 import play.api.http.HeaderNames
 import play.api.libs.json.Json
-import uk.gov.hmrc.agentsubscriptionfrontend.models.Address
+import uk.gov.hmrc.agentsubscriptionfrontend.models.AddressLookupAddress
 
 trait AddressLookupFrontendStubs {
 

@@ -22,7 +22,7 @@ import javax.inject.{Inject, Named, Singleton}
 import play.api.http.HeaderNames.LOCATION
 import play.api.libs.json.{JsObject, Json}
 import play.api.mvc.Call
-import uk.gov.hmrc.agentsubscriptionfrontend.models.Address
+import uk.gov.hmrc.agentsubscriptionfrontend.models.AddressLookupAddress
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpGet, HttpPost, HttpResponse}
 
@@ -43,10 +43,10 @@ class AddressLookUpConnector @Inject()(@Named("address-lookup-frontend-baseUrl")
     }
   }
 
-  def getAddressDetails(id: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Address] = {
-    import Address._
+  def getAddressDetails(id: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[AddressLookupAddress] = {
+    import AddressLookupAddress._
 
-    http.GET[Address](confirmJourneyUrl(id))
+    http.GET[AddressLookupAddress](confirmJourneyUrl(id))
   }
 
   private def confirmJourneyUrl(id: String) = {

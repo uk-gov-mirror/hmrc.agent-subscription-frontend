@@ -27,7 +27,7 @@ object Arn {
 }
 
 case class Agency(name: String,
-                  address: Address,
+                  address: AddressLookupAddress,
                   telephone: String,
                   email: String)
 

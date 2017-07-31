@@ -22,10 +22,10 @@ import play.api.data.validation.ValidationError
 import play.api.libs.json._
 import uk.gov.hmrc.agentsubscriptionfrontend.config.blacklistedpostcodes.PostcodesLoader
 
-class AddressValidationSpec extends FlatSpec with Matchers {
+class AddressLookupAddressValidationSpec extends FlatSpec with Matchers {
   private val blacklistedPostCodes: Set[String] = Set("BB1 1BB", "CC1 1CC", "DD1 1DD").map(PostcodesLoader.formatPostcode)
 
-  private val jsValue = (address: Address) => Json.parse(
+  private val jsValue = (address: AddressLookupAddress) => Json.parse(
     s"""{
                               	"auditRef": "093b7e77-81c4-4663-a580-fa9383775a24",
                               	"address": {
@@ -43,109 +43,111 @@ class AddressValidationSpec extends FlatSpec with Matchers {
 
 
   "Address Validation" should "fail for Empty PostCode" in {
-    val address = Address("9 King Road", Some(""), Some("Ipswich"),
+    val address = AddressLookupAddress("9 King Road", Some(""), Some("Ipswich"),
       Some("Ipswich 4"), Some(""), "GB")
-    val entity = jsValue(address).as[Address]
+    val entity = jsValue(address).as[AddressLookupAddress]
 
-    val validationResult = Address.validate(entity, blacklistedPostCodes)
+    val validationResult = AddressLookupAddress.validate(entity, blacklistedPostCodes)
     validationResult shouldBe Invalid(Set(ValidationError("error.postcode.empty")))
   }
 
   "Address Validation" should "fail for Blacklisted PostCode" in {
-    val address = Address("9 King Road", Some(""), Some("Ipswich"),
+    val address = AddressLookupAddress("9 King Road", Some(""), Some("Ipswich"),
       Some("Ipswich 4"), Some("BB1 1BB"), "GB")
 
-    val entity = jsValue(address).as[Address]
+    val entity = jsValue(address).as[AddressLookupAddress]
 
-    val validationResult = Address.validate(entity, blacklistedPostCodes)
+    val validationResult = AddressLookupAddress.validate(entity, blacklistedPostCodes)
     validationResult shouldBe Invalid(Set(ValidationError("error.postcode.blacklisted")))
   }
 
   "Address Validation" should "be Successful for Postcode matching in Regex" in {
-    val address = Address("9 King Road", Some(""), Some("Ipswich"),
+    val address = AddressLookupAddress("9 King Road", Some(""), Some("Ipswich"),
       Some("Ipswich 4"), Some("GT5 7WW"), "GB")
 
-    val entity = jsValue(address).as[Address]
+    val entity = jsValue(address).as[AddressLookupAddress]
 
-    val validationResult = Address.validate(entity, blacklistedPostCodes)
-    validationResult shouldBe Valid(())
+    val validationResult = AddressLookupAddress.validate(entity, blacklistedPostCodes)
+//    validationResult shouldBe Valid(())
+    validationResult.isValid shouldBe true
   }
 
   "Address Validation" should "pass for address line1 length exactly 35 chars" in {
-    val address = Address("12345678901234567890123456789012345", Some(""),
+    val address = AddressLookupAddress("12345678901234567890123456789012345", Some(""),
       Some("Ipswich"),
       Some("Ipswich 4"), Some("GT5 7WW"), "GB")
 
-    val entity = jsValue(address).as[Address]
+    val entity = jsValue(address).as[AddressLookupAddress]
 
-    val validationResult = Address.validate(entity, blacklistedPostCodes)
-    validationResult shouldBe Valid(())
+    val validationResult = AddressLookupAddress.validate(entity, blacklistedPostCodes)
+//    validationResult shouldBe Valid(())
+    validationResult.isValid shouldBe true
   }
 
   "Address Validation" should "fail for address line1 length greater than 35 characters" in {
-    val address = Address("9 King Road 9 King Road 9 King Road 9 King Road", Some(""),
+    val address = AddressLookupAddress("9 King Road 9 King Road 9 King Road 9 King Road", Some(""),
       Some("Ipswich"),
       Some("Ipswich 4"), Some("GT5 7WW"), "GB")
 
-    val entity = jsValue(address).as[Address]
+    val entity = jsValue(address).as[AddressLookupAddress]
 
-    val validationResult = Address.validate(entity, blacklistedPostCodes)
+    val validationResult = AddressLookupAddress.validate(entity, blacklistedPostCodes)
     validationResult shouldBe Invalid(Set(ValidationError("error.address.maxLength", 35, entity.addressLine1)))
     // s"Length of line ${entity.addressLine1} must be up to 35"
   }
 
   "Address Validation" should "fail for address line2 length greater than 35 characters" in {
-    val address = Address("9 King Road ", Some("Ipwich line 2 Ipwich line 2 Ipwich line 2"),
+    val address = AddressLookupAddress("9 King Road ", Some("Ipwich line 2 Ipwich line 2 Ipwich line 2"),
       Some("Ipswich"),
       Some("Ipswich 4"), Some("GT5 7WW"), "GB")
 
-    val entity = jsValue(address).as[Address]
+    val entity = jsValue(address).as[AddressLookupAddress]
 
-    val validationResult = Address.validate(entity, blacklistedPostCodes)
+    val validationResult = AddressLookupAddress.validate(entity, blacklistedPostCodes)
     validationResult shouldBe Invalid(Set(ValidationError("error.address.maxLength", 35, entity.addressLine2.get)))
   }
 
   "Address Validation" should "fail for address line2 violating DES regex" in {
-    val address = Address("9 King Road ", Some("<>'"),
+    val address = AddressLookupAddress("9 King Road ", Some("<>'"),
       Some("Ipswich"),
       Some("Ipswich 4"), Some("GT5 7WW"), "GB")
 
 
-    val validationResult = Address.validate(address, blacklistedPostCodes)
+    val validationResult = AddressLookupAddress.validate(address, blacklistedPostCodes)
     validationResult shouldBe Invalid(Set(ValidationError("error.des.text.invalid.withInput", address.addressLine2.get)))
   }
 
   "Address Validation" should "fail for address line2 violating DES regex and max length for line1" in {
-    val address = Address("9 King Road 9 King Road 9 King Road 9 King Road", Some("<>'"),
+    val address = AddressLookupAddress("9 King Road 9 King Road 9 King Road 9 King Road", Some("<>'"),
       Some("Ipswich"),
       Some("Ipswich 4"), Some("GT5 7WW"), "GB")
 
 
-    val validationResult = Address.validate(address, blacklistedPostCodes)
+    val validationResult = AddressLookupAddress.validate(address, blacklistedPostCodes)
     validationResult shouldBe Invalid(Set(ValidationError("error.des.text.invalid.withInput", address.addressLine2.get),
       ValidationError("error.address.maxLength", 35, address.addressLine1)))
   }
 
   "Address Validation" should "fail for address line1 and line2 length greater than 35 characters" in {
-    val address = Address("9 King Road 9 King Road 9 King Road 9 King Road", Some("Ipwich line 2 Ipwich line 2 Ipwich line 2"),
+    val address = AddressLookupAddress("9 King Road 9 King Road 9 King Road 9 King Road", Some("Ipwich line 2 Ipwich line 2 Ipwich line 2"),
       Some("Ipswich"),
       Some("Ipswich 4"), Some("GT5 7WW"), "GB")
 
-    val entity = jsValue(address).as[Address]
+    val entity = jsValue(address).as[AddressLookupAddress]
 
-    val validationResult = Address.validate(entity, blacklistedPostCodes)
+    val validationResult = AddressLookupAddress.validate(entity, blacklistedPostCodes)
     validationResult shouldBe Invalid(Set(ValidationError("error.address.maxLength", 35, entity.addressLine1),
       ValidationError("error.address.maxLength", 35, entity.addressLine2.get)))
   }
 
   "Address Parallel Validation" should "fail for address line1 and line2 length greater than 35 characters and blacklisted postcode" in {
-    val address = Address("9 King Road 9 King Road 9 King Road 9 King Road", Some("Ipwich line 2 Ipwich line 2 Ipwich line 2"),
+    val address = AddressLookupAddress("9 King Road 9 King Road 9 King Road 9 King Road", Some("Ipwich line 2 Ipwich line 2 Ipwich line 2"),
       Some("Ipswich"),
       Some("Ipswich 4"), Some("DD1 1DD"), "GB")
 
-    val entity = jsValue(address).as[Address]
+    val entity = jsValue(address).as[AddressLookupAddress]
 
-    val validationResult = Address.validate(entity, blacklistedPostCodes)
+    val validationResult = AddressLookupAddress.validate(entity, blacklistedPostCodes)
     validationResult shouldBe Invalid(Set(ValidationError("error.address.maxLength", 35, entity.addressLine1),
       ValidationError("error.address.maxLength", 35, entity.addressLine2.get),
       ValidationError("error.postcode.blacklisted")))

@@ -91,7 +91,7 @@ class AgentSubscriptionConnectorISpec extends UnitSpec with OneAppPerSuite with 
     SubscriptionRequest(utr = utr,
       knownFacts = KnownFacts("AA1 2AA"),
       agency = Agency(name = "My Agency",
-        address = Address(addressLine1 = "1 Some Street", addressLine2 = Some("Anytown"), postcode = Some("AA1 1AA"), countryCode = "GB"),
+        address = AddressLookupAddress(addressLine1 = "1 Some Street", addressLine2 = Some("Anytown"), postcode = Some("AA1 1AA"), countryCode = "GB"),
         email = "agency@example.com",
         telephone = "0123 456 7890"))
 }
