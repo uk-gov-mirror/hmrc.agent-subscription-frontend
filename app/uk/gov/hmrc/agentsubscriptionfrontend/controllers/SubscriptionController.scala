@@ -52,7 +52,7 @@ case class SubscriptionDetails(utr: Utr,
 object SubscriptionDetails {
   implicit val format: Format[SubscriptionDetails] = Json.format[SubscriptionDetails]
 
-  implicit def mapper(initDetails: InitialDetails, address: AddressLookupAddress): SubscriptionDetails = {
+  implicit def mapper(initDetails: InitialDetails, address: DesAddress): SubscriptionDetails = {
     SubscriptionDetails(initDetails.utr, initDetails.knownFactsPostcode, initDetails.name,
       initDetails.email, initDetails.telephone, address.addressLine1, address.addressLine2,
       address.addressLine3, address.postcode.getOrElse(""))
@@ -112,7 +112,7 @@ class SubscriptionController @Inject()
         import SubscriptionDetails._
 
         def subscribe(details: InitialDetails,
-                      address: AddressLookupAddress): Future[Either[SubscriptionFailed, (Arn, String)]] = {
+                      address: DesAddress): Future[Either[SubscriptionFailed, (Arn, String)]] = {
           val subscriptionDetails = mapper(details, address)
           subscriptionService.subscribeAgencyToMtd(subscriptionDetails) map {
             case Right(arn) => Right((arn, subscriptionDetails.name))
@@ -126,11 +126,11 @@ class SubscriptionController @Inject()
               Future.successful(
                 Ok(uk.gov.hmrc.agentsubscriptionfrontend.views.html.des_will_not_accept_address(id, renderErrors(errors)))
               )
-            case Valid(_) =>
+            case Valid(desAddress) =>
               val subscriptionResponse = for {
                 detailsOpt <- sessionStoreService.fetchInitialDetails
                 subscriptionResponse <- detailsOpt match {
-                  case Some(details) => subscribe(details, address)
+                  case Some(details) => subscribe(details, desAddress)
                   case None => Future.successful(Left(MissingSessionData))
                 }
                 _ <- sessionStoreService.remove()

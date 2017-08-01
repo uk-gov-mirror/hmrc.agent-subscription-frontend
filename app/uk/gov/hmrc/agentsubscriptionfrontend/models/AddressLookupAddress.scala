@@ -44,7 +44,6 @@ case class DesAddress(addressLine1: String,
 
 object AddressLookupAddress {
   type ValidatedDesAddress[T] = Validated[Set[ValidationError], T]
-  type ValidatedStringField = Validated[ValidationError, String]
 
   private val postCodeRegex = "^[A-Z]{1,2}[0-9][0-9A-Z]?\\s?[0-9][A-Z]{2}$|BFPO\\s?[0-9]{1,5}$".r
   private val desTextRegex = "^[A-Za-z0-9 \\-,.&'\\/]*$"
@@ -56,7 +55,7 @@ object AddressLookupAddress {
 
       def combine(x: ValidatedDesAddress[DesAddress], y: ValidatedDesAddress[DesAddress]): ValidatedDesAddress[DesAddress] = (x, y) match {
         case (Invalid(a), Invalid(b)) => Invalid(a ++ b)
-        case (Valid(a), Valid(b)) => Valid(a)
+        case (Valid(a), Valid(b)) => Valid(b)
         case (i@Invalid(_), _) => i
         case (_, i@Invalid(_)) => i
       }
@@ -84,7 +83,6 @@ object AddressLookupAddress {
 
     Monoid[ValidatedDesAddress[DesAddress]].combineAll(List(validateLength(line, addressLookupAddress),
       validateDesRegex(line, addressLookupAddress)))
-
   }
 
   private def validateLength(line: String, addressLookupAddress: AddressLookupAddress): ValidatedDesAddress[DesAddress] = {
@@ -125,8 +123,6 @@ object AddressLookupAddress {
     implicit val reads: Reads[AddressLookupAddress] = Reads(json => {
       val address = (json \ "address").as[JsObject]
       val addressLines = (address \ "lines").as[List[String]]
-      val county = (address \ "county").asOpt[String]
-      val town = (address \ "town").asOpt[String]
       val postcode = (address \ "postcode").asOpt[String]
       val countryCode = (address \ "country" \ "code").as[String]
 
@@ -138,17 +134,20 @@ object AddressLookupAddress {
 
       addressLines.size match {
         case 4 => JsSuccess(
-          AddressLookupAddress(addressLines.head, merge(merge(Some(addressLines(1)), Some(addressLines(2))),
-            Some(addressLines(3))), town, county, postcode, countryCode))
+          AddressLookupAddress(addressLines.head, Some(addressLines(1)), Some(addressLines(2)),
+            Some(addressLines(3)), postcode, countryCode))
 
-        case 3 => JsSuccess(AddressLookupAddress(addressLines.head, merge(Some(addressLines(1)), Some(addressLines(2))),
-          town, county, postcode, countryCode))
+        case 3 => JsSuccess(
+          AddressLookupAddress(addressLines.head, Some(addressLines(1)), Some(addressLines(2)),
+            None, postcode, countryCode))
 
-        case 2 => JsSuccess(AddressLookupAddress(addressLines.head, Some(addressLines(1)), town,
-          county, postcode, countryCode))
+        case 2 => JsSuccess(
+          AddressLookupAddress(addressLines.head, Some(addressLines(1)), None,
+            None, postcode, countryCode))
 
-        case 1 => JsSuccess(AddressLookupAddress(addressLines.head, town, county,
-          None, postcode, countryCode))
+        case 1 => JsSuccess(
+          AddressLookupAddress(addressLines.head, None, None,
+            None, postcode, countryCode))
 
         case _ => JsError(s"Address is empty from ADDRESS_LOOKUP service, $json")
       }
