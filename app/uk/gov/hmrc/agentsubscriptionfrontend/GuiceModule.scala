@@ -20,6 +20,7 @@ import java.net.URL
 import javax.inject.Provider
 
 import com.google.inject.AbstractModule
+import com.google.inject.binder.ScopedBindingBuilder
 import com.google.inject.name.Names
 import play.api.Mode.Mode
 import play.api.{Configuration, Environment}
@@ -35,6 +36,45 @@ class GuiceModule(environment: Environment, configuration: Configuration) extend
   override protected lazy val mode: Mode = environment.mode
   override protected lazy val runModeConfiguration: Configuration = configuration
 
+  trait ConfigPropertyType[A] {
+    def bindConfigProperty(clazz: Class[A])(propertyName: String): ScopedBindingBuilder
+  }
+
+  object ConfigPropertyType {
+    implicit val stringConfigProperty = new ConfigPropertyType[String] {
+      def bindConfigProperty(clazz: Class[String])(propertyName: String): ScopedBindingBuilder =
+        bind(clazz).annotatedWith(Names.named(s"$propertyName")).toProvider(new StringConfigPropertyProvider(propertyName))
+
+      private class StringConfigPropertyProvider(propertyName: String) extends Provider[String] {
+        override lazy val get = getConfString(propertyName, throw new RuntimeException(s"No configuration value found for '$propertyName'"))
+
+        def getConfString(confKey: String, defString: => String) = {
+          runModeConfiguration.getString(s"$env.$confKey").getOrElse(defString)
+        }
+      }
+    }
+
+    implicit val intConfigProperty = new ConfigPropertyType[Int] {
+      def bindConfigProperty(clazz: Class[Int])(propertyName: String): ScopedBindingBuilder =
+        bind(clazz).annotatedWith(Names.named(s"$propertyName")).toProvider(new IntConfigPropertyProvider(propertyName))
+
+      private class IntConfigPropertyProvider(propertyName: String) extends Provider[Int] {
+        override lazy val get = getConfString(propertyName, throw new RuntimeException(s"No configuration value found for '$propertyName'"))
+
+        def getConfString(confKey: String, defInt: => Int) = {
+          runModeConfiguration.getInt(s"$env.$confKey").getOrElse(defInt)
+        }
+      }
+    }
+  }
+
+  object ConfigProperty {
+    def bindConfigProperty[A](clazz: Class[A])(propertyName: String)(implicit ct: ConfigPropertyType[A]): ScopedBindingBuilder =
+      ct.bindConfigProperty(clazz)(propertyName)
+  }
+
+  import ConfigProperty._
+
   override def configure(): Unit = {
     bind(classOf[HttpGet]).toInstance(WSHttp)
     bind(classOf[AppConfig]).to(classOf[FrontendAppConfig])
@@ -43,8 +83,9 @@ class GuiceModule(environment: Environment, configuration: Configuration) extend
     bind(classOf[SessionStoreService])
     bindBaseUrl("agent-subscription")
     bindBaseUrl("address-lookup-frontend")
-    bindConfigProperty("logoutRedirectUrl")
-    bindConfigProperty("surveyRedirectUrl")
+    bindConfigProperty(classOf[String])("surveyRedirectUrl")
+    bindConfigProperty(classOf[String])("sosRedirectUrl")
+    bindConfigProperty(classOf[Int])("mongodb.knownfactsresult.ttl")
   }
 
   private def bindBaseUrl(serviceName: String) =
@@ -52,16 +93,5 @@ class GuiceModule(environment: Environment, configuration: Configuration) extend
 
   private class BaseUrlProvider(serviceName: String) extends Provider[URL] {
     override lazy val get = new URL(baseUrl(serviceName))
-  }
-
-  private def bindConfigProperty(propertyName: String) =
-    bind(classOf[String]).annotatedWith(Names.named(s"$propertyName")).toProvider(new ConfigPropertyProvider(propertyName))
-
-  private class ConfigPropertyProvider(propertyName: String) extends Provider[String] {
-    override lazy val get = getConfString(propertyName, throw new RuntimeException(s"No configuration value found for '$propertyName'"))
-
-    def getConfString(confKey: String, defString: => String) = {
-      runModeConfiguration.getString(s"$env.$confKey").getOrElse(defString)
-    }
   }
 }
