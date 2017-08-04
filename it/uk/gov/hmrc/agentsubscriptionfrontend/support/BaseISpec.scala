@@ -1,4 +1,4 @@
-package uk.gov.hmrc.agentsubscriptionfrontend.controllers
+package uk.gov.hmrc.agentsubscriptionfrontend.support
 
 import com.google.inject.AbstractModule
 import org.scalatestplus.play.OneAppPerSuite
@@ -12,11 +12,10 @@ import play.twirl.api.HtmlFormat
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUsers._
-import uk.gov.hmrc.agentsubscriptionfrontend.support.{EndpointBehaviours, SampleUser, TestSessionStoreService, WireMockSupport}
 import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 
-abstract class BaseControllerISpec extends UnitSpec with OneAppPerSuite with WireMockSupport with EndpointBehaviours {
+abstract class BaseISpec extends UnitSpec with OneAppPerSuite with WireMockSupport with EndpointBehaviours {
 
   override implicit lazy val app: Application = appBuilder.build()
 

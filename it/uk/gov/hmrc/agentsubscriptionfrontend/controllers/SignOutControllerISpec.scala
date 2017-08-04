@@ -3,8 +3,9 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 import play.api.test.FakeRequest
 import play.api.test.Helpers.redirectLocation
 import play.api.test.Helpers._
+import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 
-class SignOutControllerISpec extends BaseControllerISpec {
+class SignOutControllerISpec extends BaseISpec {
   private lazy val controller: SignedOutController = app.injector.instanceOf[SignedOutController]
 
   private lazy val logoutRedirectUrl = "/government-gateway-registration-frontend/choose-your-account"

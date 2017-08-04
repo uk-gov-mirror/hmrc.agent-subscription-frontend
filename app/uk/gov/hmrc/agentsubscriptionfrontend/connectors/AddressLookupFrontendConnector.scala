@@ -30,7 +30,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NoStackTrace
 
 @Singleton
-class AddressLookUpConnector @Inject()(@Named("address-lookup-frontend-baseUrl") baseUrl: URL, http: HttpGet with HttpPost) extends ServicesConfig {
+class AddressLookupFrontendConnector @Inject()(@Named("address-lookup-frontend-baseUrl") baseUrl: URL, http: HttpGet with HttpPost) extends ServicesConfig {
   private val addressLookupContinueUrl = getConfString("address-lookup-frontend.new-address-callback.url", "")
 
   def initJourney(call: Call, journeyName: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[String] = {
@@ -46,7 +46,7 @@ class AddressLookUpConnector @Inject()(@Named("address-lookup-frontend-baseUrl")
   def getAddressDetails(id: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[AddressLookupAddress] = {
     import AddressLookupAddress._
 
-    http.GET[AddressLookupAddress](confirmJourneyUrl(id))
+    http.GET[JsObject](confirmJourneyUrl(id)).map(json => (json \ "address").as[AddressLookupAddress])
   }
 
   private def confirmJourneyUrl(id: String) = {

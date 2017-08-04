@@ -27,7 +27,7 @@ import play.api.mvc.{AnyContent, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.{AgentRequest, AuthActions}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AddressLookUpConnector
+import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AddressLookupFrontendConnector
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.FieldMappings._
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{AddressLookupAddress, Arn, DesAddress, InitialDetails}
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionService}
@@ -44,18 +44,15 @@ case class SubscriptionDetails(utr: Utr,
                                name: String,
                                email: String,
                                telephone: String,
-                               addressLine1: String,
-                               addressLine2: Option[String],
-                               addressLine3: Option[String],
-                               postcode: String)
+                               address: DesAddress)
 
 object SubscriptionDetails {
-  implicit val format: Format[SubscriptionDetails] = Json.format[SubscriptionDetails]
+  implicit val formatDesAddress: Format[DesAddress] = Json.format[DesAddress]
+  implicit val formatSubscriptionDetails: Format[SubscriptionDetails] = Json.format[SubscriptionDetails]
 
   implicit def mapper(initDetails: InitialDetails, address: DesAddress): SubscriptionDetails = {
     SubscriptionDetails(initDetails.utr, initDetails.knownFactsPostcode, initDetails.name,
-      initDetails.email, initDetails.telephone, address.addressLine1, address.addressLine2,
-      address.addressLine3, address.postcode.getOrElse(""))
+      initDetails.email, initDetails.telephone, address)
   }
 }
 
@@ -67,7 +64,7 @@ class SubscriptionController @Inject()
  override val passcodeAuthenticationProvider: PasscodeAuthenticationProvider,
  subscriptionService: SubscriptionService,
  sessionStoreService: SessionStoreService,
- addressLookUpConnector: AddressLookUpConnector
+ addressLookUpConnector: AddressLookupFrontendConnector
 )
 (implicit appConfig: AppConfig)
   extends FrontendController with I18nSupport with AuthActions with SessionDataMissing {
@@ -155,7 +152,7 @@ class SubscriptionController @Inject()
         addressLookUpConnector.initJourney(routes.SubscriptionController.submit(), JourneyName).map { x => Redirect(x) }
   }
 
-  val getAddressDetails: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync {
+  val  getAddressDetails: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync {
     implicit authContext =>
       implicit request =>
         subscriptionDetails.bindFromRequest().fold(

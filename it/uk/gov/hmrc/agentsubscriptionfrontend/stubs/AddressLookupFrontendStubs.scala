@@ -21,7 +21,7 @@ import play.api.http.HeaderNames
 import play.api.libs.json.Json
 import uk.gov.hmrc.agentsubscriptionfrontend.models.AddressLookupAddress
 
-trait AddressLookupFrontendStubs {
+object AddressLookupFrontendStubs {
 
   def givenAddressLookupInit(journeyId: String, callbackUrl: String): Unit = {
     stubFor(post(urlEqualTo(s"/api/init/$journeyId"))
@@ -43,33 +43,38 @@ trait AddressLookupFrontendStubs {
     )
   }
 
-  def givenAddressLookupReturnsAddress(addressId: String, town: String = "Sometown", county: String = "County", postcode: String = "AA1 1AA"): Unit = {
+  def givenAddressLookupReturnsAddress(
+      addressId: String,
+      addressLine1: String = "10 Other Place",
+      addressLine2: String = "Some District",
+      addressLine3: String = "Line 3",
+      town: String = "Sometown",
+      postcode: String = "AA1 1AA",
+      countryCode: String = "GB"): Unit = {
+
     stubFor(get(urlEqualTo(s"/api/confirmed?id=$addressId"))
       .willReturn(
         aResponse()
           .withStatus(200)
           .withBody(
             s"""
-              |{
-              |"address":{
-              |    "lines" : [
-              |        "1 Some Street"
-              |    ],
-              |    "town" : "$town",
-              |    "county" : "$county",
-              |    "postcode" : "$postcode",
-              |    "subdivision" :
-              |    {
-              |        "code" : "GB-ENG",
-              |        "name" : "England"
-              |    },
-              |    "country" :
-              |    {
-              |        "code" : "GB",
-              |        "name" : "United Kingdom"
-              |    }
-              |}
-              |}
+              {
+               |    "address": {
+               |        "country": {
+               |            "code": "$countryCode",
+               |            "name": "United Kingdom"
+               |        },
+               |        "lines": [
+               |            "$addressLine1",
+               |            "$addressLine2",
+               |            "$addressLine3",
+               |            "$town"
+               |        ],
+               |        "postcode": "$postcode"
+               |    },
+               |    "auditRef": "4b982d38-32f2-4da8-9d5e-b70c45b401fe",
+               |    "id": "GB990091234524"
+               |}
               |""".stripMargin
           )
       )

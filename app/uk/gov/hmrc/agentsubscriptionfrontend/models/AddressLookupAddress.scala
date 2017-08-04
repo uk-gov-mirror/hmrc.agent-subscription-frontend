@@ -28,21 +28,27 @@ import uk.gov.hmrc.agentsubscriptionfrontend.config.blacklistedpostcodes.Postcod
 import uk.gov.hmrc.agentsubscriptionfrontend.models.AddressLookupAddress.ValidatedDesAddress
 import cats.implicits._
 
-case class AddressLookupAddress(addressLine1: String,
-                                addressLine2: Option[String] = None,
-                                addressLine3: Option[String] = None,
-                                addressLine4: Option[String] = None,
+import ValidatedDesAddress._
+
+case class Country(code: String,
+                   name: Option[String])
+
+case class AddressLookupAddress(lines: Seq[String],
                                 postcode: Option[String],
-                                countryCode: String)
+                                country: Country)
 
 case class DesAddress(addressLine1: String,
-                   addressLine2: Option[String] = None,
-                   addressLine3: Option[String] = None,
-                   town: Option[String],
-                   postcode: Option[String],
-                   countryCode: String)
+                      addressLine2: Option[String] = None,
+                      addressLine3: Option[String] = None,
+                      addressLine4: Option[String],
+                      postcode: Option[String],
+                      countryCode: String)
 
 object AddressLookupAddress {
+
+  implicit val formatCountry = Json.format[Country]
+  implicit val formatAddressLookupAddress = Json.format[AddressLookupAddress]
+
   type ValidatedDesAddress[T] = Validated[Set[ValidationError], T]
 
   private val postCodeRegex = "^[A-Z]{1,2}[0-9][0-9A-Z]?\\s?[0-9][A-Z]{2}$|BFPO\\s?[0-9]{1,5}$".r
@@ -63,24 +69,32 @@ object AddressLookupAddress {
   }
 
   def validate(address: AddressLookupAddress, blacklistedPostCodes: Set[String]): ValidatedDesAddress[DesAddress] = {
-    import ValidatedDesAddress._
-
-    Monoid[ValidatedDesAddress[DesAddress]].combineAll(List(validateLine(address.addressLine1, address),
-      validateLine(address.addressLine2.getOrElse(""), address), validateLine(address.addressLine3.getOrElse(""), address),
-      validateLine(address.addressLine4.getOrElse(""), address), nonEmpty(address.postcode, address),
+    Monoid[ValidatedDesAddress[DesAddress]].combineAll(List(validateLines(address.lines, address),
+      nonEmpty(address.postcode, address),
       validateRegex(address.postcode, address), validateBlacklist(address.postcode, blacklistedPostCodes, address)))
 
   }
 
-  private def toDesAddress(addressLookupAddress: AddressLookupAddress): DesAddress = {
-    DesAddress(addressLookupAddress.addressLine1,addressLookupAddress.addressLine2,
-      addressLookupAddress.addressLine3, addressLookupAddress.addressLine4, addressLookupAddress.postcode,
-      addressLookupAddress.countryCode)
+  private def toDesAddress(addressLookupAddress: AddressLookupAddress): DesAddress = addressLookupAddress.lines.size match {
+    case 1 =>
+      DesAddress(addressLookupAddress.lines(0), None, None, None, addressLookupAddress.postcode,
+        addressLookupAddress.country.code)
+    case 2 =>
+      DesAddress(addressLookupAddress.lines(0), Some(addressLookupAddress.lines(1)),
+        None, None, addressLookupAddress.postcode,
+        addressLookupAddress.country.code)
+    case 3 =>
+     DesAddress(addressLookupAddress.lines(0), Some(addressLookupAddress.lines(1)),
+       Some(addressLookupAddress.lines(2)), None, addressLookupAddress.postcode,
+      addressLookupAddress.country.code)
+    case _ =>
+      DesAddress(addressLookupAddress.lines(0), Some(addressLookupAddress.lines(1)),
+        Some(addressLookupAddress.lines(2)), Some(addressLookupAddress.lines(3)), addressLookupAddress.postcode,
+        addressLookupAddress.country.code)
+
   }
 
   private def validateLine(line: String, addressLookupAddress: AddressLookupAddress): ValidatedDesAddress[DesAddress] = {
-    import ValidatedDesAddress._
-
     Monoid[ValidatedDesAddress[DesAddress]].combineAll(List(validateLength(line, addressLookupAddress),
       validateDesRegex(line, addressLookupAddress)))
   }
@@ -116,45 +130,11 @@ object AddressLookupAddress {
       }).getOrElse(Invalid(Set(ValidationError("error.postcode.empty"))))
   }
 
-
-  implicit val format: OFormat[AddressLookupAddress] = {
-    implicit val formatAddressValue = Json.format[AddressLookupAddress]
-
-    implicit val reads: Reads[AddressLookupAddress] = Reads(json => {
-      val address = (json \ "address").as[JsObject]
-      val addressLines = (address \ "lines").as[List[String]]
-      val postcode = (address \ "postcode").asOpt[String]
-      val countryCode = (address \ "country" \ "code").as[String]
-
-      def merge(a: Option[String], b: Option[String]): Option[String] = (a, b) match {
-        case (Some(s1), Some(s2)) => Some(s1 + " " + s2)
-        case (None, s) => s
-        case (s, None) => s
-      }
-
-      addressLines.size match {
-        case 4 => JsSuccess(
-          AddressLookupAddress(addressLines.head, Some(addressLines(1)), Some(addressLines(2)),
-            Some(addressLines(3)), postcode, countryCode))
-
-        case 3 => JsSuccess(
-          AddressLookupAddress(addressLines.head, Some(addressLines(1)), Some(addressLines(2)),
-            None, postcode, countryCode))
-
-        case 2 => JsSuccess(
-          AddressLookupAddress(addressLines.head, Some(addressLines(1)), None,
-            None, postcode, countryCode))
-
-        case 1 => JsSuccess(
-          AddressLookupAddress(addressLines.head, None, None,
-            None, postcode, countryCode))
-
-        case _ => JsError(s"Address is empty from ADDRESS_LOOKUP service, $json")
-      }
-
-    })
-
-    OFormat[AddressLookupAddress](reads, formatAddressValue)
+  private def validateLines(lines: Seq[String], addressLookupAddress: AddressLookupAddress):
+  ValidatedDesAddress[DesAddress] = {
+      Monoid[ValidatedDesAddress[DesAddress]].combineAll(
+        addressLookupAddress.lines.take(4).map(line => validateLine(line, addressLookupAddress))
+      )
   }
 
   def renderErrors(errors: Set[ValidationError]): String = errors

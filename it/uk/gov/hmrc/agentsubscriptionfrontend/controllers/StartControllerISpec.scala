@@ -4,8 +4,9 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{contentType, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub
+import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 
-class StartControllerISpec extends BaseControllerISpec {
+class StartControllerISpec extends BaseISpec {
 
   private lazy val controller: StartController = app.injector.instanceOf[StartController]
   private lazy val configuredGovernmentGatewayUrl = "http://configured-government-gateway.gov.uk/"

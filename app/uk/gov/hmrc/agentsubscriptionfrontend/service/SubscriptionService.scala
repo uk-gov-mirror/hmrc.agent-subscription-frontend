@@ -35,11 +35,7 @@ class SubscriptionService @Inject()(agentSubscriptionConnector: AgentSubscriptio
       name = subscriptionDetails.name,
       email = subscriptionDetails.email,
       telephone = subscriptionDetails.telephone,
-      address = AddressLookupAddress(addressLine1 = subscriptionDetails.addressLine1,
-        addressLine2 = subscriptionDetails.addressLine2,
-        addressLine3 = subscriptionDetails.addressLine3,
-        postcode = Some(subscriptionDetails.postcode),
-        countryCode = "GB"))
+      address = subscriptionDetails.address)
     )
 
     agentSubscriptionConnector.subscribeAgencyToMtd(request) map { x =>

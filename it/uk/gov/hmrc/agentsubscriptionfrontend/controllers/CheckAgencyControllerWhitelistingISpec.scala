@@ -16,7 +16,9 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
-class CheckAgencyControllerWhitelistingISpec extends BaseControllerISpec {
+import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
+
+class CheckAgencyControllerWhitelistingISpec extends BaseISpec {
 
   override protected def passcodeAuthenticationEnabled = true
 
