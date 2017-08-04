@@ -123,7 +123,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
   "submitSubscriptionDetails" should {
     behave like anAgentAffinityGroupOnlyEndpoint(request => controller.getAddressDetails(request))
 
-    "redirect to subscription complete" when {
+    "send subscription request and redirect to subscription complete" when {
       "all fields are supplied" in {
         AuthStub.hasNoEnrolments(subscribingAgent)
         AgentSubscriptionStub.subscriptionSuccess(utr, subscriptionRequest())
@@ -144,8 +144,6 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         sessionStoreService.allSessionsRemoved shouldBe true
         flash(result2).get("agencyName") shouldBe Some("My Agency")
         flash(result2).get("arn") shouldBe Some("ARN00001")
-
-        // TODO HO verify that address-subscription backend was called and all fields were included especially address line 4
 
         verifySubscriptionRequestSent(subscriptionRequest())
 
