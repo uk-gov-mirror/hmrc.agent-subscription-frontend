@@ -59,7 +59,7 @@ class AgentSubscriptionConnectorISpec extends UnitSpec with OneAppPerSuite with 
 
   "subscribe" should {
     "return an ARN" in {
-      AgentSubscriptionStub.subscriptionSuccess(utr, subscriptionRequest)
+      AgentSubscriptionStub.subscriptionWillSucceed(utr, subscriptionRequest)
 
       val result = await(connector.subscribeAgencyToMtd(subscriptionRequest))
 
@@ -67,7 +67,7 @@ class AgentSubscriptionConnectorISpec extends UnitSpec with OneAppPerSuite with 
     }
 
     "throw Upstream4xxResponse if subscription already exists" in {
-      AgentSubscriptionStub.subscriptionConflict(utr, subscriptionRequest)
+      AgentSubscriptionStub.subscriptionWillConflict(utr, subscriptionRequest)
 
       val e = intercept[Upstream4xxResponse] {
         await(connector.subscribeAgencyToMtd(subscriptionRequest))
@@ -77,7 +77,7 @@ class AgentSubscriptionConnectorISpec extends UnitSpec with OneAppPerSuite with 
     }
 
     "throw Upstream4xxResponse if postcodes don't match" in {
-      AgentSubscriptionStub.subscriptionForbidden(utr, subscriptionRequest)
+      AgentSubscriptionStub.subscriptionWillBeForbidden(utr, subscriptionRequest)
 
       val e = intercept[Upstream4xxResponse] {
         await(connector.subscribeAgencyToMtd(subscriptionRequest))

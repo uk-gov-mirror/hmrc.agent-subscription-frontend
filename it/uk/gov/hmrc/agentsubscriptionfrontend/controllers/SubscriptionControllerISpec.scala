@@ -126,7 +126,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
     "send subscription request and redirect to subscription complete" when {
       "all fields are supplied" in {
         AuthStub.hasNoEnrolments(subscribingAgent)
-        AgentSubscriptionStub.subscriptionSuccess(utr, subscriptionRequest())
+        AgentSubscriptionStub.subscriptionWillSucceed(utr, subscriptionRequest())
 
         givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
 
@@ -152,7 +152,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       "town is omitted" in {
         AuthStub.hasNoEnrolments(subscribingAgent)
         val request = subscriptionRequest(town = "")
-        AgentSubscriptionStub.subscriptionSuccess(utr, request)
+        AgentSubscriptionStub.subscriptionWillSucceed(utr, request)
 
         givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
         val result = await(controller.getAddressDetails(subscriptionDetailsRequest()))
@@ -172,7 +172,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
     "not mix up data from concurrent users" in {
       AuthStub.hasNoEnrolments(subscribingAgent)
       val request = subscriptionRequest()
-      AgentSubscriptionStub.subscriptionSuccess(utr, request)
+      AgentSubscriptionStub.subscriptionWillSucceed(utr, request)
 
       givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
 
@@ -181,7 +181,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       redirectLocation(user1Result1).head shouldBe "/api/dummy/callback"
 
       AuthStub.hasNoEnrolments(subscribingAgent2)
-      AgentSubscriptionStub.subscriptionSuccess(utr, subscriptionRequest2(), "ARN00002")
+      AgentSubscriptionStub.subscriptionWillSucceed(utr, subscriptionRequest2(), "ARN00002")
 
       val user2Result1 = await(controller.getAddressDetails(subscriptionDetailsRequest2()))
       status(user2Result1) shouldBe 303
@@ -213,7 +213,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
     "redirect to subscription failed" when {
       "subscription request fails" in {
         AuthStub.hasNoEnrolments(subscribingAgent)
-        AgentSubscriptionStub.subscriptionForbidden(utr, subscriptionRequest())
+        AgentSubscriptionStub.subscriptionWillBeForbidden(utr, subscriptionRequest())
 
         givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
 
@@ -235,7 +235,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
     "redirect to already subscribed" when {
       "agency is already subscribed to MTD" in {
         AuthStub.hasNoEnrolments(subscribingAgent)
-        AgentSubscriptionStub.subscriptionConflict(utr, subscriptionRequest())
+        AgentSubscriptionStub.subscriptionWillConflict(utr, subscriptionRequest())
 
         givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
 
