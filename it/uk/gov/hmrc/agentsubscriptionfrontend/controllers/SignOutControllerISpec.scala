@@ -2,8 +2,6 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import play.api.test.FakeRequest
 
-import play.api.test.Helpers.redirectLocation
-import play.api.test.Helpers._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 import play.api.test.Helpers.{redirectLocation, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
