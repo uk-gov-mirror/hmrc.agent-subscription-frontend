@@ -1,6 +1,6 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.connectors
 
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{AddressLookupAddress, Country}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AddressLookupFrontendAddress, Country}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AddressLookupFrontendStubs.givenAddressLookupReturnsAddress
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 import uk.gov.hmrc.play.http.HeaderCarrier
@@ -22,7 +22,7 @@ class AddressLookupFrontendConnectorSpec extends BaseISpec {
       givenAddressLookupReturnsAddress(addressId, addressLine1, addressLine2, addressLine3, town, postcode)
       val connector = app.injector.instanceOf[AddressLookupFrontendConnector]
       val address = await(connector.getAddressDetails(addressId))
-      address shouldBe AddressLookupAddress(
+      address shouldBe AddressLookupFrontendAddress(
         lines = Seq(
           addressLine1,
           addressLine2,

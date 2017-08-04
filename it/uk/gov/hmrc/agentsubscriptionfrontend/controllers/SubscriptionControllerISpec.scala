@@ -18,8 +18,8 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
-import uk.gov.hmrc.agentsubscriptionfrontend.models.AddressLookupAddress.ValidatedDesAddress
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{AddressLookupAddress, Agency, Country, DesAddress, KnownFactsResult, SubscriptionRequest, KnownFacts => ModelKnownFacts}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.AddressLookupFrontendAddress.ValidatedDesAddress
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AddressLookupFrontendAddress, Agency, Country, DesAddress, KnownFactsResult, SubscriptionRequest, KnownFacts => ModelKnownFacts}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AddressLookupFrontendStubs._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.{AgentSubscriptionStub, AuthStub}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec

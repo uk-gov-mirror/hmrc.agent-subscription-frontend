@@ -19,23 +19,22 @@ package uk.gov.hmrc.agentsubscriptionfrontend.models
 import cats.data.Validated
 import cats.data.Validated.{Invalid, Valid}
 import cats.kernel.Monoid
-import play.api.data.validation.ValidationError
 import play.api.Play.current
+import play.api.data.validation.ValidationError
 import play.api.i18n.Messages
 import play.api.i18n.Messages.Implicits._
-import play.api.libs.json.{OFormat, _}
+import play.api.libs.json._
 import uk.gov.hmrc.agentsubscriptionfrontend.config.blacklistedpostcodes.PostcodesLoader
-import uk.gov.hmrc.agentsubscriptionfrontend.models.AddressLookupAddress.ValidatedDesAddress
-import cats.implicits._
-
-import ValidatedDesAddress._
+import uk.gov.hmrc.agentsubscriptionfrontend.models.AddressLookupFrontendAddress.ValidatedDesAddress._
 
 case class Country(code: String,
                    name: Option[String])
 
-case class AddressLookupAddress(lines: Seq[String],
-                                postcode: Option[String],
-                                country: Country)
+case class AddressLookupFrontendAddress(
+  lines: Seq[String],
+  postcode: Option[String],
+  country: Country
+)
 
 case class DesAddress(addressLine1: String,
                       addressLine2: Option[String] = None,
@@ -44,10 +43,10 @@ case class DesAddress(addressLine1: String,
                       postcode: Option[String],
                       countryCode: String)
 
-object AddressLookupAddress {
+object AddressLookupFrontendAddress {
 
   implicit val formatCountry = Json.format[Country]
-  implicit val formatAddressLookupAddress = Json.format[AddressLookupAddress]
+  implicit val formatAddressLookupAddress = Json.format[AddressLookupFrontendAddress]
 
   type ValidatedDesAddress[T] = Validated[Set[ValidationError], T]
 
@@ -68,14 +67,14 @@ object AddressLookupAddress {
     }
   }
 
-  def validate(address: AddressLookupAddress, blacklistedPostCodes: Set[String]): ValidatedDesAddress[DesAddress] = {
+  def validate(address: AddressLookupFrontendAddress, blacklistedPostCodes: Set[String]): ValidatedDesAddress[DesAddress] = {
     Monoid[ValidatedDesAddress[DesAddress]].combineAll(List(validateLines(address.lines, address),
       nonEmpty(address.postcode, address),
       validateRegex(address.postcode, address), validateBlacklist(address.postcode, blacklistedPostCodes, address)))
 
   }
 
-  private def toDesAddress(addressLookupAddress: AddressLookupAddress): DesAddress = addressLookupAddress.lines.size match {
+  private def toDesAddress(addressLookupAddress: AddressLookupFrontendAddress): DesAddress = addressLookupAddress.lines.size match {
     case 1 =>
       DesAddress(addressLookupAddress.lines(0), None, None, None, addressLookupAddress.postcode,
         addressLookupAddress.country.code)
@@ -94,20 +93,20 @@ object AddressLookupAddress {
 
   }
 
-  private def validateLine(line: String, addressLookupAddress: AddressLookupAddress): ValidatedDesAddress[DesAddress] = {
+  private def validateLine(line: String, addressLookupAddress: AddressLookupFrontendAddress): ValidatedDesAddress[DesAddress] = {
     Monoid[ValidatedDesAddress[DesAddress]].combineAll(List(validateLength(line, addressLookupAddress),
       validateDesRegex(line, addressLookupAddress)))
   }
 
-  private def validateLength(line: String, addressLookupAddress: AddressLookupAddress): ValidatedDesAddress[DesAddress] = {
+  private def validateLength(line: String, addressLookupAddress: AddressLookupFrontendAddress): ValidatedDesAddress[DesAddress] = {
     if (line.length <= maxLength) Valid(toDesAddress(addressLookupAddress)) else Invalid(Set(ValidationError("error.address.maxLength", maxLength, line)))
   }
 
-  private def validateDesRegex(line: String, addressLookupAddress: AddressLookupAddress): ValidatedDesAddress[DesAddress] = {
+  private def validateDesRegex(line: String, addressLookupAddress: AddressLookupFrontendAddress): ValidatedDesAddress[DesAddress] = {
     if (line.matches(desTextRegex)) Valid(toDesAddress(addressLookupAddress)) else Invalid(Set(ValidationError("error.des.text.invalid.withInput", line)))
   }
 
-  private def nonEmpty(postcode: Option[String], addressLookupAddress: AddressLookupAddress): ValidatedDesAddress[DesAddress] = {
+  private def nonEmpty(postcode: Option[String], addressLookupAddress: AddressLookupFrontendAddress): ValidatedDesAddress[DesAddress] = {
     postcode match {
       case Some("") => Invalid(Set(ValidationError("error.postcode.empty")))
       case Some(_) => Valid(toDesAddress(addressLookupAddress))
@@ -115,14 +114,14 @@ object AddressLookupAddress {
     }
   }
 
-  private def validateRegex(postcode: Option[String], addressLookupAddress: AddressLookupAddress): ValidatedDesAddress[DesAddress] = {
+  private def validateRegex(postcode: Option[String], addressLookupAddress: AddressLookupFrontendAddress): ValidatedDesAddress[DesAddress] = {
     postcode.map(str => postCodeRegex.unapplySeq(str.trim))
       .map(_ => Valid(toDesAddress(addressLookupAddress)))
       .getOrElse(Invalid(Set(ValidationError("error.postcode.invalid"))))
   }
 
   def validateBlacklist(postcode: Option[String], blacklistedPostCodes: Set[String],
-                        addressLookupAddress: AddressLookupAddress): ValidatedDesAddress[DesAddress] = {
+                        addressLookupAddress: AddressLookupFrontendAddress): ValidatedDesAddress[DesAddress] = {
     postcode.map(str =>
       blacklistedPostCodes.contains(PostcodesLoader.formatPostcode(str)) match {
         case true => Invalid(Set(ValidationError("error.postcode.blacklisted")))
@@ -130,7 +129,7 @@ object AddressLookupAddress {
       }).getOrElse(Invalid(Set(ValidationError("error.postcode.empty"))))
   }
 
-  private def validateLines(lines: Seq[String], addressLookupAddress: AddressLookupAddress):
+  private def validateLines(lines: Seq[String], addressLookupAddress: AddressLookupFrontendAddress):
   ValidatedDesAddress[DesAddress] = {
       Monoid[ValidatedDesAddress[DesAddress]].combineAll(
         addressLookupAddress.lines.take(4).map(line => validateLine(line, addressLookupAddress))

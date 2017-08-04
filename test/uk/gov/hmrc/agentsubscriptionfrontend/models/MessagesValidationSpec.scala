@@ -19,7 +19,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.models
 import org.scalatest._
 import org.scalatestplus.play.OneAppPerSuite
 import play.api.data.validation.ValidationError
-import uk.gov.hmrc.agentsubscriptionfrontend.models.AddressLookupAddress._
+import uk.gov.hmrc.agentsubscriptionfrontend.models.AddressLookupFrontendAddress._
 
 class MessagesValidationSpec extends WordSpec with Matchers with OneAppPerSuite {
 

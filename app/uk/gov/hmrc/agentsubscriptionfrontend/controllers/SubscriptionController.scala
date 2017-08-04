@@ -30,7 +30,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.auth.{AgentRequest, AuthActions}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AddressLookupFrontendConnector
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.FieldMappings._
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{AddressLookupAddress, Arn, DesAddress, InitialDetails}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AddressLookupFrontendAddress, Arn, DesAddress, InitialDetails}
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.passcode.authentication.{PasscodeAuthenticationProvider, PasscodeVerificationConfig}
@@ -106,11 +106,11 @@ class SubscriptionController @Inject()
     implicit authContext =>
       implicit request =>
 
-        import AddressLookupAddress._
+        import AddressLookupFrontendAddress._
         import SubscriptionDetails._
 
         def subscribe(details: InitialDetails,
-                      address: DesAddress, addressLookupAddress: AddressLookupAddress): Future[Either[SubscriptionFailed, (Arn, String)]] = {
+                      address: DesAddress, addressLookupAddress: AddressLookupFrontendAddress): Future[Either[SubscriptionFailed, (Arn, String)]] = {
           val subscriptionDetails = mapper(details, address)
           subscriptionService.subscribeAgencyToMtd(subscriptionDetails) map {
             case Right(arn) => {
