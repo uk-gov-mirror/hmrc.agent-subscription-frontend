@@ -19,6 +19,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 import javax.inject.{Inject, Singleton}
 
 import cats.data.Validated.{Invalid, Valid}
+import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms.{mapping, _}
 import play.api.i18n.{I18nSupport, MessagesApi}
@@ -109,10 +110,13 @@ class SubscriptionController @Inject()
         import SubscriptionDetails._
 
         def subscribe(details: InitialDetails,
-                      address: DesAddress): Future[Either[SubscriptionFailed, (Arn, String)]] = {
+                      address: DesAddress, addressLookupAddress: AddressLookupAddress): Future[Either[SubscriptionFailed, (Arn, String)]] = {
           val subscriptionDetails = mapper(details, address)
           subscriptionService.subscribeAgencyToMtd(subscriptionDetails) map {
-            case Right(arn) => Right((arn, subscriptionDetails.name))
+            case Right(arn) => {
+              if (addressLookupAddress.lines.length > 4) Logger.warn("UTR with more than 4 address lines: " + details.utr.value)
+              Right((arn, subscriptionDetails.name))
+            }
             case Left(x) => Left(SubscriptionReturnedHttpError(x))
           }
         }
@@ -127,7 +131,7 @@ class SubscriptionController @Inject()
               val subscriptionResponse = for {
                 detailsOpt <- sessionStoreService.fetchInitialDetails
                 subscriptionResponse <- detailsOpt match {
-                  case Some(details) => subscribe(details, desAddress)
+                  case Some(details) => subscribe(details, desAddress, address)
                   case None => Future.successful(Left(MissingSessionData))
                 }
                 _ <- sessionStoreService.remove()
