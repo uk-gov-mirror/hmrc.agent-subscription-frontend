@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.models
 
+import cats.data.NonEmptyList
 import org.scalatest._
 import org.scalatestplus.play.OneAppPerSuite
 import play.api.data.validation.ValidationError
@@ -25,7 +26,7 @@ class MessagesValidationSpec extends WordSpec with Matchers with OneAppPerSuite 
 
   "renderErrors function" should {
     "concatenate invalid and blacklist error messages" in {
-      val validationErrors = Set(ValidationError("error.postcode.invalid"), ValidationError("error.postcode.blacklisted"))
+      val validationErrors = NonEmptyList.of(ValidationError("error.postcode.invalid"), ValidationError("error.postcode.blacklisted"))
       val result: String = renderErrors(validationErrors)
 
       result shouldEqual "You have entered an invalid postcode, You can't use the postcode you've entered"
@@ -34,7 +35,7 @@ class MessagesValidationSpec extends WordSpec with Matchers with OneAppPerSuite 
     "concatenate invalid and maxLength error messages" in {
       val addressLine = "IpwichoIpwichoIpwichoIpwicho"
       val maxLength = 40
-      val validationErrors = Set(ValidationError("error.postcode.invalid"),
+      val validationErrors = NonEmptyList.of(ValidationError("error.postcode.invalid"),
         ValidationError("error.address.maxLength", maxLength, addressLine))
       val result: String = renderErrors(validationErrors)
 
@@ -46,7 +47,7 @@ class MessagesValidationSpec extends WordSpec with Matchers with OneAppPerSuite 
       val addressLine2 = addressLine1 + "Ipwich"
       val maxLength = 40
 
-      val validationErrors = Set(ValidationError("error.postcode.invalid"),
+      val validationErrors = NonEmptyList.of(ValidationError("error.postcode.invalid"),
         ValidationError("error.address.maxLength", maxLength, addressLine1),
         ValidationError("error.address.maxLength", maxLength, addressLine2))
       val result: String = renderErrors(validationErrors)
@@ -54,13 +55,6 @@ class MessagesValidationSpec extends WordSpec with Matchers with OneAppPerSuite 
       result shouldEqual s"You have entered an invalid postcode, " +
         s"Length of line $addressLine1 must be up to $maxLength, " +
         s"Length of line $addressLine2 must be up to $maxLength"
-    }
-
-    "not throw an exeption when there are no errors" in {
-      val validationErrors = Set.empty[ValidationError]
-      val result: String = renderErrors(validationErrors)
-
-      result shouldEqual ""
     }
 
   }

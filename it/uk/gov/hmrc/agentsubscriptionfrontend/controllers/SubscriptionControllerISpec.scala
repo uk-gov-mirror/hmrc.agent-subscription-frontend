@@ -16,21 +16,19 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
+import com.github.tomakehurst.wiremock.client.WireMock._
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
-import uk.gov.hmrc.agentsubscriptionfrontend.models.AddressLookupFrontendAddress.ValidatedDesAddress
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{AddressLookupFrontendAddress, Agency, Country, DesAddress, KnownFactsResult, SubscriptionRequest, KnownFacts => ModelKnownFacts}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{Agency, DesAddress, KnownFactsResult, SubscriptionRequest, KnownFacts => ModelKnownFacts}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AddressLookupFrontendStubs._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.{AgentSubscriptionStub, AuthStub}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUsers._
-import com.github.tomakehurst.wiremock.client.WireMock._
 
 class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec {
   private val utr = Utr("2000000000")
   private val myAgencyKnownFactsResult = KnownFactsResult(utr =
     Utr("utr"), postcode = "AA1 1AA", taxpayerName = "My Business", isSubscribedToAgentServices = false)
-  private val invalidAddress = "Invalid road %@"
 
   private lazy val controller: SubscriptionController = app.injector.instanceOf[SubscriptionController]
 

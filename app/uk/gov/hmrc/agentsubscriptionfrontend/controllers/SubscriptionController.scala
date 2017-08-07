@@ -30,7 +30,8 @@ import uk.gov.hmrc.agentsubscriptionfrontend.auth.{AgentRequest, AuthActions}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AddressLookupFrontendConnector
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.FieldMappings._
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{AddressLookupFrontendAddress, Arn, DesAddress, InitialDetails}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.AddressValidator.validateAddress
+import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.passcode.authentication.{PasscodeAuthenticationProvider, PasscodeVerificationConfig}
@@ -122,7 +123,7 @@ class SubscriptionController @Inject()
         }
 
         addressLookUpConnector.getAddressDetails(id).flatMap { address =>
-          validate(address, blacklistedPostCodes) match {
+          validateAddress(address, blacklistedPostCodes) match {
             case Invalid(errors) =>
               Future.successful(
                 Ok(uk.gov.hmrc.agentsubscriptionfrontend.views.html.des_will_not_accept_address(id, renderErrors(errors)))

@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.models
 
+import cats.data.NonEmptyList
 import cats.data.Validated.{Invalid, Valid}
 import org.scalatest.{FlatSpec, Matchers}
 import play.api.data.validation.ValidationError
@@ -50,13 +51,24 @@ class AddressLookupAddressValidationSpec extends FlatSpec with Matchers {
 
                               }""".stripMargin)
 
-  "Address Validation" should "fail for Empty PostCode" in {
+  "Address Validation" should "fail for Empty PostCode (empty string)" in {
     val address = AddressLookupFrontendAddress(Seq(addressLine1_9kingsRoad, addressLine2, addressLine3, addressLine4), Some(""), country)
     val entity = jsValue(address).as[AddressLookupFrontendAddress]
 
-    val validationResult = AddressLookupFrontendAddress.validate(entity, blacklistedPostCodes)
-    validationResult shouldBe Invalid(Set(ValidationError("error.postcode.empty")))
+    val validationResult = AddressValidator.validateAddress(entity, blacklistedPostCodes)
+    validationResult shouldBe Invalid(NonEmptyList.of(ValidationError("error.postcode.empty")))
   }
+
+  "Address Validation" should "fail for no postcode (None)" in {
+    val address = AddressLookupFrontendAddress(Seq(addressLine1_9kingsRoad, addressLine2, addressLine3, addressLine4), None, country)
+    val entity = jsValue(address).as[AddressLookupFrontendAddress]
+
+    val validationResult = AddressValidator.validateAddress(entity, blacklistedPostCodes)
+    validationResult shouldBe Invalid(NonEmptyList.of(ValidationError("error.postcode.empty")))
+  }
+
+  // TODO APB-1014 do we need to be converting to/from JSON in most of the tests?
+  // val entity = jsValue(address).as[AddressLookupFrontendAddress]
 
   "Address Validation" should "fail for Blacklisted PostCode" in {
     val address = AddressLookupFrontendAddress(Seq(addressLine1_9kingsRoad, addressLine2, addressLine3,
@@ -64,15 +76,15 @@ class AddressLookupAddressValidationSpec extends FlatSpec with Matchers {
 
     val entity = jsValue(address).as[AddressLookupFrontendAddress]
 
-    val validationResult = AddressLookupFrontendAddress.validate(entity, blacklistedPostCodes)
-    validationResult shouldBe Invalid(Set(ValidationError("error.postcode.blacklisted")))
+    val validationResult = AddressValidator.validateAddress(entity, blacklistedPostCodes)
+    validationResult shouldBe Invalid(NonEmptyList.of(ValidationError("error.postcode.blacklisted")))
   }
 
   "Address Validation" should "be Successful for even if 5th address line exists and 5th line is not valid" in {
     val address = AddressLookupFrontendAddress(Seq(addressLine1_9kingsRoad, addressLine2, addressLine3,
       addressLine4, addressLine5), postcode, country)
 
-    val validationResult = AddressLookupFrontendAddress.validate(address, blacklistedPostCodes)
+    val validationResult = AddressValidator.validateAddress(address, blacklistedPostCodes)
     validationResult.isValid shouldBe true
     validationResult shouldBe Valid(DesAddress(addressLine1_9kingsRoad, Some(addressLine2), Some(addressLine3),
       Some(addressLine4), postcode, countryCode))
@@ -84,7 +96,7 @@ class AddressLookupAddressValidationSpec extends FlatSpec with Matchers {
 
     val entity = jsValue(address).as[AddressLookupFrontendAddress]
 
-    val validationResult = AddressLookupFrontendAddress.validate(entity, blacklistedPostCodes)
+    val validationResult = AddressValidator.validateAddress(entity, blacklistedPostCodes)
     validationResult.isValid shouldBe true
     validationResult shouldBe Valid(DesAddress(addressLine1_9kingsRoad, Some(addressLine2), Some(addressLine3),
       Some(addressLine4), postcode, countryCode))
@@ -96,7 +108,7 @@ class AddressLookupAddressValidationSpec extends FlatSpec with Matchers {
 
     val entity = jsValue(address).as[AddressLookupFrontendAddress]
 
-    val validationResult = AddressLookupFrontendAddress.validate(entity, blacklistedPostCodes)
+    val validationResult = AddressValidator.validateAddress(entity, blacklistedPostCodes)
     validationResult.isValid shouldBe true
     validationResult shouldBe Valid(DesAddress(addressLine1, Some(addressLine2), Some(addressLine3),
       Some(addressLine4), postcode, countryCode))
@@ -107,10 +119,17 @@ class AddressLookupAddressValidationSpec extends FlatSpec with Matchers {
 
     val entity = jsValue(address).as[AddressLookupFrontendAddress]
 
-    val validationResult = AddressLookupFrontendAddress.validate(entity, blacklistedPostCodes)
+    val validationResult = AddressValidator.validateAddress(entity, blacklistedPostCodes)
     validationResult.isValid shouldBe true
     validationResult shouldBe Valid(DesAddress(addressLine1, Some(""), Some(""),
       Some(""), postcode, countryCode))
+  }
+
+  "Address Validation" should "fail when no lines are provided" in {
+    val address = AddressLookupFrontendAddress(Seq.empty, postcode, country)
+
+    val validationResult = AddressValidator.validateAddress(address, blacklistedPostCodes)
+    validationResult shouldBe Invalid(NonEmptyList.of(ValidationError("error.address.lines.empty")))
   }
 
   "Address Validation" should "be Successful when only a few address lines are provided" in {
@@ -119,7 +138,7 @@ class AddressLookupAddressValidationSpec extends FlatSpec with Matchers {
 
     val entity = jsValue(address).as[AddressLookupFrontendAddress]
 
-    val validationResult = AddressLookupFrontendAddress.validate(entity, blacklistedPostCodes)
+    val validationResult = AddressValidator.validateAddress(entity, blacklistedPostCodes)
     validationResult.isValid shouldBe true
     validationResult shouldBe Valid(DesAddress(addressLine1_9kingsRoad, Some(""), Some(""), Some(addressLine4), postcode, countryCode))
   }
@@ -130,8 +149,8 @@ class AddressLookupAddressValidationSpec extends FlatSpec with Matchers {
 
     val entity = jsValue(address).as[AddressLookupFrontendAddress]
 
-    val validationResult = AddressLookupFrontendAddress.validate(entity, blacklistedPostCodes)
-    validationResult shouldBe Invalid(Set(ValidationError("error.address.maxLength", 35, entity.lines(0))))
+    val validationResult = AddressValidator.validateAddress(entity, blacklistedPostCodes)
+    validationResult shouldBe Invalid(NonEmptyList.of(ValidationError("error.address.maxLength", 35, entity.lines(0))))
      s"Length of line ${entity.lines(0)} must be up to 35"
   }
 
@@ -141,8 +160,8 @@ class AddressLookupAddressValidationSpec extends FlatSpec with Matchers {
 
     val entity = jsValue(address).as[AddressLookupFrontendAddress]
 
-    val validationResult = AddressLookupFrontendAddress.validate(entity, blacklistedPostCodes)
-    validationResult shouldBe Invalid(Set(ValidationError("error.address.maxLength", 35, entity.lines(1))))
+    val validationResult = AddressValidator.validateAddress(entity, blacklistedPostCodes)
+    validationResult shouldBe Invalid(NonEmptyList.of(ValidationError("error.address.maxLength", 35, entity.lines(1))))
   }
 
   "Address Validation" should "fail for address line2 violating DES regex" in {
@@ -150,8 +169,8 @@ class AddressLookupAddressValidationSpec extends FlatSpec with Matchers {
       addressLine3, addressLine4), postcode, country)
 
 
-    val validationResult = AddressLookupFrontendAddress.validate(address, blacklistedPostCodes)
-    validationResult shouldBe Invalid(Set(ValidationError("error.des.text.invalid.withInput", address.lines(1))))
+    val validationResult = AddressValidator.validateAddress(address, blacklistedPostCodes)
+    validationResult shouldBe Invalid(NonEmptyList.of(ValidationError("error.des.text.invalid.withInput", address.lines(1))))
   }
 
   "Address Validation" should "fail for address line2 violating DES regex and max length for line1" in {
@@ -159,9 +178,11 @@ class AddressLookupAddressValidationSpec extends FlatSpec with Matchers {
       addressLine3, addressLine4), postcode, country)
 
 
-    val validationResult = AddressLookupFrontendAddress.validate(address, blacklistedPostCodes)
-    validationResult shouldBe Invalid(Set(ValidationError("error.des.text.invalid.withInput", address.lines(1)),
-      ValidationError("error.address.maxLength", 35, address.lines(0))))
+    val validationResult = AddressValidator.validateAddress(address, blacklistedPostCodes)
+    validationResult shouldBe Invalid(NonEmptyList.of(
+      ValidationError("error.address.maxLength", 35, address.lines(0)),
+      ValidationError("error.des.text.invalid.withInput", address.lines(1))
+    ))
   }
 
   "Address Validation" should "fail for address line1 and line2 length greater than 35 characters" in {
@@ -170,8 +191,8 @@ class AddressLookupAddressValidationSpec extends FlatSpec with Matchers {
 
     val entity = jsValue(address).as[AddressLookupFrontendAddress]
 
-    val validationResult = AddressLookupFrontendAddress.validate(entity, blacklistedPostCodes)
-    validationResult shouldBe Invalid(Set(ValidationError("error.address.maxLength", 35, entity.lines(0)),
+    val validationResult = AddressValidator.validateAddress(entity, blacklistedPostCodes)
+    validationResult shouldBe Invalid(NonEmptyList.of(ValidationError("error.address.maxLength", 35, entity.lines(0)),
       ValidationError("error.address.maxLength", 35, entity.lines(1))))
   }
 
@@ -181,8 +202,8 @@ class AddressLookupAddressValidationSpec extends FlatSpec with Matchers {
 
     val entity = jsValue(address).as[AddressLookupFrontendAddress]
 
-    val validationResult = AddressLookupFrontendAddress.validate(entity, blacklistedPostCodes)
-    validationResult shouldBe Invalid(Set(ValidationError("error.address.maxLength", 35, entity.lines(0)),
+    val validationResult = AddressValidator.validateAddress(entity, blacklistedPostCodes)
+    validationResult shouldBe Invalid(NonEmptyList.of(ValidationError("error.address.maxLength", 35, entity.lines(0)),
       ValidationError("error.address.maxLength", 35, entity.lines(1)),
       ValidationError("error.postcode.blacklisted")))
   }
