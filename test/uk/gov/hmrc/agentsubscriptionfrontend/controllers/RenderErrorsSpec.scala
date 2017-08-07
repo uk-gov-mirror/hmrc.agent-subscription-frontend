@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentsubscriptionfrontend.models
+package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import cats.data.NonEmptyList
 import org.scalatest._
 import org.scalatestplus.play.OneAppPerSuite
 import play.api.data.validation.ValidationError
-import uk.gov.hmrc.agentsubscriptionfrontend.models.AddressLookupFrontendAddress._
+import play.api.i18n.Messages.Implicits._
+import uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.renderErrors
 
-class MessagesValidationSpec extends WordSpec with Matchers with OneAppPerSuite {
+class RenderErrorsSpec extends WordSpec with Matchers with OneAppPerSuite {
 
   "renderErrors function" should {
     "concatenate invalid and blacklist error messages" in {
@@ -56,6 +57,5 @@ class MessagesValidationSpec extends WordSpec with Matchers with OneAppPerSuite 
         s"Length of line $addressLine1 must be up to $maxLength, " +
         s"Length of line $addressLine2 must be up to $maxLength"
     }
-
   }
 }

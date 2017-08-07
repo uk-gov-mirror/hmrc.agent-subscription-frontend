@@ -18,11 +18,13 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import javax.inject.{Inject, Singleton}
 
+import cats.data.NonEmptyList
 import cats.data.Validated.{Invalid, Valid}
 import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms.{mapping, _}
-import play.api.i18n.{I18nSupport, MessagesApi}
+import play.api.data.validation.ValidationError
+import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.libs.json._
 import play.api.mvc.{AnyContent, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
@@ -107,7 +109,6 @@ class SubscriptionController @Inject()
     implicit authContext =>
       implicit request =>
 
-        import AddressLookupFrontendAddress._
         import SubscriptionDetails._
 
         def subscribe(details: InitialDetails,
@@ -126,7 +127,7 @@ class SubscriptionController @Inject()
           validateAddress(address, blacklistedPostCodes) match {
             case Invalid(errors) =>
               Future.successful(
-                Ok(uk.gov.hmrc.agentsubscriptionfrontend.views.html.des_will_not_accept_address(id, renderErrors(errors)))
+                Ok(uk.gov.hmrc.agentsubscriptionfrontend.views.html.des_will_not_accept_address(id, SubscriptionController.renderErrors(errors)))
               )
             case Valid(desAddress) =>
               val subscriptionResponse = for {
@@ -198,4 +199,13 @@ class SubscriptionController @Inject()
         ) getOrElse sessionMissingRedirect()
       }
   }
+}
+
+object SubscriptionController {
+
+  def renderErrors(errors: NonEmptyList[ValidationError])(implicit messages: Messages): String = errors
+    .toList
+    .map(valError => Messages(valError.message, valError.args: _*))
+    .reduce(_ + ", " + _)
+
 }

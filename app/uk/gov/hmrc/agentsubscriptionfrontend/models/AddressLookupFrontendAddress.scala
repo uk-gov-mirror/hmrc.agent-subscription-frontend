@@ -16,11 +16,6 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.models
 
-import cats.data.NonEmptyList
-import play.api.Play.current
-import play.api.data.validation.ValidationError
-import play.api.i18n.Messages
-import play.api.i18n.Messages.Implicits._
 import play.api.libs.json._
 
 case class Country(code: String,
@@ -44,8 +39,4 @@ object AddressLookupFrontendAddress {
   implicit val formatCountry = Json.format[Country]
   implicit val formatAddressLookupAddress = Json.format[AddressLookupFrontendAddress]
 
-  def renderErrors(errors: NonEmptyList[ValidationError]): String = errors
-    .toList
-    .map(valError => Messages(valError.message, valError.args: _*))
-    .reduce(_ + ", " + _)
 }
