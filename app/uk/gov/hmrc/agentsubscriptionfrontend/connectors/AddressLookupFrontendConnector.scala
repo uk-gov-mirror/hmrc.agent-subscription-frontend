@@ -22,7 +22,7 @@ import javax.inject.{Inject, Named, Singleton}
 import play.api.http.HeaderNames.LOCATION
 import play.api.libs.json.{JsObject, Json}
 import play.api.mvc.Call
-import uk.gov.hmrc.agentsubscriptionfrontend.models.Address
+import uk.gov.hmrc.agentsubscriptionfrontend.models.AddressLookupFrontendAddress
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpGet, HttpPost, HttpResponse}
 
@@ -30,7 +30,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NoStackTrace
 
 @Singleton
-class AddressLookUpConnector @Inject()(@Named("address-lookup-frontend-baseUrl") baseUrl: URL, http: HttpGet with HttpPost) extends ServicesConfig {
+class AddressLookupFrontendConnector @Inject()(@Named("address-lookup-frontend-baseUrl") baseUrl: URL, http: HttpGet with HttpPost) extends ServicesConfig {
   private val addressLookupContinueUrl = getConfString("address-lookup-frontend.new-address-callback.url", "")
 
   def initJourney(call: Call, journeyName: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[String] = {
@@ -43,10 +43,10 @@ class AddressLookUpConnector @Inject()(@Named("address-lookup-frontend-baseUrl")
     }
   }
 
-  def getAddressDetails(id: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Address] = {
-    import Address._
+  def getAddressDetails(id: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[AddressLookupFrontendAddress] = {
+    import AddressLookupFrontendAddress._
 
-    http.GET[Address](confirmJourneyUrl(id))
+    http.GET[JsObject](confirmJourneyUrl(id)).map(json => (json \ "address").as[AddressLookupFrontendAddress])
   }
 
   private def confirmJourneyUrl(id: String) = {

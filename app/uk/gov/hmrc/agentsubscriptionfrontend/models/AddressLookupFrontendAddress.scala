@@ -14,17 +14,22 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentsubscriptionfrontend.controllers
+package uk.gov.hmrc.agentsubscriptionfrontend.models
 
-import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
+import play.api.libs.json._
 
-class CheckAgencyControllerWhitelistingISpec extends BaseISpec {
+case class Country(code: String,
+                   name: Option[String])
 
-  override protected def passcodeAuthenticationEnabled = true
+case class AddressLookupFrontendAddress(
+  lines: Seq[String],
+  postcode: Option[String],
+  country: Country
+)
 
-  private lazy val controller = app.injector.instanceOf[CheckAgencyController]
+object AddressLookupFrontendAddress {
 
-  "showCheckAgencyStatus" should {
-    behave like aWhitelistedEndpoint(request => controller.showCheckAgencyStatus(request))
-  }
+  implicit val formatCountry = Json.format[Country]
+  implicit val formatAddressLookupAddress = Json.format[AddressLookupFrontendAddress]
+
 }

@@ -1,4 +1,4 @@
-package uk.gov.hmrc.agentsubscriptionfrontend.controllers
+package uk.gov.hmrc.agentsubscriptionfrontend.support
 
 import com.google.inject.AbstractModule
 import org.scalatestplus.play.OneAppPerSuite
@@ -16,7 +16,7 @@ import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{EndpointBehaviours, MongoApp, SampleUser, TestSessionStoreService, WireMockSupport}
 import uk.gov.hmrc.play.test.UnitSpec
 
-abstract class BaseControllerISpec extends UnitSpec with OneAppPerSuite with MongoApp with WireMockSupport with EndpointBehaviours {
+abstract class BaseISpec extends UnitSpec with OneAppPerSuite with MongoApp with WireMockSupport with EndpointBehaviours {
 
   override implicit lazy val app: Application = appBuilder.build()
 

@@ -1,6 +1,8 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import play.api.test.FakeRequest
+
+import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 import play.api.test.Helpers.{redirectLocation, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.models.KnownFactsResult
@@ -8,7 +10,8 @@ import uk.gov.hmrc.agentsubscriptionfrontend.repository.KnownFactsResultMongoRep
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class SignOutControllerISpec extends BaseControllerISpec {
+
+class SignOutControllerISpec extends BaseISpec {
   private lazy val controller: SignedOutController = app.injector.instanceOf[SignedOutController]
 
   private lazy val sosRedirectUrl = "/government-gateway-registration-frontend?accountType=agent"

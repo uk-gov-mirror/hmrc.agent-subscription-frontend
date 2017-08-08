@@ -59,7 +59,7 @@ class AgentSubscriptionConnectorISpec extends UnitSpec with OneAppPerSuite with 
 
   "subscribe" should {
     "return an ARN" in {
-      AgentSubscriptionStub.subscriptionSuccess(utr, subscriptionRequest)
+      AgentSubscriptionStub.subscriptionWillSucceed(utr, subscriptionRequest)
 
       val result = await(connector.subscribeAgencyToMtd(subscriptionRequest))
 
@@ -67,7 +67,7 @@ class AgentSubscriptionConnectorISpec extends UnitSpec with OneAppPerSuite with 
     }
 
     "throw Upstream4xxResponse if subscription already exists" in {
-      AgentSubscriptionStub.subscriptionConflict(utr, subscriptionRequest)
+      AgentSubscriptionStub.subscriptionWillConflict(utr, subscriptionRequest)
 
       val e = intercept[Upstream4xxResponse] {
         await(connector.subscribeAgencyToMtd(subscriptionRequest))
@@ -77,7 +77,7 @@ class AgentSubscriptionConnectorISpec extends UnitSpec with OneAppPerSuite with 
     }
 
     "throw Upstream4xxResponse if postcodes don't match" in {
-      AgentSubscriptionStub.subscriptionForbidden(utr, subscriptionRequest)
+      AgentSubscriptionStub.subscriptionWillBeForbidden(utr, subscriptionRequest)
 
       val e = intercept[Upstream4xxResponse] {
         await(connector.subscribeAgencyToMtd(subscriptionRequest))
@@ -91,7 +91,13 @@ class AgentSubscriptionConnectorISpec extends UnitSpec with OneAppPerSuite with 
     SubscriptionRequest(utr = utr,
       knownFacts = KnownFacts("AA1 2AA"),
       agency = Agency(name = "My Agency",
-        address = Address(addressLine1 = "1 Some Street", addressLine2 = Some("Anytown"), postcode = Some("AA1 1AA"), countryCode = "GB"),
+        address = DesAddress(
+          addressLine1 = "1 Some Street",
+          addressLine2 = Some("Anytown"),
+          addressLine3 = None,
+          addressLine4 = None,
+          postcode = Some("AA1 1AA"),
+          countryCode = "GB"),
         email = "agency@example.com",
         telephone = "0123 456 7890"))
 }

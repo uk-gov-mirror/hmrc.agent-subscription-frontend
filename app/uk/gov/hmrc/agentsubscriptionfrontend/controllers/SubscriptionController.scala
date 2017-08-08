@@ -18,18 +18,22 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import javax.inject.{Inject, Singleton}
 
+import cats.data.NonEmptyList
 import cats.data.Validated.{Invalid, Valid}
+import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms.{mapping, _}
-import play.api.i18n.{I18nSupport, MessagesApi}
+import play.api.data.validation.ValidationError
+import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.libs.json._
 import play.api.mvc.{AnyContent, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.{AgentRequest, AuthActions}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AddressLookUpConnector
+import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AddressLookupFrontendConnector
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.FieldMappings._
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{Address, Arn, InitialDetails}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.AddressValidator.validateAddress
+import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.passcode.authentication.{PasscodeAuthenticationProvider, PasscodeVerificationConfig}
@@ -44,18 +48,15 @@ case class SubscriptionDetails(utr: Utr,
                                name: String,
                                email: String,
                                telephone: String,
-                               addressLine1: String,
-                               addressLine2: Option[String],
-                               addressLine3: Option[String],
-                               postcode: String)
+                               address: DesAddress)
 
 object SubscriptionDetails {
-  implicit val format: Format[SubscriptionDetails] = Json.format[SubscriptionDetails]
+  implicit val formatDesAddress: Format[DesAddress] = Json.format[DesAddress]
+  implicit val formatSubscriptionDetails: Format[SubscriptionDetails] = Json.format[SubscriptionDetails]
 
-  implicit def mapper(initDetails: InitialDetails, address: Address): SubscriptionDetails = {
+  implicit def mapper(initDetails: InitialDetails, address: DesAddress): SubscriptionDetails = {
     SubscriptionDetails(initDetails.utr, initDetails.knownFactsPostcode, initDetails.name,
-      initDetails.email, initDetails.telephone, address.addressLine1, address.addressLine2,
-      address.addressLine3, address.postcode.getOrElse(""))
+      initDetails.email, initDetails.telephone, address)
   }
 }
 
@@ -67,7 +68,7 @@ class SubscriptionController @Inject()
  override val passcodeAuthenticationProvider: PasscodeAuthenticationProvider,
  subscriptionService: SubscriptionService,
  sessionStoreService: SessionStoreService,
- addressLookUpConnector: AddressLookUpConnector
+ addressLookUpConnector: AddressLookupFrontendConnector
 )
 (implicit appConfig: AppConfig)
   extends FrontendController with I18nSupport with AuthActions with SessionDataMissing {
@@ -108,29 +109,31 @@ class SubscriptionController @Inject()
     implicit authContext =>
       implicit request =>
 
-        import Address._
         import SubscriptionDetails._
 
         def subscribe(details: InitialDetails,
-                      address: Address): Future[Either[SubscriptionFailed, (Arn, String)]] = {
+                      address: DesAddress, addressLookupAddress: AddressLookupFrontendAddress): Future[Either[SubscriptionFailed, (Arn, String)]] = {
           val subscriptionDetails = mapper(details, address)
           subscriptionService.subscribeAgencyToMtd(subscriptionDetails) map {
-            case Right(arn) => Right((arn, subscriptionDetails.name))
+            case Right(arn) => {
+              if (addressLookupAddress.lines.length > 4) Logger.warn("UTR with more than 4 address lines: " + details.utr.value)
+              Right((arn, subscriptionDetails.name))
+            }
             case Left(x) => Left(SubscriptionReturnedHttpError(x))
           }
         }
 
         addressLookUpConnector.getAddressDetails(id).flatMap { address =>
-          validate(address, blacklistedPostCodes) match {
+          validateAddress(address, blacklistedPostCodes) match {
             case Invalid(errors) =>
               Future.successful(
-                Ok(uk.gov.hmrc.agentsubscriptionfrontend.views.html.des_will_not_accept_address(id, renderErrors(errors)))
+                Ok(uk.gov.hmrc.agentsubscriptionfrontend.views.html.des_will_not_accept_address(id, SubscriptionController.renderErrors(errors)))
               )
-            case Valid(()) =>
+            case Valid(desAddress) =>
               val subscriptionResponse = for {
                 detailsOpt <- sessionStoreService.fetchInitialDetails
                 subscriptionResponse <- detailsOpt match {
-                  case Some(details) => subscribe(details, address)
+                  case Some(details) => subscribe(details, desAddress, address)
                   case None => Future.successful(Left(MissingSessionData))
                 }
                 _ <- sessionStoreService.remove()
@@ -155,7 +158,7 @@ class SubscriptionController @Inject()
         addressLookUpConnector.initJourney(routes.SubscriptionController.submit(), JourneyName).map { x => Redirect(x) }
   }
 
-  val getAddressDetails: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync {
+  val  getAddressDetails: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync {
     implicit authContext =>
       implicit request =>
         subscriptionDetails.bindFromRequest().fold(
@@ -196,4 +199,13 @@ class SubscriptionController @Inject()
         ) getOrElse sessionMissingRedirect()
       }
   }
+}
+
+object SubscriptionController {
+
+  def renderErrors(errors: NonEmptyList[ValidationError])(implicit messages: Messages): String = errors
+    .toList
+    .map(valError => Messages(valError.message, valError.args: _*))
+    .reduce(_ + ", " + _)
+
 }

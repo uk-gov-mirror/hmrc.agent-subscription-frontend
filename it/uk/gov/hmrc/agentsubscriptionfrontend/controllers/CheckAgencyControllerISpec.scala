@@ -21,9 +21,10 @@ import play.api.test.Helpers._
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.models.KnownFactsResult
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.{AgentSubscriptionStub, AuthStub}
+import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUsers._
 
-class CheckAgencyControllerISpec extends BaseControllerISpec with SessionDataMissingSpec {
+class CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
 
   private val validUtr = Utr("2000000000")
   private val validPostcode = "AA1 1AA"

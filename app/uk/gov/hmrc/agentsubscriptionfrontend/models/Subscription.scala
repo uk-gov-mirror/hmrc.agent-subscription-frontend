@@ -27,12 +27,13 @@ object Arn {
 }
 
 case class Agency(name: String,
-                  address: Address,
+                  address: DesAddress,
                   telephone: String,
                   email: String)
 
 object Agency {
-  implicit val format: Format[Agency] = Json.format[Agency]
+  implicit val formatDesAddress: Format[DesAddress] = Json.format[DesAddress]
+  implicit val formatAgency: Format[Agency] = Json.format[Agency]
 }
 
 case class KnownFacts(postcode: String)

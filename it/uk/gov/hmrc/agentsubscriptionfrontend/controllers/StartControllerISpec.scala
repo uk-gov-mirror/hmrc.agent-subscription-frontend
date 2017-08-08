@@ -8,10 +8,10 @@ import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.models.KnownFactsResult
 import uk.gov.hmrc.agentsubscriptionfrontend.repository.KnownFactsResultMongoRepository
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub
-
+import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class StartControllerISpec extends BaseControllerISpec {
+class StartControllerISpec extends BaseISpec {
 
   private lazy val controller: StartController = app.injector.instanceOf[StartController]
   private lazy val configuredGovernmentGatewayUrl = "http://configured-government-gateway.gov.uk/"
