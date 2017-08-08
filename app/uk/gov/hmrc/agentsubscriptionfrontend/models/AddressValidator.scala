@@ -59,7 +59,7 @@ object AddressValidator {
 
   def validateLine(line: String): Validated[ValidationErrors, String] =
     (validateLength(line) |@| validateDesRegex(line))
-      .map { case _ => line }
+      .map { case (_, _) => line }
 
   def validateLine1(lines: Seq[String]): Validated[ValidationErrors, String] = {
     lines.headOption
@@ -67,13 +67,13 @@ object AddressValidator {
       .getOrElse(Invalid(NonEmptyList.of(ValidationError("error.address.lines.empty"))))
   }
 
-  private def validateLength(line: String): Validated[ValidationErrors, String] =
-    Valid(line)
-      .ensure(NonEmptyList.of(ValidationError("error.address.maxLength", maxLength, line)))(_.length <= maxLength)
+  private def validateLength(line: String): Validated[ValidationErrors, Unit] =
+    if (line.length <= maxLength) Valid(())
+    else Invalid(NonEmptyList.of(ValidationError("error.address.maxLength", maxLength, line)))
 
-  private def validateDesRegex(line: String): Validated[ValidationErrors, String] =
+  private def validateDesRegex(line: String): Validated[ValidationErrors, Unit] =
     line match {
-      case desTextRegex(_*) => Valid(line)
+      case desTextRegex(_*) => Valid(())
       case _ => Invalid(NonEmptyList.of(ValidationError("error.des.text.invalid.withInput", line)))
     }
 
@@ -87,19 +87,19 @@ object AddressValidator {
   }
 
   private def validateNonEmptyPostcode(postcode: String, blacklistedPostcodes: Set[String]): Validated[ValidationErrors, String] =
-    (validatePostcodeRegex(postcode) |@| validateBlacklist(postcode, blacklistedPostcodes)).map { case _ => postcode }
+    (validatePostcodeRegex(postcode) |@| validateBlacklist(postcode, blacklistedPostcodes)).map { case (_, _) => postcode }
 
-  private def validatePostcodeRegex(postcode: String): Validated[ValidationErrors, String] =
+  private def validatePostcodeRegex(postcode: String): Validated[ValidationErrors, Unit] =
     postcode match {
-      case postcodeRegex(_*) => Valid(postcode)
+      case postcodeRegex(_*) => Valid(())
       case _ => Invalid(NonEmptyList.of(ValidationError("error.postcode.invalid")))
     }
 
-  private def validateBlacklist(postcode: String, blacklistedPostcodes: Set[String]): Validated[ValidationErrors, String] =
+  private def validateBlacklist(postcode: String, blacklistedPostcodes: Set[String]): Validated[ValidationErrors, Unit] =
     if (blacklistedPostcodes.contains(PostcodesLoader.formatPostcode(postcode))) {
       Invalid(NonEmptyList.of(ValidationError("error.postcode.blacklisted")))
     } else {
-      Valid(postcode)
+      Valid(())
     }
 
 }
