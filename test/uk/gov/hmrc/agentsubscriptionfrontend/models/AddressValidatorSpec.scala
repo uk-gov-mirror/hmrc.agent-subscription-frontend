@@ -16,18 +16,21 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.models
 
+import cats.data.NonEmptyList
 import cats.data.Validated.{Invalid, Valid}
-import cats.data.{NonEmptyList, Validated}
 import play.api.data.validation.ValidationError
 import uk.gov.hmrc.agentsubscriptionfrontend.config.blacklistedpostcodes.PostcodesLoader
 import uk.gov.hmrc.agentsubscriptionfrontend.models.AddressValidator._
-import uk.gov.hmrc.agentsubscriptionfrontend.support.testAddressLookupFrontendAddress
+import uk.gov.hmrc.agentsubscriptionfrontend.support.{testAddressLookupFrontendAddress, testCountry}
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.Future
 
 class AddressValidatorSpec extends UnitSpec {
 
+  // Each of these valid lines should be the maximum allowed length, 35
+  // chars, to ensure we test the edge case of validation passing when all
+  // lines are the maximum allowed length
   private val validLine = "12345678901234567890123456789012345"
   private val validLine2 = "22345678901234567890123456789012345"
   private val validLine3 = "32345678901234567890123456789012345"
@@ -46,8 +49,13 @@ class AddressValidatorSpec extends UnitSpec {
   )
 
   private val validPostcode = "AA1 1AA"
+  private val errorsForInvalidPostcode = NonEmptyList.of(ValidationError("error.postcode.invalid"))
 
-  private val blacklistedPostcodes: Set[String] = Set("BB1 1BB", "CC1 1CC", "DD1 1DD").map(PostcodesLoader.formatPostcode)
+  private val blacklistedPostcode = "BB1 1BB"
+  private val errorsForBlacklistedPostcode = NonEmptyList.of(ValidationError("error.postcode.blacklisted"))
+  private val blacklistedPostcodes: Set[String] = Set(blacklistedPostcode, "CC1 1CC", "DD1 1DD").map(PostcodesLoader.formatPostcode)
+
+  private val validCountryCode = "GB"
 
   "validateLine" should {
     "return the validated line if it is valid" in {
@@ -73,47 +81,47 @@ class AddressValidatorSpec extends UnitSpec {
     }
 
     "return an error if format is invalid" in {
-      validatePostcode(Some("not a postcode"), blacklistedPostcodes) shouldBe Invalid(NonEmptyList.of(ValidationError("error.postcode.invalid")))
+      validatePostcode(Some("not a postcode"), blacklistedPostcodes) shouldBe Invalid(errorsForInvalidPostcode)
     }
 
     "return an error if format is invalid but contains a valid postcode" in {
-      validatePostcode(Some(s"not a postcode $validPostcode not a postcode"), blacklistedPostcodes) shouldBe Invalid(NonEmptyList.of(ValidationError("error.postcode.invalid")))
-    }
-
-    "return an error if there is no postcode (None)" in {
-      validatePostcode(None, blacklistedPostcodes) shouldBe Invalid(NonEmptyList.of(ValidationError("error.postcode.empty")))
+      validatePostcode(Some(s"not a postcode $validPostcode not a postcode"), blacklistedPostcodes) shouldBe Invalid(errorsForInvalidPostcode)
     }
 
     "return an error if the postcode is empty" in {
       validatePostcode(Some(""), blacklistedPostcodes) shouldBe Invalid(NonEmptyList.of(ValidationError("error.postcode.empty")))
     }
 
+    "return an error if there is no postcode (None)" in {
+      validatePostcode(None, blacklistedPostcodes) shouldBe Invalid(NonEmptyList.of(ValidationError("error.postcode.empty")))
+    }
+
     "return an error if the postcode is blacklisted regardless of spacing" in {
-      validatePostcode(Some("BB11BB"), blacklistedPostcodes) shouldBe Invalid(NonEmptyList.of(ValidationError("error.postcode.blacklisted")))
+      validatePostcode(Some("BB11BB"), blacklistedPostcodes) shouldBe Invalid(errorsForBlacklistedPostcode)
+      validatePostcode(Some(blacklistedPostcode), blacklistedPostcodes) shouldBe Invalid(errorsForBlacklistedPostcode)
     }
   }
 
   "validateAddress" should {
-    "populate fields when the input address is valid" in {
-      val countryCode = "GB"
+    "populate all DesAddress fields when the input address is valid, even when all input lines are the maximum allowed length" in {
       val addressLookupFrontendAddress = testAddressLookupFrontendAddress(
         lines = Seq(validLine, validLine2, validLine3, validLine4),
         postcode = Some(validPostcode),
-        country = Country(countryCode,Some("United Kingdom"))
+        country = testCountry(code = validCountryCode)
       )
-      val validatedAddress: Validated[NonEmptyList[ValidationError], DesAddress] = validateAddress(addressLookupFrontendAddress, blacklistedPostcodes)
-      val desAddress: DesAddress = validatedAddress.toOption.value
-      desAddress.addressLine1 shouldBe validLine
-      desAddress.addressLine2 shouldBe Some(validLine2)
-      desAddress.addressLine3 shouldBe Some(validLine3)
-      desAddress.addressLine4 shouldBe Some(validLine4)
-      desAddress.postcode shouldBe Some(validPostcode)
-      desAddress.countryCode shouldBe countryCode
+      validateAddress(addressLookupFrontendAddress, blacklistedPostcodes) shouldBe Valid(DesAddress(
+        addressLine1 = validLine,
+        addressLine2 = Some(validLine2),
+        addressLine3 = Some(validLine3),
+        addressLine4 = Some(validLine4),
+        postcode = Some(validPostcode),
+        countryCode = validCountryCode
+      ))
     }
 
     "not throw an error when there is only one line" in {
       val addressLookupFrontendAddress = testAddressLookupFrontendAddress(lines = Seq(validLine))
-      val validatedAddress: Validated[NonEmptyList[ValidationError], DesAddress] = validateAddress(addressLookupFrontendAddress, blacklistedPostcodes)
+      val validatedAddress = validateAddress(addressLookupFrontendAddress, blacklistedPostcodes)
       val desAddress: DesAddress = validatedAddress.toOption.value
       desAddress.addressLine1 shouldBe validLine
       desAddress.addressLine2 shouldBe None
@@ -121,34 +129,73 @@ class AddressValidatorSpec extends UnitSpec {
       desAddress.addressLine4 shouldBe None
     }
 
-    "validate that address line 1 is valid, given it is present" in {
+    "pass when only address line 1 is provided and the rest are defined but empty" in {
+      val addressLookupFrontendAddress = testAddressLookupFrontendAddress(lines = Seq(validLine, "", "", ""))
+      val validatedAddress = validateAddress(addressLookupFrontendAddress, blacklistedPostcodes)
+      val desAddress: DesAddress = validatedAddress.toOption.value
+      desAddress.addressLine1 shouldBe validLine
+      desAddress.addressLine2 shouldBe Some("")
+      desAddress.addressLine3 shouldBe Some("")
+      desAddress.addressLine4 shouldBe Some("")
+    }
+
+    "fail when address line 1 is present but invalid" in {
       val addressLookupFrontendAddress = testAddressLookupFrontendAddress(lines = Seq(tooLongAndNonMatchingLine))
       validateAddress(addressLookupFrontendAddress, blacklistedPostcodes) shouldBe Invalid(errorsForTooLongAndNonMatchingLine)
     }
 
-    "validate that address line 1 is present" in {
+    "fail when no lines are provided" in {
       val addressLookupFrontendAddress = testAddressLookupFrontendAddress(lines = Seq())
       validateAddress(addressLookupFrontendAddress, blacklistedPostcodes) shouldBe Invalid(NonEmptyList.of(ValidationError("error.address.lines.empty")))
     }
 
+    "pass when only a few address lines are provided" in {
+      val addressLookupFrontendAddress = testAddressLookupFrontendAddress(lines = Seq(validLine, "", "", validLine2))
+      val validatedAddress = validateAddress(addressLookupFrontendAddress, blacklistedPostcodes)
+      val desAddress: DesAddress = validatedAddress.toOption.value
+      desAddress.addressLine1 shouldBe validLine
+      desAddress.addressLine2 shouldBe Some("")
+      desAddress.addressLine3 shouldBe Some("")
+      desAddress.addressLine4 shouldBe Some(validLine2)
+    }
+
     "validate that postcode is valid" in {
       val addressLookupFrontendAddress = testAddressLookupFrontendAddress(postcode = Some("not a valid postcode"))
-      validateAddress(addressLookupFrontendAddress, blacklistedPostcodes) shouldBe Invalid(NonEmptyList.of(ValidationError("error.postcode.invalid")))
+      validateAddress(addressLookupFrontendAddress, blacklistedPostcodes) shouldBe Invalid(errorsForInvalidPostcode)
     }
 
     "pass on the postcode blacklist so that postcode blacklisting works" in {
-      val addressLookupFrontendAddress = testAddressLookupFrontendAddress(postcode = Some("BB11BB"))
-      validateAddress(addressLookupFrontendAddress, blacklistedPostcodes) shouldBe Invalid(NonEmptyList.of(ValidationError("error.postcode.blacklisted")))
+      val addressLookupFrontendAddress = testAddressLookupFrontendAddress(postcode = Some(blacklistedPostcode))
+      validateAddress(addressLookupFrontendAddress, blacklistedPostcodes) shouldBe Invalid(errorsForBlacklistedPostcode)
     }
 
     "accumulate errors for all fields" in {
-      val addressLookupFrontendAddress = testAddressLookupFrontendAddress(lines = Seq(
-        tooLongAndNonMatchingLine,
-        nonMatchingLine,
-        tooLongLine
-      ))
-      val validatedAddress: Validated[NonEmptyList[ValidationError], DesAddress] = validateAddress(addressLookupFrontendAddress, blacklistedPostcodes)
-      validatedAddress shouldBe Invalid(errorsForTooLongAndNonMatchingLine concat errorsForNonMatchingLine concat errorsForTooLongLine)
+      val addressLookupFrontendAddress = testAddressLookupFrontendAddress(
+        lines = Seq(
+          tooLongAndNonMatchingLine,
+          nonMatchingLine,
+          tooLongLine
+        ),
+        postcode = Some(blacklistedPostcode)
+      )
+      validateAddress(addressLookupFrontendAddress, blacklistedPostcodes) shouldBe Invalid(
+        errorsForTooLongAndNonMatchingLine concat errorsForNonMatchingLine concat errorsForTooLongLine concat errorsForBlacklistedPostcode)
+    }
+
+    "be successful for even if 5th address line exists and 5th line is not valid (because 5th line is ignored)" in {
+      val addressLookupFrontendAddress = testAddressLookupFrontendAddress(
+        lines = Seq(validLine, validLine2, validLine3, validLine4, tooLongAndNonMatchingLine),
+        postcode = Some(validPostcode),
+        country = testCountry(code = validCountryCode))
+
+      AddressValidator.validateAddress(addressLookupFrontendAddress, blacklistedPostcodes) shouldBe Valid(DesAddress(
+        addressLine1 = validLine,
+        addressLine2 = Some(validLine2),
+        addressLine3 = Some(validLine3),
+        addressLine4 = Some(validLine4),
+        postcode = Some(validPostcode),
+        countryCode = validCountryCode)
+      )
     }
   }
 
