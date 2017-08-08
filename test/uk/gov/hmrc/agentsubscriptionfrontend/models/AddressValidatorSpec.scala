@@ -199,5 +199,18 @@ class AddressValidatorSpec extends UnitSpec {
     }
   }
 
+  "optionInside" should {
+    "convert a Validated inside an Option to an Option inside a Validated" in {
+      val validValue = "I am valid"
+      optionInside(Some(Valid(validValue))) shouldBe Valid(Some(validValue))
+
+      optionInside(None) shouldBe Valid(None)
+
+      val errors = NonEmptyList.of(ValidationError("error.test"))
+      optionInside(Some(Invalid(errors))) shouldBe Invalid(errors)
+    }
+  }
+
+  // remove implicit
   override def liftFuture[A](v: A): Future[A] = super.liftFuture(v)
 }

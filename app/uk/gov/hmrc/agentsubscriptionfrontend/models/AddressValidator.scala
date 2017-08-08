@@ -54,7 +54,7 @@ object AddressValidator {
   }
 
   type V[A] = Validated[ValidationErrors, A]
-  private def optionInside(maybeValidated: Option[Validated[ValidationErrors, String]]): Validated[ValidationErrors, Option[String]] =
+  private[models] def optionInside(maybeValidated: Option[Validated[ValidationErrors, String]]): Validated[ValidationErrors, Option[String]] =
     maybeValidated.traverse[V, String](identity)
 
   def validateLine(line: String): Validated[ValidationErrors, String] =
