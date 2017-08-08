@@ -16,20 +16,9 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.models
 
-import play.api.libs.json._
-
-case class Country(code: String,
-                   name: Option[String])
-
-case class AddressLookupFrontendAddress(
-  lines: Seq[String],
-  postcode: Option[String],
-  country: Country
-)
-
-object AddressLookupFrontendAddress {
-
-  implicit val formatCountry = Json.format[Country]
-  implicit val formatAddressLookupAddress = Json.format[AddressLookupFrontendAddress]
-
-}
+case class DesAddress(addressLine1: String,
+                      addressLine2: Option[String],
+                      addressLine3: Option[String],
+                      addressLine4: Option[String],
+                      postcode: Option[String],
+                      countryCode: String)
