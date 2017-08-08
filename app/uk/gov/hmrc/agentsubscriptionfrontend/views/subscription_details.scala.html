@@ -15,7 +15,6 @@
         action = SubscriptionController.getAddressDetails,
         'class -> "form js-form") {
 
-            <fieldset class="form-field-group">
 
                 <div class="form-field">
                     @input(
@@ -44,10 +43,8 @@
                     )
                 </div>
 
-            </fieldset>
-
-            @input(detailsForm("knownFactsPostcode"), '_type -> "hidden")
-            @input(detailsForm("utr"), '_type -> "hidden")
+                <input type="hidden" name="knownFactsPostcode" id="knownFactsPostcode" value="@detailsForm.data("knownFactsPostcode")" >
+                <input type="hidden" name="utr" id="utr" value="@detailsForm.data("utr")">
 
             <div class="form-field">
                 <button class="button" type="submit" id="subscribe">@Messages("button.continue")</button>
