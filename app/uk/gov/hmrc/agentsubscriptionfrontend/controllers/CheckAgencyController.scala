@@ -35,6 +35,15 @@ import uk.gov.hmrc.play.frontend.controller.FrontendController
 
 import scala.concurrent.Future
 
+object CheckAgencyController {
+  val knownFactsForm: Form[KnownFacts]  = Form[KnownFacts](
+    mapping(
+      "utr" -> FieldMappings.utr,
+      "postcode" -> FieldMappings.postcode
+    )(KnownFacts.apply)(KnownFacts.unapply)
+  )
+}
+
 @Singleton
 class CheckAgencyController @Inject()
 (override val messagesApi: MessagesApi,
@@ -45,13 +54,6 @@ class CheckAgencyController @Inject()
  val sessionStoreService: SessionStoreService)
 (implicit appConfig: AppConfig)
   extends FrontendController with I18nSupport with AuthActions with SessionDataMissing {
-
-  private val knownFactsForm = Form[KnownFacts](
-    mapping(
-      "utr" -> FieldMappings.utr,
-      "postcode" -> FieldMappings.postcode
-    )(KnownFacts.apply)(KnownFacts.unapply)
-  )
 
   val showHasOtherEnrolments: Action[AnyContent] = AuthorisedWithSubscribingAgent { implicit authContext =>
     implicit request =>
@@ -65,20 +67,20 @@ class CheckAgencyController @Inject()
       implicit request =>
         hasMtdEnrolment match {
           case true => Redirect(routes.CheckAgencyController.showAlreadySubscribed())
-          case false => Ok(html.check_agency_status(knownFactsForm))
+          case false => Ok(html.check_agency_status(CheckAgencyController.knownFactsForm))
         }
   }
 
   private def lookupNextPageUrl(isSubscribedToAgentServices: Boolean): String =
     if (isSubscribedToAgentServices)
       routes.CheckAgencyController.showAlreadySubscribed().url
-    else
-      routes.CheckAgencyController.showNotSubscribed().url
+    else routes.SubscriptionController.showSubscriptionDetails().url
 
 
-  val checkAgencyStatus: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync { implicit authContext: AuthContext =>
+  val checkAgencyStatus: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync {
+    implicit authContext: AuthContext =>
     implicit request =>
-      knownFactsForm.bindFromRequest().fold(
+      CheckAgencyController.knownFactsForm.bindFromRequest().fold(
         formWithErrors => {
           Future successful Ok(html.check_agency_status(formWithErrors))
         },
@@ -129,12 +131,4 @@ class CheckAgencyController @Inject()
       Ok(html.already_subscribed())
   }
 
-  val showNotSubscribed: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync { implicit authContext =>
-    implicit request =>
-      sessionStoreService.fetchKnownFactsResult.map(_.map { knownFactsResult =>
-        Ok(html.not_subscribed(registrationName = knownFactsResult.taxpayerName))
-      }.getOrElse {
-        sessionMissingRedirect()
-      })
-  }
 }
