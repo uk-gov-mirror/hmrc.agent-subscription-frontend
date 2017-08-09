@@ -50,7 +50,8 @@ object AddressLookupFrontendStubs {
       addressLine3: String = "Line 3",
       town: String = "Sometown",
       postcode: String = "AA1 1AA",
-      countryCode: String = "GB"): Unit = {
+      countryCode: String = "GB",
+      unsupportedAddressLines: Seq[String] = Seq.empty): Unit = {
 
     stubFor(get(urlEqualTo(s"/api/confirmed?id=$addressId"))
       .willReturn(
@@ -69,6 +70,7 @@ object AddressLookupFrontendStubs {
                |            "$addressLine2",
                |            "$addressLine3",
                |            "$town"
+               |            ${if(unsupportedAddressLines.isEmpty) "" else unsupportedAddressLines.mkString(",\"","\",\"","\"")}
                |        ],
                |        "postcode": "$postcode"
                |    },

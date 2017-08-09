@@ -90,6 +90,18 @@ object AgentSubscriptionStub {
         .withStatus(403)))
   }
 
+  def subscriptionAttemptWillReturnHttpCode(utr: Utr, request: SubscriptionRequest, code: Int): Unit = {
+    stubFor(subscriptionRequestFor(utr, request)
+      .willReturn(aResponse()
+        .withStatus(code)))
+  }
+
+  def subscriptionAttemptWillFail(utr: Utr, request: SubscriptionRequest ): Unit = {
+    stubFor(subscriptionRequestFor(utr, request)
+      .willReturn(aResponse()
+        .withStatus(500)))
+  }
+
   private def subscriptionRequestFor(utr: Utr, request: SubscriptionRequest) = {
     val agency = request.agency
     val address = agency.address
