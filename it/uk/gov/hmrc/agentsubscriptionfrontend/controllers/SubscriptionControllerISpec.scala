@@ -387,8 +387,11 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         status(result) shouldBe 200
         checkHtmlResultWithBodyText(result, htmlEscapedMessage("error.postcode.blacklisted"))
       }
+    }
 
+    "redisplay form and log a warning - hidden fields should never be invalid because they were validated when originally entered" when {
       "known facts postcode is not valid" in {
+        pending
         AuthStub.hasNoEnrolments(subscribingAgent)
         implicit val request = subscriptionDetailsRequest("knownFactsPostcode", Seq("knownFactsPostcode" -> "1AA AA1"))
         sessionStoreService.currentSession.knownFactsResult = Some(myAgencyKnownFactsResult)
@@ -396,10 +399,12 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         val result = await(controller.getAddressDetails(request))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, htmlEscapedMessage("subscriptionDetails.title"), "You have entered an invalid postcode")
+        checkHtmlResultWithBodyText(result, htmlEscapedMessage("subscriptionDetails.title"))
+        // add check for Logger.warn here
       }
 
       "utr is not valid" in {
+        pending
         AuthStub.hasNoEnrolments(subscribingAgent)
         implicit val request = subscriptionDetailsRequest("utr", Seq("utr" -> "012345"))
         sessionStoreService.currentSession.knownFactsResult = Some(myAgencyKnownFactsResult)
@@ -407,7 +412,8 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         val result = await(controller.getAddressDetails(request))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, htmlEscapedMessage("subscriptionDetails.title"), "Please enter a valid UTR")
+        checkHtmlResultWithBodyText(result, htmlEscapedMessage("subscriptionDetails.title"))
+        // add check for Logger.warn here
       }
     }
   }
