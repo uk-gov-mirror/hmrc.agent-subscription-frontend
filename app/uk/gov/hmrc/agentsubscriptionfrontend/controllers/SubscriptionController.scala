@@ -143,9 +143,8 @@ class SubscriptionController @Inject()
                 case Right((arn, agencyName)) => Redirect(routes.SubscriptionController.showSubscriptionComplete())
                   .flashing("arn" -> arn.arn, "agencyName" -> agencyName)
                 case Left(SubscriptionReturnedHttpError(CONFLICT)) => Redirect(routes.CheckAgencyController.showAlreadySubscribed())
-                case Left(SubscriptionReturnedHttpError(FORBIDDEN)) => Redirect(routes.SubscriptionController.showSubscriptionFailed())
+                case Left(SubscriptionReturnedHttpError(_)) => Redirect(routes.SubscriptionController.showSubscriptionFailed())
                 case Left(MissingSessionData) => sessionMissingRedirect()
-                case Left(error) => InternalServerError(s"Unknown error code from agent-subscription $error")
               }
           }
         }

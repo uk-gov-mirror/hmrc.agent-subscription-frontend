@@ -9,7 +9,6 @@ GET     /check-agency-status            uk.gov.hmrc.agentsubscriptionfrontend.co
 POST    /check-agency-status            uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.checkAgencyStatus
 GET     /no-agency-found                uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.showNoAgencyFound
 GET     /confirm-your-agency            uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.showConfirmYourAgency
-GET     /not-subscribed                 uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.showNotSubscribed
 GET     /already-subscribed             uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.showAlreadySubscribed
 GET     /has-other-enrolments           uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.showHasOtherEnrolments
 

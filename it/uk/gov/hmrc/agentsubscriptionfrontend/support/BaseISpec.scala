@@ -13,7 +13,6 @@ import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUsers._
 import uk.gov.hmrc.play.http.HeaderCarrier
-import uk.gov.hmrc.agentsubscriptionfrontend.support.{EndpointBehaviours, MongoApp, SampleUser, TestSessionStoreService, WireMockSupport}
 import uk.gov.hmrc.play.test.UnitSpec
 
 abstract class BaseISpec extends UnitSpec with OneAppPerSuite with MongoApp with WireMockSupport with EndpointBehaviours {

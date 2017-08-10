@@ -60,6 +60,16 @@ class CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
 
       checkHtmlResultWithBodyText(result, "Check for duplicate Agent Services accounts")
     }
+
+    "redirect to Already Subscribed if the current user is logged in and has affinity group = Agent and HMRC-AS-AGENT enrolment" in {
+      AuthStub.isSubscribedToMtd(subscribingAgent)
+
+      val result = await(controller.showCheckAgencyStatus(authenticatedRequest()))
+
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showAlreadySubscribed().url)
+
+    }
   }
 
   "checkAgencyStatus" should {
@@ -249,7 +259,7 @@ class CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
       checkHtmlResultWithBodyText(result, routes.CheckAgencyController.showCheckAgencyStatus().url)
     }
 
-    "show a link to the Not Yet Subscribed page if isSubscribedToAgentServices=false" in {
+    "show a Continue button which allows the user to go to Subscription Details if isSubscribedToAgentServices=false" in {
       AuthStub.hasNoEnrolments(subscribingAgent)
       implicit val request = authenticatedRequest()
       sessionStoreService.currentSession.knownFactsResult = Some(
@@ -257,7 +267,18 @@ class CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
 
       val result = await(controller.showConfirmYourAgency(request))
 
-      checkHtmlResultWithBodyText(result, routes.CheckAgencyController.showNotSubscribed().url)
+      checkHtmlResultWithBodyText(result, routes.SubscriptionController.showSubscriptionDetails().url)
+    }
+
+    "show a Continue button which allows the user to go to Already Subscribed if isSubscribedToAgentServices=true" in {
+      AuthStub.hasNoEnrolments(subscribingAgent)
+      implicit val request = authenticatedRequest()
+      sessionStoreService.currentSession.knownFactsResult = Some(
+        KnownFactsResult(utr = Utr("0123456789"), postcode = "AA11AA", taxpayerName = "My Agency", isSubscribedToAgentServices = true))
+
+      val result = await(controller.showConfirmYourAgency(request))
+
+      checkHtmlResultWithBodyText(result, routes.CheckAgencyController.showAlreadySubscribed().url)
     }
 
     "redirect to the Check Agency Status page if there is no KnownFactsResult in session because the user has returned to a bookmark" in {
@@ -283,31 +304,4 @@ class CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
     }
   }
 
-  "showNotSubscribed" should {
-
-    behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showNotSubscribed(request))
-
-    "display the not subscribed page if the current user is logged in and has affinity group = Agent" in {
-      AuthStub.hasNoEnrolments(subscribingAgent)
-      implicit val request = authenticatedRequest()
-      sessionStoreService.currentSession.knownFactsResult = Some(
-        KnownFactsResult(utr = Utr("0123456789"), postcode = "AA11AA", taxpayerName = "My Agency", isSubscribedToAgentServices = true))
-
-      val result = await(controller.showNotSubscribed(request))
-
-      checkHtmlResultWithBodyText(result,
-        "it doesn't have an Agent Services account",
-        "My Agency",
-        routes.SubscriptionController.showSubscriptionDetails().url)
-    }
-
-    "redirect to the Check Agency Status page if there is no KnownFactsResult in session because the user has returned to a bookmark" in {
-      AuthStub.hasNoEnrolments(subscribingAgent)
-      implicit val request = authenticatedRequest()
-
-      val result = await(controller.showNotSubscribed(request))
-
-      resultShouldBeSessionDataMissing(result)
-    }
-  }
 }

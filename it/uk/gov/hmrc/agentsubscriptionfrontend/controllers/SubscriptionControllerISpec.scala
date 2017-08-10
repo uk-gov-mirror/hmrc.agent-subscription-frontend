@@ -147,6 +147,31 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
 
       }
 
+      "all fields are supplied but address contains more than 4 lines" in {
+        AuthStub.hasNoEnrolments(subscribingAgent)
+        AgentSubscriptionStub.subscriptionWillSucceed(utr, subscriptionRequest())
+
+        givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
+
+        implicit val request = subscriptionDetailsRequest()
+        val result = await(controller.getAddressDetails(request))
+        status(result) shouldBe 303
+        redirectLocation(result).head shouldBe "/api/dummy/callback"
+
+        val addressId = "addr1"
+        stubAddressLookupReturnedAddress(addressId, subscriptionRequest(), Seq("Line 4", "Line 5"))
+        val result2 = await(controller.submit(addressId)(authenticatedRequest()))
+
+        status(result2) shouldBe 303
+        redirectLocation(result2).head shouldBe routes.SubscriptionController.showSubscriptionComplete().url
+        sessionStoreService.allSessionsRemoved shouldBe true
+        flash(result2).get("agencyName") shouldBe Some("My Agency")
+        flash(result2).get("arn") shouldBe Some("ARN00001")
+
+        verifySubscriptionRequestSent(subscriptionRequest())
+        // add check for Logger.warn here
+      }
+
       "town is omitted" in {
         AuthStub.hasNoEnrolments(subscribingAgent)
         val request = subscriptionRequest(town = "")
@@ -416,6 +441,21 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         // add check for Logger.warn here
       }
     }
+
+    "redirect back to check-agency-status" when {
+      "subscription form has errors and current session is missing" in {
+        AuthStub.hasNoEnrolments(subscribingAgent)
+        AgentSubscriptionStub.subscriptionWillSucceed(utr, subscriptionRequest())
+
+        givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
+
+        implicit val request = subscriptionDetailsRequest("name", Seq("name" -> "InvalidAgencyName!@"))
+
+        val result = await(controller.getAddressDetails(request))
+        status(result) shouldBe 303
+        redirectLocation(result).head shouldBe routes.CheckAgencyController.showCheckAgencyStatus().url
+      }
+    }
   }
 
   "submit" should {
@@ -429,6 +469,29 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       val result = await(controller.submit("addr1")(request))
 
       resultShouldBeSessionDataMissing(result)
+    }
+  }
+
+  "beginJourney" should {
+    "redirect to address lookup journey" in {
+      AuthStub.hasNoEnrolments(subscribingAgent)
+      givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
+      implicit val request = authenticatedRequest()
+
+      val result = await(controller.beginJourney("agents-subscr")(request))
+
+      status(result) shouldBe 303
+      redirectLocation(result).head shouldBe "/api/dummy/callback"
+    }
+  }
+
+  "showSubscriptionFailed" should {
+    "show subscription failed page" in {
+      AuthStub.hasNoEnrolments(subscribingAgent)
+      implicit val request = authenticatedRequest()
+      val result = await(controller.showSubscriptionFailed(request))
+      status(result) shouldBe 200
+      checkHtmlResultWithBodyText(result, "Postcodes do not match")
     }
   }
 
@@ -486,7 +549,9 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         email = "agency2@example.com",
         telephone = "0123 456 7899"))
 
-  private def stubAddressLookupReturnedAddress(addressId: String, subscriptionRequest: SubscriptionRequest) = {
+  private def stubAddressLookupReturnedAddress(addressId: String,
+                                               subscriptionRequest: SubscriptionRequest,
+                                               unsupportedAddressLines: Seq[String] = Seq.empty) = {
     givenAddressLookupReturnsAddress(
       addressId,
       subscriptionRequest.agency.address.addressLine1,
@@ -494,7 +559,9 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       subscriptionRequest.agency.address.addressLine3.getOrElse(""),
       subscriptionRequest.agency.address.addressLine4.getOrElse(""),
       subscriptionRequest.agency.address.postcode.getOrElse(""),
-      subscriptionRequest.agency.address.countryCode)
+      subscriptionRequest.agency.address.countryCode,
+      unsupportedAddressLines
+    )
   }
 
   private def verifySubscriptionRequestSent(subscriptionRequest: SubscriptionRequest) = {
