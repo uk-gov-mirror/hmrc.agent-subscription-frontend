@@ -1,6 +1,6 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes.SignedOutController
-@(agencyName: String, arn: String)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+@(redirectUrl: String, agencyName: String, arn: String)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = Messages("subscriptionComplete.title", agencyName), bodyClasses = None) {
 
@@ -14,5 +14,5 @@
 
     <p class="panel-indent">@Html(Messages("subscriptionComplete.p1"))</p>
 
-    <a href="@SignedOutController.startSurvey" class="button" id="buttonSignOut">@Messages("button.signOut")</a>
+    <a href="@redirectUrl" class="button" id="continue">@Messages("button.continue")</a>
 }
