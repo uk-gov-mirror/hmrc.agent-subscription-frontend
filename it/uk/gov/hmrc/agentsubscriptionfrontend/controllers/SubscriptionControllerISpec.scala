@@ -32,6 +32,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
 
   private lazy val controller: SubscriptionController = app.injector.instanceOf[SubscriptionController]
 
+  private lazy val redirectUrl = "https://www.gov.uk/"
 
   "showSubscriptionDetails" should {
     behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showSubscriptionDetails(request))
@@ -105,7 +106,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showCheckAgencyStatus().url)
     }
 
-    "contain a link to the survey" in {
+    "contain a link in AS services" in {
       implicit val request = authenticatedRequest()
       AuthStub.hasNoEnrolments(subscribingAgent)
 
@@ -113,8 +114,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       val result = await(controller.showSubscriptionComplete(request.withFlash("arn" -> "ARN0001", "agencyName" -> "My Agency")))
 
       status(result) shouldBe 200
-      checkHtmlResultWithBodyText(result, "href=\"/agent-subscription/start-survey\"")
-
+      bodyOf(result) should include(redirectUrl)
     }
   }
 
