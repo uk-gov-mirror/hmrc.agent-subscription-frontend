@@ -50,7 +50,7 @@ class ViewsSpec extends MixedPlaySpec {
       contentAsString(html) must {
         include("My custom page title") and
           include("My custom heading") and
-          include("My custom heading")
+          include("My custom message")
       }
 
       val hmtl2 = view.f("My custom page title", "My custom heading", "My custom message")(
