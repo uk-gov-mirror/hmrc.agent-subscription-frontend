@@ -16,17 +16,22 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.models
 
+import javax.inject.{Inject, Singleton}
+
 import cats.data.Validated.{Invalid, Valid}
 import cats.data.{NonEmptyList, Validated}
 import cats.instances.option._
 import cats.syntax.cartesian._
 import cats.syntax.traverse._
+import play.api.LoggerLike
 import play.api.data.validation.ValidationError
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.config.blacklistedpostcodes.PostcodesLoader
 
 import scala.util.matching.Regex
 
-object AddressValidator {
+@Singleton
+class AddressValidator @Inject()(logger: LoggerLike) {
 
   type ValidationErrors = NonEmptyList[ValidationError]
 
@@ -34,15 +39,19 @@ object AddressValidator {
   private val desTextRegex: Regex = "^[A-Za-z0-9 \\-,.&'\\/]*$".r
   private val postcodeRegex = "^[A-Z]{1,2}[0-9][0-9A-Z]?\\s?[0-9][A-Z]{2}$|BFPO\\s?[0-9]{1,5}$".r
 
-  def validateAddress(addressLookupFrontendAddress: AddressLookupFrontendAddress, blacklistedPostcodes: Set[String]): Validated[ValidationErrors, DesAddress] =
+  def validateAddress(
+    utr: Utr, addressLookupFrontendAddress: AddressLookupFrontendAddress,
+    blacklistedPostcodes: Set[String]): Validated[ValidationErrors, DesAddress] = {
+    if (addressLookupFrontendAddress.lines.length > 4) logger.warn("UTR with more than 4 address lines: " + utr.value)
     (validateLine1(addressLookupFrontendAddress.lines)
      |@| validateOptionLine(lineIfPresent(addressLookupFrontendAddress.lines, 1))
      |@| validateOptionLine(lineIfPresent(addressLookupFrontendAddress.lines, 2))
      |@| validateOptionLine(lineIfPresent(addressLookupFrontendAddress.lines, 3))
      |@| validatePostcode(addressLookupFrontendAddress.postcode, blacklistedPostcodes)
       ).map { (addressLine1, maybeAddressLine2, maybeAddressLine3, maybeAddressLine4, postcode) =>
-        DesAddress(addressLine1, maybeAddressLine2, maybeAddressLine3, maybeAddressLine4, postcode, addressLookupFrontendAddress.country.code)
-      }
+      DesAddress(addressLine1, maybeAddressLine2, maybeAddressLine3, maybeAddressLine4, postcode, addressLookupFrontendAddress.country.code)
+    }
+  }
 
   private def lineIfPresent(lines: Seq[String], index: Int): Option[String] =
     if (lines.length > index) Some(lines(index))
@@ -54,6 +63,7 @@ object AddressValidator {
   }
 
   type V[A] = Validated[ValidationErrors, A]
+
   private[models] def optionInside(maybeValidated: Option[Validated[ValidationErrors, String]]): Validated[ValidationErrors, Option[String]] =
     maybeValidated.traverse[V, String](identity)
 

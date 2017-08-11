@@ -23,7 +23,7 @@ import com.google.inject.AbstractModule
 import com.google.inject.binder.ScopedBindingBuilder
 import com.google.inject.name.Names
 import play.api.Mode.Mode
-import play.api.{Configuration, Environment}
+import play.api.{Configuration, Environment, Logger, LoggerLike}
 import uk.gov.hmrc.agentsubscriptionfrontend.config._
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.http.cache.client.SessionCache
@@ -81,6 +81,7 @@ class GuiceModule(environment: Environment, configuration: Configuration) extend
     bind(classOf[AuthConnector]).to(classOf[FrontendAuthConnector])
     bind(classOf[SessionCache]).toInstance(AgentSubscriptionSessionCache)
     bind(classOf[SessionStoreService])
+    bind(classOf[LoggerLike]).toInstance(Logger)
     bindBaseUrl("agent-subscription")
     bindBaseUrl("address-lookup-frontend")
     bindConfigProperty(classOf[String])("surveyRedirectUrl")

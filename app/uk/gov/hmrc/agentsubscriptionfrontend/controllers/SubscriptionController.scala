@@ -20,7 +20,6 @@ import javax.inject.{Inject, Singleton}
 
 import cats.data.NonEmptyList
 import cats.data.Validated.{Invalid, Valid}
-import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms.{mapping, _}
 import play.api.data.validation.ValidationError
@@ -32,10 +31,10 @@ import uk.gov.hmrc.agentsubscriptionfrontend.auth.{AgentRequest, AuthActions}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AddressLookupFrontendConnector
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.FieldMappings._
-import uk.gov.hmrc.agentsubscriptionfrontend.models.AddressValidator.validateAddress
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
+import uk.gov.hmrc.agentsubscriptionfrontend.views.html._
 import uk.gov.hmrc.passcode.authentication.{PasscodeAuthenticationProvider, PasscodeVerificationConfig}
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
@@ -68,6 +67,7 @@ class SubscriptionController @Inject()
  override val passcodeAuthenticationProvider: PasscodeAuthenticationProvider,
  subscriptionService: SubscriptionService,
  sessionStoreService: SessionStoreService,
+ addressLookUpValidator: AddressValidator,
  addressLookUpConnector: AddressLookupFrontendConnector
 )
 (implicit appConfig: AppConfig)
@@ -86,11 +86,7 @@ class SubscriptionController @Inject()
     )(InitialDetails.apply)(InitialDetails.unapply)
   )
 
-  private sealed trait SubscriptionFailed extends Product with Serializable
-
-  private final case class SubscriptionReturnedHttpError(httpStatusCode: Int) extends SubscriptionFailed
-
-  private final case object MissingSessionData extends SubscriptionFailed
+  private  case class SubscriptionReturnedHttpError(httpStatusCode: Int)  extends Product with Serializable
 
   private def hasEnrolments(implicit request: AgentRequest[_]): Boolean = request.enrolments.nonEmpty
 
@@ -114,41 +110,42 @@ class SubscriptionController @Inject()
         import SubscriptionDetails._
 
         def subscribe(details: InitialDetails,
-                      address: DesAddress, addressLookupAddress: AddressLookupFrontendAddress): Future[Either[SubscriptionFailed, (Arn, String)]] = {
+                      address: DesAddress, addressLookupAddress: AddressLookupFrontendAddress): Future[Either[SubscriptionReturnedHttpError, (Arn, String)]] = {
           val subscriptionDetails = mapper(details, address)
           subscriptionService.subscribeAgencyToMtd(subscriptionDetails) map {
             case Right(arn) => {
-              if (addressLookupAddress.lines.length > 4) Logger.warn("UTR with more than 4 address lines: " + details.utr.value)
               Right((arn, subscriptionDetails.name))
             }
             case Left(x) => Left(SubscriptionReturnedHttpError(x))
           }
         }
 
-        addressLookUpConnector.getAddressDetails(id).flatMap { address =>
-          validateAddress(address, blacklistedPostCodes) match {
-            case Invalid(errors) =>
-              Future.successful(
-                Ok(uk.gov.hmrc.agentsubscriptionfrontend.views.html.des_will_not_accept_address(id, SubscriptionController.renderErrors(errors)))
-              )
-            case Valid(desAddress) =>
-              val subscriptionResponse = for {
-                detailsOpt <- sessionStoreService.fetchInitialDetails
-                subscriptionResponse <- detailsOpt match {
-                  case Some(details) => subscribe(details, desAddress, address)
-                  case None => Future.successful(Left(MissingSessionData))
-                }
-                _ <- sessionStoreService.remove()
-              } yield subscriptionResponse
-
-              subscriptionResponse.map {
-                case Right((arn, agencyName)) => Redirect(routes.SubscriptionController.showSubscriptionComplete())
-                  .flashing("arn" -> arn.arn, "agencyName" -> agencyName)
-                case Left(SubscriptionReturnedHttpError(CONFLICT)) => Redirect(routes.CheckAgencyController.showAlreadySubscribed())
-                case Left(SubscriptionReturnedHttpError(_)) => Redirect(routes.SubscriptionController.showSubscriptionFailed())
-                case Left(MissingSessionData) => sessionMissingRedirect()
-              }
+        def redirectSubscriptionResponse(either: Either[SubscriptionReturnedHttpError, (Arn, String)]): Result = {
+          either match {
+            case Right((arn, agencyName)) => Redirect(routes.SubscriptionController.showSubscriptionComplete())
+              .flashing("arn" -> arn.arn, "agencyName" -> agencyName)
+            case Left(SubscriptionReturnedHttpError(CONFLICT)) => Redirect(routes.CheckAgencyController.showAlreadySubscribed())
+            case Left(SubscriptionReturnedHttpError(_)) => Redirect(routes.SubscriptionController.showSubscriptionFailed())
           }
+        }
+
+        sessionStoreService.fetchInitialDetails.flatMap { maybeDetails =>
+          maybeDetails.map { details =>
+            addressLookUpConnector.getAddressDetails(id).flatMap { address =>
+              addressLookUpValidator.validateAddress(details.utr, address, blacklistedPostCodes) match {
+                case Invalid(errors) =>
+                  Future.successful(
+                    Ok(des_will_not_accept_address(id, SubscriptionController.renderErrors(errors)))
+                  )
+                case Valid(desAddress) =>
+                  val subscriptResponse = for {
+                    res ← subscribe(details, desAddress, address)
+                    _ ← sessionStoreService.remove()
+                  } yield res
+                  subscriptResponse.map(redirectSubscriptionResponse)
+              }
+            }
+          }.getOrElse(Future.successful(sessionMissingRedirect()))
         }
   }
 
