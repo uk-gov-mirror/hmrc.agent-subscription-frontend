@@ -178,23 +178,25 @@ class SubscriptionController @Inject()
       sessionMissingRedirect()
     })
 
-  val showSubscriptionFailed: Action[AnyContent] = AuthorisedWithSubscribingAgent {
+  val showSubscriptionFailed: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync {
     implicit authContext =>
       implicit request =>
-        Ok(html.subscription_failed("Postcodes do not match"))
+        Future successful Ok(html.subscription_failed("Postcodes do not match"))
   }
 
-  val showSubscriptionComplete: Action[AnyContent] = AuthorisedWithSubscribingAgent {
+  val showSubscriptionComplete: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync {
     implicit authContext =>
       implicit request => {
-        val agencyData = for {
-          agencyName <- request.flash.get("agencyName")
-          arn <- request.flash.get("arn")
-        } yield (agencyName, arn)
+        Future successful{
+          val agencyData = for {
+            agencyName <- request.flash.get("agencyName")
+            arn <- request.flash.get("arn")
+          } yield (agencyName, arn)
 
-        agencyData.map(data =>
-          Ok(html.subscription_complete(appConfig.redirectUrl, data._1, data._2))
-        ) getOrElse sessionMissingRedirect()
+          agencyData.map(data =>
+            Ok(html.subscription_complete(appConfig.agentServicesAccountUrl, data._1, data._2))
+          ) getOrElse sessionMissingRedirect()
+        }
       }
   }
 }

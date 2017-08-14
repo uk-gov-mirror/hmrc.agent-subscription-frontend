@@ -32,8 +32,7 @@ object TestAppConfig extends AppConfig with ServicesConfig {
   override lazy val betaFeedbackUnauthenticatedUrl = s"$contactHost/contact/beta-feedback-unauthenticated?service=$contactFormServiceIdentifier"
   override lazy val governmentGatewayUrl: String = "http://www.ref.gateway.gov.uk/"
   override lazy val journeyName: String = "agents-subscr"
-  override lazy val redirectUrl: String = getConfString("agent-services-account-frontend.external-url", "") +
-    getConfString("agent-services-account-frontend.start.path", "")
+  override lazy val agentServicesAccountUrl: String = "http://localhost:9401/agent-services-account"
 
   override lazy val blacklistedPostcodes: Set[String] = Set(
     "AB10 1DU",

@@ -52,8 +52,11 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
       val failure = Upstream5xxResponse("failure in auth", 500, 500)
       when(authConnector.currentAuthority(any[HeaderCarrier])).thenReturn(Future successful Some(authority))
       when(authConnector.getUserDetails(any[AuthContext])(any[HeaderCarrier], any[HttpReads[HttpResponse]])).thenReturn(Future failed failure)
+      when(authConnector.getEnrolments(any[AuthContext])(any[HeaderCarrier], any[HttpReads[List[Enrolment]]]))
+        .thenReturn(Future successful List.empty[Enrolment])
 
-      val controller = new CheckAgencyController(TestMessagesApi.testMessagesApi, authConnector, passcodeVerificationConfig, passcodeAuthenticationProvider, agentSubscriptionConnector, sessionStoreService)
+      val controller = new CheckAgencyController(TestMessagesApi.testMessagesApi, authConnector,
+        passcodeVerificationConfig, passcodeAuthenticationProvider, agentSubscriptionConnector, sessionStoreService)
 
       intercept[Upstream5xxResponse] {
         val eventualResult: Future[Result] = controller.showCheckAgencyStatus(mockRequestWithMockAuthSession)
@@ -68,7 +71,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
       val passcodeAuthenticationProvider = new TestPasscodeAuthenticationProvider(passcodeVerificationConfig, whitelisted = false)
       val testAuthActions = new TestAuthActions(passcodeVerificationConfig, passcodeAuthenticationProvider)
 
-      val result: Result = testAuthActions.AuthorisedWithSubscribingAgent(okBody)(FakeRequest("GET", "/"))
+      val result: Result = await(testAuthActions.AuthorisedWithSubscribingAgentAsync(asyncOkBody).apply(FakeRequest("GET", "/")))
 
       status(result) shouldBe 303
     }
@@ -79,7 +82,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
       val passcodeAuthenticationProvider = new TestPasscodeAuthenticationProvider(passcodeVerificationConfig, whitelisted = true)
       val testAuthActions = new TestAuthActions(passcodeVerificationConfig, passcodeAuthenticationProvider)
 
-      val result: Result = testAuthActions.AuthorisedWithSubscribingAgent(okBody)(FakeRequest("GET", "/"))
+      val result: Result = testAuthActions.AuthorisedWithSubscribingAgentAsync(asyncOkBody).apply(FakeRequest("GET", "/"))
 
       status(result) shouldBe 200
     }
@@ -94,7 +97,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
       val passcodeAuthenticationProvider = new TestPasscodeAuthenticationProvider(passcodeVerificationConfig, whitelisted = false)
       val testAuthActions = new TestAuthActions(passcodeVerificationConfig, passcodeAuthenticationProvider)
 
-      val result: Future[Result] = testAuthActions.AuthorisedWithSubscribingAgentAsync(asyncOkBody)(FakeRequest("GET", "/"))
+      val result: Future[Result] = testAuthActions.AuthorisedWithSubscribingAgentAsync(asyncOkBody).apply(FakeRequest("GET", "/"))
 
       status(result) shouldBe 303
     }
@@ -105,21 +108,17 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
       val passcodeAuthenticationProvider = new TestPasscodeAuthenticationProvider(passcodeVerificationConfig, whitelisted = true)
       val testAuthActions = new TestAuthActions(passcodeVerificationConfig, passcodeAuthenticationProvider)
 
-      val result: Future[Result] = testAuthActions.AuthorisedWithSubscribingAgentAsync(asyncOkBody)(FakeRequest("GET", "/"))
+      val result: Future[Result] = testAuthActions.AuthorisedWithSubscribingAgentAsync(asyncOkBody).apply(FakeRequest("GET", "/"))
 
       status(result) shouldBe 200
     }
 
   }
 
-  private val okBody: AuthContext => AgentRequest[AnyContent] => Result = {
-    authContext => request =>
-      Results.Ok
-  }
-
   private val asyncOkBody: AuthContext => AgentRequest[AnyContent] => Future[Result] = {
-    authContext => request =>
-      Future successful Results.Ok
+    authContext =>
+      request =>
+        Future successful Results.Ok
   }
 
   private val fakeAuthorityUri = "fakeUser"
