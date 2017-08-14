@@ -17,58 +17,48 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.auth
 
 import play.api.mvc._
+import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
 import uk.gov.hmrc.passcode.authentication.PasscodeAuthentication
 import uk.gov.hmrc.play.frontend.auth.{Actions, AuthContext}
 import uk.gov.hmrc.play.http.HeaderCarrier
-
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
+
 import scala.concurrent.Future
 
 case class AgentRequest[A](enrolments: List[Enrolment], request: Request[A]) extends WrappedRequest[A](request)
 
 trait AuthActions extends Actions with PasscodeAuthentication {
   protected type AsyncPlayUserRequest = AuthContext => AgentRequest[AnyContent] => Future[Result]
-  protected type PlayUserRequest = AuthContext => AgentRequest[AnyContent] => Result
+
   private implicit def hc(implicit request: Request[_]): HeaderCarrier = HeaderCarrier.fromHeadersAndSession(request.headers, Some(request.session))
-  val emptyEnrolments:List[Enrolment] = List(Enrolment(""))
 
-  def AuthorisedWithSubscribingAgent(body: PlayUserRequest): Action[AnyContent] =
+  def AuthorisedWithSubscribingAgentAsync(body: AsyncPlayUserRequest)(implicit appConfig: AppConfig): Action[AnyContent] =
     AuthorisedFor(NoOpRegime, pageVisibility = GGConfidence).async {
-      implicit authContext => implicit request =>
-        withVerifiedPasscode {
-          isAgentAffinityGroup() flatMap {
-            case true => enrolments map { e => body(authContext)(AgentRequest(e, request)) }
-            case false => Future successful redirectToNonAgentNextSteps
+      implicit authContext =>
+        implicit request =>
+          withVerifiedPasscode {
+            enrolments.flatMap { enrolls =>
+              (for {
+                isAgent <- isAgentAffinityGroup
+                activatedEnrol <- checkActivatedEnrollment(enrolls)
+              } yield (isAgent, activatedEnrol)).flatMap{
+                case (true, true) => Future successful Redirect(appConfig.agentServicesAccountUrl)
+                case (true, false) => body(authContext)(AgentRequest(enrolls, request))
+                case _ => Future successful redirectToNonAgentNextSteps
+              }
+            }
           }
-        }
-    }
-
-  def AuthorisedAgentWithEmptyEnrolment(body: PlayUserRequest): Action[AnyContent] =
-    AuthorisedFor(NoOpRegime, pageVisibility = GGConfidence).async {
-      implicit authContext => implicit request =>
-        withVerifiedPasscode {
-          isAgentAffinityGroup() flatMap {
-            case true => Future(body(authContext)(AgentRequest(emptyEnrolments,request)))
-            case false => Future successful redirectToNonAgentNextSteps
-          }
-        }
-    }
-
-   def AuthorisedWithSubscribingAgentAsync(body: AsyncPlayUserRequest): Action[AnyContent] =
-    AuthorisedFor(NoOpRegime, pageVisibility = GGConfidence).async {
-      implicit authContext => implicit request =>
-        withVerifiedPasscode {
-          isAgentAffinityGroup() flatMap {
-            case true => enrolments flatMap { e => body(authContext)(AgentRequest(e, request)) }
-            case false => Future successful redirectToNonAgentNextSteps
-          }
-        }
     }
 
   protected def enrolments(implicit authContext: AuthContext, hc: HeaderCarrier): Future[List[Enrolment]] =
     authConnector.getEnrolments[List[Enrolment]](authContext)
 
+  private def checkActivatedEnrollment(enrolls: List[Enrolment]): Future[Boolean] =
+    enrolls.find(_.key equals "HMRC-AS-AGENT") match {
+      case Some(enroll) if enroll.isActivated => Future successful true
+      case _ => Future successful false
+    }
 
   protected def isAgentAffinityGroup()(implicit authContext: AuthContext, hc: HeaderCarrier): Future[Boolean] =
     authConnector.getUserDetails(authContext).map { userDetailsResponse =>
@@ -76,6 +66,6 @@ trait AuthActions extends Actions with PasscodeAuthentication {
       affinityGroup == "Agent"
     }
 
-  private def redirectToNonAgentNextSteps =
+  private def redirectToNonAgentNextSteps: Result =
     Redirect(routes.StartController.showNonAgentNextSteps())
 }

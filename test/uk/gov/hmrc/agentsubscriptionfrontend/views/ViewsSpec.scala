@@ -37,7 +37,7 @@ class ViewsSpec extends MixedPlaySpec {
     override val governmentGatewayUrl: String = "governmentGatewayUrl"
     override val blacklistedPostcodes: Set[String] = Set("blacklistedPostcodes")
     override val journeyName: String = "journeyName"
-    override val redirectUrl: String = "localhost:9401/agent-services-account"
+    override val agentServicesAccountUrl: String = "http://localhost:9401/agent-services-account"
   }
 
   "error_template view" should {

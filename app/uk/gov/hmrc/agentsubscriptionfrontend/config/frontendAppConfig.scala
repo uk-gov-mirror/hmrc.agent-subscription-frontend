@@ -33,7 +33,7 @@ trait AppConfig {
   val governmentGatewayUrl: String
   val blacklistedPostcodes: Set[String]
   val journeyName: String
-  val redirectUrl: String
+  val agentServicesAccountUrl: String
 }
 
 trait StrictConfig {
@@ -54,6 +54,8 @@ object GGConfig extends StrictConfig {
 @Singleton
 class FrontendAppConfig extends AppConfig with StrictConfig with ServicesConfig {
   private lazy val contactHost = runModeConfiguration.getString(s"contact-frontend.host").getOrElse("")
+  private lazy val servicesAccountUrl = getConfString("agent-services-account-frontend.external-url", "")
+  private lazy val servicesAccountPath = getConfString("agent-services-account-frontend.start.path", "")
   private val contactFormServiceIdentifier = "AOSS"
 
   override lazy val analyticsToken: String = loadConfig(s"google-analytics.token")
@@ -65,7 +67,6 @@ class FrontendAppConfig extends AppConfig with StrictConfig with ServicesConfig 
   override lazy val governmentGatewayUrl: String = loadConfig("government-gateway.url")
   override lazy val blacklistedPostcodes: Set[String] =
     PostcodesLoader.load("/po_box_postcodes_abp_49.csv").map(x => x.toUpperCase.replace(" ", "")).toSet
-  override lazy val journeyName = getConfString("address-lookup-frontend.journeyName", "")
-  override lazy val redirectUrl = getConfString("agent-services-account-frontend.external-url", "") +
-    getConfString("agent-services-account-frontend.start.path", "")
+  override lazy val journeyName: String = getConfString("address-lookup-frontend.journeyName", "")
+  override lazy val agentServicesAccountUrl: String = s"$servicesAccountUrl/$servicesAccountPath"
 }

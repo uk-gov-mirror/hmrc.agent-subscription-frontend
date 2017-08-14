@@ -22,11 +22,11 @@ import uk.gov.hmrc.play.test.UnitSpec
 
 class AsRedirectUrlSpec extends UnitSpec with GuiceOneAppPerSuite{
 
-  private lazy val ASAccountUrl = "localhost:9401/agent-services-account"
+  private lazy val ASAccountUrl = "http://localhost:9401/agent-services-account"
 
   "AS redirect url" should {
     "successfully being concatenated from 2 separate configs" in{
-      TestAppConfig.redirectUrl shouldEqual ASAccountUrl
+      TestAppConfig.agentServicesAccountUrl shouldEqual ASAccountUrl
     }
   }
 }

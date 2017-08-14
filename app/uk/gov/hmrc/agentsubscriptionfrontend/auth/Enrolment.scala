@@ -16,10 +16,46 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.auth
 
-import play.api.libs.json.{Format, Json}
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
+import uk.gov.hmrc.play.frontend.auth.connectors.domain.ConfidenceLevel
 
-case class Enrolment(key: String)
+case class EnrolmentIdentifier(key: String, value: String)
+
+case class Enrolment(key: String,
+                     identifiers: Seq[EnrolmentIdentifier],
+                     state: String,
+                     confidenceLevel: ConfidenceLevel,
+                     delegatedAuthRule: Option[String] = None) {
+
+  def getIdentifier(name: String): Option[EnrolmentIdentifier] = identifiers.find {
+    _.key.equalsIgnoreCase(name)
+  }
+
+  def isActivated: Boolean = state.toLowerCase == "activated"
+}
 
 object Enrolment {
-  implicit val format: Format[Enrolment] = Json.format[Enrolment]
+  implicit val idFormat = Json.format[EnrolmentIdentifier]
+  implicit val writes = Json.writes[Enrolment].transform { json: JsValue =>
+    json match {
+      case JsObject(props) => JsObject(props + ("enrolment" -> props("key")) - "key")
+    }
+  }
+  implicit val reads: Reads[Enrolment] = ((__ \ "key").read[String] and
+    (__ \ "identifiers").readNullable[Seq[EnrolmentIdentifier]] and
+    (__ \ "state").readNullable[String] and
+    (__ \ "confidenceLevel").readNullable[ConfidenceLevel] and
+    (__ \ "delegatedAuthRule").readNullable[String]) {
+    (key, optIds, optState, optCL, optDelegateRule) =>
+      Enrolment(
+        key,
+        optIds.getOrElse(Seq()),
+        optState.getOrElse("Activated"),
+        optCL.getOrElse(ConfidenceLevel.L0),
+        optDelegateRule
+      )
+  }
+
+  def apply(key: String): Enrolment = apply(key, Seq(), "Activated", ConfidenceLevel.L0, None)
 }
