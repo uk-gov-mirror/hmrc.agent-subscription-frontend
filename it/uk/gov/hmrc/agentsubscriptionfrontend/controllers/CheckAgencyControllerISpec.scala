@@ -57,7 +57,7 @@ class CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
 
       val result = await(controller.showCheckAgencyStatus(authenticatedRequest()))
 
-      checkHtmlResultWithBodyText(result, "Check for duplicate Agent Services accounts")
+      checkHtmlResultWithBodyText(result, "Identify your business")
     }
 
     "display the AS Account Page if the current user has HMRC-AS-AGENT enrolment" in {
@@ -83,7 +83,7 @@ class CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
 
       status(result) shouldBe OK
       val responseBody = bodyOf(result)
-      responseBody should include("Check for duplicate Agent Services accounts")
+      responseBody should include("Identify your business")
       responseBody should include("Please enter a valid UTR")
       responseBody should include(invalidUtr)
       responseBody should include(validPostcode)
@@ -98,7 +98,7 @@ class CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
 
       status(result) shouldBe OK
       val responseBody = bodyOf(result)
-      responseBody should include("Check for duplicate Agent Services accounts")
+      responseBody should include("Identify your business")
       responseBody should include("Please enter a valid UTR")
       responseBody should include(invalidUtr)
       responseBody should include(validPostcode)
@@ -112,7 +112,7 @@ class CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
 
       status(result) shouldBe OK
       val responseBody = bodyOf(result)
-      responseBody should include("Check for duplicate Agent Services accounts")
+      responseBody should include("Identify your business")
       responseBody should include("You have entered an invalid postcode")
       responseBody should include(validUtr.value)
       responseBody should include(invalidPostcode)
@@ -126,7 +126,7 @@ class CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
 
       status(result) shouldBe OK
       val responseBody = bodyOf(result)
-      responseBody should include("Check for duplicate Agent Services accounts")
+      responseBody should include("Identify your business")
       responseBody should include("This field is required")
     }
 
