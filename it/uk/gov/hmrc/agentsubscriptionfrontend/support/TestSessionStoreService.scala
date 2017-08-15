@@ -18,6 +18,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.support
 
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{InitialDetails, KnownFactsResult}
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
+import uk.gov.hmrc.play.binders.ContinueUrl
 import uk.gov.hmrc.play.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -26,7 +27,8 @@ class TestSessionStoreService extends SessionStoreService(null) {
 
   class Session (
     var knownFactsResult: Option[KnownFactsResult] = None,
-    var initialDetails: Option[InitialDetails] = None
+    var initialDetails: Option[InitialDetails] = None,
+    var continueUrl: Option[ContinueUrl] = None
   )
 
   private val sessions = collection.mutable.Map[String,Session]()
@@ -64,6 +66,15 @@ class TestSessionStoreService extends SessionStoreService(null) {
   override def cacheInitialDetails(details: InitialDetails)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
     Future.successful(
       currentSession.initialDetails = Some(details)
+    )
+
+  override def fetchContinueUrl(implicit hc: HeaderCarrier): Future[Option[ContinueUrl]] = {
+    Future successful currentSession.continueUrl
+  }
+
+  override def cacheContinueUrl(url: ContinueUrl)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
+    Future.successful(
+      currentSession.continueUrl = Some(url)
     )
 
   override def remove()(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =

@@ -26,6 +26,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.repository.KnownFactsResultMongoRep
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.passcode.authentication.{PasscodeAuthentication, PasscodeAuthenticationProvider, PasscodeVerificationConfig}
+import uk.gov.hmrc.play.binders.ContinueUrl
 import uk.gov.hmrc.play.frontend.auth.Actions
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
@@ -46,6 +47,10 @@ class StartController @Inject()(override val messagesApi: MessagesApi,
   }
 
   val start: Action[AnyContent] = PasscodeAuthenticatedAction { implicit request =>
+    request.getQueryString("continue").foreach { url =>
+      sessionStoreService.cacheContinueUrl(ContinueUrl(url))
+    }
+
     Ok(html.start())
   }
 

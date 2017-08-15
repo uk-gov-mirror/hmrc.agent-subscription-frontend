@@ -9,6 +9,8 @@ import uk.gov.hmrc.agentsubscriptionfrontend.models.KnownFactsResult
 import uk.gov.hmrc.agentsubscriptionfrontend.repository.KnownFactsResultMongoRepository
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
+import uk.gov.hmrc.play.binders.ContinueUrl
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class StartControllerISpec extends BaseISpec {
@@ -42,6 +44,28 @@ class StartControllerISpec extends BaseISpec {
       val result = await(controller.start(FakeRequest()))
 
       bodyOf(result) should include("Create your Agent Services account")
+    }
+
+    "store the continue url in the session store" in {
+      implicit val request = FakeRequest(GET, s"?continue=http://localhost")
+
+      val result = await(controller.start(request))
+
+      status(result) shouldBe 200
+      bodyOf(result) should include("Create your Agent Services account")
+
+      sessionStoreService.currentSession.continueUrl shouldBe Some(ContinueUrl("http://localhost"))
+    }
+
+    "not store the continue url in the session store if the continue param is not mentioned in the url" in {
+      implicit val request = FakeRequest()
+
+      val result = await(controller.start(request))
+
+      status(result) shouldBe 200
+      bodyOf(result) should include("Create your Agent Services account")
+
+      sessionStoreService.currentSession.continueUrl shouldBe None
     }
 
     behave like aPageWithFeedbackLinks(request => controller.start(request))
