@@ -35,32 +35,33 @@ class StartControllerISpec extends BaseISpec {
     "not require authentication" in {
       AuthStub.userIsNotAuthenticated()
 
-      val result = await(controller.start(FakeRequest()))
+      val result = await(controller.start()(FakeRequest()))
 
       status(result) shouldBe 200
     }
 
     "be available" in {
-      val result = await(controller.start(FakeRequest()))
+      val result = await(controller.start()(FakeRequest()))
 
       bodyOf(result) should include("Create your Agent Services account")
     }
 
     "store the continue url in the session store" in {
-      implicit val request = FakeRequest(GET, s"?continue=http://localhost")
+      val url = "http://localhost"
+      implicit val request = FakeRequest(GET, s"?continue=$url")
 
-      val result = await(controller.start(request))
+      val result = await(controller.start(Some(ContinueUrl(url)))(request))
 
       status(result) shouldBe 200
       bodyOf(result) should include("Create your Agent Services account")
 
-      sessionStoreService.currentSession.continueUrl shouldBe Some(ContinueUrl("http://localhost"))
+      sessionStoreService.currentSession.continueUrl shouldBe Some(ContinueUrl(url))
     }
 
     "not store the continue url in the session store if the continue param is not mentioned in the url" in {
       implicit val request = FakeRequest()
 
-      val result = await(controller.start(request))
+      val result = await(controller.start()(request))
 
       status(result) shouldBe 200
       bodyOf(result) should include("Create your Agent Services account")
@@ -68,7 +69,7 @@ class StartControllerISpec extends BaseISpec {
       sessionStoreService.currentSession.continueUrl shouldBe None
     }
 
-    behave like aPageWithFeedbackLinks(request => controller.start(request))
+    behave like aPageWithFeedbackLinks(request => controller.start()(request))
 
   }
 
