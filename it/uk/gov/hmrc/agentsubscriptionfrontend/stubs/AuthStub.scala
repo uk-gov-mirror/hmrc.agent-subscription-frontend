@@ -71,6 +71,42 @@ object AuthStub {
     sessionKeysForMockAuth(user)
   }
 
+  def refreshEnrolmentsSuccess = {
+    stubFor(post(urlEqualTo("/government-gateway-authentication/refresh-profile"))
+      .willReturn(
+        aResponse()
+          .withStatus(204)
+      )
+    )
+  }
+
+  def refreshEnrolmentsGGTokenHasExpired = {
+    stubFor(post(urlEqualTo("/government-gateway-authentication/refresh-profile"))
+      .willReturn(
+        aResponse()
+          .withStatus(401)
+      )
+    )
+  }
+
+  def refreshEnrolmentsNonGGToken = {
+    stubFor(post(urlEqualTo("/government-gateway-authentication/refresh-profile"))
+      .willReturn(
+        aResponse()
+          .withStatus(403)
+      )
+    )
+  }
+
+  def refreshEnrolmentsReturnsUnexpectedStatus = {
+    stubFor(post(urlEqualTo("/government-gateway-authentication/refresh-profile"))
+      .willReturn(
+        aResponse()
+          .withStatus(201)
+      )
+    )
+  }
+
   def passcodeAuthorisationSucceeds(regime: String = "agent-subscription", otacToken: String = "dummy-otac-token"): Seq[(String, String)] = {
     stubPasscodeAuthorisation(regime, 200)
 
