@@ -20,6 +20,7 @@ import javax.inject.{Inject, Singleton}
 
 import cats.data.NonEmptyList
 import cats.data.Validated.{Invalid, Valid}
+import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms.{mapping, _}
 import play.api.data.validation.ValidationError
@@ -87,7 +88,7 @@ class SubscriptionController @Inject()
     )(InitialDetails.apply)(InitialDetails.unapply)
   )
 
-  private  case class SubscriptionReturnedHttpError(httpStatusCode: Int)  extends Product with Serializable
+  private case class SubscriptionReturnedHttpError(httpStatusCode: Int) extends Product with Serializable
 
   private def hasEnrolments(implicit request: AgentRequest[_]): Boolean = request.enrolments.nonEmpty
 
@@ -188,13 +189,15 @@ class SubscriptionController @Inject()
   val showSubscriptionComplete: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync {
     implicit authContext =>
       implicit request => {
-        Future successful{
+        Future successful {
           val agencyData = for {
             agencyName <- request.flash.get("agencyName")
             arn <- request.flash.get("arn")
           } yield (agencyName, arn)
 
-          authenticatorConnector.refreshEnrolments
+          authenticatorConnector.refreshEnrolments.map { httpResponse =>
+            Logger.info(">>>>> AUTHENTICATOR RESPONSE: " + httpResponse.status)
+          }
 
           agencyData.map(data =>
             Ok(html.subscription_complete(appConfig.agentServicesAccountUrl, data._1, data._2))
