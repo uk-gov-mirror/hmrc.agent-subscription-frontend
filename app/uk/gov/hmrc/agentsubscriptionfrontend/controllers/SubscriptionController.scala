@@ -190,12 +190,13 @@ class SubscriptionController @Inject()
     implicit authContext =>
       implicit request => {
         Future successful {
+
+          authenticatorConnector.refreshEnrolments
+
           val agencyData = for {
             agencyName <- request.flash.get("agencyName")
             arn <- request.flash.get("arn")
           } yield (agencyName, arn)
-
-          authenticatorConnector.refreshEnrolments
 
           agencyData.map(data =>
             Ok(html.subscription_complete(appConfig.agentServicesAccountUrl, data._1, data._2))
