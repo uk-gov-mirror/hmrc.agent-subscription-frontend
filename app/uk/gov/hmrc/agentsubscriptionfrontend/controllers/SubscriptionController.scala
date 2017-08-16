@@ -195,9 +195,7 @@ class SubscriptionController @Inject()
             arn <- request.flash.get("arn")
           } yield (agencyName, arn)
 
-          authenticatorConnector.refreshEnrolments.map { httpResponse =>
-            Logger.info(">>>>> AUTHENTICATOR RESPONSE: " + httpResponse.status)
-          }
+          authenticatorConnector.refreshEnrolments
 
           agencyData.map(data =>
             Ok(html.subscription_complete(appConfig.agentServicesAccountUrl, data._1, data._2))
