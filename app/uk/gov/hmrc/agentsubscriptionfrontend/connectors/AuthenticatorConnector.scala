@@ -28,7 +28,7 @@ class AuthenticatorConnector @Inject()(@Named("government-gateway-authentication
 
   def refreshEnrolments(implicit hc: HeaderCarrier): Future[Unit] = {
     http.POSTEmpty(s"$baseUrl/government-gateway-authentication/refresh-profile").map { httpResponse =>
-      if(httpResponse.status != 204) throw new RuntimeException("Receive unexpected response from authenticator proxy.")
+      if(httpResponse.status != 204) throw new RuntimeException(s"Receive unexpected response from authenticator proxy, with status ${httpResponse.status}")
     }
   }
 }
