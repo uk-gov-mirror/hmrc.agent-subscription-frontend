@@ -9,11 +9,14 @@ import play.api.mvc.{AnyContentAsEmpty, Result}
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{contentType, _}
 import play.twirl.api.HtmlFormat
+import uk.gov.hmrc.agentsubscriptionfrontend.connectors.SsoConnector
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUsers._
 import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
+
+import scala.concurrent.Future
 
 abstract class BaseISpec extends UnitSpec with OneAppPerSuite with MongoApp with WireMockSupport with EndpointBehaviours {
 
@@ -25,6 +28,7 @@ abstract class BaseISpec extends UnitSpec with OneAppPerSuite with MongoApp with
         "microservice.services.auth.port" -> wireMockPort,
         "microservice.services.agent-subscription.port" -> wireMockPort,
         "microservice.services.address-lookup-frontend.port" -> wireMockPort,
+        "microservice.services.sso.port" -> wireMockPort,
         "passcodeAuthentication.enabled" -> passcodeAuthenticationEnabled
       )
       .configure(mongoConfiguration)
@@ -38,6 +42,13 @@ abstract class BaseISpec extends UnitSpec with OneAppPerSuite with MongoApp with
   private class TestGuiceModule extends AbstractModule {
     override def configure(): Unit = {
       bind(classOf[SessionStoreService]).toInstance(sessionStoreService)
+      bind(classOf[SsoConnector]).toInstance(new SsoConnector(null, null) {
+        val whitelistedSSODomains = Set("www.foo.com", "foo.org")
+
+        override def validateExternalDomain(domain: String)(implicit hc: HeaderCarrier): Future[Boolean] = {
+          Future.successful(whitelistedSSODomains.contains(domain))
+        }
+      })
     }
   }
 

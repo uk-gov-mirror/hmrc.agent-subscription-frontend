@@ -16,12 +16,14 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.config
 
+import java.util.Collections
 import javax.inject.Singleton
 
 import play.api.Play.{configuration, current}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.blacklistedpostcodes.PostcodesLoader
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
 import uk.gov.hmrc.play.config.ServicesConfig
+import scala.collection.JavaConversions._
 
 trait AppConfig {
   val analyticsToken: String
@@ -34,6 +36,7 @@ trait AppConfig {
   val blacklistedPostcodes: Set[String]
   val journeyName: String
   val agentServicesAccountUrl: String
+  val domainWhiteList: Set[String]
 }
 
 trait StrictConfig {
@@ -69,4 +72,8 @@ class FrontendAppConfig extends AppConfig with StrictConfig with ServicesConfig 
     PostcodesLoader.load("/po_box_postcodes_abp_49.csv").map(x => x.toUpperCase.replace(" ", "")).toSet
   override lazy val journeyName: String = getConfString("address-lookup-frontend.journeyName", "")
   override lazy val agentServicesAccountUrl: String = s"$servicesAccountUrl/$servicesAccountPath"
+
+  override lazy val domainWhiteList =
+    runModeConfiguration.getStringList("continueUrl.domainWhiteList").getOrElse(Collections.emptyList()).toSet
+
 }

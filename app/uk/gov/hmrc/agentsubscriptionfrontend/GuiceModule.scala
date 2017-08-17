@@ -84,6 +84,7 @@ class GuiceModule(environment: Environment, configuration: Configuration) extend
     bind(classOf[LoggerLike]).toInstance(Logger)
     bindBaseUrl("agent-subscription")
     bindBaseUrl("address-lookup-frontend")
+    bindBaseUrl("sso")
     bindConfigProperty(classOf[String])("surveyRedirectUrl")
     bindConfigProperty(classOf[String])("sosRedirectUrl")
     bindConfigProperty(classOf[Int])("mongodb.knownfactsresult.ttl")

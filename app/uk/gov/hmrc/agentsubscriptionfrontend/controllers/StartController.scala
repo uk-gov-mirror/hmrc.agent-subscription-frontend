@@ -26,7 +26,6 @@ import uk.gov.hmrc.agentsubscriptionfrontend.repository.KnownFactsResultMongoRep
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.passcode.authentication.{PasscodeAuthentication, PasscodeAuthenticationProvider, PasscodeVerificationConfig}
-import uk.gov.hmrc.play.binders.ContinueUrl
 import uk.gov.hmrc.play.frontend.auth.Actions
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
@@ -38,18 +37,23 @@ class StartController @Inject()(override val messagesApi: MessagesApi,
                                 override val config: PasscodeVerificationConfig,
                                 override val passcodeAuthenticationProvider: PasscodeAuthenticationProvider,
                                 knownFactsResultMongoRepository: KnownFactsResultMongoRepository,
+                                continueUrlActions: ContinueUrlActions,
                                 sessionStoreService: SessionStoreService)
                                (implicit appConfig: AppConfig)
     extends FrontendController with I18nSupport with Actions with PasscodeAuthentication {
 
-  val root: Action[AnyContent] = PasscodeAuthenticatedAction { implicit request =>
-    Redirect(routes.StartController.start())
+  import continueUrlActions._
+
+  val root: Action[AnyContent] = PasscodeAuthenticatedActionAsync { implicit request =>
+    withMaybeContinueUrlCached {
+      Redirect(routes.StartController.start())
+    }
   }
 
-  def start(continue: Option[ContinueUrl] = None): Action[AnyContent] = PasscodeAuthenticatedAction { implicit request =>
-    continue.foreach(sessionStoreService.cacheContinueUrl)
-
-    Ok(html.start())
+  def start: Action[AnyContent] = PasscodeAuthenticatedActionAsync { implicit request =>
+    withMaybeContinueUrlCached {
+      Ok(html.start())
+    }
   }
 
   val showNonAgentNextSteps: Action[AnyContent] = AuthorisedFor(NoOpRegime, GGConfidence) { implicit authContext =>
@@ -57,7 +61,7 @@ class StartController @Inject()(override val messagesApi: MessagesApi,
       Ok(html.non_agent_next_steps())
   }
 
-  val returnAfterGGCredsCreated:  Action[AnyContent] = PasscodeAuthenticatedActionAsync { implicit request =>
+  val returnAfterGGCredsCreated: Action[AnyContent] = PasscodeAuthenticatedActionAsync { implicit request =>
     request.getQueryString("id") match {
       case Some(id) =>
         for {
