@@ -13,6 +13,6 @@ class StartControllerWhitelistingISpec extends BaseISpec {
   }
 
   "start" should {
-    behave like aWhitelistedEndpoint(request => controller.start(request))
+    behave like aWhitelistedEndpoint(request => controller.start()(request))
   }
 }

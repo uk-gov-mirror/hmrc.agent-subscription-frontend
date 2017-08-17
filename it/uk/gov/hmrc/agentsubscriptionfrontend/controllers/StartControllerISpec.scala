@@ -1,14 +1,17 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
+import java.net.URLEncoder
+
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{contentType, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
-
 import uk.gov.hmrc.agentsubscriptionfrontend.models.KnownFactsResult
 import uk.gov.hmrc.agentsubscriptionfrontend.repository.KnownFactsResultMongoRepository
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
+import uk.gov.hmrc.play.binders.ContinueUrl
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class StartControllerISpec extends BaseISpec {
@@ -22,10 +25,25 @@ class StartControllerISpec extends BaseISpec {
 
   "context root" should {
     "redirect to start page" in {
-      val result = await(controller.root(FakeRequest()))
+      implicit val request = FakeRequest()
+      val result = await(controller.root(request))
 
       status(result) shouldBe 303
-      redirectLocation(result).head should include ("/start")
+      redirectLocation(result).head should include("/start")
+
+      sessionStoreService.currentSession.continueUrl shouldBe None
+    }
+
+    "store the absolute continue url in the session store" in {
+      val url = "http://localhost"
+      implicit val request = FakeRequest(GET, s"?continue=$url")
+
+      val result = await(controller.root(request))
+
+      status(result) shouldBe 303
+      redirectLocation(result).head should include("/start")
+
+      sessionStoreService.currentSession.continueUrl shouldBe Some(ContinueUrl(url))
     }
   }
 
@@ -39,9 +57,92 @@ class StartControllerISpec extends BaseISpec {
     }
 
     "be available" in {
-      val result = await(controller.start(FakeRequest()))
+      val result = await(controller.start()(FakeRequest()))
 
       bodyOf(result) should include("Create your Agent Services account")
+    }
+
+    "store the absolute continue url in the session store" in {
+      val url = "http://localhost"
+      implicit val request = FakeRequest(GET, s"?continue=$url")
+
+      val result = await(controller.start(request))
+
+      status(result) shouldBe 200
+      bodyOf(result) should include("Create your Agent Services account")
+
+      sessionStoreService.currentSession.continueUrl shouldBe Some(ContinueUrl(url))
+    }
+
+    "store the relative continue url in the session store" in {
+      val url = "/foo"
+      implicit val request = FakeRequest(GET, s"?continue=$url")
+
+      val result = await(controller.start(request))
+
+      status(result) shouldBe 200
+      bodyOf(result) should include("Create your Agent Services account")
+
+      sessionStoreService.currentSession.continueUrl shouldBe Some(ContinueUrl(url))
+    }
+
+    "store the absolute www.tax.service.gov.uk continue url in the session store" in {
+      val url = "http://www.tax.service.gov.uk/foo/bar?some=true"
+      implicit val request = FakeRequest(GET, s"?continue=${URLEncoder.encode(url, "UTF-8")}")
+
+      val result = await(controller.start(request))
+
+      status(result) shouldBe 200
+      bodyOf(result) should include("Create your Agent Services account")
+
+      sessionStoreService.currentSession.continueUrl shouldBe Some(ContinueUrl(url))
+    }
+
+    "store the whitelisted absolute external continue url in the session store" in {
+      val url = "http://www.foo.com/bar?some=false"
+      implicit val request = FakeRequest(GET, s"?continue=${URLEncoder.encode(url, "UTF-8")}")
+
+      val result = await(controller.start(request))
+
+      status(result) shouldBe 200
+      bodyOf(result) should include("Create your Agent Services account")
+
+      sessionStoreService.currentSession.continueUrl shouldBe Some(ContinueUrl(url))
+    }
+
+    "not store the non whitelisted absolute external continue url in the session store" in {
+      val url = "http://www.foo.org/bar?some=false"
+      implicit val request = FakeRequest(GET, s"?continue=${URLEncoder.encode(url, "UTF-8")}")
+
+      val result = await(controller.start(request))
+
+      status(result) shouldBe 200
+      bodyOf(result) should include("Create your Agent Services account")
+
+      sessionStoreService.currentSession.continueUrl shouldBe None
+    }
+
+    "not store the absolute external continue url in the session store if the url contains an invalid character" in {
+      val url = "http://www@foo.com"
+      implicit val request = FakeRequest(GET, s"?continue=${URLEncoder.encode(url, "UTF-8")}")
+
+      val result = await(controller.start(request))
+
+      status(result) shouldBe 200
+      bodyOf(result) should include("Create your Agent Services account")
+
+      sessionStoreService.currentSession.continueUrl shouldBe None
+    }
+
+    "not store the continue url in the session store if the continue param is not mentioned in the url" in {
+      implicit val request = FakeRequest()
+
+      val result = await(controller.start(request))
+
+      status(result) shouldBe 200
+      bodyOf(result) should include("Create your Agent Services account")
+
+      sessionStoreService.currentSession.continueUrl shouldBe None
     }
 
     behave like aPageWithFeedbackLinks(request => controller.start(request))
