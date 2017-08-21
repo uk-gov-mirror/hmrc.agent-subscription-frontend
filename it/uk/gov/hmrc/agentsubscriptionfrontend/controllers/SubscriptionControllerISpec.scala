@@ -47,13 +47,14 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       result.header.headers("Location") should include("/agent-subscription/has-other-enrolments")
     }
 
-    "show description details page of user has not enrolled and has clean creds" in {
+    "show subscription details page if user has not already subscribed and has clean creds" in {
       implicit val request = authenticatedRequest()
       sessionStoreService.currentSession.knownFactsResult = Some(myAgencyKnownFactsResult)
       AuthStub.hasNoEnrolments(subscribingAgent)
 
       val result = await(controller.showSubscriptionDetails(request))
-      bodyOf(result) should include(routes.SubscriptionController.showSubscriptionDetails().url)
+      status(result) shouldBe 200
+      checkHtmlResultWithBodyText(result, htmlEscapedMessage("subscriptionDetails.title"))
     }
 
     "populate form with utr and postcode" in {
