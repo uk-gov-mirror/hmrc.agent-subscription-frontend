@@ -189,19 +189,16 @@ class SubscriptionController @Inject()
   val showSubscriptionComplete: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync {
     implicit authContext =>
       implicit request => {
-        Future successful {
+          authenticatorConnector.refreshEnrolments.map{ _ =>
+            val agencyData = for {
+              agencyName <- request.flash.get("agencyName")
+              arn <- request.flash.get("arn")
+            } yield (agencyName, arn)
 
-          authenticatorConnector.refreshEnrolments
-
-          val agencyData = for {
-            agencyName <- request.flash.get("agencyName")
-            arn <- request.flash.get("arn")
-          } yield (agencyName, arn)
-
-          agencyData.map(data =>
-            Ok(html.subscription_complete(appConfig.agentServicesAccountUrl, data._1, data._2))
-          ) getOrElse sessionMissingRedirect()
-        }
+            agencyData.map(data =>
+              Ok(html.subscription_complete(appConfig.agentServicesAccountUrl, data._1, data._2))
+            ) getOrElse sessionMissingRedirect()
+          }
       }
   }
 }
