@@ -27,8 +27,13 @@ import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUsers._
 
 class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec {
   private val utr = Utr("2000000000")
-  private val myAgencyKnownFactsResult = KnownFactsResult(utr =
-    Utr("utr"), postcode = "AA1 1AA", taxpayerName = "My Business", isSubscribedToAgentServices = false)
+  private val knownFactsPostcode = "AA1 2AA"
+  private val myAgencyKnownFactsResult = KnownFactsResult(
+    utr = utr,
+    postcode = knownFactsPostcode,
+    taxpayerName = "My Business",
+    isSubscribedToAgentServices = false
+  )
 
   private lazy val controller: SubscriptionController = app.injector.instanceOf[SubscriptionController]
 
@@ -65,8 +70,8 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       val result = await(controller.showSubscriptionDetails(request))
 
       checkHtmlResultWithBodyText(result,
-        "value=\"utr\"",
-        "value=\"AA1 1AA\"")
+        s"""value="${utr.value}"""",
+        s"""value="$knownFactsPostcode"""")
     }
 
     "redirect to the Check Agency Status page if there is no KnownFactsResult in session because the user has returned to a bookmark" in {
@@ -503,7 +508,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
     authenticatedRequest().withFormUrlEncodedBody(
       Seq(
         "utr" -> utr.value,
-        "knownFactsPostcode" -> "AA1 2AA",
+        "knownFactsPostcode" -> knownFactsPostcode,
         "name" -> "My Agency",
         "email" -> "agency@example.com",
         "telephone" -> "0123 456 7890"
@@ -513,7 +518,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
 
   private def subscriptionRequest(town: String = "Sometown", county: String = "County", postcode: String = "AA1 1AA") =
     SubscriptionRequest(utr = utr,
-      knownFacts = ModelKnownFacts("AA1 2AA"),
+      knownFacts = ModelKnownFacts(knownFactsPostcode),
       agency =
         Agency(
           name = "My Agency",
