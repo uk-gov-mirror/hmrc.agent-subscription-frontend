@@ -1,6 +1,14 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes.CheckAgencyController
-@()(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+@import uk.gov.hmrc.play.binders.ContinueUrl
+@import java.net.URLEncoder
+@import uk.gov.hmrc.agentsubscriptionfrontend.support.CallOps._
+
+@(continueUrlOpt: Option[ContinueUrl])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+
+@continueUrl = @{
+    CheckAgencyController.showCheckAgencyStatus().toURLWithParams("continue" -> continueUrlOpt.map(_.url))
+}
 
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = "Create an Agent Services account", bodyClasses = None, userIsLoggedIn = false) {
 
@@ -20,7 +28,7 @@
     <p>It takes around 5 minutes to create an account.</p>
 
     <p>
-        <a class="button button-start button--get-started" name="start" id="start" href="@CheckAgencyController.showCheckAgencyStatus" role="button">Start now</a>
+        <a class="button button-start button--get-started" name="start" id="start" href="@continueUrl" role="button">Start now</a>
     </p>
 
     <h2 class="heading-medium">Before you start</h2>
@@ -37,3 +45,6 @@
     <p>If you're charging for services as an agent, you must be supervised for <a href="https://www.gov.uk/topic/business-tax/money-laundering-regulations">anti-money laundering</a>.</p>
 
 }
+
+
+

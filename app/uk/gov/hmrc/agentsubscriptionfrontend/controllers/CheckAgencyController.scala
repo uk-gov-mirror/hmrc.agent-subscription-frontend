@@ -22,7 +22,7 @@ import play.api.data.Form
 import play.api.data.Forms.mapping
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{AnyContent, Request, _}
-import uk.gov.hmrc.agentsubscriptionfrontend.auth.{AgentRequest, AuthActions, NoOpRegimeWithContinueUrl}
+import uk.gov.hmrc.agentsubscriptionfrontend.auth.{AgentRequest, AuthActions, NoOpRegime, NoOpRegimeWithContinueUrl}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentSubscriptionConnector
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{KnownFactsResult, Registration}
@@ -51,9 +51,12 @@ class CheckAgencyController @Inject()
  override val config: PasscodeVerificationConfig,
  override val passcodeAuthenticationProvider: PasscodeAuthenticationProvider,
  val agentSubscriptionConnector: AgentSubscriptionConnector,
- val sessionStoreService: SessionStoreService)
+ val sessionStoreService: SessionStoreService,
+ continueUrlActions: ContinueUrlActions)
 (implicit appConfig: AppConfig)
   extends FrontendController with I18nSupport with AuthActions with SessionDataMissing {
+
+  import continueUrlActions._
 
   val showHasOtherEnrolments: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync() { implicit authContext =>
     implicit request =>
@@ -62,15 +65,15 @@ class CheckAgencyController @Inject()
 
   private def hasMtdEnrolment(implicit request: AgentRequest[_]): Boolean = request.enrolments.exists(_.key == "HMRC-AS-AGENT")
 
-  val showCheckAgencyStatus: Action[AnyContent] = {
-
-    AuthorisedWithSubscribingAgentAsync(new NoOpRegimeWithContinueUrl(sessionStoreService)) {
-
+  def showCheckAgencyStatus: Action[AnyContent] = {
+    AuthorisedWithSubscribingAgentAsync(NoOpRegimeWithContinueUrl) {
       implicit authContext =>
         implicit request =>
-          hasMtdEnrolment match {
-            case true => Future successful Redirect(routes.CheckAgencyController.showAlreadySubscribed())
-            case false => Future successful Ok(html.check_agency_status(CheckAgencyController.knownFactsForm))
+          withMaybeContinueUrlCached {
+            hasMtdEnrolment match {
+              case true => Future successful Redirect(routes.CheckAgencyController.showAlreadySubscribed())
+              case false => Future successful Ok(html.check_agency_status(CheckAgencyController.knownFactsForm))
+            }
           }
     }
   }
