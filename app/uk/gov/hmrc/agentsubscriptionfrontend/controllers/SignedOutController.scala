@@ -44,9 +44,7 @@ class SignedOutController @Inject()(@Named("surveyRedirectUrl") surveyUrl: Strin
         case Some(x) => knownFactsResultMongoRepository.create(x).map(Option.apply)
         case None => Future.successful(None)
       }
-      x <- sessionStoreService.fetchContinueUrl
     } yield {
-      println(s"HERE TOO>>: $x")
       val continueUrl = returnAfterGGCredsCreatedUrl(id.map(i => s"?id=$i").getOrElse(""))
       Results.SeeOther(s"$sosUrl&continue=$continueUrl").withNewSession
     }
