@@ -20,7 +20,7 @@ import play.api.mvc._
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
 import uk.gov.hmrc.passcode.authentication.PasscodeAuthentication
-import uk.gov.hmrc.play.frontend.auth.{Actions, AuthContext}
+import uk.gov.hmrc.play.frontend.auth.{Actions, AuthContext, TaxRegime}
 import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
@@ -33,8 +33,8 @@ trait AuthActions extends Actions with PasscodeAuthentication {
 
   private implicit def hc(implicit request: Request[_]): HeaderCarrier = HeaderCarrier.fromHeadersAndSession(request.headers, Some(request.session))
 
-  def AuthorisedWithSubscribingAgentAsync(body: AsyncPlayUserRequest)(implicit appConfig: AppConfig): Action[AnyContent] =
-    AuthorisedFor(NoOpRegime, pageVisibility = GGConfidence).async {
+  def AuthorisedWithSubscribingAgentAsync(regime: TaxRegime = NoOpRegime)(body: AsyncPlayUserRequest)(implicit appConfig: AppConfig): Action[AnyContent] =
+    AuthorisedFor(regime, pageVisibility = GGConfidence).async {
       implicit authContext =>
         implicit request =>
           withVerifiedPasscode {

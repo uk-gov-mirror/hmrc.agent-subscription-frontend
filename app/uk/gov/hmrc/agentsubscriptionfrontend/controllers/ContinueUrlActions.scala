@@ -16,25 +16,30 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
+import java.util.UUID
 import javax.inject.{Inject, Singleton}
 
 import play.api.Logger
 import play.api.mvc._
-import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, HostnameWhiteListService}
+import uk.gov.hmrc.agentsubscriptionfrontend.service.{HostnameWhiteListService, SessionStoreService}
 import uk.gov.hmrc.play.binders.ContinueUrl
-import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
+import uk.gov.hmrc.play.http.{HeaderCarrier, SessionKeys}
 
 import scala.concurrent.Future
-import scala.util.{Failure, Success, Try}
 import scala.util.control.NonFatal
+import scala.util.{Failure, Success, Try}
 
 @Singleton
 class ContinueUrlActions @Inject()(whiteListService: HostnameWhiteListService,
                                    sessionStoreService: SessionStoreService) {
 
   def withMaybeContinueUrlCached[A](block: => Result)(implicit request: Request[A]): Future[Result] = {
-    implicit val hc = HeaderCarrier.fromHeadersAndSession(request.headers, None)
+    val session = if (request.session.isEmpty)
+      request.session + (SessionKeys.sessionId -> s"session-${UUID.randomUUID().toString}")
+    else request.session
+
+    implicit val hc = HeaderCarrier.fromHeadersAndSession(request.headers, Some(session))
 
     val result: Future[_] = request.getQueryString("continue") match {
       case Some(continueUrl) =>
@@ -54,7 +59,7 @@ class ContinueUrlActions @Inject()(whiteListService: HostnameWhiteListService,
         Future.successful(())
     }
 
-    result.map(_ => block)
+    result.map(_ => block.withSession(session))
   }
 
   private def isRelativeOrAbsoluteWhiteListed(continueUrl: ContinueUrl)(implicit hc: HeaderCarrier): Future[Boolean] = {

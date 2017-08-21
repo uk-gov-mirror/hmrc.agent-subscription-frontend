@@ -16,16 +16,38 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.auth
 
+import play.api.mvc.Request
+import play.api.mvc.Results._
 import uk.gov.hmrc.agentsubscriptionfrontend.config.GGConfig
+import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.play.frontend.auth.{GovernmentGateway, TaxRegime}
 import uk.gov.hmrc.play.frontend.auth.connectors.domain.Accounts
+import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
 object NoOpRegime extends TaxRegime {
   override def isAuthorised(accounts: Accounts) = true
+
   override val authenticationType = CheckAgencyStatusGovernmentGateway
 }
 
 object CheckAgencyStatusGovernmentGateway extends GovernmentGateway {
   override lazy val loginURL = GGConfig.ggSignInUrl
   override lazy val continueURL = GGConfig.checkAgencyStatusCallbackUrl
+}
+
+class NoOpRegimeWithContinueUrl(sessionStoreService: SessionStoreService) extends TaxRegime {
+  override def isAuthorised(accounts: Accounts) = true
+
+  override val authenticationType = new GovernmentGateway {
+    override lazy val loginURL = GGConfig.ggSignInUrl
+    override lazy val continueURL = GGConfig.checkAgencyStatusCallbackUrl
+
+    override def redirectToLogin(implicit request: Request[_]) = {
+      sessionStoreService.fetchContinueUrl.map { x =>
+        val contUrlWithPreservedUrl = s"$continueURL&continue=${x.map(_.url).getOrElse("default-fallback")}"
+
+        Redirect(loginURL, Map("continue" -> Seq(contUrlWithPreservedUrl), "origin" -> Seq(origin)))
+      }
+    }
+  }
 }

@@ -90,7 +90,7 @@ class SubscriptionController @Inject()
 
   private def hasEnrolments(implicit request: AgentRequest[_]): Boolean = request.enrolments.nonEmpty
 
-  val showSubscriptionDetails: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync { implicit authContext =>
+  val showSubscriptionDetails: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync() { implicit authContext =>
     implicit request =>
       hasEnrolments match {
         case true => Future(Redirect(routes.CheckAgencyController.showHasOtherEnrolments()))
@@ -103,7 +103,7 @@ class SubscriptionController @Inject()
       }
   }
 
-  def submit(id: String): Action[AnyContent] = AuthorisedWithSubscribingAgentAsync {
+  def submit(id: String): Action[AnyContent] = AuthorisedWithSubscribingAgentAsync() {
     implicit authContext =>
       implicit request =>
 
@@ -149,14 +149,14 @@ class SubscriptionController @Inject()
         }
   }
 
-  def beginJourney(id: String): Action[AnyContent] = AuthorisedWithSubscribingAgentAsync {
+  def beginJourney(id: String): Action[AnyContent] = AuthorisedWithSubscribingAgentAsync() {
     implicit authContext =>
       implicit request =>
 
         addressLookUpConnector.initJourney(routes.SubscriptionController.submit(), JourneyName).map { x => Redirect(x) }
   }
 
-  val getAddressDetails: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync {
+  val getAddressDetails: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync() {
     implicit authContext =>
       implicit request =>
         subscriptionDetails.bindFromRequest().fold(
@@ -178,13 +178,13 @@ class SubscriptionController @Inject()
       sessionMissingRedirect()
     })
 
-  val showSubscriptionFailed: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync {
+  val showSubscriptionFailed: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync() {
     implicit authContext =>
       implicit request =>
         Future successful Ok(html.subscription_failed("Postcodes do not match"))
   }
 
-  val showSubscriptionComplete: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync {
+  val showSubscriptionComplete: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync() {
     implicit authContext =>
       implicit request => {
         Future successful{
