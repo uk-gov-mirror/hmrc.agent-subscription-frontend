@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
-import java.net.URLEncoder
 import javax.inject.{Inject, Singleton}
 
 import cats.data.NonEmptyList
@@ -34,15 +33,16 @@ import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AddressLookupFrontendCon
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.FieldMappings._
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionService}
+import uk.gov.hmrc.agentsubscriptionfrontend.support.CallOps
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html._
 import uk.gov.hmrc.passcode.authentication.{PasscodeAuthenticationProvider, PasscodeVerificationConfig}
-import uk.gov.hmrc.play.binders.ContinueUrl
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 import uk.gov.hmrc.play.http.HeaderCarrier
 
 import scala.concurrent.Future
+import scala.util.control.NonFatal
 
 case class SubscriptionDetails(utr: Utr,
                                knownFactsPostcode: String,
@@ -70,8 +70,7 @@ class SubscriptionController @Inject()
  subscriptionService: SubscriptionService,
  sessionStoreService: SessionStoreService,
  addressLookUpValidator: AddressValidator,
- addressLookUpConnector: AddressLookupFrontendConnector,
- signedOutController: SignedOutController
+ addressLookUpConnector: AddressLookupFrontendConnector
 )
 (implicit appConfig: AppConfig)
   extends FrontendController with I18nSupport with AuthActions with SessionDataMissing {
@@ -89,14 +88,14 @@ class SubscriptionController @Inject()
     )(InitialDetails.apply)(InitialDetails.unapply)
   )
 
-  private  case class SubscriptionReturnedHttpError(httpStatusCode: Int)  extends Product with Serializable
+  private case class SubscriptionReturnedHttpError(httpStatusCode: Int) extends Product with Serializable
 
   private def hasEnrolments(implicit request: AgentRequest[_]): Boolean = request.enrolments.nonEmpty
 
   val showSubscriptionDetails: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync() { implicit authContext =>
     implicit request =>
       hasEnrolments match {
-        case true => Future(Redirect(routes.CheckAgencyController.showHasOtherEnrolments()))
+        case true  => Future(Redirect(routes.CheckAgencyController.showHasOtherEnrolments()))
         case false => sessionStoreService.fetchKnownFactsResult.map(_.map { knownFactsResult =>
           Ok(html.subscription_details(knownFactsResult.taxpayerName, subscriptionDetails.fill(
             InitialDetails(knownFactsResult.utr, knownFactsResult.postcode, null, null, null))))
@@ -119,16 +118,16 @@ class SubscriptionController @Inject()
             case Right(arn) => {
               Right((arn, subscriptionDetails.name))
             }
-            case Left(x) => Left(SubscriptionReturnedHttpError(x))
+            case Left(x)    => Left(SubscriptionReturnedHttpError(x))
           }
         }
 
         def redirectSubscriptionResponse(either: Either[SubscriptionReturnedHttpError, (Arn, String)]): Result = {
           either match {
-            case Right((arn, agencyName)) => Redirect(routes.SubscriptionController.showSubscriptionComplete())
+            case Right((arn, agencyName))                      => Redirect(routes.SubscriptionController.showSubscriptionComplete())
               .flashing("arn" -> arn.arn, "agencyName" -> agencyName)
             case Left(SubscriptionReturnedHttpError(CONFLICT)) => Redirect(routes.CheckAgencyController.showAlreadySubscribed())
-            case Left(SubscriptionReturnedHttpError(_)) => Redirect(routes.SubscriptionController.showSubscriptionFailed())
+            case Left(SubscriptionReturnedHttpError(_))        => Redirect(routes.SubscriptionController.showSubscriptionFailed())
           }
         }
 
@@ -136,7 +135,7 @@ class SubscriptionController @Inject()
           maybeDetails.map { details =>
             addressLookUpConnector.getAddressDetails(id).flatMap { address =>
               addressLookUpValidator.validateAddress(details.utr, address, blacklistedPostCodes) match {
-                case Invalid(errors) =>
+                case Invalid(errors)   =>
                   Future.successful(
                     Ok(des_will_not_accept_address(id, SubscriptionController.renderErrors(errors)))
                   )
@@ -190,33 +189,25 @@ class SubscriptionController @Inject()
   val showSubscriptionComplete: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync() {
     implicit authContext =>
       implicit request => {
-          val agencyData = for {
-            agencyName <- request.flash.get("agencyName")
-            arn <- request.flash.get("arn")
-          } yield (agencyName, arn)
 
-          sessionStoreService.fetchContinueUrl.map {_ match {
-              case Some(continueUrl) => responseWithOrWithoutContinueUrl(ContinueUrlValue(continueUrl), agencyData)
-              case _ => responseWithOrWithoutContinueUrl(stringData = agencyData)
-            }
-          }
+        val agencyData = for {
+          agencyName <- request.flash.get("agencyName")
+          arn <- request.flash.get("arn")
+        } yield (agencyName, arn)
+
+        agencyData match {
+          case Some((agencyName, arn)) =>
+            sessionStoreService.fetchContinueUrl.
+              recover { case NonFatal(_) => None }.
+              map { continueUrlOpt =>
+                val continueUrl = CallOps.addParamsToUrl(appConfig.agentServicesAccountUrl, "continue" -> continueUrlOpt.map(_.url))
+                Ok(html.subscription_complete(continueUrl, agencyName, arn))
+              }
+          case _                       =>
+            Future.successful(sessionMissingRedirect())
+        }
       }
   }
-
-  private def responseWithOrWithoutContinueUrl(continueUrl:String = "", stringData: Option[(String,String)])
-                                              (implicit hc: HeaderCarrier, request: Request[_]) = {
-    val encodedUrl = encodeUtf8(appConfig.agentServicesAccountUrl + continueUrl)
-    stringData.map(data =>
-      Ok(html.subscription_complete(encodedUrl, data._1, data._2))
-    ) getOrElse sessionMissingRedirect()
-  }
-
-  private def encodeUtf8(str: String) = URLEncoder.encode(str, "UTF-8")
-
-  private def ContinueUrlValue(ourContinueUrl: ContinueUrl) = {
-    s"?continue=${ourContinueUrl.encodedUrl}"
-  }
-
 }
 
 object SubscriptionController {
