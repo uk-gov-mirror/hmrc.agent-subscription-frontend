@@ -89,16 +89,16 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
       shouldAcceptFieldValue("A1A 1AA")
     }
 
-    "give \"error.required\" error when it is not supplied" in {
-      postcodeMapping.bind(Map.empty).left.value should contain only FormError("testKey", "error.required")
+    "give \"error.postcode.empty\" error when it is not supplied" in {
+      postcodeMapping.bind(Map.empty).left.value should contain only FormError("testKey", "error.postcode.empty")
     }
 
-    "give \"error.required\" error when it is empty" in {
-      bind("").left.value should contain only FormError("testKey", "error.required")
+    "give \"error.postcode.empty\" error when it is empty" in {
+      bind("").left.value should contain only FormError("testKey", "error.postcode.empty")
     }
 
-    "give \"error.required\" error when it only contains a space" in {
-      bind(" ").left.value should contain only FormError("testKey", "error.required")
+    "give \"error.postcode.empty\" error when it only contains a space" in {
+      bind(" ").left.value should contain only FormError("testKey", "error.postcode.empty")
     }
 
     "reject postcodes containing invalid characters" in {
@@ -142,8 +142,8 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
       shouldAcceptFieldValue("AA11AA")
     }
 
-    "accept postcodes with extra spaces" in {
-      shouldAcceptFieldValue(" A A 1 1 A A ")
+    "reject postcodes with extra spaces" in {
+      shouldRejectFieldValueAsInvalid(" A A 1 1 A A ")
     }
   }
 
@@ -211,7 +211,7 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
 
   "desTextConstraint" should {
 
-    val desTextConstraint = FieldMappings.desText
+    val desTextConstraint = FieldMappings.desText()
 
     def shouldRejectFieldValueAsInvalid(fieldValue: String): Unit = {
       desTextConstraint(fieldValue) shouldBe Invalid(ValidationError("error.des.text.invalid"))
@@ -284,11 +284,11 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
       }
 
       "input is empty" in {
-        bind("").left.value should contain(FormError("testKey", "error.required"))
+        bind("").left.value should contain(FormError("testKey", "error.address.lines.empty"))
       }
 
       "input is only whitespace" in {
-        bind("    ").left.value should contain(FormError("testKey", "error.required"))
+        bind("    ").left.value should contain(FormError("testKey", "error.address.lines.empty"))
       }
 
       "there is an invalid character" in {
@@ -316,8 +316,9 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
     }
   }
 
-  "address Line 2 and 3 bind" should {
-    val addressLine23Mapping = FieldMappings.addressLine23.withPrefix("testKey")
+  //TODO merge with other address validation tests
+  "address Line 2, 3 and 4 bind" should {
+    val addressLine23Mapping = FieldMappings.addressLine234.withPrefix("testKey")
 
     def bind(fieldValue: String) = addressLine23Mapping.bind(Map("testKey" -> fieldValue))
 

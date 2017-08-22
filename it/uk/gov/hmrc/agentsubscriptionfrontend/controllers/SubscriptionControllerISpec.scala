@@ -294,8 +294,9 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         val result = await(controller.getAddressDetails(request))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, htmlEscapedMessage("subscriptionDetails.title"),
-          "This field is limited to alphanumeric characters (A-Z, a-z, 0-9) and the following characters -,./")
+        checkHtmlResultWithBodyText(result,
+          htmlEscapedMessage("subscriptionDetails.title"),
+          htmlEscapedMessage("error.des.text.invalid"))
       }
 
       "email is omitted" in {

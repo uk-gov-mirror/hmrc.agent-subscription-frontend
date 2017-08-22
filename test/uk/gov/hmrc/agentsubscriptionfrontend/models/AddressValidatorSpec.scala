@@ -90,6 +90,7 @@ class AddressValidatorSpec extends UnitSpec with ResettingMockitoSugar {
 
     "return an error if format is invalid" in {
       addressValidator.validatePostcode(Some("not a postcode"), blacklistedPostcodes) shouldBe Invalid(errorsForInvalidPostcode)
+      addressValidator.validatePostcode(Some(" A A 1 1 A A "), blacklistedPostcodes) shouldBe Invalid(errorsForInvalidPostcode)
     }
 
     "return an error if format is invalid but contains a valid postcode" in {
