@@ -143,7 +143,6 @@ class SubscriptionController @Inject()
                 case Valid(desAddress) =>
                   val subscriptResponse = for {
                     res ← subscribe(details, desAddress, address)
-                    _ ← sessionStoreService.remove()
                   } yield res
                   subscriptResponse.map(redirectSubscriptionResponse)
               }
@@ -200,6 +199,7 @@ class SubscriptionController @Inject()
             case Some((agencyName, arn)) =>
               sessionStoreService.fetchContinueUrl.
                 recover { case NonFatal(_) => None }.
+                andThen { case _ => sessionStoreService.remove()}.
                 map { continueUrlOpt =>
                   val continueUrl = CallOps.addParamsToUrl(appConfig.agentServicesAccountUrl, "continue" -> continueUrlOpt.map(_.url))
                   Ok(html.subscription_complete(continueUrl, agencyName, arn))
