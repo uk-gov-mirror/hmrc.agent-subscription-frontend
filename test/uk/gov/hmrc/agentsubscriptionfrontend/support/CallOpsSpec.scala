@@ -33,8 +33,9 @@ class CallOpsSpec extends WordSpec with Matchers {
         CallOps.addParamsToUrl(s"$url?foo=bar") shouldBe s"$url?foo=bar"
       }
 
-      "there is one parameter but with no value" in {
+      "there are only parameters with no values" in {
         CallOps.addParamsToUrl(url, "foo" -> None) shouldBe url
+        CallOps.addParamsToUrl(url, "foo" -> None, "bar" -> None) shouldBe url
       }
     }
 
@@ -53,6 +54,16 @@ class CallOpsSpec extends WordSpec with Matchers {
 
       "the url ends with &" in {
         CallOps.addParamsToUrl(s"$url?foo=bar&", "baz" -> Some("qwaggly")) shouldBe s"$url?foo=bar&baz=qwaggly"
+      }
+
+      "one of the parameters to add has no value" in {
+        CallOps.addParamsToUrl(url, "foo" -> None, "baz" -> Some("qwaggly")) shouldBe s"$url?baz=qwaggly"
+        CallOps.addParamsToUrl(url, "foo" -> Some("bar"), "baz" -> None) shouldBe s"$url?foo=bar"
+      }
+
+      "there is an existing query part and one of the parameters to add has no value" in {
+        CallOps.addParamsToUrl(s"$url?foo=bar", "baz" -> Some("qwaggly"), "fnords" -> None) shouldBe s"$url?foo=bar&baz=qwaggly"
+        CallOps.addParamsToUrl(s"$url?foo=bar", "fnords" -> None, "baz" -> Some("qwaggly")) shouldBe s"$url?foo=bar&baz=qwaggly"
       }
     }
   }
