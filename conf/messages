@@ -11,7 +11,7 @@ error.des.text.invalid = This field is limited to alphanumeric characters (A-Z, 
 error.des.text.invalid.withInput = This field {0} is limited to alphanumeric characters (A-Z, a-z, 0-9) and the following characters -,./
 
 ##Confirm your agency
-confirmYourAgency.title=Is this the agent business you''re creating an account for?
+confirmYourAgency.title=Is this the business you are setting up an account for?
 confirmYourAgency.caption=Agency details
 confirmYourAgency.heading.businessName=Name
 confirmYourAgency.heading.postcode=Postcode
@@ -31,8 +31,8 @@ alreadySubscribed.title=Your agency is already subscribed
 alreadySubscribed.p1=Please contact your agency administrator to get access to Agent Services.
 
 #Check agency status
-checkAgencyStatus.title=Check for duplicate Agent Services accounts
-checkAgencyStatus.p1=Your business can only have one Agent Services account.
+checkAgencyStatus.title=Identify your business
+checkAgencyStatus.p1=To help us find your business we need its Self Assessment unique tax reference (UTR) or Corporation Tax reference number.
 checkAgencyStatus.label.utr=Self Assessment UTR or Corporation Tax reference
 checkAgencyStatus.label.postcode=Postcode related to that UTR or reference
 

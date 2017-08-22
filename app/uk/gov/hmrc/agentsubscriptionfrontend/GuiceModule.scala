@@ -83,6 +83,7 @@ class GuiceModule(environment: Environment, configuration: Configuration) extend
     bind(classOf[SessionStoreService])
     bind(classOf[LoggerLike]).toInstance(Logger)
     bindBaseUrl("agent-subscription")
+    bindBaseUrl("government-gateway-authentication")
     bindBaseUrl("address-lookup-frontend")
     bindBaseUrl("sso")
     bindConfigProperty(classOf[String])("surveyRedirectUrl")

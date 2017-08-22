@@ -71,9 +71,7 @@ class FrontendAppConfig extends AppConfig with StrictConfig with ServicesConfig 
   override lazy val blacklistedPostcodes: Set[String] =
     PostcodesLoader.load("/po_box_postcodes_abp_49.csv").map(x => x.toUpperCase.replace(" ", "")).toSet
   override lazy val journeyName: String = getConfString("address-lookup-frontend.journeyName", "")
-  override lazy val agentServicesAccountUrl: String = s"$servicesAccountUrl/$servicesAccountPath"
-
+  override lazy val agentServicesAccountUrl: String = s"$servicesAccountUrl$servicesAccountPath"
   override lazy val domainWhiteList =
     runModeConfiguration.getStringList("continueUrl.domainWhiteList").getOrElse(Collections.emptyList()).toSet
-
 }

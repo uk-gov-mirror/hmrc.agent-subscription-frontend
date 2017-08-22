@@ -62,4 +62,5 @@ trait WireMockSupport extends BeforeAndAfterAll with BeforeAndAfterEach {
     super.beforeEach()
     WireMock.reset()
   }
+
 }

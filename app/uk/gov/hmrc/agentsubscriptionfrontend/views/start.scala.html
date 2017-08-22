@@ -10,22 +10,23 @@
     CheckAgencyController.showCheckAgencyStatus().toURLWithParams("continue" -> continueUrlOpt.map(_.url))
 }
 
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = "Create an Agent Services account", bodyClasses = None, userIsLoggedIn = false) {
+@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = "Agent Services account: sign in or set up", bodyClasses = None, userIsLoggedIn = false) {
 
-    <h1>Create your Agent Services account</h1>
+    <header class="page-header">
+        <h1>Agent Services account: sign in or set up</h1>
+    </header>
 
-    <p>This account will give you access to new Agent Services online. It's designed for professional accountants and tax advisers.</p>
+    <p>This account is for professional tax agents.</p>
 
-    <p>You'll be able to:</p>
+    <p>Your Agent Services account will allow your business to access information about your clients and new HM Revenue and Customs (HMRC) services.</p>
+
+    <p>To sign in for the first time you will need:</p>
 
     <ul class="list list-bullet">
-        <li>look at your existing client records</li>
-        <li>add new clients</li>
-        <li>access your Self Assessment clients' tax data</li>
-        <li>interact with HMRC online, in real time</li>
+        <li>your Agent Government Gateway account - you will have one if you have used the HMRC Agent Services portal before</li>
+        <li>your unique tax reference (sometimes called a UTR) if you are a sole trader or a partnership</li>
+        <li>your Corporation Tax reference number if you are an incorporated company</li>
     </ul>
-
-    <p>It takes around 5 minutes to create an account.</p>
 
     <p>
         <a class="button button-start button--get-started" name="start" id="start" href="@continueUrl" role="button">Start now</a>
@@ -33,16 +34,7 @@
 
     <h2 class="heading-medium">Before you start</h2>
 
-    <p>We'll need the following information about the agent business you're creating an account for:</p>
-
-    <ul class="list list-bullet">
-        <li>name</li>
-        <li>email address</li>
-        <li>telephone number</li>
-        <li>Self Assessment UTR or Corporation Tax reference</li>
-    </ul>
-
-    <p>If you're charging for services as an agent, you must be supervised for <a href="https://www.gov.uk/topic/business-tax/money-laundering-regulations">anti-money laundering</a>.</p>
+    <p>If you are charging for services as an agent, you must be supervised for <a href="https://www.gov.uk/topic/business-tax/money-laundering-regulations">anti-money laundering</a>.</p>
 
 }
 

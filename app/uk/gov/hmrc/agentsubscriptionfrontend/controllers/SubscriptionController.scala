@@ -29,7 +29,7 @@ import play.api.mvc.{AnyContent, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.{AgentRequest, AuthActions}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AddressLookupFrontendConnector
+import uk.gov.hmrc.agentsubscriptionfrontend.connectors.{AddressLookupFrontendConnector, AuthenticatorConnector}
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.FieldMappings._
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionService}
@@ -70,7 +70,8 @@ class SubscriptionController @Inject()
  subscriptionService: SubscriptionService,
  sessionStoreService: SessionStoreService,
  addressLookUpValidator: AddressValidator,
- addressLookUpConnector: AddressLookupFrontendConnector
+ addressLookUpConnector: AddressLookupFrontendConnector,
+ authenticatorConnector: AuthenticatorConnector
 )
 (implicit appConfig: AppConfig)
   extends FrontendController with I18nSupport with AuthActions with SessionDataMissing {
@@ -189,22 +190,23 @@ class SubscriptionController @Inject()
   val showSubscriptionComplete: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync() {
     implicit authContext =>
       implicit request => {
+        authenticatorConnector.refreshEnrolments.flatMap { _ =>
+          val agencyData = for {
+            agencyName <- request.flash.get("agencyName")
+            arn <- request.flash.get("arn")
+          } yield (agencyName, arn)
 
-        val agencyData = for {
-          agencyName <- request.flash.get("agencyName")
-          arn <- request.flash.get("arn")
-        } yield (agencyName, arn)
-
-        agencyData match {
-          case Some((agencyName, arn)) =>
-            sessionStoreService.fetchContinueUrl.
-              recover { case NonFatal(_) => None }.
-              map { continueUrlOpt =>
-                val continueUrl = CallOps.addParamsToUrl(appConfig.agentServicesAccountUrl, "continue" -> continueUrlOpt.map(_.url))
-                Ok(html.subscription_complete(continueUrl, agencyName, arn))
-              }
-          case _                       =>
-            Future.successful(sessionMissingRedirect())
+          agencyData match {
+            case Some((agencyName, arn)) =>
+              sessionStoreService.fetchContinueUrl.
+                recover { case NonFatal(_) => None }.
+                map { continueUrlOpt =>
+                  val continueUrl = CallOps.addParamsToUrl(appConfig.agentServicesAccountUrl, "continue" -> continueUrlOpt.map(_.url))
+                  Ok(html.subscription_complete(continueUrl, agencyName, arn))
+                }
+            case _                       =>
+              Future.successful(sessionMissingRedirect())
+          }
         }
       }
   }

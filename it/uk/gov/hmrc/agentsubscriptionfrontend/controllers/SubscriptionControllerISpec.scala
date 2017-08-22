@@ -51,13 +51,14 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       result.header.headers("Location") should include("/agent-subscription/has-other-enrolments")
     }
 
-    "show description details page of user has not enrolled and has clean creds" in {
+    "show subscription details page if user has not already subscribed and has clean creds" in {
       implicit val request = authenticatedRequest()
       sessionStoreService.currentSession.knownFactsResult = Some(myAgencyKnownFactsResult)
       AuthStub.hasNoEnrolments(subscribingAgent)
 
       val result = await(controller.showSubscriptionDetails(request))
-      bodyOf(result) should include(routes.SubscriptionController.showSubscriptionDetails().url)
+      status(result) shouldBe 200
+      checkHtmlResultWithBodyText(result, htmlEscapedMessage("subscriptionDetails.title"))
     }
 
     "populate form with utr and postcode" in {
@@ -86,12 +87,14 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
     behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showSubscriptionComplete(request))
     behave like aPageWithFeedbackLinks(request => {
       AuthStub.hasNoEnrolments(subscribingAgent)
+      AuthStub.refreshEnrolmentsSuccess
       controller.showSubscriptionComplete(request)
     }, authenticatedRequest().withFlash("arn" -> "ARN0001", "agencyName" -> "My Agency"))
 
     "display the agency name and ARN" in {
       implicit val request = authenticatedRequest()
       AuthStub.hasNoEnrolments(subscribingAgent)
+      AuthStub.refreshEnrolmentsSuccess
 
       val result = await(controller.showSubscriptionComplete(request.withFlash("arn" -> "ARN0001", "agencyName" -> "My Agency")))
 
@@ -103,6 +106,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
     "redirect to session missing page if there is nothing in the flash scope" in {
       implicit val request = authenticatedRequest()
       AuthStub.hasNoEnrolments(subscribingAgent)
+      AuthStub.refreshEnrolmentsSuccess
 
       val result = await(controller.showSubscriptionComplete(request))
 
@@ -112,6 +116,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
 
     "respond with html containing continue Url to be passed to agent services account" in {
       AuthStub.hasNoEnrolments(subscribingAgent)
+      AuthStub.refreshEnrolmentsSuccess
       implicit val request = authenticatedRequest()
 
       val continueUrl = ContinueUrl("/test-continue-url")
@@ -127,7 +132,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
     "contain a link in AS services" in {
       implicit val request = authenticatedRequest()
       AuthStub.hasNoEnrolments(subscribingAgent)
-
+      AuthStub.refreshEnrolmentsSuccess
 
       val result = await(controller.showSubscriptionComplete(request.withFlash("arn" -> "ARN0001", "agencyName" -> "My Agency")))
 
@@ -532,14 +537,14 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         Agency(
           name = "My Agency",
           address = DesAddress(
-              addressLine1 = "1 Some Street",
-              addressLine2 = Some(town),
-              addressLine3 = Some(county),
-              addressLine4 = Some("Address Line 4"),
-              postcode = Some(postcode),
-              countryCode = "GB"),
-      telephone = "0123 456 7890",
-      email = "agency@example.com"))
+            addressLine1 = "1 Some Street",
+            addressLine2 = Some(town),
+            addressLine3 = Some(county),
+            addressLine4 = Some("Address Line 4"),
+            postcode = Some(postcode),
+            countryCode = "GB"),
+          telephone = "0123 456 7890",
+          email = "agency@example.com"))
 
   private def subscriptionDetailsRequest2(keyToRemove: String = "", additionalParameters: Seq[(String, String)] = Seq()) =
     authenticatedRequest(user = subscribingAgent2).withFormUrlEncodedBody(
