@@ -19,7 +19,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 import javax.inject.Inject
 
 import play.api.i18n.{I18nSupport, MessagesApi}
-import play.api.mvc.{Action, AnyContent}
+import play.api.mvc.{Action, AnyContent, Result}
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.NoOpRegime
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.repository.KnownFactsResultMongoRepository
@@ -37,16 +37,24 @@ class StartController @Inject()(override val messagesApi: MessagesApi,
                                 override val config: PasscodeVerificationConfig,
                                 override val passcodeAuthenticationProvider: PasscodeAuthenticationProvider,
                                 knownFactsResultMongoRepository: KnownFactsResultMongoRepository,
+                                continueUrlActions: ContinueUrlActions,
                                 sessionStoreService: SessionStoreService)
                                (implicit appConfig: AppConfig)
     extends FrontendController with I18nSupport with Actions with PasscodeAuthentication {
 
-  val root: Action[AnyContent] = PasscodeAuthenticatedAction { implicit request =>
-    Redirect(routes.StartController.start())
+  import continueUrlActions._
+  import uk.gov.hmrc.agentsubscriptionfrontend.support.CallOps._
+
+  val root: Action[AnyContent] = PasscodeAuthenticatedActionAsync { implicit request =>
+    withMaybeContinueUrl { urlOpt =>
+      Future.successful(Redirect(routes.StartController.start().toURLWithParams("continue" -> urlOpt.map(_.url))))
+    }
   }
 
-  val start: Action[AnyContent] = PasscodeAuthenticatedAction { implicit request =>
-    Ok(html.start())
+  def start: Action[AnyContent] = PasscodeAuthenticatedActionAsync { implicit request =>
+    withMaybeContinueUrl { urlOpt =>
+      Future.successful(Ok(html.start(urlOpt)))
+    }
   }
 
   val showNonAgentNextSteps: Action[AnyContent] = AuthorisedFor(NoOpRegime, GGConfidence) { implicit authContext =>
@@ -54,24 +62,26 @@ class StartController @Inject()(override val messagesApi: MessagesApi,
       Ok(html.non_agent_next_steps())
   }
 
-  val returnAfterGGCredsCreated:  Action[AnyContent] = PasscodeAuthenticatedActionAsync { implicit request =>
-    request.getQueryString("id") match {
-      case Some(id) =>
-        for {
-          knownFactsResultOpt <- knownFactsResultMongoRepository.findKnownFactsResult(id)
-          _ <- knownFactsResultMongoRepository.delete(id)
-          _ <- knownFactsResultOpt match {
-            case Some(knownFacts) => sessionStoreService.cacheKnownFactsResult(knownFacts)
-            case None => Future.successful(())
+  def returnAfterGGCredsCreated(id: Option[String] = None): Action[AnyContent] = PasscodeAuthenticatedActionAsync { implicit request =>
+    withMaybeContinueUrlCached {
+      id match {
+        case Some(knownFactsId) =>
+          for {
+            knownFactsResultOpt <- knownFactsResultMongoRepository.findKnownFactsResult(knownFactsId)
+            _ <- knownFactsResultMongoRepository.delete(knownFactsId)
+            _ <- knownFactsResultOpt match {
+              case Some(knownFacts) => sessionStoreService.cacheKnownFactsResult(knownFacts)
+              case None => Future.successful(())
+            }
+          } yield {
+            knownFactsResultOpt match {
+              case Some(_) => Redirect(routes.SubscriptionController.showSubscriptionDetails())
+              case None => Redirect(routes.CheckAgencyController.checkAgencyStatus())
+            }
           }
-        } yield {
-          knownFactsResultOpt match {
-            case Some(_) => Redirect(routes.SubscriptionController.showSubscriptionDetails())
-            case None => Redirect(routes.CheckAgencyController.checkAgencyStatus())
-          }
-        }
-      case None =>
-        Future.successful(Redirect(routes.CheckAgencyController.checkAgencyStatus()))
+        case None =>
+          Future.successful(Redirect(routes.CheckAgencyController.checkAgencyStatus()))
+      }
     }
   }
 }

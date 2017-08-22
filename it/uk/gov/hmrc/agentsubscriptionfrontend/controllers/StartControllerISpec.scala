@@ -1,14 +1,17 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
+import java.net.URLEncoder
+
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{contentType, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
-
 import uk.gov.hmrc.agentsubscriptionfrontend.models.KnownFactsResult
 import uk.gov.hmrc.agentsubscriptionfrontend.repository.KnownFactsResultMongoRepository
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
+import uk.gov.hmrc.play.binders.ContinueUrl
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class StartControllerISpec extends BaseISpec {
@@ -22,10 +25,33 @@ class StartControllerISpec extends BaseISpec {
 
   "context root" should {
     "redirect to start page" in {
-      val result = await(controller.root(FakeRequest()))
+      implicit val request = FakeRequest()
+      val result = await(controller.root(request))
 
       status(result) shouldBe 303
-      redirectLocation(result).head should include ("/start")
+      redirectLocation(result).head should include("/start")
+    }
+
+    "include an absolute continue URL in the redirect" in {
+      val url = "http://localhost"
+      val result = await(controller.root(FakeRequest("GET", s"/?continue=${URLEncoder.encode(url, "UTF-8")}")))
+
+      status(result) shouldBe 303
+      redirectLocation(result).head should include(s"/start?continue=${URLEncoder.encode(url, "UTF-8")}")
+    }
+
+    "not include a continue URL if it's invalid" in {
+      val result = await(controller.root(FakeRequest("GET", "/?continue=http://foo@bar:1234")))
+
+      status(result) shouldBe 303
+      redirectLocation(result).head should not include("continue=")
+    }
+
+    "not include a continue URL if it's not provided" in {
+      val result = await(controller.root(FakeRequest("GET", "/")))
+
+      status(result) shouldBe 303
+      redirectLocation(result).head should not include("continue=")
     }
   }
 
@@ -39,13 +65,69 @@ class StartControllerISpec extends BaseISpec {
     }
 
     "be available" in {
-      val result = await(controller.start(FakeRequest()))
+      val result = await(controller.start()(FakeRequest()))
 
       bodyOf(result) should include("Agent Services account: sign in or set up")
     }
 
     behave like aPageWithFeedbackLinks(request => controller.start(request))
 
+    "start redirects" should {
+      "include absolute continue URL" in {
+        val url = "http://localhost"
+        val result = await(controller.start()(FakeRequest("GET", s"/start?continue=${URLEncoder.encode(url, "UTF-8")}")))
+
+        status(result) shouldBe 200
+        bodyOf(result) should include(s"continue=${URLEncoder.encode(url, "UTF-8")}")
+      }
+
+      "include relative continue URL" in {
+        val url = "/foo"
+        val result = await(controller.start()(FakeRequest("GET", s"/start?continue=${URLEncoder.encode(url, "UTF-8")}")))
+
+        status(result) shouldBe 200
+        bodyOf(result) should include(s"continue=${URLEncoder.encode(url, "UTF-8")}")
+      }
+
+      "include continue URL if it's the absolute www.tax.service.gov.uk continue url" in {
+        val url = "http://www.tax.service.gov.uk/foo/bar?some=true"
+        val result = await(controller.start()(FakeRequest("GET", s"/start?continue=${URLEncoder.encode(url, "UTF-8")}")))
+
+        status(result) shouldBe 200
+        bodyOf(result) should include(s"continue=${URLEncoder.encode(url, "UTF-8")}")
+      }
+
+      "include continue URL if it's whitelisted" in {
+        val url = "http://www.foo.com/bar?some=false"
+        val result = await(controller.start()(FakeRequest("GET", s"/start?continue=${URLEncoder.encode(url, "UTF-8")}")))
+
+        status(result) shouldBe 200
+        bodyOf(result) should include(s"continue=${URLEncoder.encode(url, "UTF-8")}")
+      }
+
+      "not include a continue URL if it contains an invalid character" in {
+        val url = "http://www@foo.com"
+        val result = await(controller.start()(FakeRequest("GET", s"/start?continue=${URLEncoder.encode(url, "UTF-8")}")))
+
+        status(result) shouldBe 200
+        bodyOf(result) should not include("continue=")
+      }
+
+      "not include a continue URL if it's not whitelisted" in {
+        val url = "http://www.foo.org/bar?some=false"
+        val result = await(controller.start()(FakeRequest("GET", s"/start?continue=${URLEncoder.encode(url, "UTF-8")}")))
+
+        status(result) shouldBe 200
+        bodyOf(result) should not include("continue=")
+      }
+
+      "not include a continue URL if it's not provided" in {
+        val result = await(controller.start()(FakeRequest("GET", "/start")))
+
+        status(result) shouldBe 200
+        bodyOf(result) should not include("continue=")
+      }
+    }
   }
 
   "showNonAgentNextSteps" when {
@@ -89,7 +171,7 @@ class StartControllerISpec extends BaseISpec {
       val knownFactsResult = KnownFactsResult(Utr("9876543210"), "AA11AA", "Test organisation name", isSubscribedToAgentServices = true)
       val persistedId = await(repo.create(knownFactsResult))
 
-      val result = await(controller.returnAfterGGCredsCreated(FakeRequest(GET, "?id=" + persistedId)))
+      val result = await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(FakeRequest()))
 
       status(result) shouldBe 303
       redirectLocation(result).head should include ("/subscription-details")
@@ -98,15 +180,16 @@ class StartControllerISpec extends BaseISpec {
     "redirect to the check-agency-status page if given an invalid KnownFactsResult ID" in {
       val knownFactsResult = KnownFactsResult(Utr("9876543210"), "AA11AA", "Test organisation name", isSubscribedToAgentServices = true)
       val persistedId = await(repo.create(knownFactsResult))
+      val invalidId = s"A$persistedId"
 
-      val result = await(controller.returnAfterGGCredsCreated(FakeRequest(GET, s"?id=A$persistedId")))
+      val result = await(controller.returnAfterGGCredsCreated(id = Some(invalidId))(FakeRequest()))
 
       status(result) shouldBe 303
       redirectLocation(result).head should include ("/check-agency-status")
     }
 
     "redirect to check-agency-status page if there is no valid KnownFactsResult ID" in {
-      val result = await(controller.returnAfterGGCredsCreated(FakeRequest()))
+      val result = await(controller.returnAfterGGCredsCreated(id = None)(FakeRequest()))
 
       status(result) shouldBe 303
       redirectLocation(result).head should include ("/check-agency-status")
@@ -116,20 +199,30 @@ class StartControllerISpec extends BaseISpec {
       val knownFactsResult = KnownFactsResult(Utr("9876543210"), "AA11AA", "Test organisation name", isSubscribedToAgentServices = true)
       val persistedId = await(repo.create(knownFactsResult))
 
-      await(controller.returnAfterGGCredsCreated(FakeRequest(GET, "?id=" + persistedId)))
+      await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(FakeRequest()))
 
       await(repo.findKnownFactsResult(persistedId)) shouldBe None
     }
 
     "repopulate the KnownFacts session store with the persisted KnownFactsResult, if given a valid KnownFactsResult ID" in {
-
       val knownFactsResult = KnownFactsResult(Utr("9876543210"), "AA11AA", "Test organisation name", isSubscribedToAgentServices = true)
       val persistedId = await(repo.create(knownFactsResult))
-      implicit val request = FakeRequest(GET, "?id=" + persistedId)
+      implicit val request = FakeRequest()
 
-      await(controller.returnAfterGGCredsCreated(request))
+      await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(request))
 
       sessionStoreService.currentSession.knownFactsResult shouldBe Some(knownFactsResult)
+    }
+
+    "place a provided continue URL in session store, if given a valid KnownFactsResult ID" in {
+      val knownFactsResult = KnownFactsResult(Utr("9876543210"), "AA11AA", "Test organisation name", isSubscribedToAgentServices = true)
+      val persistedId = await(repo.create(knownFactsResult))
+      val continueUrl = ContinueUrl("/test-continue-url")
+      implicit val request = FakeRequest(GET, s"?id=$persistedId&continue=${continueUrl.encodedUrl}")
+
+      await(controller.returnAfterGGCredsCreated()(request))
+
+      sessionStoreService.currentSession.continueUrl shouldBe Some(continueUrl)
     }
   }
 }

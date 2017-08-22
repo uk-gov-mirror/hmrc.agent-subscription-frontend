@@ -33,6 +33,7 @@ object TestAppConfig extends AppConfig with ServicesConfig {
   override lazy val governmentGatewayUrl: String = "http://www.ref.gateway.gov.uk/"
   override lazy val journeyName: String = "agents-subscr"
   override lazy val agentServicesAccountUrl: String = "http://localhost:9401/agent-services-account"
+  override lazy val domainWhiteList: Set[String] = Set("www.foo.com", "foo.org")
 
   override lazy val blacklistedPostcodes: Set[String] = Set(
     "AB10 1DU",

@@ -22,6 +22,8 @@ import javax.inject.{Inject, Named, Singleton}
 import play.api.mvc.{Action, Results}
 import uk.gov.hmrc.agentsubscriptionfrontend.repository.KnownFactsResultMongoRepository
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
+import uk.gov.hmrc.agentsubscriptionfrontend.support.CallOps
+import uk.gov.hmrc.play.binders.ContinueUrl
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 
 import scala.concurrent.Future
@@ -35,18 +37,16 @@ class SignedOutController @Inject()(@Named("surveyRedirectUrl") surveyUrl: Strin
 
   def redirectToSos = Action.async { implicit request =>
 
-    def returnAfterGGCredsCreatedUrl(query: String) =
-      URLEncoder.encode(s"/agent-subscription/return-after-gg-creds-created$query", "UTF-8")
-
     for {
       knownFactOpt <- sessionStoreService.fetchKnownFactsResult
       id <- knownFactOpt match {
         case Some(x) => knownFactsResultMongoRepository.create(x).map(Option.apply)
         case None => Future.successful(None)
       }
+      agentSubContinueUrl <- sessionStoreService.fetchContinueUrl
     } yield {
-      val continueUrl = returnAfterGGCredsCreatedUrl(id.map(i => s"?id=$i").getOrElse(""))
-      Results.SeeOther(s"$sosUrl&continue=$continueUrl").withNewSession
+      val continueUrl = CallOps.addParamsToUrl("/agent-subscription/return-after-gg-creds-created","id" -> id.map(_.toString), "continue" -> agentSubContinueUrl.map(_.url))
+      Results.SeeOther(CallOps.addParamsToUrl(sosUrl,  "continue" -> Some(continueUrl))).withNewSession
     }
   }
 

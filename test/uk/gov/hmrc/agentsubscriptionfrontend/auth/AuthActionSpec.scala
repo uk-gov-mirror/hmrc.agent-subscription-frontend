@@ -23,7 +23,7 @@ import play.api.mvc._
 import play.api.test.FakeRequest
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentSubscriptionConnector
-import uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController
+import uk.gov.hmrc.agentsubscriptionfrontend.controllers.{CheckAgencyController, ContinueUrlActions}
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.agentsubscriptionfrontend.support.passcode.TestPasscodeVerificationConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{TestAppConfig, TestMessagesApi}
@@ -48,6 +48,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
       val sessionStoreService = mock[SessionStoreService]
       val passcodeVerificationConfig = new TestPasscodeVerificationConfig(enabled = false)
       val passcodeAuthenticationProvider = new PasscodeAuthenticationProvider(passcodeVerificationConfig)
+      val continueUrlActions = mock[ContinueUrlActions]
 
       val failure = Upstream5xxResponse("failure in auth", 500, 500)
       when(authConnector.currentAuthority(any[HeaderCarrier])).thenReturn(Future successful Some(authority))
@@ -56,7 +57,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
         .thenReturn(Future successful List.empty[Enrolment])
 
       val controller = new CheckAgencyController(TestMessagesApi.testMessagesApi, authConnector,
-        passcodeVerificationConfig, passcodeAuthenticationProvider, agentSubscriptionConnector, sessionStoreService)
+        passcodeVerificationConfig, passcodeAuthenticationProvider, agentSubscriptionConnector, sessionStoreService, continueUrlActions)
 
       intercept[Upstream5xxResponse] {
         val eventualResult: Future[Result] = controller.showCheckAgencyStatus(mockRequestWithMockAuthSession)
@@ -71,7 +72,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
       val passcodeAuthenticationProvider = new TestPasscodeAuthenticationProvider(passcodeVerificationConfig, whitelisted = false)
       val testAuthActions = new TestAuthActions(passcodeVerificationConfig, passcodeAuthenticationProvider)
 
-      val result: Result = await(testAuthActions.AuthorisedWithSubscribingAgentAsync(asyncOkBody).apply(FakeRequest("GET", "/")))
+      val result: Result = await(testAuthActions.AuthorisedWithSubscribingAgentAsync()(asyncOkBody).apply(FakeRequest("GET", "/")))
 
       status(result) shouldBe 303
     }
@@ -82,7 +83,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
       val passcodeAuthenticationProvider = new TestPasscodeAuthenticationProvider(passcodeVerificationConfig, whitelisted = true)
       val testAuthActions = new TestAuthActions(passcodeVerificationConfig, passcodeAuthenticationProvider)
 
-      val result: Result = testAuthActions.AuthorisedWithSubscribingAgentAsync(asyncOkBody).apply(FakeRequest("GET", "/"))
+      val result: Result = testAuthActions.AuthorisedWithSubscribingAgentAsync()(asyncOkBody).apply(FakeRequest("GET", "/"))
 
       status(result) shouldBe 200
     }
@@ -97,7 +98,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
       val passcodeAuthenticationProvider = new TestPasscodeAuthenticationProvider(passcodeVerificationConfig, whitelisted = false)
       val testAuthActions = new TestAuthActions(passcodeVerificationConfig, passcodeAuthenticationProvider)
 
-      val result: Future[Result] = testAuthActions.AuthorisedWithSubscribingAgentAsync(asyncOkBody).apply(FakeRequest("GET", "/"))
+      val result: Future[Result] = testAuthActions.AuthorisedWithSubscribingAgentAsync()(asyncOkBody).apply(FakeRequest("GET", "/"))
 
       status(result) shouldBe 303
     }
@@ -108,7 +109,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
       val passcodeAuthenticationProvider = new TestPasscodeAuthenticationProvider(passcodeVerificationConfig, whitelisted = true)
       val testAuthActions = new TestAuthActions(passcodeVerificationConfig, passcodeAuthenticationProvider)
 
-      val result: Future[Result] = testAuthActions.AuthorisedWithSubscribingAgentAsync(asyncOkBody).apply(FakeRequest("GET", "/"))
+      val result: Future[Result] = testAuthActions.AuthorisedWithSubscribingAgentAsync()(asyncOkBody).apply(FakeRequest("GET", "/"))
 
       status(result) shouldBe 200
     }

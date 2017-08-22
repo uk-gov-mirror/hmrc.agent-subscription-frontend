@@ -20,6 +20,7 @@ import play.api.libs.json.{JsValue, Reads, Writes}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{InitialDetails, KnownFactsResult}
 import uk.gov.hmrc.http.cache.client.{CacheMap, NoSessionException, SessionCache}
+import uk.gov.hmrc.play.binders.ContinueUrl
 import uk.gov.hmrc.play.http.logging.SessionId
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.test.UnitSpec
@@ -65,6 +66,22 @@ class SessionStoreServiceSpec extends UnitSpec {
       await(store.fetchInitialDetails) shouldBe None
     }
 
+    "store continue url" in {
+      val store = new SessionStoreService(new TestSessionCache())
+
+      val url = ContinueUrl("http://localhost:9000/agent-mapping")
+
+      await(store.cacheContinueUrl(url))
+
+      await(store.fetchContinueUrl) shouldBe Some(url)
+    }
+
+    "return None when no continue url have been stored" in {
+      val store = new SessionStoreService(new TestSessionCache())
+
+      await(store.fetchContinueUrl) shouldBe None
+    }
+
     "remove the underlying storage for the current session when remove is called" in {
       val store = new SessionStoreService(new TestSessionCache())
 
@@ -72,9 +89,14 @@ class SessionStoreServiceSpec extends UnitSpec {
 
       await(store.cacheKnownFactsResult(knownFactsResult))
 
+      val url = ContinueUrl("http://localhost:9000/agent-mapping")
+
+      await(store.cacheContinueUrl(url))
+
       await(store.remove())
 
       await(store.fetchKnownFactsResult) shouldBe None
+      await(store.fetchContinueUrl) shouldBe None
     }
   }
 

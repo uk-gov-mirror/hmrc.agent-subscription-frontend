@@ -85,6 +85,7 @@ class GuiceModule(environment: Environment, configuration: Configuration) extend
     bindBaseUrl("agent-subscription")
     bindBaseUrl("government-gateway-authentication")
     bindBaseUrl("address-lookup-frontend")
+    bindBaseUrl("sso")
     bindConfigProperty(classOf[String])("surveyRedirectUrl")
     bindConfigProperty(classOf[String])("sosRedirectUrl")
     bindConfigProperty(classOf[Int])("mongodb.knownfactsresult.ttl")
