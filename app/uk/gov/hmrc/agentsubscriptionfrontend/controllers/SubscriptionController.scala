@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
+import java.net.URLEncoder
 import javax.inject.{Inject, Singleton}
 
 import cats.data.NonEmptyList
@@ -36,6 +37,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, Subsc
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html._
 import uk.gov.hmrc.passcode.authentication.{PasscodeAuthenticationProvider, PasscodeVerificationConfig}
+import uk.gov.hmrc.play.binders.ContinueUrl
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 import uk.gov.hmrc.play.http.HeaderCarrier
@@ -68,7 +70,8 @@ class SubscriptionController @Inject()
  subscriptionService: SubscriptionService,
  sessionStoreService: SessionStoreService,
  addressLookUpValidator: AddressValidator,
- addressLookUpConnector: AddressLookupFrontendConnector
+ addressLookUpConnector: AddressLookupFrontendConnector,
+ signedOutController: SignedOutController
 )
 (implicit appConfig: AppConfig)
   extends FrontendController with I18nSupport with AuthActions with SessionDataMissing {
@@ -187,18 +190,33 @@ class SubscriptionController @Inject()
   val showSubscriptionComplete: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync() {
     implicit authContext =>
       implicit request => {
-        Future successful{
           val agencyData = for {
             agencyName <- request.flash.get("agencyName")
             arn <- request.flash.get("arn")
           } yield (agencyName, arn)
 
-          agencyData.map(data =>
-            Ok(html.subscription_complete(appConfig.agentServicesAccountUrl, data._1, data._2))
-          ) getOrElse sessionMissingRedirect()
-        }
+          sessionStoreService.fetchContinueUrl.map {_ match {
+              case Some(continueUrl) => responseWithOrWithoutContinueUrl(ContinueUrlValue(continueUrl), agencyData)
+              case _ => responseWithOrWithoutContinueUrl(stringData = agencyData)
+            }
+          }
       }
   }
+
+  private def responseWithOrWithoutContinueUrl(continueUrl:String = "", stringData: Option[(String,String)])
+                                              (implicit hc: HeaderCarrier, request: Request[_]) = {
+    val encodedUrl = encodeUtf8(appConfig.agentServicesAccountUrl + continueUrl)
+    stringData.map(data =>
+      Ok(html.subscription_complete(encodedUrl, data._1, data._2))
+    ) getOrElse sessionMissingRedirect()
+  }
+
+  private def encodeUtf8(str: String) = URLEncoder.encode(str, "UTF-8")
+
+  private def ContinueUrlValue(ourContinueUrl: ContinueUrl) = {
+    s"?continue=${ourContinueUrl.encodedUrl}"
+  }
+
 }
 
 object SubscriptionController {
