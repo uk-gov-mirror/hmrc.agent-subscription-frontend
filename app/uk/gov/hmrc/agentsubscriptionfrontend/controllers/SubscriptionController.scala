@@ -78,7 +78,7 @@ class SubscriptionController @Inject()
   private val JourneyName: String = appConfig.journeyName
   private val blacklistedPostCodes: Set[String] = appConfig.blacklistedPostcodes
 
-  private val subscriptionDetails = Form[InitialDetails](
+  private val initialDetailsForm = Form[InitialDetails](
     mapping(
       "utr" -> utr,
       "knownFactsPostcode" -> postcode,
@@ -92,12 +92,12 @@ class SubscriptionController @Inject()
 
   private def hasEnrolments(implicit request: AgentRequest[_]): Boolean = request.enrolments.nonEmpty
 
-  val showSubscriptionDetails: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync { implicit authContext =>
+  val showInitialDetails: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync { implicit authContext =>
     implicit request =>
       hasEnrolments match {
         case true => Future(Redirect(routes.CheckAgencyController.showHasOtherEnrolments()))
         case false => sessionStoreService.fetchKnownFactsResult.map(_.map { knownFactsResult =>
-          Ok(html.subscription_details(knownFactsResult.taxpayerName, subscriptionDetails.fill(
+          Ok(html.subscription_details(knownFactsResult.taxpayerName, initialDetailsForm.fill(
             InitialDetails(knownFactsResult.utr, knownFactsResult.postcode, null, null, null))))
         }.getOrElse {
           sessionMissingRedirect()
@@ -105,7 +105,29 @@ class SubscriptionController @Inject()
       }
   }
 
-  def submit(id: String): Action[AnyContent] = AuthorisedWithSubscribingAgentAsync {
+  val submitInitialDetails: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync {
+    implicit authContext =>
+      implicit request =>
+        initialDetailsForm.bindFromRequest().fold(
+          formWithErrors =>
+            redisplayInitialDetails(formWithErrors),
+          form =>
+            addressLookUpConnector.initJourney(routes.SubscriptionController.returnFromAddressLookup(), JourneyName).map { x =>
+              sessionStoreService.cacheInitialDetails(InitialDetails(form.utr, form.knownFactsPostcode, form.name,
+                form.email, form.telephone))
+              Redirect(x)
+            }
+        )
+  }
+
+  private def redisplayInitialDetails(formWithErrors: Form[InitialDetails])(implicit hc: HeaderCarrier, request: Request[_]) =
+    sessionStoreService.fetchKnownFactsResult.map(_.map { knownFactsResult =>
+      Ok(html.subscription_details(knownFactsResult.taxpayerName, formWithErrors))
+    }.getOrElse {
+      sessionMissingRedirect()
+    })
+
+  def returnFromAddressLookup(id: String): Action[AnyContent] = AuthorisedWithSubscribingAgentAsync {
     implicit authContext =>
       implicit request =>
 
@@ -151,34 +173,12 @@ class SubscriptionController @Inject()
         }
   }
 
-  def beginJourney(id: String): Action[AnyContent] = AuthorisedWithSubscribingAgentAsync {
+  def restartAddressLookup(id: String): Action[AnyContent] = AuthorisedWithSubscribingAgentAsync {
     implicit authContext =>
       implicit request =>
 
-        addressLookUpConnector.initJourney(routes.SubscriptionController.submit(), JourneyName).map { x => Redirect(x) }
+        addressLookUpConnector.initJourney(routes.SubscriptionController.returnFromAddressLookup(), JourneyName).map { x => Redirect(x) }
   }
-
-  val getAddressDetails: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync {
-    implicit authContext =>
-      implicit request =>
-        subscriptionDetails.bindFromRequest().fold(
-          formWithErrors =>
-            redisplaySubscriptionDetails(formWithErrors),
-          form =>
-            addressLookUpConnector.initJourney(routes.SubscriptionController.submit(), JourneyName).map { x =>
-              sessionStoreService.cacheInitialDetails(InitialDetails(form.utr, form.knownFactsPostcode, form.name,
-                form.email, form.telephone))
-              Redirect(x)
-            }
-        )
-  }
-
-  private def redisplaySubscriptionDetails(formWithErrors: Form[InitialDetails])(implicit hc: HeaderCarrier, request: Request[_]) =
-    sessionStoreService.fetchKnownFactsResult.map(_.map { knownFactsResult =>
-      Ok(html.subscription_details(knownFactsResult.taxpayerName, formWithErrors))
-    }.getOrElse {
-      sessionMissingRedirect()
-    })
 
   val showSubscriptionFailed: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync {
     implicit authContext =>
