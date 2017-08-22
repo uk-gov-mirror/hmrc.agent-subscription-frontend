@@ -31,7 +31,7 @@ class SubscriptionService @Inject()(agentSubscriptionConnector: AgentSubscriptio
 
   def subscribeAgencyToMtd(subscriptionDetails: SubscriptionDetails)
                           (implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[Int, Arn]] = {
-    val request = SubscriptionRequest(subscriptionDetails.utr, KnownFacts(subscriptionDetails.knownFactsPostcode), Agency(
+    val request = SubscriptionRequest(subscriptionDetails.utr, SubscriptionRequestKnownFacts(subscriptionDetails.knownFactsPostcode), Agency(
       name = subscriptionDetails.name,
       email = subscriptionDetails.email,
       telephone = subscriptionDetails.telephone,

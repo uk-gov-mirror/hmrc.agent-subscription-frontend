@@ -19,7 +19,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 import com.github.tomakehurst.wiremock.client.WireMock._
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{Agency, DesAddress, KnownFactsResult, SubscriptionRequest, KnownFacts => ModelKnownFacts}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{Agency, DesAddress, KnownFactsResult, SubscriptionRequest, SubscriptionRequestKnownFacts}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AddressLookupFrontendStubs._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.{AgentSubscriptionStub, AuthStub}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
@@ -518,7 +518,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
 
   private def subscriptionRequest(town: String = "Sometown", county: String = "County", postcode: String = "AA1 1AA") =
     SubscriptionRequest(utr = utr,
-      knownFacts = ModelKnownFacts(knownFactsPostcode),
+      knownFacts = SubscriptionRequestKnownFacts(knownFactsPostcode),
       agency =
         Agency(
           name = "My Agency",
@@ -546,7 +546,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
 
   private def subscriptionRequest2(town: String = "Sometown", county: String = "County", postcode: String = "AA1 1AA") =
     SubscriptionRequest(utr = utr,
-      knownFacts = ModelKnownFacts("BA1 2AA"),
+      knownFacts = SubscriptionRequestKnownFacts("BA1 2AA"),
       agency = Agency(name = "My Agency 2",
         address = DesAddress(
           addressLine1 = "1 Some Street",

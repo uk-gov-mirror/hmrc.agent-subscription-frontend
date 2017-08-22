@@ -36,14 +36,14 @@ object Agency {
   implicit val formatAgency: Format[Agency] = Json.format[Agency]
 }
 
-case class KnownFacts(postcode: String)
+case class SubscriptionRequestKnownFacts(postcode: String)
 
-object KnownFacts {
-  implicit val format: Format[KnownFacts] = Json.format[KnownFacts]
+object SubscriptionRequestKnownFacts {
+  implicit val format: Format[SubscriptionRequestKnownFacts] = Json.format[SubscriptionRequestKnownFacts]
 }
 
 case class SubscriptionRequest(utr: Utr,
-                               knownFacts: KnownFacts,
+                               knownFacts: SubscriptionRequestKnownFacts,
                                agency: Agency)
 
 object SubscriptionRequest {
