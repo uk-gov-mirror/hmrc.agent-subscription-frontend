@@ -15,7 +15,15 @@ following the ROSM (Register Once Subscribe Many) pattern.
 
     ./run-local
     sm --start AGENT_MTD -f
+    
+## Continue URL
 
+Agent Subscription journey can be integrated as part of external journey using `continue` url
+parameter:
+```
+http://www.tax.service.gov.uk/agent-subscription/start?continue=/your-service/path?paramA=valueA
+```
+After successful subscription user will be redirected to Agent Services Account page and presented with `Continue with your journey` button.
 
 
 ### License

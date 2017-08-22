@@ -3,7 +3,7 @@
 GET     /                               uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.root
 GET     /start                          uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.start
 GET     /non-agent-next-steps           uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.showNonAgentNextSteps
-GET     /return-after-gg-creds-created  uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.returnAfterGGCredsCreated
+GET     /return-after-gg-creds-created  uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.returnAfterGGCredsCreated(id: Option[String] ?= None)
 
 GET     /check-agency-status            uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.showCheckAgencyStatus
 POST    /check-agency-status            uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.checkAgencyStatus

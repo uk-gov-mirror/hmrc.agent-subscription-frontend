@@ -16,16 +16,39 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.auth
 
+import java.net.URLEncoder
+
+import play.api.mvc.Request
+import play.api.mvc.Results._
 import uk.gov.hmrc.agentsubscriptionfrontend.config.GGConfig
-import uk.gov.hmrc.play.frontend.auth.{GovernmentGateway, TaxRegime}
+import uk.gov.hmrc.agentsubscriptionfrontend.support.CallOps
 import uk.gov.hmrc.play.frontend.auth.connectors.domain.Accounts
+import uk.gov.hmrc.play.frontend.auth.{GovernmentGateway, TaxRegime}
+
+import scala.concurrent.Future
 
 object NoOpRegime extends TaxRegime {
   override def isAuthorised(accounts: Accounts) = true
+
   override val authenticationType = CheckAgencyStatusGovernmentGateway
 }
 
 object CheckAgencyStatusGovernmentGateway extends GovernmentGateway {
   override lazy val loginURL = GGConfig.ggSignInUrl
   override lazy val continueURL = GGConfig.checkAgencyStatusCallbackUrl
+}
+
+object NoOpRegimeWithContinueUrl extends TaxRegime {
+  override def isAuthorised(accounts: Accounts) = true
+
+  override val authenticationType = new GovernmentGateway {
+    override lazy val loginURL = GGConfig.ggSignInUrl
+    override lazy val continueURL = GGConfig.checkAgencyStatusCallbackUrl
+
+    override def redirectToLogin(implicit request: Request[_]) = {
+      val url = CallOps.addParamsToUrl(continueURL,"continue" -> request.getQueryString("continue"))
+
+      Future.successful(Redirect(loginURL, Map("continue" -> Seq(url), "origin" -> Seq(origin))))
+    }
+  }
 }

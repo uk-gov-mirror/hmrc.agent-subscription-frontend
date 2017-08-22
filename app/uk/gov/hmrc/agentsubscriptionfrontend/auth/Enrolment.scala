@@ -28,10 +28,6 @@ case class Enrolment(key: String,
                      confidenceLevel: ConfidenceLevel,
                      delegatedAuthRule: Option[String] = None) {
 
-  def getIdentifier(name: String): Option[EnrolmentIdentifier] = identifiers.find {
-    _.key.equalsIgnoreCase(name)
-  }
-
   def isActivated: Boolean = state.toLowerCase == "activated"
 }
 
@@ -56,6 +52,4 @@ object Enrolment {
         optDelegateRule
       )
   }
-
-  def apply(key: String): Enrolment = apply(key, Seq(), "Activated", ConfidenceLevel.L0, None)
 }

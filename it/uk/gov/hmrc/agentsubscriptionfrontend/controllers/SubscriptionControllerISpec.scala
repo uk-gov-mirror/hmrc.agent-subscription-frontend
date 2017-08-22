@@ -19,11 +19,13 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 import com.github.tomakehurst.wiremock.client.WireMock._
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{Agency, DesAddress, KnownFactsResult, SubscriptionRequest, SubscriptionRequestKnownFacts}
+import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
+import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AddressLookupFrontendStubs._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.{AgentSubscriptionStub, AuthStub}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUsers._
+import uk.gov.hmrc.play.binders.ContinueUrl
 
 class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec {
   private val utr = Utr("2000000000")
@@ -38,6 +40,8 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
   private lazy val controller: SubscriptionController = app.injector.instanceOf[SubscriptionController]
 
   private lazy val redirectUrl = "https://www.gov.uk/"
+
+  private lazy val appConfig = app.injector.instanceOf[AppConfig]
 
   "showInitialDetails" should {
     behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showInitialDetails(request))
@@ -113,6 +117,21 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showCheckAgencyStatus().url)
+    }
+
+    "respond with html containing continue Url to be passed to agent services account" in {
+      AuthStub.hasNoEnrolments(subscribingAgent)
+      AuthStub.refreshEnrolmentsSuccess
+      implicit val request = authenticatedRequest()
+
+      val continueUrl = ContinueUrl("/test-continue-url")
+      val expectedContinueParam = appConfig.agentServicesAccountUrl + "?continue=" + continueUrl.encodedUrl
+
+      sessionStoreService.currentSession(hc(request)).continueUrl = Some(continueUrl)
+      val result = await(controller.showSubscriptionComplete(request.withFlash("arn" -> "ARN0001", "agencyName" -> "My Agency")))
+
+      status(result) shouldBe 200
+      checkHtmlResultWithBodyText(result, expectedContinueParam)
     }
 
     "contain a link in AS services" in {
