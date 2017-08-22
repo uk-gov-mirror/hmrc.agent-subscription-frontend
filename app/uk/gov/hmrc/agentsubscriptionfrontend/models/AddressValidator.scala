@@ -87,13 +87,13 @@ class AddressValidator @Inject()(logger: LoggerLike) {
       case _ => Invalid(NonEmptyList.of(ValidationError("error.des.text.invalid.withInput", line)))
     }
 
-  def validatePostcode(maybePostcode: Option[String], blacklistedPostcodes: Set[String]): Validated[ValidationErrors, Option[String]] = {
-    validateNotEmpty(maybePostcode) andThen (maybePostcode => optionInside(maybePostcode.map(pc => validateNonEmptyPostcode(pc, blacklistedPostcodes))))
+  def validatePostcode(maybePostcode: Option[String], blacklistedPostcodes: Set[String]): Validated[ValidationErrors, String] = {
+    validateNotEmpty(maybePostcode) andThen (postcode => validateNonEmptyPostcode(postcode, blacklistedPostcodes))
   }
 
-  private def validateNotEmpty(maybePostcode: Option[String]): Validated[ValidationErrors, Option[String]] = maybePostcode match {
+  private def validateNotEmpty(maybePostcode: Option[String]): Validated[ValidationErrors, String] = maybePostcode match {
     case Some("") | None => Invalid(NonEmptyList.of(ValidationError("error.postcode.empty")))
-    case Some(_) => Valid(maybePostcode)
+    case Some(postcode) => Valid(postcode)
   }
 
   private def validateNonEmptyPostcode(postcode: String, blacklistedPostcodes: Set[String]): Validated[ValidationErrors, String] =

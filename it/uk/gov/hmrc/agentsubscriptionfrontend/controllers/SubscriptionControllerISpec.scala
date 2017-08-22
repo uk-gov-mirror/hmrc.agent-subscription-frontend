@@ -527,7 +527,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
             addressLine2 = Some(town),
             addressLine3 = Some(county),
             addressLine4 = Some("Address Line 4"),
-            postcode = Some(postcode),
+            postcode = postcode,
             countryCode = "GB"),
           telephone = "0123 456 7890",
           email = "agency@example.com"))
@@ -553,7 +553,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
           addressLine2 = Some(town),
           addressLine3 = Some(county),
           addressLine4 = Some("Address Line 4"),
-          postcode = Some(postcode),
+          postcode = postcode,
           countryCode = "GB"),
         email = "agency2@example.com",
         telephone = "0123 456 7899"))
@@ -567,7 +567,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       subscriptionRequest.agency.address.addressLine2.getOrElse(""),
       subscriptionRequest.agency.address.addressLine3.getOrElse(""),
       subscriptionRequest.agency.address.addressLine4.getOrElse(""),
-      subscriptionRequest.agency.address.postcode.getOrElse(""),
+      subscriptionRequest.agency.address.postcode,
       subscriptionRequest.agency.address.countryCode,
       unsupportedAddressLines
     )
@@ -579,7 +579,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       .withRequestBody(containing(subscriptionRequest.agency.address.addressLine2.getOrElse("")))
       .withRequestBody(containing(subscriptionRequest.agency.address.addressLine3.getOrElse("")))
       .withRequestBody(containing(subscriptionRequest.agency.address.addressLine4.getOrElse("")))
-      .withRequestBody(containing(subscriptionRequest.agency.address.postcode.getOrElse("")))
+      .withRequestBody(containing(subscriptionRequest.agency.address.postcode))
       .withRequestBody(containing(subscriptionRequest.agency.address.countryCode))
     )
   }

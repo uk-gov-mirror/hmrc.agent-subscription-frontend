@@ -85,7 +85,7 @@ class AddressValidatorSpec extends UnitSpec with ResettingMockitoSugar {
 
   "validatePostcode" should {
     "return the validated postcode if it is valid" in {
-      addressValidator.validatePostcode(Some(validPostcode), blacklistedPostcodes) shouldBe Valid(Some(validPostcode))
+      addressValidator.validatePostcode(Some(validPostcode), blacklistedPostcodes) shouldBe Valid(validPostcode)
     }
 
     "return an error if format is invalid" in {
@@ -122,7 +122,7 @@ class AddressValidatorSpec extends UnitSpec with ResettingMockitoSugar {
         addressLine2 = Some(validLine2),
         addressLine3 = Some(validLine3),
         addressLine4 = Some(validLine4),
-        postcode = Some(validPostcode),
+        postcode = validPostcode,
         countryCode = validCountryCode
       ))
     }
@@ -213,7 +213,7 @@ class AddressValidatorSpec extends UnitSpec with ResettingMockitoSugar {
         addressLine2 = Some(validLine2),
         addressLine3 = Some(validLine3),
         addressLine4 = Some(validLine4),
-        postcode = Some(validPostcode),
+        postcode = validPostcode,
         countryCode = validCountryCode)
       )
     }

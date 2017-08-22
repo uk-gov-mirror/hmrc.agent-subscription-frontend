@@ -96,7 +96,7 @@ class AgentSubscriptionConnectorISpec extends UnitSpec with OneAppPerSuite with 
           addressLine2 = Some("Anytown"),
           addressLine3 = None,
           addressLine4 = None,
-          postcode = Some("AA1 1AA"),
+          postcode = "AA1 1AA",
           countryCode = "GB"),
         email = "agency@example.com",
         telephone = "0123 456 7890"))
