@@ -20,6 +20,7 @@ import javax.inject.{Inject, Singleton}
 
 import cats.data.NonEmptyList
 import cats.data.Validated.{Invalid, Valid}
+import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms.{mapping, _}
 import play.api.data.validation.ValidationError
@@ -198,7 +199,7 @@ class SubscriptionController @Inject()
           agencyData match {
             case Some((agencyName, arn)) =>
               sessionStoreService.fetchContinueUrl.
-                recover { case NonFatal(_) => None }.
+                recover { case NonFatal(ex) => Logger.warn("Session store service failure",ex) }.
                 andThen { case _ => sessionStoreService.remove()}.
                 map { continueUrlOpt =>
                   val continueUrl = CallOps.addParamsToUrl(appConfig.agentServicesAccountUrl, "continue" -> continueUrlOpt.map(_.url))
