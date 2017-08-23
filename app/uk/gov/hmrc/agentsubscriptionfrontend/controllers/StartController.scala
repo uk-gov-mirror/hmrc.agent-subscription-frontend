@@ -75,7 +75,7 @@ class StartController @Inject()(override val messagesApi: MessagesApi,
             }
           } yield {
             knownFactsResultOpt match {
-              case Some(_) => Redirect(routes.SubscriptionController.showSubscriptionDetails())
+              case Some(_) => Redirect(routes.SubscriptionController.showInitialDetails())
               case None => Redirect(routes.CheckAgencyController.checkAgencyStatus())
             }
           }

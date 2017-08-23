@@ -265,7 +265,7 @@ class CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
 
       val result = await(controller.showConfirmYourAgency(request))
 
-      checkHtmlResultWithBodyText(result, routes.SubscriptionController.showSubscriptionDetails().url)
+      checkHtmlResultWithBodyText(result, routes.SubscriptionController.showInitialDetails().url)
     }
 
     "show a Continue button which allows the user to go to Already Subscribed if isSubscribedToAgentServices=true" in {

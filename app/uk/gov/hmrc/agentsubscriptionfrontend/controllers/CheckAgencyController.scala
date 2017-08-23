@@ -81,7 +81,7 @@ class CheckAgencyController @Inject()
   private def lookupNextPageUrl(isSubscribedToAgentServices: Boolean): String =
     if (isSubscribedToAgentServices)
       routes.CheckAgencyController.showAlreadySubscribed().url
-    else routes.SubscriptionController.showSubscriptionDetails().url
+    else routes.SubscriptionController.showInitialDetails().url
 
 
   val checkAgencyStatus: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync() {
