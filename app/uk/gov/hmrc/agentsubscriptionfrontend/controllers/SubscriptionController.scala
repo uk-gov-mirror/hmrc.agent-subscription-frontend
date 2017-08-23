@@ -38,6 +38,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.support.CallOps
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html._
 import uk.gov.hmrc.passcode.authentication.{PasscodeAuthenticationProvider, PasscodeVerificationConfig}
+import uk.gov.hmrc.play.binders.ContinueUrl
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 import uk.gov.hmrc.play.http.HeaderCarrier
@@ -199,8 +200,11 @@ class SubscriptionController @Inject()
           agencyData match {
             case Some((agencyName, arn)) =>
               sessionStoreService.fetchContinueUrl.
-                recover { case NonFatal(ex) => Logger.warn("Session store service failure",ex) }.
-                andThen { case _ => sessionStoreService.remove()}.
+                recover { case NonFatal(ex) =>
+                  Logger.warn("Session store service failure", ex)
+                  None
+                }.
+                andThen { case _ => sessionStoreService.remove() }.
                 map { continueUrlOpt =>
                   val continueUrl = CallOps.addParamsToUrl(appConfig.agentServicesAccountUrl, "continue" -> continueUrlOpt.map(_.url))
                   Ok(html.subscription_complete(continueUrl, agencyName, arn))
