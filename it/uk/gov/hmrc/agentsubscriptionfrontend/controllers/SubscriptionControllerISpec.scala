@@ -139,6 +139,17 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       status(result) shouldBe 200
       bodyOf(result) should include(redirectUrl)
     }
+
+    "remove existing session" in {
+      implicit val request = authenticatedRequest()
+      AuthStub.hasNoEnrolments(subscribingAgent)
+      AuthStub.refreshEnrolmentsSuccess
+
+      val result = await(controller.showSubscriptionComplete(request.withFlash("arn" -> "ARN0001", "agencyName" -> "My Agency")))
+
+      status(result) shouldBe 200
+      sessionStoreService.allSessionsRemoved shouldBe true
+    }
   }
 
   "submitSubscriptionDetails" should {
@@ -162,7 +173,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
 
         status(result2) shouldBe 303
         redirectLocation(result2).head shouldBe routes.SubscriptionController.showSubscriptionComplete().url
-        sessionStoreService.allSessionsRemoved shouldBe true
+        sessionStoreService.allSessionsRemoved shouldBe false
         flash(result2).get("agencyName") shouldBe Some("My Agency")
         flash(result2).get("arn") shouldBe Some("ARN00001")
 
@@ -187,7 +198,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
 
         status(result2) shouldBe 303
         redirectLocation(result2).head shouldBe routes.SubscriptionController.showSubscriptionComplete().url
-        sessionStoreService.allSessionsRemoved shouldBe true
+        sessionStoreService.allSessionsRemoved shouldBe false
         flash(result2).get("agencyName") shouldBe Some("My Agency")
         flash(result2).get("arn") shouldBe Some("ARN00001")
 
@@ -251,7 +262,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       status(user2Result2) shouldBe 303
       redirectLocation(user2Result2).head shouldBe routes.SubscriptionController.showSubscriptionComplete().url
 
-      sessionStoreService.allSessionsRemoved shouldBe true
+      sessionStoreService.allSessionsRemoved shouldBe false
       flash(user2Result2).get("agencyName") shouldBe Some("My Agency 2")
       flash(user2Result2).get("arn") shouldBe Some("ARN00002")
     }
@@ -274,7 +285,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
 
         status(result) shouldBe 303
         redirectLocation(result).head shouldBe routes.SubscriptionController.showSubscriptionFailed().url
-        sessionStoreService.allSessionsRemoved shouldBe true
+        sessionStoreService.allSessionsRemoved shouldBe false
       }
     }
 
@@ -295,7 +306,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
 
         status(result) shouldBe 303
         redirectLocation(result).head shouldBe routes.CheckAgencyController.showAlreadySubscribed().url
-        sessionStoreService.allSessionsRemoved shouldBe true
+        sessionStoreService.allSessionsRemoved shouldBe false
       }
     }
 
