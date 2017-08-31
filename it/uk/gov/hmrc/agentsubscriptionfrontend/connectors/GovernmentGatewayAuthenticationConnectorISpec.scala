@@ -11,10 +11,11 @@ import uk.gov.hmrc.agentsubscriptionfrontend.support.WireMockSupport
 import uk.gov.hmrc.play.http.{HeaderCarrier, Upstream4xxResponse}
 import uk.gov.hmrc.play.test.UnitSpec
 
-class AuthenticatorConnectorISpec extends UnitSpec with OneAppPerSuite with WireMockSupport {
+class GovernmentGatewayAuthenticationConnectorISpec extends UnitSpec with OneAppPerSuite with WireMockSupport {
   private implicit val hc = HeaderCarrier()
 
-  private lazy val connector: AuthenticatorConnector = new AuthenticatorConnector(new URL(s"http://localhost:$wireMockPort"), WSHttp)
+  private lazy val connector: GovernmentGatewayAuthenticationConnector =
+    new GovernmentGatewayAuthenticationConnector(new URL(s"http://localhost:$wireMockPort"), WSHttp)
 
   "refreshEnrolments" should {
     "return true for successful enrolments refresh" in {
