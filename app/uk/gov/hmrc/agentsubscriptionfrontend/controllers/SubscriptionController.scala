@@ -30,7 +30,7 @@ import play.api.mvc.{AnyContent, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.{AgentRequest, AuthActions}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.connectors.{AddressLookupFrontendConnector, AuthenticatorConnector}
+import uk.gov.hmrc.agentsubscriptionfrontend.connectors.{AddressLookupFrontendConnector, GovernmentGatewayAuthenticationConnector}
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.FieldMappings._
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionService}
@@ -73,7 +73,7 @@ class SubscriptionController @Inject()
  sessionStoreService: SessionStoreService,
  addressLookUpValidator: AddressValidator,
  addressLookUpConnector: AddressLookupFrontendConnector,
- authenticatorConnector: AuthenticatorConnector
+ ggAuthenticationConnector: GovernmentGatewayAuthenticationConnector
 )
 (implicit appConfig: AppConfig)
   extends FrontendController with I18nSupport with AuthActions with SessionDataMissing {
@@ -191,7 +191,7 @@ class SubscriptionController @Inject()
   val showSubscriptionComplete: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync() {
     implicit authContext =>
       implicit request => {
-        authenticatorConnector.refreshEnrolments.flatMap { _ =>
+        ggAuthenticationConnector.refreshEnrolments.flatMap { _ =>
           val agencyData = for {
             agencyName <- request.flash.get("agencyName")
             arn <- request.flash.get("arn")
