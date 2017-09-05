@@ -137,6 +137,19 @@ object AuthStub {
         ))
   }
 
+  def isSubscribedToMtdNotActivated(user: SampleUser): Unit = {
+    stubFor(get(urlEqualTo(user.enrolmentsLink))
+      .willReturn(
+        aResponse()
+          .withStatus(200)
+          .withBody(
+            s"""
+               |[{"key":"HMRC-AS-AGENT","state":"Not-Activated"}]
+                 """.stripMargin
+          )
+      ))
+  }
+
   def hasNoEnrolments(user: SampleUser): Unit = {
     stubFor(get(urlEqualTo(user.enrolmentsLink))
       .willReturn(

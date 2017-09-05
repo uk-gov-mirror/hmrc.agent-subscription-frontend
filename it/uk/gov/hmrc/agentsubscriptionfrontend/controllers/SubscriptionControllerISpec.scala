@@ -36,6 +36,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
     taxpayerName = "My Business",
     isSubscribedToAgentServices = false
   )
+  private val initialDetails = InitialDetails(utr, knownFactsPostcode, "My Agency", "agency@example.com", "0123 456 7890")
 
   private lazy val controller: SubscriptionController = app.injector.instanceOf[SubscriptionController]
 
@@ -328,7 +329,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
 
       "town is omitted" in {
         AuthStub.hasNoEnrolments(subscribingAgent)
-        val request = subscriptionRequest(town = "")
+        val request = subscriptionRequest(town = None)
         AgentSubscriptionStub.subscriptionWillSucceed(utr, request)
 
         givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
@@ -430,7 +431,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       }
     }
 
-    "report errors" when {
+    "display address_form_with_errors and report related errors" when {
       "postcode is blacklisted" in {
         AuthStub.hasNoEnrolments(subscribingAgent)
         implicit val request = subscriptionDetailsRequest()
@@ -446,9 +447,10 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
 
         status(result) shouldBe 200
         checkHtmlResultWithBodyText(result, htmlEscapedMessage("error.postcode.blacklisted"))
+        checkHtmlResultWithBodyText(result, htmlEscapedMessage("invalidAddress.title"))
       }
 
-      "postcode with whitespaces is blacklisted" in {
+      "the address is not valid according to DES's rules" in {
         AuthStub.hasNoEnrolments(subscribingAgent)
         implicit val request = subscriptionDetailsRequest()
         sessionStoreService.currentSession.knownFactsResult = Some(myAgencyKnownFactsResult)
@@ -458,46 +460,13 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         status(result0) shouldBe 303
         redirectLocation(result0).head shouldBe "/api/dummy/callback"
 
-        givenAddressLookupReturnsAddress("addr1", postcode = "AB10     1ZT")
+        val tooLongLine = "123456789012345678901234567890123456"
+        givenAddressLookupReturnsAddress("addr1", addressLine1 = tooLongLine)
         val result = await(controller.returnFromAddressLookup("addr1")(authenticatedRequest()))
 
         status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, htmlEscapedMessage("error.postcode.blacklisted"))
-      }
-
-      "postcode with lowercase characters is blacklisted" in {
-        AuthStub.hasNoEnrolments(subscribingAgent)
-        implicit val request = subscriptionDetailsRequest()
-        sessionStoreService.currentSession.knownFactsResult = Some(myAgencyKnownFactsResult)
-
-        givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
-        val result0 = await(controller.submitInitialDetails(request))
-        status(result0) shouldBe 303
-        redirectLocation(result0).head shouldBe "/api/dummy/callback"
-
-        givenAddressLookupReturnsAddress("addr1", postcode = "Ab10 1zT")
-        val result = await(controller.returnFromAddressLookup("addr1")(authenticatedRequest()))
-
-        status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, htmlEscapedMessage("error.postcode.blacklisted"))
-      }
-
-      "postcode without whitespaces is blacklisted" in {
-        AuthStub.hasNoEnrolments(subscribingAgent)
-        implicit val request = subscriptionDetailsRequest()
-        sessionStoreService.currentSession.knownFactsResult = Some(myAgencyKnownFactsResult)
-
-        givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
-        val result0 = await(controller.submitInitialDetails(request))
-        status(result0) shouldBe 303
-        redirectLocation(result0).head shouldBe "/api/dummy/callback"
-
-        givenAddressLookupReturnsAddress("addr1", postcode = "AB101ZT")
-        val result = await(controller.returnFromAddressLookup("addr1")(authenticatedRequest()))
-
-
-        status(result) shouldBe 200
-        checkHtmlResultWithBodyText(result, htmlEscapedMessage("error.postcode.blacklisted"))
+        checkHtmlResultWithBodyText(result, htmlEscapedMessage("error.maxLength", 35))
+        checkHtmlResultWithBodyText(result, htmlEscapedMessage("invalidAddress.title"))
       }
     }
 
@@ -514,16 +483,44 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
     }
   }
 
-  "restartAddressLookup" should {
-    "redirect to address lookup journey" in {
+  "submitModifiedAddress" should {
+    "display submit-modified-address and submit revised form if there are no errors" in {
       AuthStub.hasNoEnrolments(subscribingAgent)
-      givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
-      implicit val request = authenticatedRequest()
+      AgentSubscriptionStub.subscriptionWillSucceed(utr, subscriptionRequest())
 
-      val result = await(controller.restartAddressLookup("agents-subscr")(request))
+      implicit val request = desAddressForm()
+      sessionStoreService.currentSession.initialDetails = Some(initialDetails)
+
+      val result = await(controller.submitModifiedAddress()(request))
 
       status(result) shouldBe 303
-      redirectLocation(result).head shouldBe "/api/dummy/callback"
+      redirectLocation(result).head shouldBe routes.SubscriptionController.showSubscriptionComplete().url
+    }
+
+    "redirect to check-agency-status if there is no valid session" in {
+      AuthStub.hasNoEnrolments(subscribingAgent)
+      implicit val request = desAddressForm()
+      sessionStoreService.currentSession.initialDetails = None
+
+      val result = await(controller.submitModifiedAddress()(request))
+
+      status(result) shouldBe 303
+      redirectLocation(result).head shouldBe routes.CheckAgencyController.showCheckAgencyStatus().url
+    }
+
+     "redisplay address_form_with_errors and show errors" when {
+       "the address is not valid according to DES's rules" in {
+         AuthStub.hasNoEnrolments(subscribingAgent)
+         val tooLongAddressLine = "12345678901234567890123456789012345678901234567890"
+         implicit val request = desAddressForm(addressLine1 = tooLongAddressLine)
+         val result = await(controller.submitModifiedAddress()(request))
+         status(result) shouldBe 200
+         checkHtmlResultWithBodyText(
+           result,
+           htmlEscapedMessage("error.maxLength", 35),
+           tooLongAddressLine
+         )
+       }
     }
   }
 
@@ -537,6 +534,21 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
     }
   }
 
+
+  private def desAddressForm(addressLine1: String = "1 Some Street", postcode: String = "AA1 1AA",
+                             keyToRemove: String = "", additionalParameters: Seq[(String, String)] = Seq()) =
+    authenticatedRequest().withFormUrlEncodedBody(
+      Seq(
+        "addressLine1" -> addressLine1,
+        "addressLine2" -> "Sometown",
+        "addressLine3" -> "County",
+        "addressLine4" -> "Address Line 4",
+        "postcode" -> postcode,
+        "countryCode" -> "GB"
+      )
+        .filter(_._1 != keyToRemove) ++ additionalParameters: _*
+    )
+
   private def subscriptionDetailsRequest(keyToRemove: String = "", additionalParameters: Seq[(String, String)] = Seq()) =
     authenticatedRequest().withFormUrlEncodedBody(
       Seq(
@@ -549,7 +561,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         .filter(_._1 != keyToRemove) ++ additionalParameters: _*
     )
 
-  private def subscriptionRequest(town: String = "Sometown", county: String = "County", postcode: String = "AA1 1AA") =
+  private def subscriptionRequest(town: Option[String] = Some("Sometown"), county: Option[String] = Some("County"), postcode: String = "AA1 1AA") =
     SubscriptionRequest(utr = utr,
       knownFacts = SubscriptionRequestKnownFacts(knownFactsPostcode),
       agency =
@@ -557,8 +569,8 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
           name = "My Agency",
           address = DesAddress(
             addressLine1 = "1 Some Street",
-            addressLine2 = Some(town),
-            addressLine3 = Some(county),
+            addressLine2 = town,
+            addressLine3 = county,
             addressLine4 = Some("Address Line 4"),
             postcode = postcode,
             countryCode = "GB"),
@@ -616,5 +628,4 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       .withRequestBody(containing(subscriptionRequest.agency.address.countryCode))
     )
   }
-
 }

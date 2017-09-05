@@ -76,7 +76,7 @@ abstract class BaseISpec extends UnitSpec with OneAppPerSuite with MongoApp with
   private val messagesApi = app.injector.instanceOf[MessagesApi]
   private implicit val messages: Messages = messagesApi.preferred(Seq.empty[Lang])
 
-  protected def htmlEscapedMessage(key: String): String = HtmlFormat.escape(Messages(key)).toString
+  protected def htmlEscapedMessage(key: String, args: Any*): String = HtmlFormat.escape(Messages(key, args: _*)).toString
 
   implicit def hc(implicit request: FakeRequest[_]): HeaderCarrier = HeaderCarrier.fromHeadersAndSession(request.headers, Some(request.session))
 

@@ -30,7 +30,7 @@ import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.Future
 
-class DesAddressValidationSpec extends UnitSpec with ResettingMockitoSugar with EitherValues {
+class DesAddressFormSpec extends UnitSpec with ResettingMockitoSugar with EitherValues {
 
   // Each of these valid lines should be the maximum allowed length, 35
   // chars, to ensure we test the edge case of validation passing when all
@@ -68,115 +68,13 @@ class DesAddressValidationSpec extends UnitSpec with ResettingMockitoSugar with 
   private val blacklistedPostcodes: Set[String] = Set(blacklistedPostcode, "CC1 1CC", "DD1 1DD").map(PostcodesLoader.formatPostcode)
 
   private val validCountryCode = "GB"
-  val utr = Utr("1234567890")
-  val slf4jLogger = resettingMock[Logger]
-  val logger = new LoggerLike {
+  private val utr = Utr("1234567890")
+  private val slf4jLogger = resettingMock[Logger]
+  private val logger = new LoggerLike {
     override val logger: Logger = slf4jLogger
   }
 
   private val desAddressForm = new DesAddressForm(logger, blacklistedPostcodes)
-
-  "addressLine1" should {
-    val mapping = FieldMappings.addressLine1.withPrefix("testKey")
-
-    def bind(fieldValue: String): Either[Seq[FormError], String] = mapping.bind(Map("testKey" -> fieldValue))
-
-    def shouldRejectFieldValue(fieldValue: String, messageKey: String, args: Any*) = {
-      bind(fieldValue) shouldBe Left(List(FormError("testKey", List(messageKey), args)))
-    }
-
-    "return the validated line if it is valid" in {
-      bind(validLine) shouldBe Right(validLine)
-    }
-
-    "return an error if the line is empty" in {
-      shouldRejectFieldValue("", "error.address.lines.empty")
-    }
-
-    "return an error if the line is too long for DES" in {
-      shouldRejectFieldValue(tooLongLine, "error.maxLength", 35)
-    }
-
-    "return an error if the line does not match the DES regex" in {
-      shouldRejectFieldValue(nonMatchingLine, "error.des.text.invalid")
-    }
-
-    "accumulate errors if there are multiple validation problems" in {
-      bind(tooLongAndNonMatchingLine) shouldBe Left(List(
-        FormError("testKey", "error.maxLength", Seq(35)),
-        FormError("testKey", "error.des.text.invalid", Seq())
-      ))
-    }
-  }
-
-  "addressLine 2 3 and 4" should {
-    val mapping = FieldMappings.addressLine234.withPrefix("testKey")
-
-    def bind(fieldValue: String): Either[Seq[FormError], Option[String]] = mapping.bind(Map("testKey" -> fieldValue))
-
-    def shouldRejectFieldValue(fieldValue: String, messageKey: String, args: Any*) = {
-      bind(fieldValue) shouldBe Left(List(FormError("testKey", List(messageKey), args)))
-    }
-
-    "return the validated line if it is valid" in {
-      bind(validLine) shouldBe Right(Some(validLine))
-    }
-
-    "accept empty lines" in {
-      bind("") shouldBe Right(None)
-    }
-
-    "return an error if the line is too long for DES" in {
-      shouldRejectFieldValue(tooLongLine, "error.maxLength", 35)
-    }
-
-    "return an error if the line does not match the DES regex" in {
-      shouldRejectFieldValue(nonMatchingLine, "error.des.text.invalid")
-    }
-
-    "accumulate errors if there are multiple validation problems" in {
-      bind(tooLongAndNonMatchingLine) shouldBe Left(List(
-        FormError("testKey", "error.maxLength", Seq(35)),
-        FormError("testKey", "error.des.text.invalid", Seq())
-      ))
-    }
-  }
-
-  "postcode bind" should {
-    val postcodeMapping = FieldMappings.postcodeWithBlacklist(blacklistedPostcodes).withPrefix("testKey")
-
-    def bind(fieldValue: String): Either[Seq[FormError], String] = postcodeMapping.bind(Map("testKey" -> fieldValue))
-
-    def shouldRejectFieldValue(fieldValue: String, messageKey: String) = {
-      bind(fieldValue) shouldBe Left(List(FormError("testKey", List(messageKey), Seq())))
-    }
-
-    "return the validated postcode if it is valid" in {
-     bind(validPostcode) shouldBe Right(validPostcode)
-    }
-
-    "return an error if format is invalid" in {
-      shouldRejectFieldValue("not a postcode", "error.postcode.invalid")
-      shouldRejectFieldValue(" A A 1 1 A A ", "error.postcode.invalid")
-    }
-
-    "return an error if format is invalid but contains a valid postcode" in {
-      shouldRejectFieldValue(s"not a postcode $validPostcode not a postcode", "error.postcode.invalid")
-    }
-
-    "return an error if the postcode is empty" in {
-      shouldRejectFieldValue("", "error.postcode.empty")
-    }
-
-    "return an error if there is no postcode (no map entry)" in {
-      postcodeMapping.bind(Map.empty) shouldBe Left(List(FormError("testKey", List("error.postcode.empty"), Seq())))
-    }
-
-    "return an error if the postcode is blacklisted regardless of spacing" in {
-      shouldRejectFieldValue("BB11BB", "error.postcode.blacklisted")
-      shouldRejectFieldValue(blacklistedPostcode, "error.postcode.blacklisted")
-    }
-  }
 
   "form" should {
     "populate all DesAddress fields when the input address is valid, even when all input lines are the maximum allowed length" in {
@@ -280,6 +178,14 @@ class DesAddressValidationSpec extends UnitSpec with ResettingMockitoSugar with 
       val validatedForm = desAddressForm.bindAddressLookupFrontendAddress(utr, addressLookupFrontendAddress)
 
       validatedForm.errors shouldBe errorsForInvalidPostcode
+    }
+
+    "validate that postcode is not empty" in {
+      val addressLookupFrontendAddress = testAddressLookupFrontendAddress(postcode = Some(" "))
+
+      val validatedForm = desAddressForm.bindAddressLookupFrontendAddress(utr, addressLookupFrontendAddress)
+
+      validatedForm.errors shouldBe Seq(FormError("postcode", "error.postcode.empty", Seq()))
     }
 
     "pass on the postcode blacklist so that postcode blacklisting works" in {

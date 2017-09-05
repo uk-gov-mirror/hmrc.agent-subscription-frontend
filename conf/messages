@@ -6,14 +6,21 @@ error.postcode.invalid = You have entered an invalid postcode
 error.postcode.blacklisted = You can''t use the postcode you''ve entered
 error.postcode.empty = You must include a postcode
 error.address.lines.empty = The address must have at least 1 line
-#TODO APB-1112 remove
-error.address.maxLength = Length of line {1} must be up to {0}
 error.utr.invalid = Please enter a valid UTR
 error.telephone.invalid = Please enter a valid telephone number
 error.no.ampersand = Agency name cannot contain "&"
 error.des.text.invalid = You can only use these characters: A-Z, a-z, 0-9, -,./
-#TODO APB-1112 remove
-error.des.text.invalid.withInput = This field {0} is limited to alphanumeric characters (A-Z, a-z, 0-9) and the following characters -,./
+
+##Modifying address
+address.form.with-errors.error.heading = There was a problem
+address.form.with-errors.error.summary = Please check the following:
+address.form.with-errors.heading = Enter address
+address.form.with-errors.address_line_1 = Address line 1
+address.form.with-errors.address_line_2 = Address line 2
+address.form.with-errors.address_line_3 = Address line 3
+address.form.with-errors.town = Town
+address.form.with-errors.postcode = Postcode
+address.form.with-errors.button.confirm_address= Confirm address
 
 ##Confirm your agency
 confirmYourAgency.title=Is this the business you are setting up an account for?

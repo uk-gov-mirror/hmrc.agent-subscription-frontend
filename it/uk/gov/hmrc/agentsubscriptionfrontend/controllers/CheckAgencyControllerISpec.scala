@@ -68,6 +68,15 @@ class CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(redirectUrl)
     }
+
+    "redirect to Already Subscribed page if current user has HMRC-AS-AGENT enrolment" in {
+      AuthStub.isSubscribedToMtdNotActivated(subscribingAgent)
+
+      val result = await(controller.showCheckAgencyStatus(authenticatedRequest()))
+
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showAlreadySubscribed().url)
+    }
   }
 
   "checkAgencyStatus" should {

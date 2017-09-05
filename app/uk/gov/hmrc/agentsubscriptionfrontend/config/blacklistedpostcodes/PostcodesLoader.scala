@@ -41,7 +41,7 @@ object PostcodesLoader {
       throw new PostcodeLoaderException(ex.getMessage)
   }
 
-  def formatPostcode(p: String) = p.replace(" ", "").toUpperCase
+  def formatPostcode(p: String) = Option(p).map(_.replace(" ", "").toUpperCase).orNull
 
   final class PostcodeLoaderException(message: String) extends
     Exception(s"Unknown error code from agent-subscription while loading postcodes: $message")

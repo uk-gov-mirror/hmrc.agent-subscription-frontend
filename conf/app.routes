@@ -15,7 +15,7 @@ GET     /has-other-enrolments           uk.gov.hmrc.agentsubscriptionfrontend.co
 GET     /subscription-details           uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showInitialDetails
 POST    /subscription-details           uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.submitInitialDetails
 GET     /return-from-address-lookup     uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.returnFromAddressLookup(id: String ?= "")
-GET     /restart-address-lookup         uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.restartAddressLookup(id: String ?= "")
+POST    /submit-modified-address        uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.submitModifiedAddress
 
 GET    /subscription-complete           uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showSubscriptionComplete
 GET    /subscription-failed             uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showSubscriptionFailed

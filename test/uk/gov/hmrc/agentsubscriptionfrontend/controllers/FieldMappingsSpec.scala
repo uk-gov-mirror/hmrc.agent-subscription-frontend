@@ -17,11 +17,11 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import org.scalatest.EitherValues
+import play.api.data.validation.{Invalid, Valid, ValidationError}
 import play.api.data.{FormError, Mapping}
-import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.agentsubscriptionfrontend.config.blacklistedpostcodes.PostcodesLoader
 import uk.gov.hmrc.play.test.UnitSpec
-import play.api.data.Forms._
 
 class FieldMappingsSpec extends UnitSpec with EitherValues {
 
@@ -70,7 +70,12 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
   }
 
   "postcode bind" should {
-    val postcodeMapping = FieldMappings.postcode.withPrefix("testKey")
+    behave like aPostcodeValidatingMapping(FieldMappings.postcode)
+  }
+
+  def aPostcodeValidatingMapping(unprefixedPostcodeMapping: Mapping[String]): Unit = {
+
+    val postcodeMapping: Mapping[String] = unprefixedPostcodeMapping.withPrefix("testKey")
 
     def bind(fieldValue: String) = postcodeMapping.bind(Map("testKey" -> fieldValue))
 
@@ -87,6 +92,10 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
       shouldAcceptFieldValue("AA1M 1AA")
       shouldAcceptFieldValue("A11 1AA")
       shouldAcceptFieldValue("A1A 1AA")
+    }
+
+    "give \"error.postcode.empty\" error when it is set to null" in {
+      bind(null).left.value should contain only FormError("testKey", List("error.postcode.empty"))
     }
 
     "give \"error.postcode.empty\" error when it is not supplied" in {
@@ -133,7 +142,6 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
       shouldRejectFieldValueAsInvalid("AA1 AAA")
     }
 
-
     "reject valid start of postcode but invalid after" in {
       shouldRejectFieldValueAsInvalid("AA1 AAA PPRRD")
     }
@@ -144,6 +152,38 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
 
     "reject postcodes with extra spaces" in {
       shouldRejectFieldValueAsInvalid(" A A 1 1 A A ")
+    }
+  }
+
+  "postcodeWithBlacklist bind" should {
+    val blacklistedPostcode = "BB1 1BB"
+    val blacklistedPostcodes: Set[String] = Set(blacklistedPostcode, "CC1 1CC", "DD1 1DD").map(PostcodesLoader.formatPostcode)
+
+    val unprefixedPostcodeMapping = FieldMappings.postcodeWithBlacklist(blacklistedPostcodes)
+    val postcodeMapping = unprefixedPostcodeMapping.withPrefix("testKey")
+
+    behave like aPostcodeValidatingMapping(unprefixedPostcodeMapping)
+
+    def bind(fieldValue: String): Either[Seq[FormError], String] = postcodeMapping.bind(Map("testKey" -> fieldValue))
+
+    def shouldRejectFieldValueContainingMessage(fieldValue: String, messageKey: String) = {
+      bind(fieldValue).left.get should contain(FormError("testKey", List(messageKey), Seq()))
+    }
+
+    "return an error if the postcode is blacklisted" in {
+      shouldRejectFieldValueContainingMessage(blacklistedPostcode, "error.postcode.blacklisted")
+    }
+
+    "return an error if postcode without whitespace is blacklisted" in {
+      shouldRejectFieldValueContainingMessage("BB11BB", "error.postcode.blacklisted")
+    }
+
+    "return an error if postcode with whitespace is blacklisted" in {
+      shouldRejectFieldValueContainingMessage("BB1     1BB", "error.postcode.blacklisted")
+    }
+
+    "return an error if postcode with lowercase characters is blacklisted" in {
+      shouldRejectFieldValueContainingMessage("bb1 1bB", "error.postcode.blacklisted")
     }
   }
 
@@ -261,24 +301,15 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
   }
 
   "addressLine1 bind" should {
-    val addressLine1Mapping = FieldMappings.addressLine1.withPrefix("testKey")
+    val unprefixedAddressLine1Mapping = FieldMappings.addressLine1
+
+    behave like anAddressLineValidatingMapping(unprefixedAddressLine1Mapping)
+
+    val addressLine1Mapping = unprefixedAddressLine1Mapping.withPrefix("testKey")
 
     def bind(fieldValue: String) = addressLine1Mapping.bind(Map("testKey" -> fieldValue))
 
-    def shouldRejectFieldValueAsInvalid(fieldValue: String): Unit = {
-      bind(fieldValue) should matchPattern { case Left(List(FormError("testKey", List("error.des.text.invalid"), _))) => }
-    }
-
-    def shouldRejectFieldValueAsTooLong(fieldValue: String): Unit = {
-      bind(fieldValue) should matchPattern { case Left(List(FormError("testKey", List("error.maxLength"), _))) => }
-    }
-
-    def shouldAcceptFieldValue(fieldValue: String): Unit = {
-      if (fieldValue.isEmpty) bind(fieldValue) shouldBe Right(None)
-      else bind(fieldValue) shouldBe Right(fieldValue)
-    }
-
-    "reject address Line 1" when {
+    "reject the line" when {
       "field is not present" in {
         addressLine1Mapping.bind(Map.empty).left.value should contain only FormError("testKey", "error.required")
       }
@@ -290,67 +321,66 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
       "input is only whitespace" in {
         bind("    ").left.value should contain(FormError("testKey", "error.address.lines.empty"))
       }
-
-      "there is an invalid character" in {
-        shouldRejectFieldValueAsInvalid("My Agency street; City~City")
-      }
-
-      "more than 35 characters" in {
-        shouldRejectFieldValueAsTooLong("1234567891123456789212345678931234567")
-      }
-    }
-
-    "accept address Line 1" when {
-      "there is text and numbers" in {
-        shouldAcceptFieldValue("99 My Agency address")
-      }
-
-      "there are valid symbols in the input" in {
-        shouldAcceptFieldValue("My Agency address/Street ")
-        shouldAcceptFieldValue("Tester's Agency address/Street")
-      }
-
-      "there is a valid address" in {
-        shouldAcceptFieldValue("My Agency address")
-      }
     }
   }
 
-  //TODO merge with other address validation tests
-  "address Line 2, 3 and 4 bind" should {
+  "addressLine 2, 3 and 4 bind" should {
+    val nonOptionalAddressLine234Mapping: Mapping[String] = FieldMappings.addressLine234.transform(_.get, Some.apply)
+
+    behave like anAddressLineValidatingMapping(nonOptionalAddressLine234Mapping)
+
     val addressLine23Mapping = FieldMappings.addressLine234.withPrefix("testKey")
 
     def bind(fieldValue: String) = addressLine23Mapping.bind(Map("testKey" -> fieldValue))
-
-    def shouldRejectFieldValueAsInvalid(fieldValue: String): Unit = {
-      bind(fieldValue) should matchPattern { case Left(List(FormError("testKey", List("error.des.text.invalid"), _))) => }
-    }
-
-    def shouldRejectFieldValueAsTooLong(fieldValue: String): Unit = {
-      bind(fieldValue) should matchPattern { case Left(List(FormError("testKey", List("error.maxLength"), _))) => }
-    }
 
     def shouldAcceptFieldValue(fieldValue: String): Unit = {
       if (fieldValue.isEmpty) bind(fieldValue) shouldBe Right(None)
       else bind(fieldValue) shouldBe Right(Some(fieldValue))
     }
 
-    "reject addressLine 2 and 3" when {
-
+    "reject the line" when {
       "input is only whitespace" in {
         bind("    ").left.value should contain only FormError("testKey", "error.required")
       }
+    }
 
-      "more than 35 characters" in {
-        shouldRejectFieldValueAsTooLong("1234567891123456789212345678931234567")
+    "accept the line" when {
+      "field is empty" in {
+        shouldAcceptFieldValue("")
+      }
+    }
+  }
+
+  private def anAddressLineValidatingMapping(unprefixedAddressLineMapping: Mapping[String]): Unit = {
+
+    val addressLine1Mapping = unprefixedAddressLineMapping.withPrefix("testKey")
+
+    def bind(fieldValue: String) = addressLine1Mapping.bind(Map("testKey" -> fieldValue))
+
+    def shouldRejectFieldValueAsInvalid(fieldValue: String): Unit = {
+      bind(fieldValue) should matchPattern { case Left(List(FormError("testKey", List("error.des.text.invalid"), _))) => }
+    }
+
+    def shouldRejectFieldValueAsTooLong(fieldValue: String): Unit = {
+      bind(fieldValue) shouldBe Left(List(FormError("testKey", List("error.maxLength"), List(35))))
+    }
+
+    def shouldAcceptFieldValue(fieldValue: String): Unit = {
+      if (fieldValue.isEmpty) bind(fieldValue) shouldBe Right(None)
+      else bind(fieldValue) shouldBe Right(fieldValue)
+    }
+
+    "reject the line" when {
+      "there is an character that is not allowed by the DES regex" in {
+        shouldRejectFieldValueAsInvalid("My Agency street<script> City~City")
       }
 
-      "there is an invalid character" in {
-        shouldRejectFieldValueAsInvalid("My Agency street; City~City")
+      "the line is too long for DES" in {
+        shouldRejectFieldValueAsTooLong("123456789012345678901234567890123456")
       }
     }
 
-    "accept address Line 2 and 3" when {
+    "accept the line" when {
       "there is text and numbers" in {
         shouldAcceptFieldValue("99 My Agency address")
       }
@@ -364,9 +394,17 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
         shouldAcceptFieldValue("My Agency address")
       }
 
-      "field is empty" in {
-        shouldAcceptFieldValue("")
+      "it is the maximum allowable length" in {
+        shouldAcceptFieldValue("12345678901234567890123456789012345")
       }
+    }
+
+    "accumulate errors if there are multiple validation problems" in {
+      val tooLongAndNonMatchingLine = "123456789012345678901234567890123456<"
+      bind(tooLongAndNonMatchingLine) shouldBe Left(List(
+        FormError("testKey", "error.maxLength", Seq(35)),
+        FormError("testKey", "error.des.text.invalid", Seq())
+      ))
     }
   }
 

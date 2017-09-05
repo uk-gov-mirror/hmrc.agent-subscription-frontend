@@ -32,12 +32,7 @@ case class Enrolment(key: String,
 }
 
 object Enrolment {
-  implicit val idFormat = Json.format[EnrolmentIdentifier]
-  implicit val writes = Json.writes[Enrolment].transform { json: JsValue =>
-    json match {
-      case JsObject(props) => JsObject(props + ("enrolment" -> props("key")) - "key")
-    }
-  }
+  implicit val idReads = Json.reads[EnrolmentIdentifier]
   implicit val reads: Reads[Enrolment] = ((__ \ "key").read[String] and
     (__ \ "identifiers").readNullable[Seq[EnrolmentIdentifier]] and
     (__ \ "state").readNullable[String] and

@@ -19,11 +19,10 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 import javax.inject.{Inject, Singleton}
 
 import cats.data.NonEmptyList
-import cats.data.Validated.{Invalid, Valid}
 import play.api.Logger
-import play.api.data.Form
 import play.api.data.Forms.{mapping, _}
 import play.api.data.validation.ValidationError
+import play.api.data.{Form, FormError}
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.libs.json._
 import play.api.mvc.{AnyContent, _}
@@ -32,13 +31,12 @@ import uk.gov.hmrc.agentsubscriptionfrontend.auth.{AgentRequest, AuthActions}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.{AddressLookupFrontendConnector, GovernmentGatewayAuthenticationConnector}
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.FieldMappings._
+import uk.gov.hmrc.agentsubscriptionfrontend.form.DesAddressForm
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.CallOps
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
-import uk.gov.hmrc.agentsubscriptionfrontend.views.html._
 import uk.gov.hmrc.passcode.authentication.{PasscodeAuthenticationProvider, PasscodeVerificationConfig}
-import uk.gov.hmrc.play.binders.ContinueUrl
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 import uk.gov.hmrc.play.http.HeaderCarrier
@@ -71,7 +69,6 @@ class SubscriptionController @Inject()
  override val passcodeAuthenticationProvider: PasscodeAuthenticationProvider,
  subscriptionService: SubscriptionService,
  sessionStoreService: SessionStoreService,
- addressLookUpValidator: AddressValidator,
  addressLookUpConnector: AddressLookupFrontendConnector,
  ggAuthenticationConnector: GovernmentGatewayAuthenticationConnector
 )
@@ -80,6 +77,8 @@ class SubscriptionController @Inject()
 
   private val JourneyName: String = appConfig.journeyName
   private val blacklistedPostCodes: Set[String] = appConfig.blacklistedPostcodes
+
+  val desAddressForm = new DesAddressForm(Logger, blacklistedPostCodes)
 
   private val initialDetailsForm = Form[InitialDetails](
     mapping(
@@ -98,7 +97,7 @@ class SubscriptionController @Inject()
   val showInitialDetails: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync() { implicit authContext =>
     implicit request =>
       hasEnrolments match {
-        case true  => Future(Redirect(routes.CheckAgencyController.showHasOtherEnrolments()))
+        case true => Future(Redirect(routes.CheckAgencyController.showHasOtherEnrolments()))
         case false => sessionStoreService.fetchKnownFactsResult.map(_.map { knownFactsResult =>
           Ok(html.subscription_details(knownFactsResult.taxpayerName, initialDetailsForm.fill(
             InitialDetails(knownFactsResult.utr, knownFactsResult.postcode, null, null, null))))
@@ -130,56 +129,57 @@ class SubscriptionController @Inject()
       sessionMissingRedirect()
     })
 
+  import SubscriptionDetails._
+
+  private def subscribe(details: InitialDetails,
+                        address: DesAddress)
+                       (implicit hc: HeaderCarrier): Future[Either[SubscriptionReturnedHttpError, (Arn, String)]] = {
+    val subscriptionDetails = mapper(details, address)
+    subscriptionService.subscribeAgencyToMtd(subscriptionDetails) map {
+      case Right(arn) => {
+        Right((arn, subscriptionDetails.name))
+      }
+      case Left(x) => Left(SubscriptionReturnedHttpError(x))
+    }
+  }
+
+  private def redirectSubscriptionResponse(either: Either[SubscriptionReturnedHttpError, (Arn, String)]): Result = {
+    either match {
+      case Right((arn, agencyName)) => Redirect(routes.SubscriptionController.showSubscriptionComplete())
+        .flashing("arn" -> arn.arn, "agencyName" -> agencyName)
+      case Left(SubscriptionReturnedHttpError(CONFLICT)) => Redirect(routes.CheckAgencyController.showAlreadySubscribed())
+      case Left(SubscriptionReturnedHttpError(_)) => Redirect(routes.SubscriptionController.showSubscriptionFailed())
+    }
+  }
+
   def returnFromAddressLookup(id: String): Action[AnyContent] = AuthorisedWithSubscribingAgentAsync() {
     implicit authContext =>
       implicit request =>
 
-        import SubscriptionDetails._
-
-        def subscribe(details: InitialDetails,
-                      address: DesAddress, addressLookupAddress: AddressLookupFrontendAddress): Future[Either[SubscriptionReturnedHttpError, (Arn, String)]] = {
-          val subscriptionDetails = mapper(details, address)
-          subscriptionService.subscribeAgencyToMtd(subscriptionDetails) map {
-            case Right(arn) => {
-              Right((arn, subscriptionDetails.name))
-            }
-            case Left(x)    => Left(SubscriptionReturnedHttpError(x))
-          }
-        }
-
-        def redirectSubscriptionResponse(either: Either[SubscriptionReturnedHttpError, (Arn, String)]): Result = {
-          either match {
-            case Right((arn, agencyName))                      => Redirect(routes.SubscriptionController.showSubscriptionComplete())
-              .flashing("arn" -> arn.arn, "agencyName" -> agencyName)
-            case Left(SubscriptionReturnedHttpError(CONFLICT)) => Redirect(routes.CheckAgencyController.showAlreadySubscribed())
-            case Left(SubscriptionReturnedHttpError(_))        => Redirect(routes.SubscriptionController.showSubscriptionFailed())
-          }
-        }
-
         sessionStoreService.fetchInitialDetails.flatMap { maybeDetails =>
           maybeDetails.map { details =>
             addressLookUpConnector.getAddressDetails(id).flatMap { address =>
-              addressLookUpValidator.validateAddress(details.utr, address, blacklistedPostCodes) match {
-                case Invalid(errors)   =>
-                  Future.successful(
-                    Ok(des_will_not_accept_address(id, SubscriptionController.renderErrors(errors)))
-                  )
-                case Valid(desAddress) =>
-                  val subscriptResponse = for {
-                    res ← subscribe(details, desAddress, address)
-                  } yield res
-                  subscriptResponse.map(redirectSubscriptionResponse)
-              }
+              desAddressForm.bindAddressLookupFrontendAddress(details.utr, address).fold(
+                formWithErrors => Future successful Ok(html.address_form_with_errors(formWithErrors)),
+                validDesAddress => subscribe(details, validDesAddress).map(redirectSubscriptionResponse)
+              )
             }
           }.getOrElse(Future.successful(sessionMissingRedirect()))
         }
   }
 
-  def restartAddressLookup(id: String): Action[AnyContent] = AuthorisedWithSubscribingAgentAsync() {
+  def submitModifiedAddress: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync() {
     implicit authContext =>
       implicit request =>
-
-        addressLookUpConnector.initJourney(routes.SubscriptionController.returnFromAddressLookup(), JourneyName).map { x => Redirect(x) }
+        desAddressForm.form.bindFromRequest().fold(
+          formWithErrors => Future successful Ok(html.address_form_with_errors(formWithErrors)),
+          validDesAddress =>
+            sessionStoreService.fetchInitialDetails.flatMap { maybeInitialDetails =>
+              maybeInitialDetails.map { initialDetails =>
+                subscribe(initialDetails, validDesAddress).map(redirectSubscriptionResponse)
+              }.getOrElse(Future.successful(sessionMissingRedirect()))
+            }
+        )
   }
 
   val showSubscriptionFailed: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync() {
@@ -209,19 +209,10 @@ class SubscriptionController @Inject()
                   val continueUrl = CallOps.addParamsToUrl(appConfig.agentServicesAccountUrl, "continue" -> continueUrlOpt.map(_.url))
                   Ok(html.subscription_complete(continueUrl, agencyName, arn))
                 }
-            case _                       =>
+            case _ =>
               Future.successful(sessionMissingRedirect())
           }
         }
       }
   }
-}
-
-object SubscriptionController {
-
-  def renderErrors(errors: NonEmptyList[ValidationError])(implicit messages: Messages): String = errors
-    .toList
-    .map(valError => Messages(valError.message, valError.args: _*))
-    .reduce(_ + ", " + _)
-
 }
