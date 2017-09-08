@@ -18,6 +18,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.service
 
 import javax.inject.{Inject, Singleton}
 
+import play.api.Logger
 import play.api.http.Status
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentSubscriptionConnector
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionDetails
@@ -31,11 +32,19 @@ class SubscriptionService @Inject()(agentSubscriptionConnector: AgentSubscriptio
 
   def subscribeAgencyToMtd(subscriptionDetails: SubscriptionDetails)
                           (implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[Int, Arn]] = {
+    val address = if (subscriptionDetails.address.countryCode != "GB") {
+      Logger.warn(s"Non-GB country code chosen by user for UTR ${subscriptionDetails.utr.value}. " +
+                  s"Overriding with GB. A better fix for this is coming in APB-1288.")
+      subscriptionDetails.address.copy(countryCode = "GB")
+    } else {
+      subscriptionDetails.address
+    }
+
     val request = SubscriptionRequest(subscriptionDetails.utr, SubscriptionRequestKnownFacts(subscriptionDetails.knownFactsPostcode), Agency(
       name = subscriptionDetails.name,
       email = subscriptionDetails.email,
       telephone = subscriptionDetails.telephone,
-      address = subscriptionDetails.address)
+      address = address)
     )
 
     agentSubscriptionConnector.subscribeAgencyToMtd(request) map { x =>

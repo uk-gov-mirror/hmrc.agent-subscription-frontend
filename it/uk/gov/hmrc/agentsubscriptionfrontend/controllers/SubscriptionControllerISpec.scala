@@ -347,6 +347,27 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       }
     }
 
+    "always send countryCode=GB to the back end as we do not currently allow non-UK addresses" in {
+      AuthStub.hasNoEnrolments(subscribingAgent)
+      AgentSubscriptionStub.subscriptionWillSucceed(utr, subscriptionRequest(countryCode = "GB"))
+
+      givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
+
+      val detailsRequest = subscriptionDetailsRequest()
+      val result = await(controller.submitInitialDetails(detailsRequest))
+      status(result) shouldBe 303
+      redirectLocation(result).head shouldBe "/api/dummy/callback"
+
+      val addressId = "addr1"
+      stubAddressLookupReturnedAddress(addressId, subscriptionRequest(countryCode = "AR"))
+      val result2 = await(controller.returnFromAddressLookup(addressId)(authenticatedRequest()))
+
+      status(result2) shouldBe 303
+      redirectLocation(result2).head shouldBe routes.SubscriptionController.showSubscriptionComplete().url
+
+      verifySubscriptionRequestSent(subscriptionRequest(countryCode = "GB"))
+    }
+
     "not mix up data from concurrent users" in {
       AuthStub.hasNoEnrolments(subscribingAgent)
       val request = subscriptionRequest()
@@ -561,7 +582,11 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         .filter(_._1 != keyToRemove) ++ additionalParameters: _*
     )
 
-  private def subscriptionRequest(town: Option[String] = Some("Sometown"), county: Option[String] = Some("County"), postcode: String = "AA1 1AA") =
+  private def subscriptionRequest(
+    town: Option[String] = Some("Sometown"),
+    county: Option[String] = Some("County"),
+    postcode: String = "AA1 1AA",
+    countryCode: String = "GB") =
     SubscriptionRequest(utr = utr,
       knownFacts = SubscriptionRequestKnownFacts(knownFactsPostcode),
       agency =
@@ -573,7 +598,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
             addressLine3 = county,
             addressLine4 = Some("Address Line 4"),
             postcode = postcode,
-            countryCode = "GB"),
+            countryCode = countryCode),
           telephone = "0123 456 7890",
           email = "agency@example.com"))
 
