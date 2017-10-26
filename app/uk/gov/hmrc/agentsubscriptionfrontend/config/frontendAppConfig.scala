@@ -37,6 +37,7 @@ trait AppConfig {
   val journeyName: String
   val agentServicesAccountUrl: String
   val domainWhiteList: Set[String]
+  val agentAssuranceFlag: Boolean
 }
 
 trait StrictConfig {
@@ -74,4 +75,5 @@ class FrontendAppConfig extends AppConfig with StrictConfig with ServicesConfig 
   override lazy val agentServicesAccountUrl: String = s"$servicesAccountUrl$servicesAccountPath"
   override lazy val domainWhiteList =
     runModeConfiguration.getStringList("continueUrl.domainWhiteList").getOrElse(Collections.emptyList()).toSet
+  override lazy val agentAssuranceFlag: Boolean = getConfBool("agentAssuranceFlag", false)
 }
