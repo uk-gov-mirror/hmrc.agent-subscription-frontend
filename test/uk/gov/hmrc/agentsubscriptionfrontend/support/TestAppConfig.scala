@@ -51,4 +51,6 @@ object TestAppConfig extends AppConfig with ServicesConfig {
     "AB11 5ZH",
     "AB11 6NW"
   )
+
+  override val agentAssuranceFlag: Boolean = false
 }

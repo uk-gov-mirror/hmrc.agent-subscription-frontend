@@ -17,7 +17,7 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.views
 
 import org.scalatestplus.play.MixedPlaySpec
-import play.api.i18n.Messages
+import play.api.i18n.Messages.Implicits.applicationMessages
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import play.twirl.api.Html
@@ -39,6 +39,7 @@ class ViewsSpec extends MixedPlaySpec {
     override val journeyName: String = "journeyName"
     override val agentServicesAccountUrl: String = "http://localhost:9401/agent-services-account"
     override val domainWhiteList: Set[String] = Set("www.foo.com", "foo.org")
+    override val agentAssuranceFlag: Boolean = false
   }
 
   "error_template view" should {
@@ -46,8 +47,7 @@ class ViewsSpec extends MixedPlaySpec {
     "render title, heading and message" in new App {
       val view = new error_template()
       val html = view.render(
-        "My custom page title", "My custom heading", "My custom message",
-        FakeRequest(), Messages.Implicits.applicationMessages, appConfig)
+        "My custom page title", "My custom heading", "My custom message", FakeRequest(), applicationMessages, appConfig)
 
       contentAsString(html) must {
         include("My custom page title") and
@@ -56,7 +56,7 @@ class ViewsSpec extends MixedPlaySpec {
       }
 
       val hmtl2 = view.f("My custom page title", "My custom heading", "My custom message")(
-        FakeRequest(), Messages.Implicits.applicationMessages, appConfig
+        FakeRequest(), applicationMessages, appConfig
       )
       hmtl2 must be(html)
     }
@@ -77,7 +77,7 @@ class ViewsSpec extends MixedPlaySpec {
         userIsLoggedIn = true,
         mainContent = Html("mainContent"),
         request = FakeRequest(),
-        messages = Messages.Implicits.applicationMessages
+        messages = applicationMessages
       )
 
       contentAsString(html) must {
@@ -99,7 +99,7 @@ class ViewsSpec extends MixedPlaySpec {
         Some("mainClass"),
         Some(Html("scriptElem")),
         true
-      )(Html("mainContent"))(FakeRequest(), Messages.Implicits.applicationMessages)
+      )(Html("mainContent"))(FakeRequest(), applicationMessages)
       hmtl2 must be(html)
     }
 

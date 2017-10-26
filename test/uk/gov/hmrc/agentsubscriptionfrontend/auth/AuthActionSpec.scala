@@ -25,8 +25,9 @@ import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentSubscriptionConnector
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.{CheckAgencyController, ContinueUrlActions}
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
+import uk.gov.hmrc.agentsubscriptionfrontend.support.TestAppConfig
+import uk.gov.hmrc.agentsubscriptionfrontend.support.TestMessagesApi.testMessagesApi
 import uk.gov.hmrc.agentsubscriptionfrontend.support.passcode.TestPasscodeVerificationConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.support.{TestAppConfig, TestMessagesApi}
 import uk.gov.hmrc.passcode.authentication.{PasscodeAuthenticationProvider, PasscodeVerificationConfig, TestPasscodeAuthenticationProvider}
 import uk.gov.hmrc.play.frontend.auth._
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
@@ -56,8 +57,9 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
       when(authConnector.getEnrolments(any[AuthContext])(any[HeaderCarrier], any[HttpReads[List[Enrolment]]]))
         .thenReturn(Future successful List.empty[Enrolment])
 
-      val controller = new CheckAgencyController(TestMessagesApi.testMessagesApi, authConnector,
-        passcodeVerificationConfig, passcodeAuthenticationProvider, agentSubscriptionConnector, sessionStoreService, continueUrlActions)
+      val controller = new CheckAgencyController(
+        false, testMessagesApi, authConnector, passcodeVerificationConfig, passcodeAuthenticationProvider,
+        agentSubscriptionConnector, sessionStoreService, continueUrlActions)
 
       intercept[Upstream5xxResponse] {
         val eventualResult: Future[Result] = controller.showCheckAgencyStatus(mockRequestWithMockAuthSession)
