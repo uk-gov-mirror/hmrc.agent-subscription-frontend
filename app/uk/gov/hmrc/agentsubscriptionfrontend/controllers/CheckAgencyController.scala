@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.{Inject, Named, Singleton}
 
 import play.api.data.Form
 import play.api.data.Forms.mapping
@@ -36,7 +36,7 @@ import uk.gov.hmrc.play.frontend.controller.FrontendController
 import scala.concurrent.Future
 
 object CheckAgencyController {
-  val knownFactsForm: Form[KnownFacts]  = Form[KnownFacts](
+  val knownFactsForm: Form[KnownFacts] = Form[KnownFacts](
     mapping(
       "utr" -> FieldMappings.utr,
       "postcode" -> FieldMappings.postcode
@@ -46,7 +46,8 @@ object CheckAgencyController {
 
 @Singleton
 class CheckAgencyController @Inject()
-(override val messagesApi: MessagesApi,
+(@Named("agentAssuranceFlag") agentAssuranceFlag: Boolean,
+ override val messagesApi: MessagesApi,
  override val authConnector: AuthConnector,
  override val config: PasscodeVerificationConfig,
  override val passcodeAuthenticationProvider: PasscodeAuthenticationProvider,
@@ -105,7 +106,10 @@ class CheckAgencyController @Inject()
             postcode = knownFacts.postcode,
             taxpayerName = name,
             isSubscribedToAgentServices = isSubscribedToAgentServices)).map { _ =>
-            Redirect(routes.CheckAgencyController.showConfirmYourAgency())
+            if (agentAssuranceFlag)
+              NotImplemented
+            else
+              Redirect(routes.CheckAgencyController.showConfirmYourAgency())
           }
         case Some(_) => throw new IllegalStateException(s"The agency with UTR ${knownFacts.utr} has no organisation name.")
         case None => Future successful Redirect(routes.CheckAgencyController.showNoAgencyFound())

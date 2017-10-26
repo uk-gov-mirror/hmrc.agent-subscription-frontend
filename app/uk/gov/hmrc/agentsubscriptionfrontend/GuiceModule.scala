@@ -66,6 +66,19 @@ class GuiceModule(environment: Environment, configuration: Configuration) extend
         }
       }
     }
+
+    implicit val booleanConfigProperty = new ConfigPropertyType[Boolean] {
+      def bindConfigProperty(clazz: Class[Boolean])(propertyName: String): ScopedBindingBuilder =
+        bind(clazz).annotatedWith(Names.named(s"$propertyName")).toProvider(new BooleanConfigPropertyProvider(propertyName))
+
+      private class BooleanConfigPropertyProvider(propertyName: String) extends Provider[Boolean] {
+        override lazy val get = getConfBool(propertyName, throw new RuntimeException(s"No configuration value found for '$propertyName'"))
+
+        def getConfString(confKey: String, defBool: => Boolean) = {
+          runModeConfiguration.getInt(s"$confKey").getOrElse(defBool)
+        }
+      }
+    }
   }
 
   object ConfigProperty {
@@ -89,6 +102,7 @@ class GuiceModule(environment: Environment, configuration: Configuration) extend
     bindConfigProperty(classOf[String])("surveyRedirectUrl")
     bindConfigProperty(classOf[String])("sosRedirectUrl")
     bindConfigProperty(classOf[Int])("mongodb.knownfactsresult.ttl")
+    bindConfigProperty(classOf[Boolean])("agentAssuranceFlag")
   }
 
   private def bindBaseUrl(serviceName: String) =
