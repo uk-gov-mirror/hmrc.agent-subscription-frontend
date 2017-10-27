@@ -23,6 +23,7 @@ import play.api.mvc._
 import play.api.test.FakeRequest
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentSubscriptionConnector
+import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentAssuranceConnector
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.{CheckAgencyController, ContinueUrlActions}
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestAppConfig
@@ -50,16 +51,18 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
       val passcodeVerificationConfig = new TestPasscodeVerificationConfig(enabled = false)
       val passcodeAuthenticationProvider = new PasscodeAuthenticationProvider(passcodeVerificationConfig)
       val continueUrlActions = mock[ContinueUrlActions]
+      val agentAssuranceConnector = mock[AgentAssuranceConnector]
 
       val failure = Upstream5xxResponse("failure in auth", 500, 500)
+
       when(authConnector.currentAuthority(any[HeaderCarrier])).thenReturn(Future successful Some(authority))
       when(authConnector.getUserDetails(any[AuthContext])(any[HeaderCarrier], any[HttpReads[HttpResponse]])).thenReturn(Future failed failure)
       when(authConnector.getEnrolments(any[AuthContext])(any[HeaderCarrier], any[HttpReads[List[Enrolment]]]))
         .thenReturn(Future successful List.empty[Enrolment])
 
       val controller = new CheckAgencyController(
-        false, testMessagesApi, authConnector, passcodeVerificationConfig, passcodeAuthenticationProvider,
-        agentSubscriptionConnector, sessionStoreService, continueUrlActions)
+        false, agentAssuranceConnector, testMessagesApi, authConnector, passcodeVerificationConfig,
+        passcodeAuthenticationProvider, agentSubscriptionConnector, sessionStoreService, continueUrlActions)
 
       intercept[Upstream5xxResponse] {
         val eventualResult: Future[Result] = controller.showCheckAgencyStatus(mockRequestWithMockAuthSession)
