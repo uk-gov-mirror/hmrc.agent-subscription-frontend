@@ -95,6 +95,7 @@ class GuiceModule(environment: Environment, configuration: Configuration) extend
     bind(classOf[SessionCache]).toInstance(AgentSubscriptionSessionCache)
     bind(classOf[SessionStoreService])
     bind(classOf[LoggerLike]).toInstance(Logger)
+    bindBaseUrl("agent-assurance")
     bindBaseUrl("agent-subscription")
     bindBaseUrl("government-gateway-authentication")
     bindBaseUrl("address-lookup-frontend")

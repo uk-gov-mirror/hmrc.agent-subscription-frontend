@@ -82,7 +82,8 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
   private lazy val configuredGovernmentGatewayUrl = "http://configured-government-gateway.gov.uk/"
 
   override protected def appBuilder: GuiceApplicationBuilder = super.appBuilder
-    .configure("agentAssuranceFlag" -> agentAssuranceFlag, "government-gateway.url" -> configuredGovernmentGatewayUrl)
+    .configure("agentAssuranceFlag" -> agentAssuranceFlag,
+      "government-gateway.url" -> configuredGovernmentGatewayUrl)
 
   lazy val controller: CheckAgencyController = app.injector.instanceOf[CheckAgencyController]
 

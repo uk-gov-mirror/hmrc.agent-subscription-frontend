@@ -16,6 +16,9 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
+import play.api.test.Helpers._
+import uk.gov.hmrc.agentsubscriptionfrontend.models.KnownFactsResult
+import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub.withMatchingUtrAndPostcode
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub.hasNoEnrolments
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUsers.subscribingAgent
@@ -27,24 +30,70 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
     "redirect to confirm agency page and store known facts result in the session store when a matching registration is found for the UTR and postcode" in {
       withMatchingUtrAndPostcode(validUtr, validPostcode)
       hasNoEnrolments(subscribingAgent)
+      givenUserIsAnAgentWithAnAccetableNumberOfPAYEClients
+
       implicit val request = authenticatedRequest().withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
 
-      status(result) shouldBe 501
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showConfirmYourAgency().url)
+
+      sessionStoreService.currentSession.knownFactsResult shouldBe Some(KnownFactsResult(validUtr, validPostcode, "My Agency", isSubscribedToAgentServices = false))
     }
 
     "store isSubscribedToAgentServices = false in session when the business registration found by agent-subscription is not already subscribed" in {
       withMatchingUtrAndPostcode(validUtr, validPostcode)
       hasNoEnrolments(subscribingAgent)
+      givenUserIsAnAgentWithAnAccetableNumberOfPAYEClients
+
+      implicit val request = authenticatedRequest().withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
+      val result = await(controller.checkAgencyStatus(request))
+
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showConfirmYourAgency().url)
+      sessionStoreService.currentSession.knownFactsResult.get.isSubscribedToAgentServices shouldBe false
+    }
+
+    "store isSubscribedToAgentServices = true in session when the business registration found by agent-subscription is already subscribed" in {
+      withMatchingUtrAndPostcode(validUtr, validPostcode, isSubscribedToAgentServices = true)
+      hasNoEnrolments(subscribingAgent)
+      givenUserIsAnAgentWithAnAccetableNumberOfPAYEClients
+
+      implicit val request = authenticatedRequest().withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
+      val result = await(controller.checkAgencyStatus(request))
+
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showConfirmYourAgency().url)
+      sessionStoreService.currentSession.knownFactsResult.get.isSubscribedToAgentServices shouldBe true
+    }
+
+    "fail when a matching registration is found for the UTR and postcode for an agent without an acceptable number of PAYE clients" in {
+      withMatchingUtrAndPostcode(validUtr, validPostcode)
+      hasNoEnrolments(subscribingAgent)
+      givenUserIsNotAnAgentWithAnAccetableNumberOfPAYEClients
+
       implicit val request = authenticatedRequest().withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
 
       status(result) shouldBe 501
     }
 
-    "store isSubscribedToAgentServices = true in session when the business registration found by agent-subscription is already subscribed" in {
+    "fail when the business registration found by agent-subscription is not already subscribed for an agent without an acceptable number of PAYE clients" in {
+      withMatchingUtrAndPostcode(validUtr, validPostcode)
+      hasNoEnrolments(subscribingAgent)
+      givenUserIsNotAnAgentWithAnAccetableNumberOfPAYEClients
+
+      implicit val request = authenticatedRequest().withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
+      val result = await(controller.checkAgencyStatus(request))
+
+      status(result) shouldBe 501
+    }
+
+    "fail when the business registration found by agent-subscription is already subscribed for an agent without an acceptable number of PAYE clients" in {
       withMatchingUtrAndPostcode(validUtr, validPostcode, isSubscribedToAgentServices = true)
       hasNoEnrolments(subscribingAgent)
+      givenUserIsNotAnAgentWithAnAccetableNumberOfPAYEClients
+
       implicit val request = authenticatedRequest().withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
 

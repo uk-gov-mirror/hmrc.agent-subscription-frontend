@@ -8,12 +8,13 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.{AnyContentAsEmpty, Result}
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{contentType, _}
-import play.twirl.api.HtmlFormat
+import play.twirl.api.HtmlFormat.escape
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.SsoConnector
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
-import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub
+import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub.userIsAuthenticated
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUsers._
 import uk.gov.hmrc.play.http.HeaderCarrier
+import uk.gov.hmrc.play.http.HeaderCarrier.fromHeadersAndSession
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.Future
@@ -30,7 +31,8 @@ abstract class BaseISpec extends UnitSpec with OneAppPerSuite with MongoApp with
         "microservice.services.address-lookup-frontend.port" -> wireMockPort,
         "microservice.services.sso.port" -> wireMockPort,
         "passcodeAuthentication.enabled" -> passcodeAuthenticationEnabled,
-        "microservice.services.government-gateway-authentication.port" -> wireMockPort
+        "microservice.services.government-gateway-authentication.port" -> wireMockPort,
+        "microservice.services.agent-assurance.port" -> wireMockPort
       )
       .configure(mongoConfiguration)
       .overrides(new TestGuiceModule)
@@ -61,7 +63,7 @@ abstract class BaseISpec extends UnitSpec with OneAppPerSuite with MongoApp with
   protected implicit val materializer = app.materializer
 
   protected def authenticatedRequest(user: SampleUser = subscribingAgent): FakeRequest[AnyContentAsEmpty.type] = {
-    val sessionKeys = AuthStub.userIsAuthenticated(user)
+    val sessionKeys = userIsAuthenticated(user)
     FakeRequest().withSession(sessionKeys: _*)
   }
 
@@ -76,9 +78,9 @@ abstract class BaseISpec extends UnitSpec with OneAppPerSuite with MongoApp with
   private val messagesApi = app.injector.instanceOf[MessagesApi]
   private implicit val messages: Messages = messagesApi.preferred(Seq.empty[Lang])
 
-  protected def htmlEscapedMessage(key: String, args: Any*): String = HtmlFormat.escape(Messages(key, args: _*)).toString
+  protected def htmlEscapedMessage(key: String, args: Any*): String = escape(Messages(key, args: _*)).toString
 
-  implicit def hc(implicit request: FakeRequest[_]): HeaderCarrier = HeaderCarrier.fromHeadersAndSession(request.headers, Some(request.session))
+  implicit def hc(implicit request: FakeRequest[_]): HeaderCarrier = fromHeadersAndSession(request.headers, Some(request.session))
 
 }
 
