@@ -2,10 +2,10 @@
 
 @(continueUrl: String, agencyName: String, arn: String)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = Messages("subscriptionComplete.title", agencyName), bodyClasses = None) {
+@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = Messages("subscriptionComplete.title"), bodyClasses = None) {
 
     <div class="transaction-banner--complete">
-        <h1 class="transaction-banner__heading">@Messages("subscriptionComplete.title", agencyName)</h1>
+        <h1 class="transaction-banner__heading">@Messages("subscriptionComplete.h1", agencyName)</h1>
         <p>
             @Messages("subscriptionComplete.accountName")<br>
             <strong class="heading-medium">@arn</strong>
