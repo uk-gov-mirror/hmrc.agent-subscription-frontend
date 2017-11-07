@@ -88,13 +88,13 @@ class CheckAgencyController @Inject()
 
   val checkAgencyStatus: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync() {
     implicit authContext: AuthContext =>
-    implicit request =>
-      CheckAgencyController.knownFactsForm.bindFromRequest().fold(
-        formWithErrors => {
-          Future successful Ok(html.check_agency_status(formWithErrors))
-        },
-        knownFacts => checkAgencyStatusGivenValidForm(knownFacts)
-      )
+      implicit request =>
+        CheckAgencyController.knownFactsForm.bindFromRequest().fold(
+          formWithErrors => {
+            Future successful Ok(html.check_agency_status(formWithErrors))
+          },
+          knownFacts => checkAgencyStatusGivenValidForm(knownFacts)
+        )
   }
 
   private def checkAgencyStatusGivenValidForm(knownFacts: KnownFacts)
@@ -107,14 +107,20 @@ class CheckAgencyController @Inject()
             postcode = knownFacts.postcode,
             taxpayerName = name,
             isSubscribedToAgentServices = isSubscribedToAgentServices)).flatMap { _ =>
-              if (agentAssuranceFlag) {
-                agentAssuranceConnector.hasAcceptableNumberOfPayeClients.map( ok =>
-                  if (ok) Redirect(routes.CheckAgencyController.showConfirmYourAgency())
-                  else NotImplemented
-                )
-              } else{
-                Future successful Redirect(routes.CheckAgencyController.showConfirmYourAgency())
+            if (agentAssuranceFlag) {
+              val futurePaye = agentAssuranceConnector.hasAcceptableNumberOfPayeClients
+              val futureSA = agentAssuranceConnector.hasAcceptableNumberOfSAClients
+
+              for {
+                paye <- futurePaye
+                sa <- futureSA
+              } yield (paye, sa) match {
+                case (false, false) => NotImplemented
+                case _ => Redirect(routes.SubscriptionController.showInitialDetails())
               }
+            } else {
+              Future successful Redirect(routes.CheckAgencyController.showConfirmYourAgency())
+            }
           }
         case Some(_) => throw new IllegalStateException(s"The agency with UTR ${knownFacts.utr} has no organisation name.")
         case None => Future successful Redirect(routes.CheckAgencyController.showNoAgencyFound())

@@ -31,12 +31,13 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       withMatchingUtrAndPostcode(validUtr, validPostcode)
       hasNoEnrolments(subscribingAgent)
       givenUserIsAnAgentWithAnAccetableNumberOfPAYEClients
+      givenUserIsAnAgentWithAnAccetableNumberOfSAClients
 
       implicit val request = authenticatedRequest().withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
 
       status(result) shouldBe 303
-      redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showConfirmYourAgency().url)
+      redirectLocation(result) shouldBe Some(routes.SubscriptionController.showInitialDetails().url)
 
       sessionStoreService.currentSession.knownFactsResult shouldBe Some(KnownFactsResult(validUtr, validPostcode, "My Agency", isSubscribedToAgentServices = false))
     }
@@ -45,12 +46,13 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       withMatchingUtrAndPostcode(validUtr, validPostcode)
       hasNoEnrolments(subscribingAgent)
       givenUserIsAnAgentWithAnAccetableNumberOfPAYEClients
+      givenUserIsAnAgentWithAnAccetableNumberOfSAClients
 
       implicit val request = authenticatedRequest().withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
 
       status(result) shouldBe 303
-      redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showConfirmYourAgency().url)
+      redirectLocation(result) shouldBe Some(routes.SubscriptionController.showInitialDetails().url)
       sessionStoreService.currentSession.knownFactsResult.get.isSubscribedToAgentServices shouldBe false
     }
 
@@ -58,12 +60,13 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       withMatchingUtrAndPostcode(validUtr, validPostcode, isSubscribedToAgentServices = true)
       hasNoEnrolments(subscribingAgent)
       givenUserIsAnAgentWithAnAccetableNumberOfPAYEClients
+      givenUserIsAnAgentWithAnAccetableNumberOfSAClients
 
       implicit val request = authenticatedRequest().withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
 
       status(result) shouldBe 303
-      redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showConfirmYourAgency().url)
+      redirectLocation(result) shouldBe Some(routes.SubscriptionController.showInitialDetails().url)
       sessionStoreService.currentSession.knownFactsResult.get.isSubscribedToAgentServices shouldBe true
     }
 
@@ -71,6 +74,7 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       withMatchingUtrAndPostcode(validUtr, validPostcode)
       hasNoEnrolments(subscribingAgent)
       givenUserIsNotAnAgentWithAnAccetableNumberOfPAYEClients
+      givenUserIsNotAnAgentWithAnAccetableNumberOfSAClients
 
       implicit val request = authenticatedRequest().withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
@@ -82,6 +86,7 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       withMatchingUtrAndPostcode(validUtr, validPostcode)
       hasNoEnrolments(subscribingAgent)
       givenUserIsNotAnAgentWithAnAccetableNumberOfPAYEClients
+      givenUserIsNotAnAgentWithAnAccetableNumberOfSAClients
 
       implicit val request = authenticatedRequest().withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
@@ -93,6 +98,7 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       withMatchingUtrAndPostcode(validUtr, validPostcode, isSubscribedToAgentServices = true)
       hasNoEnrolments(subscribingAgent)
       givenUserIsNotAnAgentWithAnAccetableNumberOfPAYEClients
+      givenUserIsNotAnAgentWithAnAccetableNumberOfSAClients
 
       implicit val request = authenticatedRequest().withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))

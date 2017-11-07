@@ -14,7 +14,7 @@ class AgentAssuranceConnectorISpec extends UnitSpec with OneAppPerSuite with Wir
 
   private lazy val connector = new AgentAssuranceConnector(new URL(s"http://localhost:$wireMockPort"), WSHttp)
 
-  "getRegistration" should {
+  "getRegistration PAYE" should {
     "return true when the current logged in user has an acceptable number of PAYE clients" in {
       givenUserIsAnAgentWithAnAccetableNumberOfPAYEClients
       await(connector.hasAcceptableNumberOfPayeClients) shouldBe true
@@ -34,6 +34,30 @@ class AgentAssuranceConnectorISpec extends UnitSpec with OneAppPerSuite with Wir
       givenAnExceptionOccursDuringhThePAYEClientCheck
       intercept[Exception] {
         await(connector.hasAcceptableNumberOfPayeClients)
+      }
+    }
+  }
+
+  "getRegistration SA" should {
+    "return true when the current logged in user has an acceptable number of SA clients" in {
+      givenUserIsAnAgentWithAnAccetableNumberOfSAClients
+      await(connector.hasAcceptableNumberOfSAClients) shouldBe true
+    }
+
+    "return false when the current logged in user does not have an acceptable number of SA clients" in {
+      givenUserIsNotAnAgentWithAnAccetableNumberOfSAClients
+      await(connector.hasAcceptableNumberOfSAClients) shouldBe false
+    }
+
+    "return false when the current user is not authenticated" in {
+      givenUserIsNotAuthenticatedForSAClientCheck
+      await(connector.hasAcceptableNumberOfSAClients) shouldBe false
+    }
+
+    "throw an exception when appropriate" in {
+      givenAnExceptionOccursDuringhTheSAClientCheck
+      intercept[Exception] {
+        await(connector.hasAcceptableNumberOfSAClients)
       }
     }
   }

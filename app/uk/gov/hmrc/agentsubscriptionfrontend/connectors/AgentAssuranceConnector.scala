@@ -26,12 +26,16 @@ import scala.concurrent.Future
 
 @Singleton
 class AgentAssuranceConnector @Inject() (@Named("agent-assurance-baseUrl") baseUrl: URL, http: HttpGet){
-  def hasAcceptableNumberOfPayeClients(implicit hc: HeaderCarrier): Future[Boolean] = {
+  def hasAcceptableNumberOfClients(regime: String)(implicit hc: HeaderCarrier): Future[Boolean] = {
     http.GET[HttpResponse](
-      new URL(baseUrl, "/agent-assurance/acceptableNumberOfClients/service/IR-PAYE").toString).map { response =>
+      new URL(baseUrl, s"/agent-assurance/acceptableNumberOfClients/service/$regime").toString).map { response =>
         response.status == 204
     } recover {
       case e: Upstream4xxResponse => if ( e.upstreamResponseCode == 401 || e.upstreamResponseCode == 403 ) false else throw e
     }
   }
+
+  def hasAcceptableNumberOfPayeClients(implicit hc: HeaderCarrier): Future[Boolean] = hasAcceptableNumberOfClients("IR-PAYE")
+
+  def hasAcceptableNumberOfSAClients(implicit hc: HeaderCarrier): Future[Boolean] = hasAcceptableNumberOfClients("IR-SA")
 }
