@@ -18,7 +18,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.auth
 
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 import play.api.mvc._
 import play.api.test.FakeRequest
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
@@ -60,8 +60,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
       when(authConnector.getEnrolments(any[AuthContext])(any[HeaderCarrier], any[HttpReads[List[Enrolment]]]))
         .thenReturn(Future successful List.empty[Enrolment])
 
-      val controller = new CheckAgencyController(
-        false, agentAssuranceConnector, testMessagesApi, authConnector, passcodeVerificationConfig,
+      val controller = new CheckAgencyController(testMessagesApi, authConnector, passcodeVerificationConfig,
         passcodeAuthenticationProvider, agentSubscriptionConnector, sessionStoreService, continueUrlActions)
 
       intercept[Upstream5xxResponse] {

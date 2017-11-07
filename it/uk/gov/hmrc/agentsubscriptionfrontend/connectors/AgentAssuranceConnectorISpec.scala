@@ -16,12 +16,12 @@ class AgentAssuranceConnectorISpec extends UnitSpec with OneAppPerSuite with Wir
 
   "getRegistration PAYE" should {
     "return true when the current logged in user has an acceptable number of PAYE clients" in {
-      givenUserIsAnAgentWithAnAccetableNumberOfPAYEClients
+      givenUserIsAnAgentWithAnAcceptableNumberOfPAYEClients
       await(connector.hasAcceptableNumberOfPayeClients) shouldBe true
     }
 
     "return false when the current logged in user does not have an acceptable number of PAYE clients" in {
-      givenUserIsNotAnAgentWithAnAccetableNumberOfPAYEClients
+      givenUserIsNotAnAgentWithAnAcceptableNumberOfPAYEClients
       await(connector.hasAcceptableNumberOfPayeClients) shouldBe false
     }
 
@@ -31,7 +31,7 @@ class AgentAssuranceConnectorISpec extends UnitSpec with OneAppPerSuite with Wir
     }
 
     "throw an exception when appropriate" in {
-      givenAnExceptionOccursDuringhThePAYEClientCheck
+      givenAnExceptionOccursDuringThePAYEClientCheck
       intercept[Exception] {
         await(connector.hasAcceptableNumberOfPayeClients)
       }
@@ -40,12 +40,12 @@ class AgentAssuranceConnectorISpec extends UnitSpec with OneAppPerSuite with Wir
 
   "getRegistration SA" should {
     "return true when the current logged in user has an acceptable number of SA clients" in {
-      givenUserIsAnAgentWithAnAccetableNumberOfSAClients
+      givenUserIsAnAgentWithAnAcceptableNumberOfSAClients
       await(connector.hasAcceptableNumberOfSAClients) shouldBe true
     }
 
     "return false when the current logged in user does not have an acceptable number of SA clients" in {
-      givenUserIsNotAnAgentWithAnAccetableNumberOfSAClients
+      givenUserIsNotAnAgentWithAnAcceptableNumberOfSAClients
       await(connector.hasAcceptableNumberOfSAClients) shouldBe false
     }
 
@@ -55,7 +55,7 @@ class AgentAssuranceConnectorISpec extends UnitSpec with OneAppPerSuite with Wir
     }
 
     "throw an exception when appropriate" in {
-      givenAnExceptionOccursDuringhTheSAClientCheck
+      givenAnExceptionOccursDuringTheSAClientCheck
       intercept[Exception] {
         await(connector.hasAcceptableNumberOfSAClients)
       }

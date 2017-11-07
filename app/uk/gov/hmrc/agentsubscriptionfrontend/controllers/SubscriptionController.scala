@@ -16,20 +16,18 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.{Inject, Named, Singleton}
 
-import cats.data.NonEmptyList
 import play.api.Logger
+import play.api.data.Form
 import play.api.data.Forms.{mapping, _}
-import play.api.data.validation.ValidationError
-import play.api.data.{Form, FormError}
-import play.api.i18n.{I18nSupport, Messages, MessagesApi}
+import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.json._
 import play.api.mvc.{AnyContent, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.{AgentRequest, AuthActions}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.connectors.{AddressLookupFrontendConnector, GovernmentGatewayAuthenticationConnector}
+import uk.gov.hmrc.agentsubscriptionfrontend.connectors.{AddressLookupFrontendConnector, AgentAssuranceConnector, GovernmentGatewayAuthenticationConnector}
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.FieldMappings._
 import uk.gov.hmrc.agentsubscriptionfrontend.form.DesAddressForm
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
@@ -62,17 +60,17 @@ object SubscriptionDetails {
 }
 
 @Singleton
-class SubscriptionController @Inject()
-(override val messagesApi: MessagesApi,
- override val authConnector: AuthConnector,
- override val config: PasscodeVerificationConfig,
- override val passcodeAuthenticationProvider: PasscodeAuthenticationProvider,
- subscriptionService: SubscriptionService,
- sessionStoreService: SessionStoreService,
- addressLookUpConnector: AddressLookupFrontendConnector,
- ggAuthenticationConnector: GovernmentGatewayAuthenticationConnector
-)
-(implicit appConfig: AppConfig)
+class SubscriptionController @Inject()(@Named("agentAssuranceFlag") agentAssuranceFlag: Boolean,
+                                       val agentAssuranceConnector: AgentAssuranceConnector,
+                                       override val messagesApi: MessagesApi,
+                                       override val authConnector: AuthConnector,
+                                       override val config: PasscodeVerificationConfig,
+                                       override val passcodeAuthenticationProvider: PasscodeAuthenticationProvider,
+                                       subscriptionService: SubscriptionService,
+                                       sessionStoreService: SessionStoreService,
+                                       addressLookUpConnector: AddressLookupFrontendConnector,
+                                       ggAuthenticationConnector: GovernmentGatewayAuthenticationConnector)
+                                      (implicit appConfig: AppConfig)
   extends FrontendController with I18nSupport with AuthActions with SessionDataMissing {
 
   private val JourneyName: String = appConfig.journeyName
@@ -96,13 +94,28 @@ class SubscriptionController @Inject()
 
   val showInitialDetails: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync() { implicit authContext =>
     implicit request =>
-      hasEnrolments match {
-        case true => Future(Redirect(routes.CheckAgencyController.showHasOtherEnrolments()))
-        case false => sessionStoreService.fetchKnownFactsResult.map(_.map { knownFactsResult =>
-          Ok(html.subscription_details(knownFactsResult.taxpayerName, initialDetailsForm.fill(
-            InitialDetails(knownFactsResult.utr, knownFactsResult.postcode, null, null, null))))
+      if (hasEnrolments) Future(Redirect(routes.CheckAgencyController.showHasOtherEnrolments()))
+      else {
+        sessionStoreService.fetchKnownFactsResult.flatMap(maybeResult => maybeResult.map { knownFactsResult =>
+          if (agentAssuranceFlag) {
+            val futurePaye = agentAssuranceConnector.hasAcceptableNumberOfPayeClients
+            val futureSA = agentAssuranceConnector.hasAcceptableNumberOfSAClients
+
+            for {
+              paye <- futurePaye
+              sa <- futureSA
+            } yield (paye, sa) match {
+              case (false, false) => NotImplemented
+              case _ => Ok(html.subscription_details(knownFactsResult.taxpayerName, initialDetailsForm.fill(
+                InitialDetails(knownFactsResult.utr, knownFactsResult.postcode, null, null, null))))
+            }
+          }
+          else {
+            Future successful Ok(html.subscription_details(knownFactsResult.taxpayerName, initialDetailsForm.fill(
+              InitialDetails(knownFactsResult.utr, knownFactsResult.postcode, null, null, null))))
+          }
         }.getOrElse {
-          sessionMissingRedirect()
+          Future successful sessionMissingRedirect()
         })
       }
   }
