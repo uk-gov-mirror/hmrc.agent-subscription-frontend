@@ -14,14 +14,14 @@ class AgentAssuranceConnectorISpec extends UnitSpec with OneAppPerSuite with Wir
 
   private lazy val connector = new AgentAssuranceConnector(new URL(s"http://localhost:$wireMockPort"), WSHttp)
 
-  "getRegistration" should {
+  "getRegistration PAYE" should {
     "return true when the current logged in user has an acceptable number of PAYE clients" in {
-      givenUserIsAnAgentWithAnAccetableNumberOfPAYEClients
+      givenUserIsAnAgentWithAnAcceptableNumberOfPAYEClients
       await(connector.hasAcceptableNumberOfPayeClients) shouldBe true
     }
 
     "return false when the current logged in user does not have an acceptable number of PAYE clients" in {
-      givenUserIsNotAnAgentWithAnAccetableNumberOfPAYEClients
+      givenUserIsNotAnAgentWithAnAcceptableNumberOfPAYEClients
       await(connector.hasAcceptableNumberOfPayeClients) shouldBe false
     }
 
@@ -31,9 +31,33 @@ class AgentAssuranceConnectorISpec extends UnitSpec with OneAppPerSuite with Wir
     }
 
     "throw an exception when appropriate" in {
-      givenAnExceptionOccursDuringhThePAYEClientCheck
+      givenAnExceptionOccursDuringThePAYEClientCheck
       intercept[Exception] {
         await(connector.hasAcceptableNumberOfPayeClients)
+      }
+    }
+  }
+
+  "getRegistration SA" should {
+    "return true when the current logged in user has an acceptable number of SA clients" in {
+      givenUserIsAnAgentWithAnAcceptableNumberOfSAClients
+      await(connector.hasAcceptableNumberOfSAClients) shouldBe true
+    }
+
+    "return false when the current logged in user does not have an acceptable number of SA clients" in {
+      givenUserIsNotAnAgentWithAnAcceptableNumberOfSAClients
+      await(connector.hasAcceptableNumberOfSAClients) shouldBe false
+    }
+
+    "return false when the current user is not authenticated" in {
+      givenUserIsNotAuthenticatedForSAClientCheck
+      await(connector.hasAcceptableNumberOfSAClients) shouldBe false
+    }
+
+    "throw an exception when appropriate" in {
+      givenAnExceptionOccursDuringTheSAClientCheck
+      intercept[Exception] {
+        await(connector.hasAcceptableNumberOfSAClients)
       }
     }
   }

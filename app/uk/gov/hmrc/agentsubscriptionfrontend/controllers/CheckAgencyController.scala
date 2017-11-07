@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
-import javax.inject.{Inject, Named, Singleton}
+import javax.inject.{Inject, Singleton}
 
 import play.api.data.Form
 import play.api.data.Forms.mapping
@@ -24,7 +24,7 @@ import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{AnyContent, Request, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.{AgentRequest, AuthActions, NoOpRegimeWithContinueUrl}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.connectors.{AgentAssuranceConnector, AgentSubscriptionConnector}
+import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentSubscriptionConnector
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{KnownFactsResult, Registration}
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
@@ -46,9 +46,7 @@ object CheckAgencyController {
 
 @Singleton
 class CheckAgencyController @Inject()
-(@Named("agentAssuranceFlag") agentAssuranceFlag: Boolean,
- val agentAssuranceConnector: AgentAssuranceConnector,
- override val messagesApi: MessagesApi,
+(override val messagesApi: MessagesApi,
  override val authConnector: AuthConnector,
  override val config: PasscodeVerificationConfig,
  override val passcodeAuthenticationProvider: PasscodeAuthenticationProvider,
@@ -88,13 +86,13 @@ class CheckAgencyController @Inject()
 
   val checkAgencyStatus: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync() {
     implicit authContext: AuthContext =>
-    implicit request =>
-      CheckAgencyController.knownFactsForm.bindFromRequest().fold(
-        formWithErrors => {
-          Future successful Ok(html.check_agency_status(formWithErrors))
-        },
-        knownFacts => checkAgencyStatusGivenValidForm(knownFacts)
-      )
+      implicit request =>
+        CheckAgencyController.knownFactsForm.bindFromRequest().fold(
+          formWithErrors => {
+            Future successful Ok(html.check_agency_status(formWithErrors))
+          },
+          knownFacts => checkAgencyStatusGivenValidForm(knownFacts)
+        )
   }
 
   private def checkAgencyStatusGivenValidForm(knownFacts: KnownFacts)
@@ -106,16 +104,8 @@ class CheckAgencyController @Inject()
             utr = knownFacts.utr,
             postcode = knownFacts.postcode,
             taxpayerName = name,
-            isSubscribedToAgentServices = isSubscribedToAgentServices)).flatMap { _ =>
-              if (agentAssuranceFlag) {
-                agentAssuranceConnector.hasAcceptableNumberOfPayeClients.map( ok =>
-                  if (ok) Redirect(routes.CheckAgencyController.showConfirmYourAgency())
-                  else NotImplemented
-                )
-              } else{
-                Future successful Redirect(routes.CheckAgencyController.showConfirmYourAgency())
-              }
-          }
+            isSubscribedToAgentServices = isSubscribedToAgentServices)).map(_ =>
+            Redirect(routes.CheckAgencyController.showConfirmYourAgency()))
         case Some(_) => throw new IllegalStateException(s"The agency with UTR ${knownFacts.utr} has no organisation name.")
         case None => Future successful Redirect(routes.CheckAgencyController.showNoAgencyFound())
       }
