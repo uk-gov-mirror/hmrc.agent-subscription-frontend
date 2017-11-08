@@ -25,7 +25,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUsers._
 
-class CheckAgencyControllerWithoiutAssuranceISpec extends CheckAgencyControllerISpec {
+class CheckAgencyControllerWithoutAssuranceISpec extends CheckAgencyControllerISpec {
   "checkAgencyStatus with the agentAssuranceFlag set to false" should {
     "redirect to confirm agency page and store known facts result in the session store when a matching registration is found for the UTR and postcode" in {
       withMatchingUtrAndPostcode(validUtr, validPostcode)
@@ -37,7 +37,8 @@ class CheckAgencyControllerWithoiutAssuranceISpec extends CheckAgencyControllerI
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showConfirmYourAgency().url)
 
-      sessionStoreService.currentSession.knownFactsResult shouldBe Some(KnownFactsResult(validUtr, validPostcode, "My Agency", isSubscribedToAgentServices = false))
+      sessionStoreService.currentSession.knownFactsResult shouldBe
+        Some(KnownFactsResult(validUtr, validPostcode, "My Agency", isSubscribedToAgentServices = false))
     }
 
     "store isSubscribedToAgentServices = false in session when the business registration found by agent-subscription is not already subscribed" in {
