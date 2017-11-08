@@ -18,6 +18,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
+import play.api.test.Helpers._
 import uk.gov.hmrc.agentsubscriptionfrontend.models.KnownFactsResult
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub._
@@ -72,7 +73,7 @@ class SubscriptionControllerWithAssuranceFlagISpec extends SubscriptionControlle
         Some(KnownFactsResult(utr, knownFactsPostcode, "My Business", isSubscribedToAgentServices = false))
     }
 
-    "return NotImplemented when both PAYE and SA checks fail" in {
+    "redirect to setup incomplete page when both PAYE and SA checks fail" in {
       implicit val request: FakeRequest[AnyContentAsEmpty.type] = authenticatedRequest()
       sessionStoreService.currentSession.knownFactsResult = Some(myAgencyKnownFactsResult)
       hasNoEnrolments(subscribingAgent)
@@ -81,7 +82,8 @@ class SubscriptionControllerWithAssuranceFlagISpec extends SubscriptionControlle
 
       val result = await(controller.showInitialDetails(request))
 
-      status(result) shouldBe 501
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.SubscriptionController.setupIncomplete().url)
     }
   }
 }

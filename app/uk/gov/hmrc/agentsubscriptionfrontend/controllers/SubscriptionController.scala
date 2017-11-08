@@ -105,7 +105,7 @@ class SubscriptionController @Inject()(@Named("agentAssuranceFlag") agentAssuran
               paye <- futurePaye
               sa <- futureSA
             } yield (paye, sa) match {
-              case (false, false) => NotImplemented
+              case (false, false) => Redirect(routes.SubscriptionController.setupIncomplete)
               case _ => Ok(html.subscription_details(knownFactsResult.taxpayerName, initialDetailsForm.fill(
                 InitialDetails(knownFactsResult.utr, knownFactsResult.postcode, null, null, null))))
             }
@@ -228,4 +228,9 @@ class SubscriptionController @Inject()(@Named("agentAssuranceFlag") agentAssuran
         }
       }
   }
+
+    def setupIncomplete: Action[AnyContent] = PasscodeAuthenticatedActionAsync { implicit request =>
+        Future.successful(Ok(html.setup_incomplete()))
+    }
+
 }
