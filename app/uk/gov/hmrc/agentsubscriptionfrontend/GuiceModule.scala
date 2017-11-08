@@ -27,6 +27,7 @@ import play.api.{Configuration, Environment, Logger, LoggerLike}
 import uk.gov.hmrc.agentsubscriptionfrontend.config._
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.http.cache.client.SessionCache
+import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.http.HttpGet
@@ -92,6 +93,7 @@ class GuiceModule(environment: Environment, configuration: Configuration) extend
     bind(classOf[HttpGet]).toInstance(WSHttp)
     bind(classOf[AppConfig]).to(classOf[FrontendAppConfig])
     bind(classOf[AuthConnector]).to(classOf[FrontendAuthConnector])
+    bind(classOf[AuditConnector]).toInstance(FrontendAuditConnector)
     bind(classOf[SessionCache]).toInstance(AgentSubscriptionSessionCache)
     bind(classOf[SessionStoreService])
     bind(classOf[LoggerLike]).toInstance(Logger)

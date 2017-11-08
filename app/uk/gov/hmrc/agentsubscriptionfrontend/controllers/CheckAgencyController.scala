@@ -22,6 +22,7 @@ import play.api.data.Form
 import play.api.data.Forms.mapping
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{AnyContent, Request, _}
+import uk.gov.hmrc.agentsubscriptionfrontend.audit.AuditService
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.{AgentRequest, AuthActions, NoOpRegimeWithContinueUrl}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.{AgentAssuranceConnector, AgentSubscriptionConnector}
@@ -54,7 +55,8 @@ class CheckAgencyController @Inject()
  override val passcodeAuthenticationProvider: PasscodeAuthenticationProvider,
  val agentSubscriptionConnector: AgentSubscriptionConnector,
  val sessionStoreService: SessionStoreService,
- continueUrlActions: ContinueUrlActions)
+ continueUrlActions: ContinueUrlActions,
+ auditService: AuditService)
 (implicit appConfig: AppConfig)
   extends FrontendController with I18nSupport with AuthActions with SessionDataMissing {
 
@@ -98,7 +100,7 @@ class CheckAgencyController @Inject()
   }
 
   private def checkAgencyStatusGivenValidForm(knownFacts: KnownFacts)
-                                             (implicit authContext: AuthContext, request: Request[AnyContent]): Future[Result] = {
+                                             (implicit authContext: AuthContext, request: AgentRequest[AnyContent]): Future[Result] = {
     def assureIsAgent(): Future[Option[AssuranceResults]] = {
       if (agentAssuranceFlag) {
         val futurePaye = agentAssuranceConnector.hasAcceptableNumberOfPayeClients
@@ -113,7 +115,7 @@ class CheckAgencyController @Inject()
     }
 
     def decideBasedOn: Option[AssuranceResults] => Result = {
-      case Some(AssuranceResults(false,false)) => Redirect(routes.StartController.setupIncomplete)
+      case Some(AssuranceResults(false,false)) => Redirect(routes.StartController.setupIncomplete())
       case _  => Redirect(routes.CheckAgencyController.showConfirmYourAgency())
     }
 
@@ -125,6 +127,7 @@ class CheckAgencyController @Inject()
             assuranceResults <- assureIsAgent()
             knownFactsResult = KnownFactsResult(knownFacts.utr, knownFacts.postcode, taxpayerName, isSubscribedToAgentServices)
             _ <- sessionStoreService.cacheKnownFactsResult(knownFactsResult)
+            _ <- assuranceResults.map(auditService.sendAgentAssuranceAuditEvent(knownFactsResult, _)).getOrElse(Future.successful(()))
           } yield decideBasedOn(assuranceResults)
 
         case Some(_) => throw new IllegalStateException(s"The agency with UTR ${knownFacts.utr} has no organisation name.")

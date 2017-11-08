@@ -52,7 +52,9 @@ object SampleUsers {
     """.stripMargin,
     userDetailsJson = s"""
        |{
-       |  "affinityGroup": "Agent"
+       |  "affinityGroup": "Agent",
+       |  "authProviderId" : "12345-credId",
+       |  "authProviderType" : "GovernmentGateway"
        |}
     """.stripMargin
   )
@@ -81,7 +83,9 @@ object SampleUsers {
     """.stripMargin,
     userDetailsJson = s"""
                          |{
-                         |  "affinityGroup": "Agent"
+                         |  "affinityGroup": "Agent",
+                         |  "authProviderId" : "12345-credId",
+                         |  "authProviderType" : "GovernmentGateway"
                          |}
     """.stripMargin
   )
@@ -110,7 +114,9 @@ object SampleUsers {
     """.stripMargin,
     userDetailsJson = s"""
        |{
-       |  "affinityGroup": "Individual"
+       |  "affinityGroup": "Individual",
+       |  "authProviderId" : "12345-credId",
+       |  "authProviderType" : "GovernmentGateway"
        |}
     """.stripMargin
 

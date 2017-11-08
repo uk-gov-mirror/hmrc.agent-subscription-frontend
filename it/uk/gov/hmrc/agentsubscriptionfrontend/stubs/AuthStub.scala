@@ -131,7 +131,7 @@ object AuthStub {
               .withStatus(200)
               .withBody(
                 s"""
-                   |[{"key":"HMRC-AS-AGENT","state":"Activated"}]
+                   |[{"key":"HMRC-AS-AGENT","identifiers":[{"key":"AgentReferenceNumber","value":"JARN1234567"}],"state":"Activated"}]
                  """.stripMargin
               )
         ))
@@ -144,7 +144,7 @@ object AuthStub {
           .withStatus(200)
           .withBody(
             s"""
-               |[{"key":"HMRC-AS-AGENT","state":"Not-Activated"}]
+               |[{"key":"HMRC-AS-AGENT","identifiers":[{"key":"AgentReferenceNumber","value":"JARN1234567"}],"state":"Not-Activated"}]
                  """.stripMargin
           )
       ))
@@ -166,8 +166,8 @@ object AuthStub {
           .withStatus(200)
           .withBody(
             s"""
-               |[{"key":"IR-PAYE-AGENT","identifiers":[{"key":"IrAgentReference","value":"HZ1234"}],"state":"Activated"},
-               | {"key":"HMRC-AGENT-AGENT","identifiers":[{"key":"AgentRefNumber","value":"JARN1234567"}],"state":"Activated"}]
+               |[{"key":"IR-PAYE-AGENT","identifiers":[{"key":"IRAgentReference","value":"HZ1234"}],"state":"Activated"},
+               | {"key":"IR-SA-AGENT","identifiers":[{"key":"IRAgentReference","value":"FOO1234"}],"state":"Activated"}]
          """.stripMargin
           )
       ))
