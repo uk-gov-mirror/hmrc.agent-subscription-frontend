@@ -31,6 +31,7 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       withMatchingUtrAndPostcode(validUtr, validPostcode)
       hasNoEnrolments(subscribingAgent)
       givenUserIsAnAgentWithAnAcceptableNumberOfPAYEClients
+      givenUserIsAnAgentWithAnAcceptableNumberOfSAClients
 
       implicit val request = authenticatedRequest().withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
@@ -45,6 +46,7 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       withMatchingUtrAndPostcode(validUtr, validPostcode)
       hasNoEnrolments(subscribingAgent)
       givenUserIsAnAgentWithAnAcceptableNumberOfPAYEClients
+      givenUserIsAnAgentWithAnAcceptableNumberOfSAClients
 
       implicit val request = authenticatedRequest().withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
@@ -58,6 +60,7 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       withMatchingUtrAndPostcode(validUtr, validPostcode, isSubscribedToAgentServices = true)
       hasNoEnrolments(subscribingAgent)
       givenUserIsAnAgentWithAnAcceptableNumberOfPAYEClients
+      givenUserIsAnAgentWithAnAcceptableNumberOfSAClients
 
       implicit val request = authenticatedRequest().withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
@@ -71,33 +74,65 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       withMatchingUtrAndPostcode(validUtr, validPostcode)
       hasNoEnrolments(subscribingAgent)
       givenUserIsNotAnAgentWithAnAcceptableNumberOfPAYEClients
+      givenUserIsNotAnAgentWithAnAcceptableNumberOfSAClients
 
       implicit val request = authenticatedRequest().withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
 
-      status(result) shouldBe 501
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.StartController.setupIncomplete().url)
     }
 
     "fail when the business registration found by agent-subscription is not already subscribed for an agent without an acceptable number of PAYE clients" in {
       withMatchingUtrAndPostcode(validUtr, validPostcode)
       hasNoEnrolments(subscribingAgent)
       givenUserIsNotAnAgentWithAnAcceptableNumberOfPAYEClients
+      givenUserIsNotAnAgentWithAnAcceptableNumberOfSAClients
 
       implicit val request = authenticatedRequest().withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
 
-      status(result) shouldBe 501
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.StartController.setupIncomplete().url)
     }
 
     "fail when the business registration found by agent-subscription is already subscribed for an agent without an acceptable number of PAYE clients" in {
       withMatchingUtrAndPostcode(validUtr, validPostcode, isSubscribedToAgentServices = true)
       hasNoEnrolments(subscribingAgent)
       givenUserIsNotAnAgentWithAnAcceptableNumberOfPAYEClients
+      givenUserIsNotAnAgentWithAnAcceptableNumberOfSAClients
 
       implicit val request = authenticatedRequest().withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
 
-      status(result) shouldBe 501
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.StartController.setupIncomplete().url)
+    }
+
+    "proceed to showConfirmYourAgency when there in not an acceptable number of PAYE client, but there is enough SA Clients" in {
+      withMatchingUtrAndPostcode(validUtr, validPostcode)
+      hasNoEnrolments(subscribingAgent)
+      givenUserIsNotAnAgentWithAnAcceptableNumberOfPAYEClients
+      givenUserIsAnAgentWithAnAcceptableNumberOfSAClients
+
+      implicit val request = authenticatedRequest().withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
+      val result = await(controller.checkAgencyStatus(request))
+
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showConfirmYourAgency().url)
+    }
+
+    "proceed to showConfirmYourAgency when there in not an acceptable number of SA client, but there is enough PAYE Clients" in {
+      withMatchingUtrAndPostcode(validUtr, validPostcode)
+      hasNoEnrolments(subscribingAgent)
+      givenUserIsAnAgentWithAnAcceptableNumberOfPAYEClients
+      givenUserIsNotAnAgentWithAnAcceptableNumberOfSAClients
+
+      implicit val request = authenticatedRequest().withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
+      val result = await(controller.checkAgencyStatus(request))
+
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showConfirmYourAgency().url)
     }
   }
 }
