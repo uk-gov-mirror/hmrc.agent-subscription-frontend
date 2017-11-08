@@ -60,7 +60,8 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
       when(authConnector.getEnrolments(any[AuthContext])(any[HeaderCarrier], any[HttpReads[List[Enrolment]]]))
         .thenReturn(Future successful List.empty[Enrolment])
 
-      val controller = new CheckAgencyController(testMessagesApi, authConnector, passcodeVerificationConfig,
+      val controller = new CheckAgencyController(
+        false, agentAssuranceConnector, testMessagesApi, authConnector, passcodeVerificationConfig,
         passcodeAuthenticationProvider, agentSubscriptionConnector, sessionStoreService, continueUrlActions)
 
       intercept[Upstream5xxResponse] {

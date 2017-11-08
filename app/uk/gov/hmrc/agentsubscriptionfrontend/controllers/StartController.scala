@@ -84,4 +84,8 @@ class StartController @Inject()(override val messagesApi: MessagesApi,
       }
     }
   }
+
+  def setupIncomplete: Action[AnyContent] = PasscodeAuthenticatedActionAsync { implicit request =>
+    Future.successful(Ok(html.setup_incomplete()))
+  }
 }
