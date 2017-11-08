@@ -25,24 +25,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUsers._
 
-class CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
-  val validUtr = Utr("2000000000")
-  val validPostcode = "AA1 1AA"
-  private val invalidPostcode = "not a postcode"
-
-  val utr = Utr("0123456789")
-  val postcode = "AA11AA"
-  val registrationName = "My Agency"
-
-  private lazy val redirectUrl: String = "http://localhost:9401/agent-services-account"
-
-  private lazy val configuredGovernmentGatewayUrl = "http://configured-government-gateway.gov.uk/"
-
-  override protected def appBuilder: GuiceApplicationBuilder = super.appBuilder
-    .configure("government-gateway.url" -> configuredGovernmentGatewayUrl)
-
-  lazy val controller: CheckAgencyController = app.injector.instanceOf[CheckAgencyController]
-
+class CheckAgencyControllerWithoutAssuranceISpec extends CheckAgencyControllerISpec {
   "checkAgencyStatus with the agentAssuranceFlag set to false" should {
     "redirect to confirm agency page and store known facts result in the session store when a matching registration is found for the UTR and postcode" in {
       withMatchingUtrAndPostcode(validUtr, validPostcode)
@@ -54,7 +37,8 @@ class CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showConfirmYourAgency().url)
 
-      sessionStoreService.currentSession.knownFactsResult shouldBe Some(KnownFactsResult(validUtr, validPostcode, "My Agency", isSubscribedToAgentServices = false))
+      sessionStoreService.currentSession.knownFactsResult shouldBe
+        Some(KnownFactsResult(validUtr, validPostcode, "My Agency", isSubscribedToAgentServices = false))
     }
 
     "store isSubscribedToAgentServices = false in session when the business registration found by agent-subscription is not already subscribed" in {
@@ -81,6 +65,28 @@ class CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
       sessionStoreService.currentSession.knownFactsResult.get.isSubscribedToAgentServices shouldBe true
     }
   }
+}
+
+trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
+  val validUtr = Utr("2000000000")
+  val validPostcode = "AA1 1AA"
+  private val invalidPostcode = "not a postcode"
+
+  val utr = Utr("0123456789")
+  val postcode = "AA11AA"
+  val registrationName = "My Agency"
+
+  def agentAssuranceFlag: Boolean =  false
+
+  private lazy val redirectUrl: String = "http://localhost:9401/agent-services-account"
+
+  private lazy val configuredGovernmentGatewayUrl = "http://configured-government-gateway.gov.uk/"
+
+  override protected def appBuilder: GuiceApplicationBuilder = super.appBuilder
+    .configure("agentAssuranceFlag" -> agentAssuranceFlag,
+      "government-gateway.url" -> configuredGovernmentGatewayUrl)
+
+  lazy val controller: CheckAgencyController = app.injector.instanceOf[CheckAgencyController]
 
   "showCheckAgencyStatus" should {
 
@@ -261,7 +267,7 @@ class CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
       hasNoEnrolments(subscribingAgent)
       implicit val request = authenticatedRequest()
       sessionStoreService.currentSession.knownFactsResult = Some(
-        KnownFactsResult(utr = Utr("0123456789"), postcode = "AA11AA", taxpayerName = "My Agency", isSubscribedToAgentServices = false))
+      KnownFactsResult(utr = Utr("0123456789"), postcode = "AA11AA", taxpayerName = "My Agency", isSubscribedToAgentServices = false))
 
       val result = await(controller.showConfirmYourAgency(request))
 
@@ -272,7 +278,7 @@ class CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
       hasNoEnrolments(subscribingAgent)
       implicit val request = authenticatedRequest()
       sessionStoreService.currentSession.knownFactsResult = Some(
-        KnownFactsResult(utr = Utr("0123456789"), postcode = "AA11AA", taxpayerName = "My Agency", isSubscribedToAgentServices = false))
+      KnownFactsResult(utr = Utr("0123456789"), postcode = "AA11AA", taxpayerName = "My Agency", isSubscribedToAgentServices = false))
 
       val result = await(controller.showConfirmYourAgency(request))
 
