@@ -21,6 +21,7 @@ import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import play.api.mvc._
 import play.api.test.FakeRequest
+import uk.gov.hmrc.agentsubscriptionfrontend.audit.AuditService
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentSubscriptionConnector
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentAssuranceConnector
@@ -52,6 +53,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
       val passcodeAuthenticationProvider = new PasscodeAuthenticationProvider(passcodeVerificationConfig)
       val continueUrlActions = mock[ContinueUrlActions]
       val agentAssuranceConnector = mock[AgentAssuranceConnector]
+      val auditService = mock[AuditService]
 
       val failure = Upstream5xxResponse("failure in auth", 500, 500)
 
@@ -62,7 +64,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
 
       val controller = new CheckAgencyController(
         false, agentAssuranceConnector, testMessagesApi, authConnector, passcodeVerificationConfig,
-        passcodeAuthenticationProvider, agentSubscriptionConnector, sessionStoreService, continueUrlActions)
+        passcodeAuthenticationProvider, agentSubscriptionConnector, sessionStoreService, continueUrlActions, auditService)
 
       intercept[Upstream5xxResponse] {
         val eventualResult: Future[Result] = controller.showCheckAgencyStatus(mockRequestWithMockAuthSession)

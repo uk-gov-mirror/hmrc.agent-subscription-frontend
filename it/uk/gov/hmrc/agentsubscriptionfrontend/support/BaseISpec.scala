@@ -32,7 +32,10 @@ abstract class BaseISpec extends UnitSpec with OneAppPerSuite with MongoApp with
         "microservice.services.sso.port" -> wireMockPort,
         "passcodeAuthentication.enabled" -> passcodeAuthenticationEnabled,
         "microservice.services.government-gateway-authentication.port" -> wireMockPort,
-        "microservice.services.agent-assurance.port" -> wireMockPort
+        "microservice.services.agent-assurance.port" -> wireMockPort,
+        "auditing.enabled" -> true,
+        "auditing.consumer.baseUri.host" -> wireMockHost,
+        "auditing.consumer.baseUri.port" -> wireMockPort
       )
       .configure(mongoConfiguration)
       .overrides(new TestGuiceModule)
