@@ -24,6 +24,7 @@ import play.twirl.api.Html
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html.error_template_Scope0.error_template
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template_Scope0.main_template
+import uk.gov.hmrc.agentsubscriptionfrontend.views.html._
 
 class ViewsSpec extends MixedPlaySpec {
 
@@ -73,7 +74,7 @@ class ViewsSpec extends MixedPlaySpec {
         contentHeader = Some(Html("contentHeader")),
         bodyClasses = Some("bodyClasses"),
         mainClass = Some("mainClass"),
-        scriptElem = Some(Html("scriptElem")),
+        scriptElem = Some(accessibilityScripts()),
         userIsLoggedIn = true,
         mainContent = Html("mainContent"),
         request = FakeRequest(),
@@ -84,7 +85,7 @@ class ViewsSpec extends MixedPlaySpec {
         include("My custom page title") and
           include("sidebarLinks") and
           include("contentHeader") and
-          include("scriptElem") and
+          include("Accessibility scripts") and
           include("mainContent") and
           include("bodyClasses") and
           include("mainClass")

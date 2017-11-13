@@ -8,11 +8,12 @@ error.postcode.empty = You must include a postcode
 error.address.lines.empty = The address must have at least 1 line
 error.utr.invalid = Please enter a valid UTR
 error.telephone.invalid = Please enter a valid telephone number
-error.no.ampersand = Agency name cannot contain "&"
-error.des.text.invalid = You can only use these characters: A-Z, a-z, 0-9, -,./
+error.no.ampersand = Business name must not include an ampersand
+error.des.text.invalid = Business name must only include letters a to z, numbers, spaces, hyphens, commas, apostrophes, full stops and forward slashes
+error.summary.heading=There was a problem
+error.prefix=Error:
 
 ##Modifying address
-address.form.with-errors.error.heading = There was a problem
 address.form.with-errors.error.summary = Please check the following:
 address.form.with-errors.heading = Enter address
 address.form.with-errors.address_line_1 = Address line 1
@@ -23,11 +24,12 @@ address.form.with-errors.postcode = Postcode
 address.form.with-errors.button.confirm_address= Confirm address
 
 ##Confirm your agency
-confirmYourAgency.title=Is this the business you are setting up an account for?
+confirmYourAgency.title=You are setting up an account for:
 confirmYourAgency.caption=Agency details
 confirmYourAgency.heading.businessName=Name
 confirmYourAgency.heading.postcode=Postcode
 confirmYourAgency.heading.utr=UTR
+confirmYourAgency.cancel=This information is incorrect
 
 ##Subscription details
 subscriptionDetails.title=Add your agent business''s details
@@ -56,9 +58,9 @@ notSubscribed.p1=We''ve checked <strong class="bold">{0}</strong> and it doesn''
 subscription.failed.title=Subscription failed
 
 #Invalid address
-invalidAddress.title=Invalid Address
+invalidAddress.title=Invalid address
 invalidAddress.p1=Sorry, the address is not in a format that our system can accept. Please change the address to fix the problems described below:
-invalidAddress.button.changeAddress=Change Address
+invalidAddress.button.changeAddress=Change address
 
 #Has other enrolments
 hasOtherEnrolments.title=Create your new Agent Services account
@@ -80,6 +82,7 @@ subscriptionComplete.p1=<strong>You must save this number for your agency''s rec
 #Common
 button.startAgain=Try again
 button.continue=Continue
+button.continue.confirm=Confirm and continue
 button.continueToASAccount=Continue to your Agent Services account
 button.yes=Yes
 button.no=No

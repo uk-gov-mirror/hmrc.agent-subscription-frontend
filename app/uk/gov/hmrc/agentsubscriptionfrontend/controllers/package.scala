@@ -22,6 +22,8 @@ import play.api.data.format.Formatter
 import play.api.data.validation.{Constraint, Constraints, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.config.blacklistedpostcodes.PostcodesLoader
+import scala.util.matching.Regex
+
 
 package object controllers {
 
@@ -42,15 +44,22 @@ package object controllers {
     }
 
     private val nonEmptyPostcode: Constraint[String] = Constraint[String] { fieldValue: String =>
-      nonEmptyWithMessage("error.postcode.empty")(fieldValue) match {
-        case i: Invalid =>
-          i
-        case Valid =>
-          val error = "error.postcode.invalid"
-          desPostcodeRegex.unapplySeq(fieldValue)
-            .map(_ => Valid)
-            .getOrElse(Invalid(ValidationError(error)))
-      }
+       nonEmptyWithMessage("error.postcode.empty")(postcodeTrimSpaces(fieldValue)) match {
+         case i: Invalid =>
+           i
+         case Valid =>
+           val error = "error.postcode.invalid"
+           desPostcodeRegex.unapplySeq(fieldValue)
+             .map(_ => Valid)
+             .getOrElse(Invalid(ValidationError(error)))
+       }
+     }
+
+    private def postcodeTrimSpaces(string: String): String = {
+        val regex = "^[ ]+|[ ]+$".r
+        if(string.matches(regex.toString))
+            string.replaceAll("^[ ]+|[ ]+$", "")
+        else string
     }
 
     private val telephoneNumber: Constraint[String] = Constraint[String] { fieldValue: String =>

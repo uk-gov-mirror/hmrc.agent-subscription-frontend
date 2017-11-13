@@ -1,0 +1,15 @@
+@()(implicit messages: Messages)
+<script type="text/javascript">
+    //Accessibility scripts
+    $(function() {
+        var errorSummary =  $('#error-summary-display')
+        if (errorSummary){ errorSummary.focus() }
+        $('input:text').each( function(){
+            if($(this).closest('label').hasClass('form-field--error')){
+                $(this).attr('aria-invalid', true)
+            }else{
+                $(this).attr('aria-invalid', false)
+            }
+        });
+    });
+</script>

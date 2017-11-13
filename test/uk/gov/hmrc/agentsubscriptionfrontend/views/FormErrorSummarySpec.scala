@@ -41,8 +41,7 @@ class FormErrorSummarySpec extends UnitSpec {
     "display error messages including arguments" in {
 
       val formWithError = testForm.bind(Map("name" -> "too long too long"))
-
-      html.form_error_summary("heading", formWithError).toString should include(htmlEscapedMessage("error.maxLength", maxLength))
+       uk.gov.hmrc.play.views.html.helpers.errorSummary("heading", formWithError).toString should include(htmlEscapedMessage("error.maxLength", maxLength))
     }
   }
 
