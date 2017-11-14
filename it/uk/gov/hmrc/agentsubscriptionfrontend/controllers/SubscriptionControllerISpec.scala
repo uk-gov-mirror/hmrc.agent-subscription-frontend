@@ -17,7 +17,6 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import com.github.tomakehurst.wiremock.client.WireMock._
-import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
@@ -28,7 +27,23 @@ import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUsers._
 import uk.gov.hmrc.play.binders.ContinueUrl
 
-class SubscriptionControllerWithoutAssuranceISpec extends SubscriptionControllerISpec {
+class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec {
+  private val utr = Utr("2000000000")
+  private val knownFactsPostcode = "AA1 2AA"
+  private val myAgencyKnownFactsResult = KnownFactsResult(
+    utr = utr,
+    postcode = knownFactsPostcode,
+    taxpayerName = "My Business",
+    isSubscribedToAgentServices = false
+  )
+  private val initialDetails = InitialDetails(utr, knownFactsPostcode, "My Agency", "agency@example.com", "0123 456 7890")
+
+  private lazy val controller: SubscriptionController = app.injector.instanceOf[SubscriptionController]
+
+  private lazy val redirectUrl = "https://www.gov.uk/"
+
+  private lazy val appConfig = app.injector.instanceOf[AppConfig]
+
   "showInitialDetails" should {
     behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showInitialDetails(request))
 
@@ -73,30 +88,6 @@ class SubscriptionControllerWithoutAssuranceISpec extends SubscriptionController
       resultShouldBeSessionDataMissing(result)
     }
   }
-}
-
-trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec {
-  val utr = Utr("2000000000")
-  val knownFactsPostcode = "AA1 2AA"
-  val myAgencyKnownFactsResult = KnownFactsResult(
-    utr = utr,
-    postcode = knownFactsPostcode,
-    taxpayerName = "My Business",
-    isSubscribedToAgentServices = false
-  )
-
-  def agentAssuranceFlag: Boolean =  false
-
-  private val initialDetails = InitialDetails(utr, knownFactsPostcode, "My Agency", "agency@example.com", "0123 456 7890")
-
-  override protected def appBuilder: GuiceApplicationBuilder = super.appBuilder
-    .configure("agentAssuranceFlag" -> agentAssuranceFlag)
-
-  lazy val controller: SubscriptionController = app.injector.instanceOf[SubscriptionController]
-
-  private lazy val redirectUrl = "https://www.gov.uk/"
-
-  private lazy val appConfig = app.injector.instanceOf[AppConfig]
 
   "showSubscriptionComplete" should {
     behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showSubscriptionComplete(request))

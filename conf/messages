@@ -90,3 +90,7 @@ button.createAccount=Create account
 button.goToGg=Go to Government Gateway
 button.register=Register now
 button.signOut=Sign out
+
+#Setup Incomplete
+setupIncomplete.title=We need some more information
+setupIncomplete.p1=If you think the tax reference and postcode you entered were correct, <a href="{0}" onclick="{1}">let us know.</a>
