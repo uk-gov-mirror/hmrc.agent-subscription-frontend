@@ -22,14 +22,14 @@ import javax.inject.{Inject, Named, Singleton}
 import play.api.libs.json.JsValue
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{Arn, Registration, SubscriptionRequest}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpGet, HttpPost}
 import uk.gov.hmrc.play.encoding.UriPathEncoding.encodePathSegment
-import uk.gov.hmrc.play.http._
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext.fromLoggingDetails
 
 import scala.concurrent.Future
 
 @Singleton
-class AgentSubscriptionConnector @Inject() (@Named("agent-subscription-baseUrl") baseUrl: URL, http: HttpGet with HttpPost) {
+class AgentSubscriptionConnector @Inject()(@Named("agent-subscription-baseUrl") baseUrl: URL, http: HttpGet with HttpPost) {
 
   def getRegistration(utr: Utr, postcode: String)(implicit hc: HeaderCarrier): Future[Option[Registration]] = {
     val url = getRegistrationUrlFor(utr, postcode)

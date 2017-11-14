@@ -19,19 +19,19 @@ package uk.gov.hmrc.agentsubscriptionfrontend.connectors
 import java.net.URL
 import javax.inject.{Inject, Named, Singleton}
 
+import uk.gov.hmrc.http.{HeaderCarrier, HttpGet, HttpResponse, Upstream4xxResponse}
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext.fromLoggingDetails
-import uk.gov.hmrc.play.http.{HeaderCarrier, HttpGet, HttpResponse, Upstream4xxResponse}
 
 import scala.concurrent.Future
 
 @Singleton
-class AgentAssuranceConnector @Inject() (@Named("agent-assurance-baseUrl") baseUrl: URL, http: HttpGet){
+class AgentAssuranceConnector @Inject()(@Named("agent-assurance-baseUrl") baseUrl: URL, http: HttpGet) {
   def hasAcceptableNumberOfClients(regime: String)(implicit hc: HeaderCarrier): Future[Boolean] = {
     http.GET[HttpResponse](
       new URL(baseUrl, s"/agent-assurance/acceptableNumberOfClients/service/$regime").toString).map { response =>
-        response.status == 204
+      response.status == 204
     } recover {
-      case e: Upstream4xxResponse => if ( e.upstreamResponseCode == 401 || e.upstreamResponseCode == 403 ) false else throw e
+      case e: Upstream4xxResponse => if (e.upstreamResponseCode == 401 || e.upstreamResponseCode == 403) false else throw e
     }
   }
 

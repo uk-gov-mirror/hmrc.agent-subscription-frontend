@@ -26,11 +26,11 @@ import play.api.test.FakeRequest
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.DataEvent
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
-import uk.gov.hmrc.play.http.HeaderCarrier
-import uk.gov.hmrc.play.http.logging.{Authorization, RequestId, SessionId}
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.ExecutionContext
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.logging.{ Authorization, RequestId, SessionId }
 
 class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
 

@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.config
 
+import javax.inject.Inject
+
 import com.typesafe.config.Config
 import net.ceedubs.ficus.Ficus._
 import play.api.Play.current
@@ -25,26 +27,23 @@ import play.api.{Application, Configuration, Play}
 import play.twirl.api.Html
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.crypto.ApplicationCrypto.verifyConfiguration
-import uk.gov.hmrc.play.audit.filters.FrontendAuditFilter
+import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.config.{AppName, ControllerConfig, RunMode}
-import uk.gov.hmrc.play.filters.MicroserviceFilterSupport
 import uk.gov.hmrc.play.frontend.bootstrap.DefaultFrontendGlobal
-import uk.gov.hmrc.play.http.logging.filters.FrontendLoggingFilter
+import uk.gov.hmrc.play.frontend.filters.{FrontendAuditFilter, FrontendLoggingFilter, MicroserviceFilterSupport}
 
 
-object FrontendGlobal
-  extends DefaultFrontendGlobal {
+object FrontendGlobal extends DefaultFrontendGlobal {
 
-  override val auditConnector = FrontendAuditConnector
-  override val loggingFilter = LoggingFilter
-  override val frontendAuditFilter = AuditFilter
+  implicit lazy val appConfig: AppConfig = current.injector.instanceOf[AppConfig]
+  override lazy val auditConnector = current.injector.instanceOf[AuditConnector]
+  override lazy val loggingFilter = current.injector.instanceOf[LoggingFilter]
+  override lazy val frontendAuditFilter = current.injector.instanceOf[AuditFilter]
 
   override def onStart(app: Application) {
     super.onStart(app)
     verifyConfiguration()
   }
-
-  implicit lazy val appConfig: AppConfig = current.injector.instanceOf[AppConfig]
 
   override def standardErrorTemplate(pageTitle: String, heading: String, message: String)(implicit rh: Request[_]): Html =
     html.error_template(pageTitle, heading, message)
@@ -56,17 +55,15 @@ object ControllerConfiguration extends ControllerConfig {
   lazy val controllerConfigs = Play.current.configuration.underlying.as[Config]("controllers")
 }
 
-object LoggingFilter extends FrontendLoggingFilter with MicroserviceFilterSupport {
+class LoggingFilter extends FrontendLoggingFilter with MicroserviceFilterSupport {
   override def controllerNeedsLogging(controllerName: String) = ControllerConfiguration.paramsForController(controllerName).needsLogging
 }
 
-object AuditFilter extends FrontendAuditFilter with RunMode with AppName with MicroserviceFilterSupport {
+class AuditFilter @Inject()(val auditConnector: AuditConnector) extends FrontendAuditFilter with RunMode with AppName with MicroserviceFilterSupport {
 
   override lazy val maskedFormFields = Seq("password")
 
   override lazy val applicationPort = None
-
-  override lazy val auditConnector = FrontendAuditConnector
 
   override def controllerNeedsAuditing(controllerName: String) = ControllerConfiguration.paramsForController(controllerName).needsAuditing
 }

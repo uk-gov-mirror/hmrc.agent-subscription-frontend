@@ -21,11 +21,11 @@ import javax.inject.{Inject, Singleton}
 
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.SsoConnector
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.binders.ContinueUrl
-import uk.gov.hmrc.play.http.HeaderCarrier
 
 import scala.concurrent.Future
-import scala.util.{Success, Try}
+import scala.util.Try
 
 @Singleton
 class HostnameWhiteListService @Inject()(appConfig: AppConfig, ssoConnector: SsoConnector) {

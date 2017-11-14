@@ -2,14 +2,14 @@ package uk.gov.hmrc.agentsubscriptionfrontend.connectors
 
 import java.net.URL
 
-import uk.gov.hmrc.agentsubscriptionfrontend.config.WSHttp
+import uk.gov.hmrc.agentsubscriptionfrontend.config.{HttpVerbs}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.SsoStub
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
-import uk.gov.hmrc.play.http.HeaderCarrier
+import uk.gov.hmrc.http.HeaderCarrier
 
 class SsoConnectorSpec extends BaseISpec {
 
-  private lazy val connector = new SsoConnector(WSHttp, new URL(s"http://localhost:$wireMockPort"))
+  private lazy val connector = new SsoConnector(app.injector.instanceOf[HttpVerbs], new URL(s"http://localhost:$wireMockPort"))
   private implicit val hc = HeaderCarrier()
 
   "SsoConnector" should {

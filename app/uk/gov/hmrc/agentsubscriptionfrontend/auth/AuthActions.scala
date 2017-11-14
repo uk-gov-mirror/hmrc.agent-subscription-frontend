@@ -19,9 +19,10 @@ package uk.gov.hmrc.agentsubscriptionfrontend.auth
 import play.api.mvc._
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.passcode.authentication.PasscodeAuthentication
+import uk.gov.hmrc.play.HeaderCarrierConverter
 import uk.gov.hmrc.play.frontend.auth.{Actions, AuthContext, TaxRegime}
-import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
 import scala.concurrent.Future
@@ -31,7 +32,7 @@ case class AgentRequest[A](enrolments: List[Enrolment], request: Request[A]) ext
 trait AuthActions extends Actions with PasscodeAuthentication {
   protected type AsyncPlayUserRequest = AuthContext => AgentRequest[AnyContent] => Future[Result]
 
-  private implicit def hc(implicit request: Request[_]): HeaderCarrier = HeaderCarrier.fromHeadersAndSession(request.headers, Some(request.session))
+  private implicit def hc(implicit request: Request[_]): HeaderCarrier = HeaderCarrierConverter.fromHeadersAndSession(request.headers, Some(request.session))
 
   def AuthorisedWithSubscribingAgentAsync(regime: TaxRegime = NoOpRegime)(body: AsyncPlayUserRequest)(implicit appConfig: AppConfig): Action[AnyContent] =
     AuthorisedFor(regime, pageVisibility = GGConfidence).async {
@@ -42,7 +43,7 @@ trait AuthActions extends Actions with PasscodeAuthentication {
               (for {
                 isAgent <- isAgentAffinityGroup
                 activatedEnrol <- checkActivatedEnrollment(enrolls)
-              } yield (isAgent, activatedEnrol)).flatMap{
+              } yield (isAgent, activatedEnrol)).flatMap {
                 case (true, true) => Future successful Redirect(appConfig.agentServicesAccountUrl)
                 case (true, false) => body(authContext)(AgentRequest(enrolls, request))
                 case _ => Future successful redirectToNonAgentNextSteps

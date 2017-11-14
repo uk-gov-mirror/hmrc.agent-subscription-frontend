@@ -19,7 +19,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.connectors
 import java.net.URL
 import javax.inject.{Inject, Named}
 
-import uk.gov.hmrc.play.http.{HeaderCarrier, HttpGet, HttpPost}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpGet, HttpPost}
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext.fromLoggingDetails
 
 import scala.concurrent.Future
@@ -28,7 +28,7 @@ class GovernmentGatewayAuthenticationConnector @Inject()(@Named("government-gate
 
   def refreshEnrolments(implicit hc: HeaderCarrier): Future[Unit] = {
     http.POSTEmpty(s"$baseUrl/government-gateway-authentication/refresh-profile").map { httpResponse =>
-      if(httpResponse.status != 204) throw new RuntimeException(s"Receive unexpected response from authenticator proxy, with status ${httpResponse.status}")
+      if (httpResponse.status != 204) throw new RuntimeException(s"Receive unexpected response from authenticator proxy, with status ${httpResponse.status}")
     }
   }
 }

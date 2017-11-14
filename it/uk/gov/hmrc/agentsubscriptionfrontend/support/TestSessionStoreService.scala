@@ -19,7 +19,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.support
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{InitialDetails, KnownFactsResult}
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.play.binders.ContinueUrl
-import uk.gov.hmrc.play.http.HeaderCarrier
+import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -50,7 +50,7 @@ class TestSessionStoreService extends SessionStoreService(null) {
     sessions.isEmpty
   }
 
-  override def fetchKnownFactsResult(implicit hc: HeaderCarrier): Future[Option[KnownFactsResult]] = {
+  override def fetchKnownFactsResult(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[KnownFactsResult]] = {
     Future successful currentSession.knownFactsResult
   }
 
@@ -59,7 +59,7 @@ class TestSessionStoreService extends SessionStoreService(null) {
       currentSession.knownFactsResult = Some(knownFactsResult)
     )
 
-  override def fetchInitialDetails(implicit hc: HeaderCarrier): Future[Option[InitialDetails]] = {
+  override def fetchInitialDetails(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[InitialDetails]] = {
     Future successful currentSession.initialDetails
   }
 
@@ -68,7 +68,7 @@ class TestSessionStoreService extends SessionStoreService(null) {
       currentSession.initialDetails = Some(details)
     )
 
-  override def fetchContinueUrl(implicit hc: HeaderCarrier): Future[Option[ContinueUrl]] = {
+  override def fetchContinueUrl(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[ContinueUrl]] = {
     Future successful currentSession.continueUrl
   }
 

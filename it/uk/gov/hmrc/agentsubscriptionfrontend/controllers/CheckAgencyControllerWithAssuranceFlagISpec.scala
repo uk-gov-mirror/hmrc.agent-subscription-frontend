@@ -32,7 +32,7 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       isEnrolledForNonMtdServices(subscribingAgent)
       givenUserIsAnAgentWithAnAcceptableNumberOfPAYEClients
       givenUserIsAnAgentWithAnAcceptableNumberOfSAClients
-      givenAuditConnector()
+
 
       implicit val request = authenticatedRequest(subscribingAgent).withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
@@ -50,7 +50,7 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       isEnrolledForNonMtdServices(subscribingAgent)
       givenUserIsAnAgentWithAnAcceptableNumberOfPAYEClients
       givenUserIsAnAgentWithAnAcceptableNumberOfSAClients
-      givenAuditConnector()
+
 
       implicit val request = authenticatedRequest(subscribingAgent).withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
@@ -66,7 +66,7 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       isEnrolledForNonMtdServices(subscribingAgent)
       givenUserIsAnAgentWithAnAcceptableNumberOfPAYEClients
       givenUserIsAnAgentWithAnAcceptableNumberOfSAClients
-      givenAuditConnector()
+
 
       implicit val request = authenticatedRequest(subscribingAgent).withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
@@ -82,7 +82,7 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       isEnrolledForNonMtdServices(subscribingAgent)
       givenUserIsNotAnAgentWithAnAcceptableNumberOfPAYEClients
       givenUserIsNotAnAgentWithAnAcceptableNumberOfSAClients
-      givenAuditConnector()
+
 
       implicit val request = authenticatedRequest(subscribingAgent).withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
@@ -97,7 +97,7 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       isEnrolledForNonMtdServices(subscribingAgent)
       givenUserIsNotAnAgentWithAnAcceptableNumberOfPAYEClients
       givenUserIsNotAnAgentWithAnAcceptableNumberOfSAClients
-      givenAuditConnector()
+
 
       implicit val request = authenticatedRequest().withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
@@ -112,7 +112,7 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       isEnrolledForNonMtdServices(subscribingAgent)
       givenUserIsNotAnAgentWithAnAcceptableNumberOfPAYEClients
       givenUserIsNotAnAgentWithAnAcceptableNumberOfSAClients
-      givenAuditConnector()
+
 
       implicit val request = authenticatedRequest(subscribingAgent).withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
@@ -127,7 +127,7 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       isEnrolledForNonMtdServices(subscribingAgent)
       givenUserIsNotAnAgentWithAnAcceptableNumberOfPAYEClients
       givenUserIsAnAgentWithAnAcceptableNumberOfSAClients
-      givenAuditConnector()
+
 
       implicit val request = authenticatedRequest(subscribingAgent).withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
@@ -142,7 +142,7 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       isEnrolledForNonMtdServices(subscribingAgent)
       givenUserIsAnAgentWithAnAcceptableNumberOfPAYEClients
       givenUserIsNotAnAgentWithAnAcceptableNumberOfSAClients
-      givenAuditConnector()
+
 
       implicit val request = authenticatedRequest(subscribingAgent).withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))

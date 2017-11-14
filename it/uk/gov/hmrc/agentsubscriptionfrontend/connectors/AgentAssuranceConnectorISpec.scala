@@ -3,16 +3,17 @@ package uk.gov.hmrc.agentsubscriptionfrontend.connectors
 import java.net.URL
 
 import org.scalatestplus.play.OneAppPerSuite
-import uk.gov.hmrc.agentsubscriptionfrontend.config.WSHttp
+import uk.gov.hmrc.agentsubscriptionfrontend.config.HttpVerbs
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.WireMockSupport
-import uk.gov.hmrc.play.http.HeaderCarrier
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 
 class AgentAssuranceConnectorISpec extends UnitSpec with OneAppPerSuite with WireMockSupport{
+
   private implicit val hc = HeaderCarrier()
 
-  private lazy val connector = new AgentAssuranceConnector(new URL(s"http://localhost:$wireMockPort"), WSHttp)
+  private lazy val connector = new AgentAssuranceConnector(new URL(s"http://localhost:$wireMockPort"), app.injector.instanceOf[HttpVerbs])
 
   "getRegistration PAYE" should {
     "return true when the current logged in user has an acceptable number of PAYE clients" in {

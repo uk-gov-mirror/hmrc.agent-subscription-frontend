@@ -18,30 +18,30 @@ package uk.gov.hmrc.agentsubscriptionfrontend.service
 
 import javax.inject.{Inject, Singleton}
 
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{InitialDetails, KnownFactsResult}
-import uk.gov.hmrc.http.cache.client.SessionCache
 import uk.gov.hmrc.agentsubscriptionfrontend.models.ContinueUrlJsonFormat._
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{InitialDetails, KnownFactsResult}
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.cache.client.SessionCache
 import uk.gov.hmrc.play.binders.ContinueUrl
-import uk.gov.hmrc.play.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class SessionStoreService @Inject() (sessionCache: SessionCache) {
+class SessionStoreService @Inject()(sessionCache: SessionCache) {
 
-  def fetchKnownFactsResult(implicit hc: HeaderCarrier): Future[Option[KnownFactsResult]] =
+  def fetchKnownFactsResult(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[KnownFactsResult]] =
     sessionCache.fetchAndGetEntry[KnownFactsResult]("knownFactsResult")
 
   def cacheKnownFactsResult(knownFactsResult: KnownFactsResult)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
     sessionCache.cache("knownFactsResult", knownFactsResult).map(_ => ())
 
-  def fetchInitialDetails(implicit hc: HeaderCarrier): Future[Option[InitialDetails]] =
+  def fetchInitialDetails(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[InitialDetails]] =
     sessionCache.fetchAndGetEntry[InitialDetails]("initialDetails")
 
   def cacheInitialDetails(details: InitialDetails)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
     sessionCache.cache("initialDetails", details).map(_ => ())
 
-  def fetchContinueUrl(implicit hc: HeaderCarrier): Future[Option[ContinueUrl]] =
+  def fetchContinueUrl(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[ContinueUrl]] =
     sessionCache.fetchAndGetEntry[ContinueUrl]("continueUrl")
 
   def cacheContinueUrl(url: ContinueUrl)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] = {
