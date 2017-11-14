@@ -220,7 +220,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec w
 
       checkHtmlResultWithBodyText(result,
         htmlEscapedMessage("confirmYourAgency.title"),
-        s">$postcode</", s">${utr.value}</", s">$registrationName</")
+        s"$postcode", s"${utr.value}", s"$registrationName")
     }
 
     "show a button which allows the user to return to Check Agency Status page" in {
