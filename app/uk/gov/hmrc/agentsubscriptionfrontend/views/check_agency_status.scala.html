@@ -15,7 +15,7 @@
  *@
 
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-@import uk.gov.hmrc.play.views.html.helpers.form
+@import uk.gov.hmrc.play.views.html.helpers.{form, input, errorSummary}
 @import uk.gov.hmrc.play.views.html.helpers.input
 
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
@@ -23,38 +23,40 @@
 
 @(knownFactsForm : Form[KnownFacts])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = Messages("checkAgencyStatus.title"), bodyClasses = None) {
-    <header class="page-header">
-        <h1>@Messages("checkAgencyStatus.title")</h1>
-    </header>
+@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = error_prefix(knownFactsForm) + Messages("checkAgencyStatus.title"), bodyClasses = None) {
+
+    @errorSummary(Messages("error.summary.heading"), knownFactsForm, Seq.empty, Some("check-agency-status"))
+
+    <h1 class="heading-xlarge">@Messages("checkAgencyStatus.title")</h1>
+
+    <p>@Messages("checkAgencyStatus.p1")</p>
 
     @form(
         action = routes.CheckAgencyController.checkAgencyStatus,
         'class -> "form js-form") {
 
-            <p>@Messages("checkAgencyStatus.p1")</p>
+            <div class="form-group">
+                @input(
+                    knownFactsForm("utr"),
+                    '_label -> Messages("checkAgencyStatus.label.utr"),
+                    '_inputClass -> "form-control input--cleared",
+                    '_labelClass -> "heading-small"
+                )
+            </div>
 
-                <div class="form-field">
-                    @input(
-                        knownFactsForm("utr"),
-                        '_label -> Messages("checkAgencyStatus.label.utr"),
-                        '_inputClass -> "input--medium input--cleared",
-                        '_labelClass -> "bold"
-                    )
-                </div>
+            <div class="form-group">
+                @input(
+                    knownFactsForm("postcode"),
+                    '_label -> Messages("checkAgencyStatus.label.postcode"),
+                    '_inputClass -> "form-control input--cleared input--small",
+                    '_labelClass -> "heading-small"
+                )
+            </div>
 
-                <div class="form-field">
-                    @input(
-                        knownFactsForm("postcode"),
-                        '_label -> Messages("checkAgencyStatus.label.postcode"),
-                        '_inputClass -> "input--small input--cleared",
-                        '_labelClass -> "bold"
-                    )
-                </div>
+            <div class="form-group">
+                <button class="button" type="submit" id="continue">@Messages("button.continue")</button>
+            </div>
 
-                <div class="form-field">
-                    <button class="button" type="submit" id="continue">@Messages("button.continue")</button>
-                </div>
 
     }
 }

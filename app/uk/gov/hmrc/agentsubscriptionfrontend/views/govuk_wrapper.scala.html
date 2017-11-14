@@ -29,6 +29,7 @@
 @import layouts.{govuk_template => hmrcGovUkTemplate}
 @import uk.gov.hmrc.play.views.html.{layouts => uiLayouts}
 @import uk.gov.hmrc.play.views.html.{helpers => uiHelpers}
+@import uk.gov.hmrc.agentsubscriptionfrontend.views.html._
 
 
 @betaBanner = {
@@ -38,11 +39,19 @@
     showFeedbackLinkInBetaBanner = true)
 }
 
+@headScripts = {
+    @accessibilityStyles()
+}
+
 @head = {
     @uiLayouts.head(
       linkElem = None,
-      headScripts = None)
+      headScripts = Some(headScripts))
     <meta name="format-detection" content="telephone=no" />
+}
+
+@scriptElement = {
+    @accessibilityScripts()
 }
 
 @headerNavLinks = {}
@@ -62,7 +71,7 @@
       analyticsToken = Some(appConfig.analyticsToken),
       analyticsHost = appConfig.analyticsHost,
       ssoUrl = None,
-      scriptElem = scriptElem,
+      scriptElem = Some(scriptElement),
       gaCalls = None)
 }
 

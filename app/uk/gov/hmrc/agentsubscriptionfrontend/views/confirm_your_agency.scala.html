@@ -20,28 +20,37 @@
 @(registrationName: String, postcode: String, utr: Utr, nextPageUrl: String)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = Messages("confirmYourAgency.title"), bodyClasses = None) {
-    <header class="page-header">
-        <h1>@Messages("confirmYourAgency.title")</h1>
-    </header>
 
-    <table class="form-group">
-        <caption class="visuallyhidden">@Messages("confirmYourAgency.caption")</caption>
-        <tbody>
-            <tr>
-                <th>@Messages("confirmYourAgency.heading.businessName")</th>
-                <td id="registration-name">@registrationName</td>
-            </tr>
-            <tr>
-                <th>@Messages("confirmYourAgency.heading.postcode")</th>
-                <td id="postcode">@postcode</td>
-            </tr>
-            <tr>
-                <th>@Messages("confirmYourAgency.heading.utr")</th>
-                <td id="utr">@{utr.value}</td>
-            </tr>
-        </tbody>
-    </table>
+    <h1 class="heading-xlarge">@Messages("confirmYourAgency.title")</h1>
 
-    <a id="continue" class="button" href="@nextPageUrl">@Messages("button.yes")</a>
-    <a id="return" class="button--secondary" href="@CheckAgencyController.showCheckAgencyStatus">@Messages("button.no")</a>
+    <dl class="govuk-check-your-answers cya-questions-short">
+        <div>
+            <dt class="cya-question">
+                @Messages("confirmYourAgency.heading.businessName")
+            </dt>
+            <dd class="cya-answer" id="registration-name">
+                @registrationName
+            </dd>
+        </div>
+        <div>
+            <dt class="cya-question">
+                @Messages("confirmYourAgency.heading.postcode")
+            </dt>
+            <dd class="cya-answer" id="postcode">
+                @postcode
+            </dd>
+        </div>
+        <div>
+            <dt class="cya-question">
+                @Messages("confirmYourAgency.heading.utr")
+            </dt>
+            <dd class="cya-answer" id="utr">
+                @{utr.value}
+            </dd>
+        </div>
+    </dl>
+
+    <a id="continue" class="button" href="@nextPageUrl" role="button">@Messages("button.continue.confirm")</a>
+    <br /><br />
+    <a id="return" href="@CheckAgencyController.showCheckAgencyStatus" role="button">@Messages("confirmYourAgency.cancel")</a>
 }

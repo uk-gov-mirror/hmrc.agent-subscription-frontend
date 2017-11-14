@@ -15,72 +15,74 @@
  *@
 
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-@import uk.gov.hmrc.play.views.html.helpers.form
+@import uk.gov.hmrc.play.views.html.helpers.{form, input, errorSummary}
 @import uk.gov.hmrc.play.views.html.helpers.input
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes.SubscriptionController
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
 @import uk.gov.hmrc.agentsubscriptionfrontend.models.DesAddress
 @(detailsForm: Form[DesAddress])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = Messages("subscriptionDetails.title"), bodyClasses = None) {
+@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title =  error_prefix(detailsForm) + Messages("subscriptionDetails.title"), bodyClasses = None) {
 
-<header class="page-header">
-    <h1>@Messages("invalidAddress.title")</h1>
-</header>
+    @errorSummary(Messages("error.summary.heading"), detailsForm, Seq.empty, Some("return-from-address-lookup"))
 
-<p>@Messages("invalidAddress.p1")</p>
+    <h1 class="heading-xlarge">@Messages("invalidAddress.title")</h1>
 
-@form(action = routes.SubscriptionController.submitModifiedAddress(), 'class -> "form js-form") {
-@form_error_summary(Messages("address.form.with-errors.error.heading"), detailsForm, Seq.empty)
-<h1>@Messages("address.form.with-errors.heading")</h1>
 
-<div class="form-field">
-    @input(
-    detailsForm("addressLine1"),
-    '_label -> Messages("address.form.with-errors.address_line_1"),
-    '_inputClass -> "input--medium input--cleared",
-    '_labelClass -> "bold"
-    )
-</div>
-<div class="form-field">
-    @input(
-    detailsForm("addressLine2"),
-    '_label -> Messages("address.form.with-errors.address_line_2"),
-    '_inputClass -> "input--medium input--cleared",
-    '_labelClass -> "bold"
-    )
-</div>
-@input(
-detailsForm("addressLine3"),
-'_label -> Messages("address.form.with-errors.address_line_3"),
-'_inputClass -> "input--medium input--cleared",
-'_labelClass -> "bold"
-)
-<div class="form-field">
-    @input(
-    detailsForm("addressLine4"),
-    '_label -> Messages("address.form.with-errors.town"),
-    '_inputClass -> "input--medium input--cleared",
-    '_labelClass -> "bold"
-    )
-</div>
-<div class="form-field">
-    @input(
-    detailsForm("postcode"),
-    '_label -> Messages("address.form.with-errors.postcode"),
-    '_inputClass -> "input--medium input--cleared",
-    '_labelClass -> "bold"
-    )
-</div>
-<div class="form-field">
-    @input(
-    detailsForm("countryCode"),
-    '_inputClass -> "hidden"
-    )
-</div>
-<div class="form-field">
-    <button class="button" type="submit" id="continue">@Messages("address.form.with-errors.button.confirm_address")
-    </button>
-</div>
-}
+    <p>@Messages("invalidAddress.p1")</p>
+
+    @form(action = routes.SubscriptionController.submitModifiedAddress(), 'class -> "form js-form") {
+
+        <h2>@Messages("address.form.with-errors.heading")</h2>
+
+        <div class="form-group">
+            @input(
+                detailsForm("addressLine1"),
+                '_label -> Messages("address.form.with-errors.address_line_1"),
+                '_inputClass -> "form-control input--cleared",
+                '_labelClass -> "heading-small"
+            )
+        </div>
+        <div class="form-group">
+            @input(
+                detailsForm("addressLine2"),
+                '_label -> Messages("address.form.with-errors.address_line_2"),
+                '_inputClass -> "form-control input--cleared",
+                '_labelClass -> "heading-small"
+            )
+        </div>
+        <div class="form-group">
+            @input(
+                detailsForm("addressLine3"),
+                '_label -> Messages("address.form.with-errors.address_line_3"),
+                '_inputClass -> "form-control input--cleared",
+                '_labelClass -> "heading-small"
+            )
+        </div>
+        <div class="form-group">
+            @input(
+                detailsForm("addressLine4"),
+                '_label -> Messages("address.form.with-errors.town"),
+                '_inputClass -> "form-control input--cleared",
+                '_labelClass -> "heading-small"
+            )
+        </div>
+        <div class="form-group">
+            @input(
+                detailsForm("postcode"),
+                '_label -> Messages("address.form.with-errors.postcode"),
+                '_inputClass -> "form-control input--cleared input--small",
+                '_labelClass -> "heading-small"
+            )
+        </div>
+        <div class="form-group">
+            @input(
+                detailsForm("countryCode"),
+                '_inputClass -> "hidden"
+            )
+        </div>
+        <div class="form-group">
+            <button class="button" type="submit" id="continue">@Messages("address.form.with-errors.button.confirm_address")</button>
+        </div>
+    }
 }

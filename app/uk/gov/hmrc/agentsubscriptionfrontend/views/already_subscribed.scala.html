@@ -18,9 +18,8 @@
 @()(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = Messages("alreadySubscribed.title"), bodyClasses = None) {
-    <header class="page-header">
-        <h1>@Messages("alreadySubscribed.title")</h1>
-    </header>
 
+    <h1 class="heading-xlarge">@Messages("alreadySubscribed.title")</h1>
+    
     <p>@Messages("alreadySubscribed.p1")</p>
 }
