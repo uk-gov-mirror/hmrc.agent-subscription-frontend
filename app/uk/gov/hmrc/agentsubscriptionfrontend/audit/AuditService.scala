@@ -24,12 +24,12 @@ import play.api.mvc.{AnyContent, Request}
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.AgentRequest
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{AssuranceResults, KnownFactsResult}
 import uk.gov.hmrc.domain.TaxIdentifier
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.AuditExtensions.auditHeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.DataEvent
 import uk.gov.hmrc.play.frontend.auth.AuthContext
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
-import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
 import scala.collection.JavaConversions

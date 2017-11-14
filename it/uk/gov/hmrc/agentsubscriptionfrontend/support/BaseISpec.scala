@@ -12,14 +12,15 @@ import play.twirl.api.HtmlFormat.escape
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.SsoConnector
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub.userIsAuthenticated
+import uk.gov.hmrc.agentsubscriptionfrontend.stubs.DataStreamStubs
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUsers._
-import uk.gov.hmrc.play.http.HeaderCarrier
-import uk.gov.hmrc.play.http.HeaderCarrier.fromHeadersAndSession
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.HeaderCarrierConverter
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.Future
 
-abstract class BaseISpec extends UnitSpec with OneAppPerSuite with MongoApp with WireMockSupport with EndpointBehaviours {
+abstract class BaseISpec extends UnitSpec with OneAppPerSuite with MongoApp with WireMockSupport with EndpointBehaviours with DataStreamStubs {
 
   override implicit lazy val app: Application = appBuilder.build()
 
@@ -39,6 +40,10 @@ abstract class BaseISpec extends UnitSpec with OneAppPerSuite with MongoApp with
       )
       .configure(mongoConfiguration)
       .overrides(new TestGuiceModule)
+  }
+
+  override def commonStubs(): Unit = {
+    givenAuditConnector()
   }
 
   protected def passcodeAuthenticationEnabled: Boolean = false
@@ -83,7 +88,7 @@ abstract class BaseISpec extends UnitSpec with OneAppPerSuite with MongoApp with
 
   protected def htmlEscapedMessage(key: String, args: Any*): String = escape(Messages(key, args: _*)).toString
 
-  implicit def hc(implicit request: FakeRequest[_]): HeaderCarrier = fromHeadersAndSession(request.headers, Some(request.session))
+  implicit def hc(implicit request: FakeRequest[_]): HeaderCarrier = HeaderCarrierConverter.fromHeadersAndSession(request.headers, Some(request.session))
 
 }
 

@@ -23,7 +23,7 @@ import play.api.http.Status
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentSubscriptionConnector
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionDetails
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
-import uk.gov.hmrc.play.http.{HeaderCarrier, Upstream4xxResponse}
+import uk.gov.hmrc.http.{HeaderCarrier, Upstream4xxResponse}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -34,7 +34,7 @@ class SubscriptionService @Inject()(agentSubscriptionConnector: AgentSubscriptio
                           (implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[Int, Arn]] = {
     val address = if (subscriptionDetails.address.countryCode != "GB") {
       Logger.warn(s"Non-GB country code chosen by user for UTR ${subscriptionDetails.utr.value}. " +
-                  s"Overriding with GB. A better fix for this is coming in APB-1288.")
+        s"Overriding with GB. A better fix for this is coming in APB-1288.")
       subscriptionDetails.address.copy(countryCode = "GB")
     } else {
       subscriptionDetails.address

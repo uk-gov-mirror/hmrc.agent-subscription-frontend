@@ -5,17 +5,17 @@ import java.net.URL
 import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import org.scalatestplus.play.OneAppPerSuite
-import uk.gov.hmrc.agentsubscriptionfrontend.config.WSHttp
+import uk.gov.hmrc.agentsubscriptionfrontend.config.{HttpVerbs}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub
 import uk.gov.hmrc.agentsubscriptionfrontend.support.WireMockSupport
-import uk.gov.hmrc.play.http.{HeaderCarrier, Upstream4xxResponse}
+import uk.gov.hmrc.http.{HeaderCarrier, Upstream4xxResponse}
 import uk.gov.hmrc.play.test.UnitSpec
 
 class GovernmentGatewayAuthenticationConnectorISpec extends UnitSpec with OneAppPerSuite with WireMockSupport {
   private implicit val hc = HeaderCarrier()
 
   private lazy val connector: GovernmentGatewayAuthenticationConnector =
-    new GovernmentGatewayAuthenticationConnector(new URL(s"http://localhost:$wireMockPort"), WSHttp)
+    new GovernmentGatewayAuthenticationConnector(new URL(s"http://localhost:$wireMockPort"), app.injector.instanceOf[HttpVerbs])
 
   "refreshEnrolments" should {
     "return true for successful enrolments refresh" in {

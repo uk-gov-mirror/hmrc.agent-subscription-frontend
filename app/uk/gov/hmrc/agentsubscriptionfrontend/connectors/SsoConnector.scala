@@ -21,13 +21,13 @@ import javax.inject.{Inject, Singleton}
 
 import com.google.inject.name.Named
 import play.api.Logger
-import uk.gov.hmrc.play.http._
+import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpGet}
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
 import scala.concurrent.Future
 
 @Singleton
-class SsoConnector @Inject()(http: HttpGet, @Named("sso-baseUrl") baseUrl: URL) extends AgentsHttpErrorMonitor {
+class SsoConnector @Inject()(http: HttpGet, @Named("sso-baseUrl") baseUrl: URL) {
 
   def validateExternalDomain(domain: String)(implicit hc: HeaderCarrier): Future[Boolean] = {
     val url = new URL(baseUrl, s"/sso/validate/domain/$domain")

@@ -23,8 +23,8 @@ import play.api.http.HeaderNames.LOCATION
 import play.api.libs.json.{JsObject, Json}
 import play.api.mvc.Call
 import uk.gov.hmrc.agentsubscriptionfrontend.models.AddressLookupFrontendAddress
+import uk.gov.hmrc.http.{HeaderCarrier, HttpGet, HttpPost, HttpResponse}
 import uk.gov.hmrc.play.config.ServicesConfig
-import uk.gov.hmrc.play.http.{HeaderCarrier, HttpGet, HttpPost, HttpResponse}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NoStackTrace

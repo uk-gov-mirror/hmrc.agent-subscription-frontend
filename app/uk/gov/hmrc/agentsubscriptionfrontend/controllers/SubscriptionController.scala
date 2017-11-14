@@ -18,12 +18,10 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import javax.inject.{Inject, Singleton}
 
-import cats.data.NonEmptyList
 import play.api.Logger
+import play.api.data.Form
 import play.api.data.Forms.{mapping, _}
-import play.api.data.validation.ValidationError
-import play.api.data.{Form, FormError}
-import play.api.i18n.{I18nSupport, Messages, MessagesApi}
+import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.json._
 import play.api.mvc.{AnyContent, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
@@ -36,10 +34,10 @@ import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.CallOps
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.passcode.authentication.{PasscodeAuthenticationProvider, PasscodeVerificationConfig}
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
-import uk.gov.hmrc.play.http.HeaderCarrier
 
 import scala.concurrent.Future
 import scala.util.control.NonFatal

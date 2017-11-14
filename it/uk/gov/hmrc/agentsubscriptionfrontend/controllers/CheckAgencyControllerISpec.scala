@@ -23,11 +23,10 @@ import uk.gov.hmrc.agentsubscriptionfrontend.audit.AgentSubscriptionFrontendEven
 import uk.gov.hmrc.agentsubscriptionfrontend.models.KnownFactsResult
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub._
-import uk.gov.hmrc.agentsubscriptionfrontend.stubs.DataStreamStubs
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUsers._
 
-trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec with DataStreamStubs {
+trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
   val validUtr = Utr("2000000000")
   val validPostcode = "AA1 1AA"
   private val invalidPostcode = "not a postcode"

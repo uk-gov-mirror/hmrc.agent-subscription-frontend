@@ -26,11 +26,13 @@ import play.api.Mode.Mode
 import play.api.{Configuration, Environment, Logger, LoggerLike}
 import uk.gov.hmrc.agentsubscriptionfrontend.config._
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
+import uk.gov.hmrc.http.HttpGet
 import uk.gov.hmrc.http.cache.client.SessionCache
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
-import uk.gov.hmrc.play.http.HttpGet
+
+import scala.reflect.ClassTag
 
 class GuiceModule(environment: Environment, configuration: Configuration) extends AbstractModule with ServicesConfig {
 
@@ -50,9 +52,10 @@ class GuiceModule(environment: Environment, configuration: Configuration) extend
         override lazy val get = getConfString(propertyName, throw new RuntimeException(s"No configuration value found for '$propertyName'"))
 
         def getConfString(confKey: String, defString: => String) = {
-          runModeConfiguration.getString(s"$env.$confKey").getOrElse(defString)
+          configuration.getString(s"$env.$confKey").getOrElse(configuration.getString(confKey).getOrElse(defString))
         }
       }
+
     }
 
     implicit val intConfigProperty = new ConfigPropertyType[Int] {
@@ -63,9 +66,10 @@ class GuiceModule(environment: Environment, configuration: Configuration) extend
         override lazy val get = getConfInt(propertyName, throw new RuntimeException(s"No configuration value found for '$propertyName'"))
 
         def getConfInt(confKey: String, defInt: => Int) = {
-          runModeConfiguration.getInt(s"$env.$confKey").getOrElse(defInt)
+          configuration.getInt(s"$env.$confKey").getOrElse(configuration.getInt(confKey).getOrElse(defInt))
         }
       }
+
     }
 
     implicit val booleanConfigProperty = new ConfigPropertyType[Boolean] {
@@ -76,25 +80,27 @@ class GuiceModule(environment: Environment, configuration: Configuration) extend
         override lazy val get = getConfBool(propertyName)
 
         def getConfBool(confKey: String) = {
-          runModeConfiguration.getBoolean(s"$confKey").getOrElse(false)
+          configuration.getBoolean(s"$env.$confKey").getOrElse(configuration.getBoolean(confKey).getOrElse(false))
         }
       }
+
     }
   }
 
   object ConfigProperty {
-    def bindConfigProperty[A](clazz: Class[A])(propertyName: String)(implicit ct: ConfigPropertyType[A]): ScopedBindingBuilder =
-      ct.bindConfigProperty(clazz)(propertyName)
+    def bindConfigProperty[A](propertyName: String)(implicit classTag: ClassTag[A], ct: ConfigPropertyType[A]): ScopedBindingBuilder =
+      ct.bindConfigProperty(classTag.runtimeClass.asInstanceOf[Class[A]])(propertyName)
   }
 
   import ConfigProperty._
 
   override def configure(): Unit = {
-    bind(classOf[HttpGet]).toInstance(WSHttp)
+    bindConfigProperty[String]("appName")
     bind(classOf[AppConfig]).to(classOf[FrontendAppConfig])
     bind(classOf[AuthConnector]).to(classOf[FrontendAuthConnector])
-    bind(classOf[AuditConnector]).toInstance(FrontendAuditConnector)
-    bind(classOf[SessionCache]).toInstance(AgentSubscriptionSessionCache)
+    bind(classOf[AuditConnector]).to(classOf[FrontendAuditConnector])
+    bind(classOf[HttpGet]).to(classOf[HttpVerbs])
+    bind(classOf[SessionCache]).to(classOf[AgentSubscriptionSessionCache])
     bind(classOf[SessionStoreService])
     bind(classOf[LoggerLike]).toInstance(Logger)
     bindBaseUrl("agent-assurance")
@@ -102,10 +108,13 @@ class GuiceModule(environment: Environment, configuration: Configuration) extend
     bindBaseUrl("government-gateway-authentication")
     bindBaseUrl("address-lookup-frontend")
     bindBaseUrl("sso")
-    bindConfigProperty(classOf[String])("surveyRedirectUrl")
-    bindConfigProperty(classOf[String])("sosRedirectUrl")
-    bindConfigProperty(classOf[Int])("mongodb.knownfactsresult.ttl")
-    bindConfigProperty(classOf[Boolean])("agentAssuranceFlag")
+    bindBaseUrl("cachable.session-cache")
+    bindBaseUrl("auth")
+    bindConfigProperty[String]("surveyRedirectUrl")
+    bindConfigProperty[String]("sosRedirectUrl")
+    bindConfigProperty[Int]("mongodb.knownfactsresult.ttl")
+    bindConfigProperty[Boolean]("agentAssuranceFlag")
+    bindServiceProperty("cachable.session-cache.domain")
   }
 
   private def bindBaseUrl(serviceName: String) =
@@ -114,4 +123,14 @@ class GuiceModule(environment: Environment, configuration: Configuration) extend
   private class BaseUrlProvider(serviceName: String) extends Provider[URL] {
     override lazy val get = new URL(baseUrl(serviceName))
   }
+
+  private def bindServiceProperty(propertyName: String) =
+    bind(classOf[String]).annotatedWith(named(propertyName)).toProvider(new BaseServicePropertyProvider(propertyName))
+
+  private class BaseServicePropertyProvider(propertyName: String) extends Provider[String] {
+    override lazy val get = getConfString(propertyName, {
+      throw new Exception(s"Config property for service not found $propertyName")
+    })
+  }
+
 }

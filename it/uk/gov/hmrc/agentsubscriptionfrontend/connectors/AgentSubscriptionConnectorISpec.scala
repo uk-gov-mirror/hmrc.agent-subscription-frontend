@@ -4,18 +4,19 @@ import java.net.URL
 
 import org.scalatestplus.play.OneAppPerSuite
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
-import uk.gov.hmrc.agentsubscriptionfrontend.config.WSHttp
+import uk.gov.hmrc.agentsubscriptionfrontend.config.{HttpVerbs}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub
 import uk.gov.hmrc.agentsubscriptionfrontend.support.WireMockSupport
-import uk.gov.hmrc.play.http.{HeaderCarrier, Upstream4xxResponse, Upstream5xxResponse}
+import uk.gov.hmrc.http.{HeaderCarrier, Upstream4xxResponse, Upstream5xxResponse}
 import uk.gov.hmrc.play.test.UnitSpec
 
 class AgentSubscriptionConnectorISpec extends UnitSpec with OneAppPerSuite with WireMockSupport {
 
   private implicit val hc = HeaderCarrier()
 
-  private lazy val connector: AgentSubscriptionConnector = new AgentSubscriptionConnector(new URL(s"http://localhost:$wireMockPort"), WSHttp)
+  private lazy val connector: AgentSubscriptionConnector = new AgentSubscriptionConnector(
+    new URL(s"http://localhost:$wireMockPort"), app.injector.instanceOf[HttpVerbs])
 
   private val utr = Utr("0123456789")
   "getRegistration" should {
