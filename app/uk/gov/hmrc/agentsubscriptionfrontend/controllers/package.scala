@@ -44,7 +44,7 @@ package object controllers {
     }
 
     private val nonEmptyPostcode: Constraint[String] = Constraint[String] { fieldValue: String =>
-       nonEmptyWithMessage("error.postcode.empty")(postcodeTrimSpaces(fieldValue)) match {
+       nonEmptyWithMessage("error.postcode.empty")(fieldValue) match {
          case i: Invalid =>
            i
          case Valid =>
@@ -54,13 +54,6 @@ package object controllers {
              .getOrElse(Invalid(ValidationError(error)))
        }
      }
-
-    private def postcodeTrimSpaces(string: String): String = {
-        val regex = "^[ ]+|[ ]+$".r
-        if(string.matches(regex.toString))
-            string.replaceAll("^[ ]+|[ ]+$", "")
-        else string
-    }
 
     private val telephoneNumber: Constraint[String] = Constraint[String] { fieldValue: String =>
       Constraints.nonEmpty(fieldValue) match {
