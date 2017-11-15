@@ -82,7 +82,6 @@ subscriptionComplete.p1=<strong>You must save this number for your agency''s rec
 #Common
 button.startAgain=Try again
 button.continue=Continue
-button.continue.confirm=Confirm and continue
 button.continueToASAccount=Continue to your Agent Services account
 button.yes=Yes
 button.no=No
