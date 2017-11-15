@@ -24,3 +24,5 @@ GET    /redirect-to-sos                 uk.gov.hmrc.agentsubscriptionfrontend.co
 GET    /start-survey                    uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.startSurvey
 
 GET    /setup-incomplete               uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.setupIncomplete
+
+GET    /assets/*file        controllers.Assets.at(path="/public", file)
