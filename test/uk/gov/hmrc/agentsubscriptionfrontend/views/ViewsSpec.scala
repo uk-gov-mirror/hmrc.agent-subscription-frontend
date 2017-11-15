@@ -74,7 +74,7 @@ class ViewsSpec extends MixedPlaySpec {
         contentHeader = Some(Html("contentHeader")),
         bodyClasses = Some("bodyClasses"),
         mainClass = Some("mainClass"),
-        scriptElem = Some(accessibilityScripts()),
+        scriptElem = Some(Html("<script src=\"@controllers.routes.Assets.at(\"javascripts/scripts.js\")\" type=\"text/javascript\"></script>")),
         userIsLoggedIn = true,
         mainContent = Html("mainContent"),
         request = FakeRequest(),
@@ -85,7 +85,7 @@ class ViewsSpec extends MixedPlaySpec {
         include("My custom page title") and
           include("sidebarLinks") and
           include("contentHeader") and
-          include("Accessibility scripts") and
+          include("type=\"text/javascript\"") and
           include("mainContent") and
           include("bodyClasses") and
           include("mainClass")
