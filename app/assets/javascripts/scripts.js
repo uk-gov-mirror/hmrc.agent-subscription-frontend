@@ -15,7 +15,7 @@ $(function() {
     $('[type="submit"]').click(function(){
         $input.each( function(){
             if($(this).val() && $(this).attr('name') === 'postcode'){
-                $(this).val($(this).val().trim().toUpperCase())
+                $(this).val($(this).val().toUpperCase().replace(/\s\s+/g, ' ').trim())
             }else{
                 $(this).val($(this).val().trim())
             }
