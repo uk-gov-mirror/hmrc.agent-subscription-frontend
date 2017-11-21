@@ -12,6 +12,7 @@ error.no.ampersand = Business name must not include an ampersand
 error.des.text.invalid = Business name must only include letters a to z, numbers, spaces, hyphens, commas, apostrophes, full stops and forward slashes
 error.summary.heading=There was a problem
 error.prefix=Error:
+error.email=Enter a valid email address
 
 ##Modifying address
 address.form.with-errors.error.summary = Please check the following:
