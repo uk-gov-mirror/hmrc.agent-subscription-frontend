@@ -1,18 +1,25 @@
 ##Errors that override Play default messages
-error.maxLength = You can only add up to {0} characters
+error.maxLength = You must not enter more than {0} figures
+error.email=You must enter an email address
 
 ##Errors
-error.postcode.invalid = You have entered an invalid postcode
+error.postcode.invalid = Enter a valid postcode, for example AA1 1AA
 error.postcode.blacklisted = You can''t use the postcode you''ve entered
-error.postcode.empty = You must include a postcode
+error.postcode.empty = You must enter a postcode
 error.address.lines.empty = The address must have at least 1 line
-error.utr.invalid = Please enter a valid UTR
-error.telephone.invalid = Please enter a valid telephone number
-error.no.ampersand = Business name must not include an ampersand
-error.des.text.invalid = Business name must only include letters a to z, numbers, spaces, hyphens, commas, apostrophes, full stops and forward slashes
+error.address.lines.invalid = The address must only include letters a to z, numbers, spaces, hyphens, commas, apostrophes, full stops and forward slashes
+error.address.lines.maxLength = You must not enter more than {0} figures
+error.utr.empty = You must enter a UTR or reference
+error.utr.invalid = Enter a valid 10-digit UTR
+error.telephone.empty = You must enter a telephone number
+error.telephone.invalid = You must enter a valid telephone number, for example 01234567890
+error.telephone.maxLength =  The number you enter must contain between 10 and {0} digits
+error.agency-name.empty = You must enter a business name
+error.agency-name.no.ampersand = Business name must not include an ampersand
+error.agency-name.invalid = Business name must only include letters a to z, numbers, spaces, hyphens, commas, apostrophes, full stops and forward slashes
 error.summary.heading=There is a problem
 error.prefix=Error:
-error.email=Enter a valid email address
+error.email.empty=You must enter an email address
 
 ##Modifying address
 address.form.with-errors.error.summary = Please check the following:

@@ -97,7 +97,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
       status(result) shouldBe OK
       val responseBody = bodyOf(result)
       responseBody should include("Identify your business")
-      responseBody should include("Please enter a valid UTR")
+      responseBody should include("Enter a valid 10-digit UTR")
       responseBody should include(invalidUtr)
       responseBody should include(validPostcode)
     }
@@ -112,7 +112,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
       status(result) shouldBe OK
       val responseBody = bodyOf(result)
       responseBody should include("Identify your business")
-      responseBody should include("Please enter a valid UTR")
+      responseBody should include("Enter a valid 10-digit UTR")
       responseBody should include(invalidUtr)
       responseBody should include(validPostcode)
     }
@@ -126,7 +126,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
       status(result) shouldBe OK
       val responseBody = bodyOf(result)
       responseBody should include("Identify your business")
-      responseBody should include("You have entered an invalid postcode")
+      responseBody should include("Enter a valid postcode, for example AA1 1AA")
       responseBody should include(validUtr.value)
       responseBody should include(invalidPostcode)
     }
@@ -140,7 +140,8 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
       status(result) shouldBe OK
       val responseBody = bodyOf(result)
       responseBody should include("Identify your business")
-      responseBody should include("This field is required")
+      responseBody should include("You must enter a UTR or reference")
+      responseBody should include("You must enter a postcode")
     }
 
     "redirect to no-agency-found page when no matching registration found by agent-subscription" in {

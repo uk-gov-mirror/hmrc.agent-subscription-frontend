@@ -42,18 +42,18 @@ class DesAddressFormSpec extends UnitSpec with ResettingMockitoSugar with Either
 
   private val tooLongLine = "123456789012345678901234567890123456"
   private def errorsForTooLongLine(key: String) = Seq(
-    FormError(key, "error.maxLength", Seq(35))
+    FormError(key, "error.address.lines.maxLength", Seq(35))
   )
 
   private val nonMatchingLine = "<"
   private def errorsForNonMatchingLine(key: String) = Seq(
-    FormError(key, "error.des.text.invalid", Seq())
+    FormError(key, "error.address.lines.invalid", Seq())
   )
 
   private val tooLongAndNonMatchingLine = "123456789012345678901234567890123456<"
   private def errorsForTooLongAndNonMatchingLine(key: String) = Seq(
-    FormError(key, "error.maxLength", Seq(35)),
-    FormError(key, "error.des.text.invalid", Seq())
+    FormError(key, "error.address.lines.maxLength", Seq(35)),
+    FormError(key, "error.address.lines.invalid", Seq())
   )
 
   private val validPostcode = "AA1 1AA"

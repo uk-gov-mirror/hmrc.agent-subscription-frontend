@@ -35,7 +35,7 @@
                     detailsForm("name"),
                     '_label -> Messages("subscriptionDetails.businessName.label"),
                     '_inputClass -> "form-control input--cleared",
-                    '_labelClass -> "heading-small"
+                    '_labelClass -> "heading-small soft--ends"
                 )
             </div>
 
@@ -44,7 +44,7 @@
                     detailsForm("email"),
                     '_label -> Messages("subscriptionDetails.email.label"),
                     '_inputClass -> "form-control input--cleared",
-                    '_labelClass -> "heading-small"
+                    '_labelClass -> "heading-small soft--ends"
                 )
             </div>
 
@@ -53,11 +53,11 @@
                     detailsForm("telephone"),
                     '_label -> Messages("subscriptionDetails.telephone.label"),
                     '_inputClass -> "form-control input--cleared",
-                    '_labelClass -> "heading-small"
+                    '_labelClass -> "heading-small soft--ends"
                 )
             </div>
 
-            <input type="hidden" name="knownFactsPostcode" id="knownFactsPostcode" value="@detailsForm.data("knownFactsPostcode")" >
+            <input type="hidden" name="knownFactsPostcode" id="knownFactsPostcode" value="@detailsForm.data("knownFactsPostcode")">
             <input type="hidden" name="utr" id="utr" value="@detailsForm.data("utr")">
 
             <div class="form-field">

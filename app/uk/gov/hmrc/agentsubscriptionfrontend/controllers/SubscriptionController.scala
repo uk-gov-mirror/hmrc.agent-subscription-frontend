@@ -83,7 +83,7 @@ class SubscriptionController @Inject()
       "utr" -> utr,
       "knownFactsPostcode" -> postcode,
       "name" -> agencyName,
-      "email" -> email,
+      "email" -> emailAddress,
       "telephone" -> telephone
     )(InitialDetails.apply)(InitialDetails.unapply)
   )

@@ -38,12 +38,12 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
       utrMapping.bind(Map.empty).left.value should contain only FormError("testKey", "error.required")
     }
 
-    "give \"error.required\" error when it is empty" in {
-      bind("").left.value should contain only FormError("testKey", "error.required")
+    "give \"error.utr.empty\" error when it is empty" in {
+      bind("").left.value should contain only FormError("testKey", "error.utr.empty")
     }
 
-    "give \"error.required\" error when it only contains a space" in {
-      bind(" ").left.value should contain only FormError("testKey", "error.required")
+    "give \"error.utr.empty\" error when it only contains a space" in {
+      bind(" ").left.value should contain only FormError("testKey", "error.utr.empty")
     }
 
     "give \"error.utr.invalid\" error" when {
@@ -187,6 +187,42 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
     }
   }
 
+  "emailAddress bind" should {
+    val emailAddress = FieldMappings.emailAddress.withPrefix("testKey")
+
+    def bind(fieldValue: String) = emailAddress.bind(Map("testKey" -> fieldValue))
+
+    def shouldRejectFieldValueAsInvalid(fieldValue: String): Unit = {
+      bind(fieldValue) should matchPattern { case Left(List(FormError("testKey", List("error.email"), _))) => }
+    }
+
+    def shouldAcceptFieldValue(fieldValue: String): Unit = {
+      bind(fieldValue) shouldBe Right(fieldValue)
+    }
+
+    "reject email address" when {
+      "field is not present" in {
+        emailAddress.bind(Map.empty).left.value should contain only FormError("testKey", "error.required")
+      }
+
+      "input is empty" in {
+        bind("").left.value should contain only FormError("testKey", "error.email.empty")
+      }
+
+      "input is only whitespace" in {
+        bind("    ").left.value should contain only FormError("testKey", "error.email.empty")
+      }
+
+      "not a valid email" in {
+        shouldRejectFieldValueAsInvalid("bademail")
+      }
+    }
+
+    "accept a valid email address" in {
+      shouldAcceptFieldValue("valid@test.com")
+    }
+  }
+
   "telephoneNumber bind" should {
     val telephoneMapping = FieldMappings.telephone.withPrefix("testKey")
 
@@ -197,7 +233,7 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
     }
 
     def shouldRejectFieldValueAsTooLong(fieldValue: String): Unit = {
-      bind(fieldValue) should matchPattern { case Left(List(FormError("testKey", List("error.maxLength"), _))) => }
+      bind(fieldValue) should matchPattern { case Left(List(FormError("testKey", List("error.telephone.maxLength"), _))) => }
     }
 
     def shouldAcceptFieldValue(fieldValue: String): Unit = {
@@ -210,11 +246,11 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
       }
 
       "input is empty" in {
-        bind("").left.value should contain only FormError("testKey", "error.required")
+        bind("").left.value should contain only FormError("testKey", "error.telephone.empty")
       }
 
       "input is only whitespace" in {
-        bind("    ").left.value should contain only FormError("testKey", "error.required")
+        bind("    ").left.value should contain only FormError("testKey", "error.telephone.empty")
       }
 
       "more than 24 characters" in {
@@ -251,14 +287,14 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
 
   "desTextConstraint" should {
 
-    val desTextConstraint = FieldMappings.desText()
+    val desTextConstraint = FieldMappings.desText("error.des.text.empty", "error.des.text.invalid")
 
     def shouldRejectFieldValueAsInvalid(fieldValue: String): Unit = {
       desTextConstraint(fieldValue) shouldBe Invalid(ValidationError("error.des.text.invalid"))
     }
 
     def shouldRejectFieldValidAsRequired(fieldValue: String): Unit = {
-      desTextConstraint(fieldValue) shouldBe Invalid(ValidationError("error.required"))
+      desTextConstraint(fieldValue) shouldBe Invalid(ValidationError("error.des.text.empty"))
     }
 
     def shouldAcceptFieldValue(fieldValue: String): Unit = {
@@ -340,7 +376,7 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
 
     "reject the line" when {
       "input is only whitespace" in {
-        bind("    ").left.value should contain only FormError("testKey", "error.required")
+        bind("    ").left.value should contain only FormError("testKey", "error.address.lines.empty")
       }
     }
 
@@ -358,11 +394,11 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
     def bind(fieldValue: String) = addressLine1Mapping.bind(Map("testKey" -> fieldValue))
 
     def shouldRejectFieldValueAsInvalid(fieldValue: String): Unit = {
-      bind(fieldValue) should matchPattern { case Left(List(FormError("testKey", List("error.des.text.invalid"), _))) => }
+      bind(fieldValue) should matchPattern { case Left(List(FormError("testKey", List("error.address.lines.invalid"), _))) => }
     }
 
     def shouldRejectFieldValueAsTooLong(fieldValue: String): Unit = {
-      bind(fieldValue) shouldBe Left(List(FormError("testKey", List("error.maxLength"), List(35))))
+      bind(fieldValue) shouldBe Left(List(FormError("testKey", List("error.address.lines.maxLength"), List(35))))
     }
 
     def shouldAcceptFieldValue(fieldValue: String): Unit = {
@@ -402,8 +438,8 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
     "accumulate errors if there are multiple validation problems" in {
       val tooLongAndNonMatchingLine = "123456789012345678901234567890123456<"
       bind(tooLongAndNonMatchingLine) shouldBe Left(List(
-        FormError("testKey", "error.maxLength", Seq(35)),
-        FormError("testKey", "error.des.text.invalid", Seq())
+        FormError("testKey", "error.address.lines.maxLength", Seq(35)),
+        FormError("testKey", "error.address.lines.invalid", Seq())
       ))
     }
   }
@@ -415,7 +451,7 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
     def bind(fieldValue: String) = agencyNameMapping.bind(Map("testKey" -> fieldValue))
 
     def shouldRejectFieldValueAsInvalid(fieldValue: String): Unit = {
-      bind(fieldValue) should matchPattern { case Left(List(FormError("testKey", List("error.des.text.invalid"), _))) => }
+      bind(fieldValue) should matchPattern { case Left(List(FormError("testKey", List("error.agency-name.invalid"), _))) => }
     }
 
     def shouldRejectFieldValueAsTooLong(fieldValue: String): Unit = {
@@ -429,7 +465,7 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
     "reject Agency name" when {
 
       "there is an ampersand character" in {
-        bind("My Agency & Co") should matchPattern { case Left(List(FormError("testKey", List("error.no.ampersand"), _))) => }
+        bind("My Agency & Co") should matchPattern { case Left(List(FormError("testKey", List("error.agency-name.no.ampersand"), _))) => }
         }
 
       "there is an invalid character" in {
@@ -441,11 +477,11 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
       }
 
       "input is empty" in {
-        bind("").left.value should contain(FormError("testKey", "error.required"))
+        bind("").left.value should contain(FormError("testKey", "error.agency-name.empty"))
       }
 
       "input is only whitespace" in {
-        bind("    ").left.value should contain only FormError("testKey", "error.required")
+        bind("    ").left.value should contain only FormError("testKey", "error.agency-name.empty")
       }
 
       "field is not present" in {
