@@ -34,7 +34,7 @@ import scala.util.{Failure, Success, Try}
 class ContinueUrlActions @Inject()(whiteListService: HostnameWhiteListService,
                                    sessionStoreService: SessionStoreService) {
 
-  private def extractContinueUrl[A](implicit request: Request[A]): Future[Option[ContinueUrl]] = {
+  def extractContinueUrl[A](implicit request: Request[A]): Future[Option[ContinueUrl]] = {
     implicit val hc = HeaderCarrierConverter.fromHeadersAndSession(request.headers, Option(request.session))
 
     request.getQueryString("continue") match {

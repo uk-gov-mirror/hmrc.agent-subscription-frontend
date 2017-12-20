@@ -68,7 +68,8 @@ class SubscriptionController @Inject()
  subscriptionService: SubscriptionService,
  sessionStoreService: SessionStoreService,
  addressLookUpConnector: AddressLookupFrontendConnector,
- ggAuthenticationConnector: GovernmentGatewayAuthenticationConnector
+ ggAuthenticationConnector: GovernmentGatewayAuthenticationConnector,
+ val continueUrlActions: ContinueUrlActions
 )
 (implicit appConfig: AppConfig)
   extends FrontendController with I18nSupport with AuthActions with SessionDataMissing {
