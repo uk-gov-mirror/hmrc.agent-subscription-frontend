@@ -18,7 +18,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.auth
 
 import play.api.mvc._
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
+import uk.gov.hmrc.agentsubscriptionfrontend.controllers.{ContinueUrlActions, routes}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.passcode.authentication.PasscodeAuthentication
 import uk.gov.hmrc.play.HeaderCarrierConverter
@@ -32,6 +32,8 @@ case class AgentRequest[A](enrolments: List[Enrolment], request: Request[A]) ext
 trait AuthActions extends Actions with PasscodeAuthentication {
   protected type AsyncPlayUserRequest = AuthContext => AgentRequest[AnyContent] => Future[Result]
 
+  val continueUrlActions: ContinueUrlActions
+
   private implicit def hc(implicit request: Request[_]): HeaderCarrier = HeaderCarrierConverter.fromHeadersAndSession(request.headers, Some(request.session))
 
   def AuthorisedWithSubscribingAgentAsync(regime: TaxRegime = NoOpRegime)(body: AsyncPlayUserRequest)(implicit appConfig: AppConfig): Action[AnyContent] =
@@ -44,7 +46,12 @@ trait AuthActions extends Actions with PasscodeAuthentication {
                 isAgent <- isAgentAffinityGroup
                 activatedEnrol <- checkActivatedEnrollment(enrolls)
               } yield (isAgent, activatedEnrol)).flatMap {
-                case (true, true) => Future successful Redirect(appConfig.agentServicesAccountUrl)
+                case (true, true) => {
+                  continueUrlActions.extractContinueUrl.map {
+                    case Some(continueUrl) => Redirect(continueUrl.url)
+                    case None => Redirect(appConfig.agentServicesAccountUrl)
+                  }
+                }
                 case (true, false) => body(authContext)(AgentRequest(enrolls, request))
                 case _ => Future successful redirectToNonAgentNextSteps
               }

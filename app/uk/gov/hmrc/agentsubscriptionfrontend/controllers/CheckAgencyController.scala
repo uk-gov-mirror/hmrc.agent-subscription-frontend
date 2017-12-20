@@ -55,7 +55,7 @@ class CheckAgencyController @Inject()
  override val passcodeAuthenticationProvider: PasscodeAuthenticationProvider,
  val agentSubscriptionConnector: AgentSubscriptionConnector,
  val sessionStoreService: SessionStoreService,
- continueUrlActions: ContinueUrlActions,
+ val continueUrlActions: ContinueUrlActions,
  auditService: AuditService)
 (implicit appConfig: AppConfig)
   extends FrontendController with I18nSupport with AuthActions with SessionDataMissing {

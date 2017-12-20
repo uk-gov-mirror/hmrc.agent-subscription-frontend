@@ -155,13 +155,14 @@ class TestAuthActions(override val config: PasscodeVerificationConfig, override 
   extends AuthActions with MockitoSugar {
 
   override protected def authConnector: AuthConnector = ???
-
+  override val continueUrlActions: ContinueUrlActions = new ContinueUrlActions(null, null)
 
   override def AuthorisedFor(taxRegime: TaxRegime, pageVisibility: PageVisibilityPredicate): AuthenticatedBy = NoCheckAuthenticatedBy
 
   object NoCheckAuthenticatedBy extends AuthenticatedBy(null, None, null) {
     override def apply(body: AuthContext => (Request[AnyContent] => Result)): Action[AnyContent] = Action { implicit request =>
       body(authContext)(request)
+
     }
 
     override def async(body: AuthContext => (Request[AnyContent] => Future[Result])): Action[AnyContent] = Action.async { implicit request =>
