@@ -20,7 +20,8 @@ error.agency-name.invalid = Business name must only include letters a to z, numb
 error.summary.heading=There is a problem
 error.prefix=Error:
 error.email.empty=You must enter an email address
-enter.nino.invalid-format=Enter a valid National Insurance number
+error.nino.invalid-format=Enter a valid National Insurance number
+error.saAgentCode.invalid=Enter a valid 6 digit Self Assessment Agent Code
 
 ##Modifying address
 address.form.with-errors.error.summary = Please check the following:
