@@ -47,9 +47,9 @@ class AgentAssuranceConnector @Inject()(@Named("agent-assurance-baseUrl") baseUr
   def getActiveCesaRelationship(url: String)(implicit hc: HeaderCarrier): Future[Boolean] = {
     monitor(s"ConsumedAPI-AgentAssurance-getActiveCesaRelationship-GET") {
       http.GET[HttpResponse](baseUrl + url).map(
-        response => response.status == 200)
+        _ => true)
         .recover {
-          case e: Upstream4xxResponse => if (e.upstreamResponseCode == 403) false else throw e
+          case e: Upstream4xxResponse => if (e.upstreamResponseCode == 403 || e.upstreamResponseCode == 404) false else throw e
         }
     }
   }
