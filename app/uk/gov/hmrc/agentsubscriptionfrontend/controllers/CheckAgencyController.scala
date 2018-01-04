@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,19 +20,23 @@ import javax.inject.{Inject, Named, Singleton}
 
 import play.api.data.Form
 import play.api.data.Forms.mapping
-import play.api.i18n.{I18nSupport, MessagesApi}
+import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.mvc.{AnyContent, Request, _}
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.audit.AuditService
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.{AgentRequest, AuthActions, NoOpRegimeWithContinueUrl}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.{AgentAssuranceConnector, AgentSubscriptionConnector}
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{AssuranceResults, KnownFactsResult, Registration}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AssuranceResults, KnownFactsResult, RadioWithInput, Registration}
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
+import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{invasive_check_start, invasive_input_option}
 import uk.gov.hmrc.passcode.authentication.{PasscodeAuthenticationProvider, PasscodeVerificationConfig}
 import uk.gov.hmrc.play.frontend.auth.AuthContext
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
+import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
+import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.Future
 
@@ -98,7 +102,6 @@ class CheckAgencyController @Inject()
           knownFacts => checkAgencyStatusGivenValidForm(knownFacts)
         )
   }
-
   private def checkAgencyStatusGivenValidForm(knownFacts: KnownFacts)
                                              (implicit authContext: AuthContext, request: AgentRequest[AnyContent]): Future[Result] = {
     def assureIsAgent(): Future[Option[AssuranceResults]] = {
@@ -115,7 +118,7 @@ class CheckAgencyController @Inject()
     }
 
     def decideBasedOn: Option[AssuranceResults] => Result = {
-      case Some(AssuranceResults(false,false)) => Redirect(routes.StartController.setupIncomplete())
+      case Some(AssuranceResults(false, false)) => Redirect(routes.CheckAgencyController.invasiveCheckStart)
       case _  => Redirect(routes.CheckAgencyController.showConfirmYourAgency())
     }
 
@@ -159,5 +162,77 @@ class CheckAgencyController @Inject()
   val showAlreadySubscribed: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync() { implicit authContext =>
     implicit request =>
       Future successful Ok(html.already_subscribed())
+  }
+
+  def invasiveCheckStart: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync() {
+    implicit authContext =>
+      implicit request =>
+        Future.successful(Ok(invasive_check_start(RadioWithInput.confirmResponseForm)))
+  }
+
+
+  def invasiveSaAgentCodePost: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync() {
+    implicit authContext =>
+      implicit request =>
+        RadioWithInput.confirmResponseForm.bindFromRequest().fold(
+          formWithErrors => {
+            Future.successful(Ok(invasive_check_start(formWithErrors)))
+          }, correctForm => {
+            if (correctForm.value.getOrElse(false)) {
+              if(correctForm.messageOfTrueRadioChoice.getOrElse("").length < 7 && correctForm.messageOfTrueRadioChoice.getOrElse("").length > 0) {
+                Future.successful(Redirect(routes.CheckAgencyController.invasiveTaxPayerOptionGet)
+                  .withSession(request.session + ("saAgentReferenceToCheck" -> correctForm.messageOfTrueRadioChoice.getOrElse(""))))
+              }else{
+                Future.successful(Ok(invasive_check_start(RadioWithInput
+                  .confirmResponseForm.withError("confirmResponse-true-hidden-input", "invalidInputErrorUpdateThis"))))
+              }
+            } else
+              Future.successful(Redirect(routes.StartController.setupIncomplete()))
+          })
+  }
+
+  def invasiveTaxPayerOptionGet: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync() {
+    implicit authContext =>
+      implicit request =>
+        Future.successful(Ok(invasive_input_option(RadioWithInput.confirmResponseForm)))
+  }
+
+  def invasiveTaxPayerOption: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync() {
+    implicit authContext =>
+      implicit request =>
+        RadioWithInput.confirmResponseForm.bindFromRequest().fold(
+          formWithErrors => {
+            Future.successful(Ok(invasive_input_option(formWithErrors)))
+          }, correctForm => {
+            if (correctForm.value.getOrElse(false)) {
+              Nino.isValid(correctForm.messageOfTrueRadioChoice.getOrElse("")) match {
+                case true => checkActiveCesaRelationship(Nino(correctForm.messageOfTrueRadioChoice.getOrElse("")),
+                  SaAgentReference(request.session.get("saAgentReferenceToCheck").getOrElse(""))).map {
+                  case true => Redirect(routes.CheckAgencyController.showConfirmYourAgency())
+                  case false => Redirect(routes.StartController.setupIncomplete())
+                }
+                case false => Future.successful(Ok(invasive_input_option(RadioWithInput.confirmResponseForm
+                  .withError("confirmResponse-true-hidden-input", Messages("error.utr.empty")))))
+              }
+            } else {
+              Utr.isValid(correctForm.messageOfFalseRadioChoice.getOrElse("")) match {
+                case true => agentAssuranceConnector.hasActiveCesaRelationship(Utr(correctForm.messageOfFalseRadioChoice.getOrElse("")),
+                  SaAgentReference(request.session.get("saAgentReferenceToCheck").getOrElse("")))
+                  .map {
+                    case true =>
+                      Redirect(routes.CheckAgencyController.showConfirmYourAgency())
+                    case false => Redirect(routes.StartController.setupIncomplete())
+                  }
+                case false =>
+                  Future.successful(Ok(invasive_input_option(RadioWithInput.confirmResponseForm
+                    .withError("confirmResponse-false-hidden-input", Messages("enter.nino.invalid-format")))))
+              }
+            }
+          }
+        )
+  }
+
+  def checkActiveCesaRelationship(ninoOrUtr: TaxIdentifier, inputSaAgentReference: SaAgentReference)(implicit hc: HeaderCarrier): Future[Boolean] = {
+    agentAssuranceConnector.hasActiveCesaRelationship(ninoOrUtr, inputSaAgentReference).map(result => result)
   }
 }

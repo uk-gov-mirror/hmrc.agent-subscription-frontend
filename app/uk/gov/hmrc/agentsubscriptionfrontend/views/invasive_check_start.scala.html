@@ -1,0 +1,64 @@
+@*
+ * Copyright 2018 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
+@import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioWithInput
+@import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
+@import uk.gov.hmrc.play.views.html.helpers.{form, errorSummary}
+
+@(confirmResponseForm: Form[RadioWithInput])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+
+@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = Messages("invasive.title.saCode"), bodyClasses = None) {
+
+    @if(confirmResponseForm.hasErrors) {
+        @errorSummary(Messages("error.summary.heading"), confirmResponseForm, Seq.empty, Some("confirmResponseSomethingTrackingGGA"))
+    }
+    <h1 class="heading-large">@Messages("invasive.title.saCode")</h1>
+
+    @form(action = routes.CheckAgencyController.invasiveSaAgentCodePost(), 'class -> "form js-form") {
+        <div class="form-group @if(confirmResponseForm.hasErrors){form-group-error}">
+        <fieldset>
+        <legend>
+            <span class="visually-hidden">@Messages("invasive.title.saCode")</span>
+        </legend>
+        <div class="multiple-choice" data-target="saAgentCode">
+            <input id="confirmResponse" type="radio" name="confirmResponse" value="true">
+            <label for="confirmResponse">@Messages("invasive.confirmResponse.true.yes")</label>
+        </div>
+        <div class="panel panel-border-narrow js-hidden" id="saAgentCode">
+            <label class="form-label" for="confirmResponse-true-hidden-input">@Messages("confirmResponse.true.hidden.input.label.sa")</label>
+            <input class="form-control" name="confirmResponse-true-hidden-input" type="text" id="confirmResponse-true-hidden-input">
+        </div>
+
+        <div class="multiple-choice" data-target="confirmResponse">
+            <input id="confirmResponse" type="radio" name="confirmResponse" value="false">
+            <label for="confirmResponse">@Messages("invasive.confirmResponse.false.no")</label>
+        </div>
+        </fieldset>
+        </div>
+        <details class="form-group">
+            <summary><span class="summary">@Messages("invasive.expandable.p1")</span>
+            </summary>
+            <div class="panel panel-border-narrow">
+                <p>@Messages("invasive.expandable.p1.open")</p>
+            </div>
+        </details>
+
+        <div class="form-group">
+            <button class="button" type="submit" id="continue">@Messages("button.continue")</button>
+        </div>
+    }
+}

@@ -23,4 +23,7 @@ $(function() {
     });
     //Add aria-hidden to hidden inputs
     $('[type="hidden"]').attr("aria-hidden", true)
+
+    var showHideContent = new GOVUK.ShowHideContent()
+    showHideContent.init()
 });

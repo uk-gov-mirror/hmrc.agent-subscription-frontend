@@ -88,7 +88,7 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       val result = await(controller.checkAgencyStatus(request))
 
       status(result) shouldBe 303
-      redirectLocation(result) shouldBe Some(routes.StartController.setupIncomplete().url)
+      redirectLocation(result) shouldBe Some(routes.CheckAgencyController.invasiveCheckStart().url)
       verifyAgentAssuranceAuditRequestSent(passPayeAgentAssuranceCheck = false, passSaAgentAssuranceCheck = false)
     }
 
@@ -103,7 +103,7 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       val result = await(controller.checkAgencyStatus(request))
 
       status(result) shouldBe 303
-      redirectLocation(result) shouldBe Some(routes.StartController.setupIncomplete().url)
+      redirectLocation(result) shouldBe Some(routes.CheckAgencyController.invasiveCheckStart().url)
       verifyAgentAssuranceAuditRequestSent(passPayeAgentAssuranceCheck = false, passSaAgentAssuranceCheck = false)
     }
 
@@ -118,7 +118,7 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       val result = await(controller.checkAgencyStatus(request))
 
       status(result) shouldBe 303
-      redirectLocation(result) shouldBe Some(routes.StartController.setupIncomplete().url)
+      redirectLocation(result) shouldBe Some(routes.CheckAgencyController.invasiveCheckStart().url)
       verifyAgentAssuranceAuditRequestSent(passPayeAgentAssuranceCheck = false, passSaAgentAssuranceCheck = false)
     }
 

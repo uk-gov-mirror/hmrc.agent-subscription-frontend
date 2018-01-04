@@ -1,28 +1,33 @@
 # microservice specific routes
 
-GET     /                               uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.root
-GET     /start                          uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.start
-GET     /non-agent-next-steps           uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.showNonAgentNextSteps
-GET     /return-after-gg-creds-created  uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.returnAfterGGCredsCreated(id: Option[String] ?= None)
+GET         /                                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.root
+GET         /start                                uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.start
+GET         /non-agent-next-steps                 uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.showNonAgentNextSteps
+GET         /return-after-gg-creds-created        uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.returnAfterGGCredsCreated(id: Option[String] ?= None)
 
-GET     /check-agency-status            uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.showCheckAgencyStatus
-POST    /check-agency-status            uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.checkAgencyStatus
-GET     /no-agency-found                uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.showNoAgencyFound
-GET     /confirm-your-agency            uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.showConfirmYourAgency
-GET     /already-subscribed             uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.showAlreadySubscribed
-GET     /has-other-enrolments           uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.showHasOtherEnrolments
+GET         /check-agency-status                  uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.showCheckAgencyStatus
+POST        /check-agency-status                  uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.checkAgencyStatus
+GET         /no-agency-found                      uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.showNoAgencyFound
+GET         /confirm-your-agency                  uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.showConfirmYourAgency
+GET         /already-subscribed                   uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.showAlreadySubscribed
+GET         /has-other-enrolments                 uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.showHasOtherEnrolments
 
-GET     /subscription-details           uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showInitialDetails
-POST    /subscription-details           uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.submitInitialDetails
-GET     /return-from-address-lookup     uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.returnFromAddressLookup(id: String ?= "")
-POST    /submit-modified-address        uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.submitModifiedAddress
+GET         /enter-agent-code                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.invasiveCheckStart
+POST        /enter-agent-code                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.invasiveSaAgentCodePost
+GET         /enter-client-id                      uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.invasiveTaxPayerOptionGet
+POST        /enter-client-id                      uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.invasiveTaxPayerOption
 
-GET    /subscription-complete           uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showSubscriptionComplete
-GET    /subscription-failed             uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showSubscriptionFailed
+GET         /subscription-details                 uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showInitialDetails
+POST        /subscription-details                 uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.submitInitialDetails
+GET         /return-from-address-lookup           uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.returnFromAddressLookup(id: String ?= "")
+POST        /submit-modified-address              uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.submitModifiedAddress
 
-GET    /redirect-to-sos                 uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.redirectToSos
-GET    /start-survey                    uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.startSurvey
+GET         /subscription-complete                uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showSubscriptionComplete
+GET         /subscription-failed                  uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showSubscriptionFailed
 
-GET    /setup-incomplete               uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.setupIncomplete
+GET         /redirect-to-sos                      uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.redirectToSos
+GET         /start-survey                         uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.startSurvey
 
-GET    /assets/*file        controllers.Assets.at(path="/public", file)
+GET         /setup-incomplete                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.setupIncomplete
+
+GET         /assets/*file                         controllers.Assets.at(path="/public", file)

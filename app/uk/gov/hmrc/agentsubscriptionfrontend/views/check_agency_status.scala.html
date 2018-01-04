@@ -1,5 +1,5 @@
 @*
- * Copyright 2017 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,15 @@
 
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 @import uk.gov.hmrc.play.views.html.helpers.{form, input, errorSummary}
-@import uk.gov.hmrc.play.views.html.helpers.input
-
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.KnownFacts
 
-@(knownFactsForm : Form[KnownFacts])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+@(knownFactsForm: Form[KnownFacts])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = error_prefix(knownFactsForm) + Messages("checkAgencyStatus.title"), bodyClasses = None) {
-
-    @errorSummary(Messages("error.summary.heading"), knownFactsForm, Seq.empty, Some("check-agency-status"))
-
+    @if(knownFactsForm.hasErrors) {
+        @errorSummary(Messages("error.summary.heading"), knownFactsForm, Seq.empty, Some("check-agency-status"))
+    }
     <h1 class="heading-xlarge">@Messages("checkAgencyStatus.title")</h1>
 
     <p>@Messages("checkAgencyStatus.p1")</p>
@@ -35,27 +33,27 @@
         action = routes.CheckAgencyController.checkAgencyStatus,
         'class -> "form js-form") {
 
-            <div class="form-group">
-                @input(
-                    knownFactsForm("utr"),
-                    '_label -> Messages("checkAgencyStatus.label.utr"),
-                    '_inputClass -> "form-control input--cleared",
-                    '_labelClass -> "heading-small soft--ends"
-                )
-            </div>
+        <div class="form-group">
+        @input(
+            knownFactsForm("utr"),
+            '_label -> Messages("checkAgencyStatus.label.utr"),
+            '_inputClass -> "form-control input--cleared",
+            '_labelClass -> "heading-small soft--ends"
+        )
+        </div>
 
-            <div class="form-group">
-                @input(
-                    knownFactsForm("postcode"),
-                    '_label -> Messages("checkAgencyStatus.label.postcode"),
-                    '_inputClass -> "form-control input--cleared input--small",
-                    '_labelClass -> "heading-small soft--ends"
-                )
-            </div>
+        <div class="form-group">
+        @input(
+            knownFactsForm("postcode"),
+            '_label -> Messages("checkAgencyStatus.label.postcode"),
+            '_inputClass -> "form-control input--cleared input--small",
+            '_labelClass -> "heading-small soft--ends"
+        )
+        </div>
 
-            <div class="form-group">
-                <button class="button" type="submit" id="continue">@Messages("button.continue")</button>
-            </div>
+        <div class="form-group">
+            <button class="button" type="submit" id="continue">@Messages("button.continue")</button>
+        </div>
 
 
     }
