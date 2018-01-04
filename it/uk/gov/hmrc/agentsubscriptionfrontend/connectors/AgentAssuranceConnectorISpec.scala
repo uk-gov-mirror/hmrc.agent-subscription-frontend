@@ -68,13 +68,13 @@ class AgentAssuranceConnectorISpec extends UnitSpec with OneAppPerSuite with Wir
   }
 
   "hasActiveCesaRelationship" should {
-    "receie 200 if valid combination passed and relationship exists in Cesa Nino" in {
+    "receive 200 if valid combination passed and relationship exists in Cesa Nino" in {
       givenNinoAGoodCombinationAndUserHasRelationshipInCesa("nino", "AA123456A", "SA6012")
       givenCleanMetricRegistry()
       await(connector.hasActiveCesaRelationship(Nino("AA123456A"), SaAgentReference("SA6012"))) shouldBe true
       timerShouldExistsAndBeenUpdated("ConsumedAPI-AgentAssurance-getActiveCesaRelationship-GET")
     }
-    "receie 200 if valid combination passed and relationship exists in Cesa Utr" in {
+    "receive 200 if valid combination passed and relationship exists in Cesa Utr" in {
       givenUtrAGoodCombinationAndUserHasRelationshipInCesa("utr", "4000000009", "SA6012")
       givenCleanMetricRegistry()
       await(connector.hasActiveCesaRelationship(Utr("4000000009"), SaAgentReference("SA6012"))) shouldBe true

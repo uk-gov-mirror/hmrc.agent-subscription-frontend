@@ -18,6 +18,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import javax.inject.{Inject, Named, Singleton}
 
+import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms.mapping
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
@@ -108,17 +109,18 @@ class CheckAgencyController @Inject()
       if (agentAssuranceFlag) {
         val futurePaye = agentAssuranceConnector.hasAcceptableNumberOfPayeClients
         val futureSA = agentAssuranceConnector.hasAcceptableNumberOfSAClients
+        val passCesaAgentAssuranceCheck = false
 
         for {
           hasAcceptableNumberOfPayeClients <- futurePaye
           hasAcceptableNumberOfSAClients <- futureSA
-        } yield Some(AssuranceResults(hasAcceptableNumberOfPayeClients, hasAcceptableNumberOfSAClients))
+        } yield Some(AssuranceResults(hasAcceptableNumberOfPayeClients, hasAcceptableNumberOfSAClients, passCesaAgentAssuranceCheck))
       }
       else Future.successful(None)
     }
 
     def decideBasedOn: Option[AssuranceResults] => Result = {
-      case Some(AssuranceResults(false, false)) => Redirect(routes.CheckAgencyController.invasiveCheckStart)
+      case Some(AssuranceResults(false, false, false)) => Redirect(routes.CheckAgencyController.invasiveCheckStart)
       case _  => Redirect(routes.CheckAgencyController.showConfirmYourAgency())
     }
 
@@ -216,7 +218,7 @@ class CheckAgencyController @Inject()
               }
             } else {
               Utr.isValid(correctForm.messageOfFalseRadioChoice.getOrElse("")) match {
-                case true => agentAssuranceConnector.hasActiveCesaRelationship(Utr(correctForm.messageOfFalseRadioChoice.getOrElse("")),
+                case true => checkActiveCesaRelationship(Utr(correctForm.messageOfFalseRadioChoice.getOrElse("")),
                   SaAgentReference(request.session.get("saAgentReferenceToCheck").getOrElse("")))
                   .map {
                     case true =>
@@ -232,7 +234,26 @@ class CheckAgencyController @Inject()
         )
   }
 
-  def checkActiveCesaRelationship(ninoOrUtr: TaxIdentifier, inputSaAgentReference: SaAgentReference)(implicit hc: HeaderCarrier): Future[Boolean] = {
-    agentAssuranceConnector.hasActiveCesaRelationship(ninoOrUtr, inputSaAgentReference).map(result => result)
+  def checkActiveCesaRelationship(ninoOrUtr: TaxIdentifier,
+                                  inputSaAgentReference: SaAgentReference)(
+    implicit hc: HeaderCarrier, request:  AgentRequest[AnyContent], authContext: AuthContext): Future[Boolean] = {
+    agentAssuranceConnector.hasActiveCesaRelationship(ninoOrUtr, inputSaAgentReference).map { relationshipExists =>
+      val (clientNino, clientUtr) = ninoOrUtr match {
+        case nino @ Nino(_) => (Some(nino), None)
+        case utr @ Utr(_) => (None, Some(utr))
+      }
+
+      for {
+        knownFactResultOpt <- sessionStoreService.fetchKnownFactsResult
+        _ <- knownFactResultOpt match {
+          case Some(knownFactsResult) =>
+            auditService.sendAgentAssuranceAuditEvent(knownFactsResult, AssuranceResults(false, false, relationshipExists), clientUtr, clientNino)
+          case None =>
+            Future.successful(Logger.warn("Could not send audit events due to empty knownfacts results"))
+        }
+      } yield ()
+
+      relationshipExists
+    }
   }
 }
