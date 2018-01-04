@@ -49,7 +49,8 @@ class AgentAssuranceConnector @Inject()(@Named("agent-assurance-baseUrl") baseUr
       http.GET[HttpResponse](baseUrl + url).map(
         _ => true)
         .recover {
-          case e: Upstream4xxResponse => if (e.upstreamResponseCode == 403 || e.upstreamResponseCode == 404) false else throw e
+          case e: Upstream4xxResponse if e.upstreamResponseCode == 403 => false
+          case e: NotFoundException => false
         }
     }
   }
