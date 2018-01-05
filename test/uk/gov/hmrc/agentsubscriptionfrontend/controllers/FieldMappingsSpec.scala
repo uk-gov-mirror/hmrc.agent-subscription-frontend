@@ -502,6 +502,33 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
         shouldAcceptFieldValue("The 100 Agency")
       }
     }
-}
+  }
+
+  "SA Agent Reference" should {
+    "pass validation when the length of the sa agent reference is 6 characters and all A-Z0-9" in {
+      FieldMappings.isValidSaAgentCode("123456") shouldBe true
+      FieldMappings.isValidSaAgentCode("AA1234") shouldBe true
+      FieldMappings.isValidSaAgentCode("123AA9") shouldBe true
+      FieldMappings.isValidSaAgentCode("aabb12") shouldBe true
+    }
+
+    "fail validation when the length of the sa agent reference is less than 6 characters" in {
+      FieldMappings.isValidSaAgentCode("12345") shouldBe false
+      FieldMappings.isValidSaAgentCode("AA123") shouldBe false
+      FieldMappings.isValidSaAgentCode("B123") shouldBe false
+    }
+
+    "fail validation when the length of the sa agent reference is more than 6 characters" in {
+      FieldMappings.isValidSaAgentCode("1234567") shouldBe false
+      FieldMappings.isValidSaAgentCode("AAA4567") shouldBe false
+      FieldMappings.isValidSaAgentCode("123456789") shouldBe false
+    }
+
+    "fail validation when the sa agent reference contains non alphanumeric characters" in {
+      FieldMappings.isValidSaAgentCode("!%1234") shouldBe false
+      FieldMappings.isValidSaAgentCode("AA123.") shouldBe false
+      FieldMappings.isValidSaAgentCode("abc12+") shouldBe false
+    }
+  }
 
 }

@@ -59,12 +59,9 @@ class AgentAssuranceConnector @Inject()(@Named("agent-assurance-baseUrl") baseUr
     s"/agent-assurance/activeCesaRelationship/$ninoOrUtr/$valueOfNinoOrUtr/saAgentReference/${saAgentReference.value}"
   }
 
-  def hasActiveCesaRelationship(ninoOrUtr: TaxIdentifier, saAgentReference: SaAgentReference)
+  def hasActiveCesaRelationship(ninoOrUtr: TaxIdentifier, taxIdName: String, saAgentReference: SaAgentReference)
                                (implicit hc: HeaderCarrier): Future[Boolean] = {
-    ninoOrUtr match {
-      case nino @ Nino(_) => getActiveCesaRelationship(cesaGetUrl("nino", nino.value, saAgentReference))
-      case utr @ Utr(_) => getActiveCesaRelationship(cesaGetUrl("utr", utr.value, saAgentReference))
-    }
+    getActiveCesaRelationship(cesaGetUrl(taxIdName, ninoOrUtr.value, saAgentReference))
   }
 
   def hasAcceptableNumberOfPayeClients(implicit hc: HeaderCarrier): Future[Boolean] = hasAcceptableNumberOfClients("IR-PAYE")

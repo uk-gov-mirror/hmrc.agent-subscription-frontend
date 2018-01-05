@@ -180,9 +180,10 @@ class CheckAgencyController @Inject()
             Future.successful(Ok(invasive_check_start(formWithErrors)))
           }, correctForm => {
             if (correctForm.value.getOrElse(false)) {
-              if(correctForm.messageOfTrueRadioChoice.getOrElse("").length < 7 && correctForm.messageOfTrueRadioChoice.getOrElse("").length > 0) {
+              val saAgentReference = correctForm.messageOfTrueRadioChoice.getOrElse("")
+              if (FieldMappings.isValidSaAgentCode(saAgentReference)) {
                 Future.successful(Redirect(routes.CheckAgencyController.invasiveTaxPayerOptionGet)
-                  .withSession(request.session + ("saAgentReferenceToCheck" -> correctForm.messageOfTrueRadioChoice.getOrElse(""))))
+                  .withSession(request.session + ("saAgentReferenceToCheck" -> saAgentReference)))
               }else{
                 Future.successful(Ok(invasive_check_start(RadioWithInput
                   .confirmResponseForm.withError("confirmResponse-true-hidden-input", Messages("error.saAgentCode.invalid")))))
@@ -205,39 +206,57 @@ class CheckAgencyController @Inject()
           formWithErrors => {
             Future.successful(Ok(invasive_input_option(formWithErrors)))
           }, correctForm => {
-            if (correctForm.value.getOrElse(false)) {
-              Nino.isValid(correctForm.messageOfTrueRadioChoice.getOrElse("")) match {
-                case true => checkActiveCesaRelationship(Nino(correctForm.messageOfTrueRadioChoice.getOrElse("")),
-                  SaAgentReference(request.session.get("saAgentReferenceToCheck").getOrElse(""))).map {
-                  case true => Redirect(routes.CheckAgencyController.showConfirmYourAgency())
-                  case false => Redirect(routes.StartController.setupIncomplete())
-                }
-                case false => Future.successful(Ok(invasive_input_option(RadioWithInput.confirmResponseForm
-                  .withError("confirmResponse-true-hidden-input", Messages("error.nino.invalid-format")))))
-              }
+
+            val taxId = if (correctForm.value.getOrElse(false)) {
+              TaxIdFormValue(
+                id = correctForm.messageOfTrueRadioChoice.getOrElse(""),
+                name = "nino",
+                formField = "confirmResponse-true-hidden-input",
+                validateId = Nino.isValid,
+                stringAsTaxId = Nino.apply
+              )
             } else {
-              Utr.isValid(correctForm.messageOfFalseRadioChoice.getOrElse("")) match {
-                case true => checkActiveCesaRelationship(Utr(correctForm.messageOfFalseRadioChoice.getOrElse("")),
-                  SaAgentReference(request.session.get("saAgentReferenceToCheck").getOrElse("")))
-                  .map {
-                    case true =>
-                      Redirect(routes.CheckAgencyController.showConfirmYourAgency())
-                    case false => Redirect(routes.StartController.setupIncomplete())
-                  }
-                case false =>
-                  Future.successful(Ok(invasive_input_option(RadioWithInput.confirmResponseForm
-                    .withError("confirmResponse-false-hidden-input", Messages("error.utr.invalid")))))
-              }
+              TaxIdFormValue(
+                id = correctForm.messageOfFalseRadioChoice.getOrElse(""),
+                name = "utr",
+                formField = "confirmResponse-false-hidden-input",
+                validateId = Utr.isValid,
+                stringAsTaxId = Utr.apply
+              )
             }
+
+            checkAndRedirect(taxId)
           }
         )
   }
 
-  def checkActiveCesaRelationship(ninoOrUtr: TaxIdentifier,
+  private case class TaxIdFormValue(id: String, name: String, formField: String,
+                            validateId: (String) => Boolean,
+                            stringAsTaxId: (String) => TaxIdentifier) {
+    lazy val taxId = stringAsTaxId(id)
+    def isValid = validateId(id)
+  }
+
+  def checkAndRedirect(value: TaxIdFormValue)
+                      (implicit hc: HeaderCarrier, request: AgentRequest[AnyContent], authContext: AuthContext) = {
+
+    if (value.isValid) {
+      val saAgentReference = request.session.get("saAgentReferenceToCheck").getOrElse("")
+      checkActiveCesaRelationship(value, SaAgentReference(saAgentReference)).map {
+        case true => Redirect(routes.CheckAgencyController.showConfirmYourAgency())
+        case false => Redirect(routes.StartController.setupIncomplete())
+      }
+    } else {
+      Future.successful(Ok(invasive_input_option(RadioWithInput.confirmResponseForm
+        .withError(value.formField, Messages(s"error.${value.name}.invalid")))))
+    }
+  }
+
+  def checkActiveCesaRelationship(taxIdFormValue: TaxIdFormValue,
                                   inputSaAgentReference: SaAgentReference)(
     implicit hc: HeaderCarrier, request:  AgentRequest[AnyContent], authContext: AuthContext): Future[Boolean] = {
-    agentAssuranceConnector.hasActiveCesaRelationship(ninoOrUtr, inputSaAgentReference).map { relationshipExists =>
-      val (userEnteredNino, userEnteredUtr) = ninoOrUtr match {
+    agentAssuranceConnector.hasActiveCesaRelationship(taxIdFormValue.taxId, taxIdFormValue.name, inputSaAgentReference).map { relationshipExists =>
+      val (userEnteredNino, userEnteredUtr) = taxIdFormValue.taxId match {
         case nino @ Nino(_) => (Some(nino), None)
         case utr @ Utr(_) => (None, Some(utr))
       }

@@ -100,13 +100,8 @@ package object controllers {
         true
       }
 
-    def isValidSaAgentCode(shouldBeSaAgentCode: String) = {
-      val regex = """([A-Z0-9]{2})""".r //changeRegex
-      shouldBeSaAgentCode match {
-        case regex(shouldBeSaAgentCode) => true
-        case _ => false
-      }
-    }
+    private val saAgentReferenceRegex = """([a-zA-Z0-9]{6})"""
+    def isValidSaAgentCode(value: String) = value.matches(saAgentReferenceRegex)
 
     def utr: Mapping[Utr] = text
       .verifying(nonEmptyWithMessage("error.utr.empty"))

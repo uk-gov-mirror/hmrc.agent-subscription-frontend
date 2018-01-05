@@ -308,6 +308,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
         .withFormUrlEncodedBody(("confirmResponse", "true"), ("confirmResponse-true-hidden-input", "SA6012AAAA"))))
 
       status(result) shouldBe 200
+      checkHtmlResultWithBodyText(result, htmlEscapedMessage("error.saAgentCode.invalid"))
     }
 
     "redirect to confirm your agency when successfully submitting nino" in {
