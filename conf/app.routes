@@ -26,6 +26,7 @@ GET         /subscription-complete                uk.gov.hmrc.agentsubscriptionf
 GET         /subscription-failed                  uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showSubscriptionFailed
 
 GET         /redirect-to-sos                      uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.redirectToSos
+GET         /redirect-to-asaccount                uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.redirectToASAccountPage
 GET         /start-survey                         uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.startSurvey
 
 GET         /setup-incomplete                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.setupIncomplete

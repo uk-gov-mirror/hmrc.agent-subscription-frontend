@@ -94,5 +94,20 @@ class SignOutControllerISpec extends BaseISpec {
       redirectLocation(result).head should include("feedback-survey")
     }
   }
+
+  "redirect to Agent Services Account page" should {
+    "logout and redirect to agent services account" in {
+      implicit val request = fakeRequest.withSession("sessionId" -> "SomeSession")
+
+      request.session.get("sessionId") should not be empty
+
+      val result = await(controller.redirectToASAccountPage(request))
+
+      status(result) shouldBe 303
+      redirectLocation(result).head should include("agent-services-account")
+
+      result.session.get("sessionId") shouldBe empty
+    }
+  }
 }
 

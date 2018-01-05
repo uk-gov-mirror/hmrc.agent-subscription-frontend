@@ -101,8 +101,8 @@ button.register=Register now
 button.signOut=Sign out
 
 #Setup Incomplete
-setupIncomplete.title=We need some more information
-setupIncomplete.p1=If you think the tax reference and postcode you entered were correct, <a href="{0}" onclick="{1}">let us know.</a>
+setupIncomplete.title=You can't set up an Agent services account with the details you entered
+setupIncomplete.p1=<a href="{0}">Try again using a different agent user ID</a> if your agency uses more than one Government Gateway account, for example for Self Assessment or PAYE.
 
 
 #Invasive check
