@@ -23,7 +23,7 @@ import com.google.inject.Singleton
 import play.api.mvc.{AnyContent, Request}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.AgentRequest
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{AssuranceResults, KnownFactsResult}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AssuranceCheckInput, AssuranceResults, KnownFactsResult}
 import uk.gov.hmrc.domain.{Nino, TaxIdentifier}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.AuditExtensions.auditHeaderCarrier
@@ -72,8 +72,9 @@ class AuditService @Inject()(val auditConnector: AuditConnector, authConnector: 
     ("isEnrolledPAYEAgent", None),
     ("payeAgentRef", None),
     ("passPayeAgentAssuranceCheck", None),
-    ("clientUtr", None),
-    ("clientNino", None),
+    ("userEnteredSaAgentRef", None),
+    ("userEnteredUtr", None),
+    ("userEnteredNino", None),
     ("passCESAAgentAssuranceCheck", None),
     ("authProviderId", None),
     ("authProviderType", None)
@@ -81,16 +82,15 @@ class AuditService @Inject()(val auditConnector: AuditConnector, authConnector: 
 
   def sendAgentAssuranceAuditEvent(knownFactsResult: KnownFactsResult,
                                    assuranceResults: AssuranceResults,
-                                   clientUtr: Option[Utr] = None,
-                                   clientNino: Option[Nino] = None)
-                                  (implicit hc: HeaderCarrier, request: AgentRequest[AnyContent], authContext: AuthContext): Future[Unit] = {
+                                   assuranceCheckInput: Option[AssuranceCheckInput] = None)
+                                  (implicit hc: HeaderCarrier, request: AgentRequest[AnyContent],
+                                   authContext: AuthContext): Future[Unit] = {
     implicit val auditData: AuditData = new AuditData
 
     auditData.set("utr", knownFactsResult.utr)
       .set("postcode", knownFactsResult.postcode)
       .set("passSaAgentAssuranceCheck", assuranceResults.hasAcceptableNumberOfSAClients)
       .set("passPayeAgentAssuranceCheck", assuranceResults.hasAcceptableNumberOfPayeClients)
-      .set("passCESAAgentAssuranceCheck", assuranceResults.passCesaAgentAssuranceCheck)
 
     //TODO auditData.set("refuseToDealWith", ?)
 
@@ -110,12 +110,19 @@ class AuditService @Inject()(val auditConnector: AuditConnector, authConnector: 
       saAgentRef <- e.identifiers.find(_.key == "IRAgentReference")
     } auditData.set("saAgentRef", saAgentRef.value)
 
-    clientNino.foreach { nino =>
-      auditData.set("clientNino", nino)
-    }
-
-    clientUtr.foreach { utr =>
-      auditData.set("clientUtr", utr)
+    assuranceCheckInput.foreach { userInput =>
+      userInput.passCesaAgentAssuranceCheck.foreach { assuranceCheck =>
+        auditData.set("passCESAAgentAssuranceCheck", assuranceCheck)
+      }
+      userInput.userEnteredNino.foreach { nino =>
+        auditData.set("userEnteredNino", nino)
+      }
+      userInput.userEnteredUtr.foreach { utr =>
+        auditData.set("userEnteredUtr", utr)
+      }
+      userInput.userEnteredSaAgentRef.foreach { saAgentRef =>
+        auditData.set("userEnteredSaAgentRef", saAgentRef)
+      }
     }
 
     for {

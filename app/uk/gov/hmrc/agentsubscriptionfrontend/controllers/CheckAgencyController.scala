@@ -28,7 +28,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.audit.AuditService
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.{AgentRequest, AuthActions, NoOpRegimeWithContinueUrl}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.{AgentAssuranceConnector, AgentSubscriptionConnector}
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{AssuranceResults, KnownFactsResult, RadioWithInput, Registration}
+import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{invasive_check_start, invasive_input_option}
@@ -109,18 +109,17 @@ class CheckAgencyController @Inject()
       if (agentAssuranceFlag) {
         val futurePaye = agentAssuranceConnector.hasAcceptableNumberOfPayeClients
         val futureSA = agentAssuranceConnector.hasAcceptableNumberOfSAClients
-        val passCesaAgentAssuranceCheck = false
 
         for {
           hasAcceptableNumberOfPayeClients <- futurePaye
           hasAcceptableNumberOfSAClients <- futureSA
-        } yield Some(AssuranceResults(hasAcceptableNumberOfPayeClients, hasAcceptableNumberOfSAClients, passCesaAgentAssuranceCheck))
+        } yield Some(AssuranceResults(hasAcceptableNumberOfPayeClients, hasAcceptableNumberOfSAClients))
       }
       else Future.successful(None)
     }
 
     def decideBasedOn: Option[AssuranceResults] => Result = {
-      case Some(AssuranceResults(false, false, false)) => Redirect(routes.CheckAgencyController.invasiveCheckStart)
+      case Some(AssuranceResults(false, false)) => Redirect(routes.CheckAgencyController.invasiveCheckStart)
       case _  => Redirect(routes.CheckAgencyController.showConfirmYourAgency())
     }
 
@@ -238,7 +237,7 @@ class CheckAgencyController @Inject()
                                   inputSaAgentReference: SaAgentReference)(
     implicit hc: HeaderCarrier, request:  AgentRequest[AnyContent], authContext: AuthContext): Future[Boolean] = {
     agentAssuranceConnector.hasActiveCesaRelationship(ninoOrUtr, inputSaAgentReference).map { relationshipExists =>
-      val (clientNino, clientUtr) = ninoOrUtr match {
+      val (userEnteredNino, userEnteredUtr) = ninoOrUtr match {
         case nino @ Nino(_) => (Some(nino), None)
         case utr @ Utr(_) => (None, Some(utr))
       }
@@ -247,7 +246,9 @@ class CheckAgencyController @Inject()
         knownFactResultOpt <- sessionStoreService.fetchKnownFactsResult
         _ <- knownFactResultOpt match {
           case Some(knownFactsResult) =>
-            auditService.sendAgentAssuranceAuditEvent(knownFactsResult, AssuranceResults(false, false, relationshipExists), clientUtr, clientNino)
+            auditService.sendAgentAssuranceAuditEvent(knownFactsResult,
+              AssuranceResults(false, false),
+              Some(AssuranceCheckInput(Some(relationshipExists), Some(inputSaAgentReference.value), userEnteredUtr, userEnteredNino)))
           case None =>
             Future.successful(Logger.warn("Could not send audit events due to empty knownfacts results"))
         }

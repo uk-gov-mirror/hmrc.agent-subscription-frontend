@@ -16,6 +16,11 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.models
 
-case class AssuranceResults(
-                             hasAcceptableNumberOfPayeClients: Boolean,
-                             hasAcceptableNumberOfSAClients: Boolean)
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.domain.Nino
+
+case class AssuranceCheckInput(passCesaAgentAssuranceCheck: Option[Boolean],
+                                userEnteredSaAgentRef: Option[String] = None,
+                                userEnteredUtr: Option[Utr] = None,
+                                userEnteredNino: Option[Nino] = None)
+

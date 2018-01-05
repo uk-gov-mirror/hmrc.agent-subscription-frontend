@@ -325,7 +325,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showConfirmYourAgency().url)
 
-      verifyAgentAssuranceAuditRequestSentWithClientIdentifier(Nino("AA123456A"), true)
+      verifyAgentAssuranceAuditRequestSentWithClientIdentifier(Nino("AA123456A"), true, "SA6012")
     }
 
     "redirect to setup incomplete page when submitting valid nino with no relationship" in {
@@ -343,7 +343,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.StartController.setupIncomplete().url)
 
-      verifyAgentAssuranceAuditRequestSentWithClientIdentifier(Nino("AA123456A"), false)
+      verifyAgentAssuranceAuditRequestSentWithClientIdentifier(Nino("AA123456A"), false, "SA6012")
     }
 
     "nino invalid send back 200 with error page" in {
@@ -370,7 +370,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showConfirmYourAgency().url)
 
-      verifyAgentAssuranceAuditRequestSentWithClientIdentifier(Utr("4000000009"), true)
+      verifyAgentAssuranceAuditRequestSentWithClientIdentifier(Utr("4000000009"), true, "SA6012")
     }
 
     "redirect to setup incomplete page when submitting valid utr with no relationship" in {
@@ -388,7 +388,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.StartController.setupIncomplete().url)
 
-      verifyAgentAssuranceAuditRequestSentWithClientIdentifier(Utr("4000000009"), false)
+      verifyAgentAssuranceAuditRequestSentWithClientIdentifier(Utr("4000000009"), false, "SA6012")
     }
 
     "utr invalid send back 200 with error page" in {
@@ -425,7 +425,6 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
         "isEnrolledPAYEAgent" -> "true",
         "payeAgentRef" -> "HZ1234",
         "passPayeAgentAssuranceCheck" -> passPayeAgentAssuranceCheck.toString,
-        "passCESAAgentAssuranceCheck" -> "false",
         "authProviderId" -> "12345-credId",
         "authProviderType" -> "GovernmentGateway"
       ),
@@ -436,10 +435,10 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
     )
   }
 
-  def verifyAgentAssuranceAuditRequestSentWithClientIdentifier(identifier: TaxIdentifier, passCESAAgentAssuranceCheck: Boolean): Unit = {
+  def verifyAgentAssuranceAuditRequestSentWithClientIdentifier(identifier: TaxIdentifier, passCESAAgentAssuranceCheck: Boolean, saAgentRef: String): Unit = {
     val clientIdentifier = identifier match {
-      case nino @ Nino(_) => ("clientNino" -> nino.value)
-      case utr @ Utr(_) => ("clientUtr" -> utr.value)
+      case nino @ Nino(_) => ("userEnteredNino" -> nino.value)
+      case utr @ Utr(_) => ("userEnteredUtr" -> utr.value)
     }
     verifyAuditRequestSent(1, AgentSubscriptionFrontendEvent.AgentAssurance,
       detail = Map(
@@ -451,7 +450,8 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
         "passPayeAgentAssuranceCheck" -> "false",
         "passCESAAgentAssuranceCheck" -> passCESAAgentAssuranceCheck.toString,
         "authProviderId" -> "12345-credId",
-        "authProviderType" -> "GovernmentGateway"
+        "authProviderType" -> "GovernmentGateway",
+        "userEnteredSaAgentRef" -> saAgentRef
       ) + clientIdentifier,
       tags = Map(
         "transactionName" -> "agent-assurance",
