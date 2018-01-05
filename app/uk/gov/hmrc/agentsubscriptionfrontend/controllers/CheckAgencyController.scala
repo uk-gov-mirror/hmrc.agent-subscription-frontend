@@ -180,9 +180,10 @@ class CheckAgencyController @Inject()
             Future.successful(Ok(invasive_check_start(formWithErrors)))
           }, correctForm => {
             if (correctForm.value.getOrElse(false)) {
-              if(correctForm.messageOfTrueRadioChoice.getOrElse("").length < 7 && correctForm.messageOfTrueRadioChoice.getOrElse("").length > 0) {
+              val saAgentReference = correctForm.messageOfTrueRadioChoice.getOrElse("")
+              if (FieldMappings.isValidSaAgentCode(saAgentReference)) {
                 Future.successful(Redirect(routes.CheckAgencyController.invasiveTaxPayerOptionGet)
-                  .withSession(request.session + ("saAgentReferenceToCheck" -> correctForm.messageOfTrueRadioChoice.getOrElse(""))))
+                  .withSession(request.session + ("saAgentReferenceToCheck" -> saAgentReference)))
               }else{
                 Future.successful(Ok(invasive_check_start(RadioWithInput
                   .confirmResponseForm.withError("confirmResponse-true-hidden-input", Messages("error.saAgentCode.invalid")))))
