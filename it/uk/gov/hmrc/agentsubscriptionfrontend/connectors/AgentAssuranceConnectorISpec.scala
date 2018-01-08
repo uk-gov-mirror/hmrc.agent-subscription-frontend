@@ -74,20 +74,30 @@ class AgentAssuranceConnectorISpec extends UnitSpec with OneAppPerSuite with Wir
       await(connector.hasActiveCesaRelationship(Nino("AA123456A"), "nino", SaAgentReference("SA6012"))) shouldBe true
       timerShouldExistsAndBeenUpdated("ConsumedAPI-AgentAssurance-getActiveCesaRelationship-GET")
     }
+
     "receive 200 if valid combination passed and relationship exists in Cesa Utr" in {
       givenUtrAGoodCombinationAndUserHasRelationshipInCesa("utr", "4000000009", "SA6012")
       givenCleanMetricRegistry()
       await(connector.hasActiveCesaRelationship(Utr("4000000009"), "utr", SaAgentReference("SA6012"))) shouldBe true
       timerShouldExistsAndBeenUpdated("ConsumedAPI-AgentAssurance-getActiveCesaRelationship-GET")
     }
+
     "receive 403 if valid combination passed and relationship does not exist in Cesa" in {
       givenAUserDoesNotHaveRelationshipInCesa("nino", "AA123456A", "SA6012")
       givenCleanMetricRegistry()
       await(connector.hasActiveCesaRelationship(Nino("AA123456A"), "nino", SaAgentReference("SA6012"))) shouldBe false
       timerShouldExistsAndBeenUpdated("ConsumedAPI-AgentAssurance-getActiveCesaRelationship-GET")
     }
+
     "receive 403 if invalid combination passed" in {
       givenABadCombinationAndUserHasRelationshipInCesa("nino", "AB123456A", "SA126013")
+      givenCleanMetricRegistry()
+      await(connector.hasActiveCesaRelationship(Nino("AB123456A"), "nino", SaAgentReference("SA126013"))) shouldBe false
+      timerShouldExistsAndBeenUpdated("ConsumedAPI-AgentAssurance-getActiveCesaRelationship-GET")
+    }
+
+    "receive 404 when valid Nino but is not found in DB" in {
+      givenAGoodCombinationAndNinoNotFoundInCesa("nino", "AB123456B", "SA126012")
       givenCleanMetricRegistry()
       await(connector.hasActiveCesaRelationship(Nino("AB123456A"), "nino", SaAgentReference("SA126013"))) shouldBe false
       timerShouldExistsAndBeenUpdated("ConsumedAPI-AgentAssurance-getActiveCesaRelationship-GET")
