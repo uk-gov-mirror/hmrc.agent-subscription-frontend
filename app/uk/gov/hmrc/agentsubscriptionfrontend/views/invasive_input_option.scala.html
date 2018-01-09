@@ -21,7 +21,7 @@
 
 @(confirmResponseForm: Form[RadioWithInput])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = Messages("invasive.title.option"), bodyClasses = None) {
+@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = error_prefix(confirmResponseForm) + Messages("invasive.title.option"), bodyClasses = None) {
 
     @if(confirmResponseForm.hasErrors) {
         @errorSummary(Messages("error.summary.heading"), confirmResponseForm, Seq.empty, Some("confirmResponseSomethingTrackingGGA"))
