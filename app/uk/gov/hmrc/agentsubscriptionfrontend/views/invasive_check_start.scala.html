@@ -29,28 +29,35 @@
     <h1 class="heading-large">@Messages("invasive.title.saCode")</h1>
 
     @form(action = routes.CheckAgencyController.invasiveSaAgentCodePost(), 'class -> "form js-form") {
-        <div class="form-group @if(confirmResponseForm.hasErrors){form-group-error}">
-        <fieldset>
-        <legend>
-            <span class="visually-hidden">@Messages("invasive.title.saCode")</span>
-        </legend>
-        <div class="multiple-choice" data-target="saAgentCode">
-            <input id="confirmResponse" type="radio" name="confirmResponse" value="true">
-            <label for="confirmResponse">@Messages("invasive.confirmResponse.true.yes")</label>
-        </div>
-        <div class="panel panel-border-narrow js-hidden" id="saAgentCode">
-            <label class="form-label" for="confirmResponse-true-hidden-input">@Messages("confirmResponse.true.hidden.input.label.sa")</label>
-            <input class="form-control" name="confirmResponse-true-hidden-input" type="text" id="confirmResponse-true-hidden-input">
+        <div class="form-group @if(confirmResponseForm.error("confirmResponse").isDefined){form-group-error}" id="confirmResponse">
+            <fieldset>
+                <legend>
+                    <span class="visually-hidden">@Messages("invasive.title.saCode")</span>
+                    @if(confirmResponseForm.error("confirmResponse").isDefined){
+                        <span class="error-message">@Messages("error.confirmResponse.invalid")</span>
+                    }
+                </legend>
+
+                <div class="multiple-choice" data-target="saAgentCode">
+                    <input id="confirmResponse-true" type="radio" name="confirmResponse" value="true" @if(confirmResponseForm.error("confirmResponse-true-hidden-input").isDefined){checked}>
+                    <label for="confirmResponse-true">@Messages("invasive.confirmResponse.true.yes")</label>
+                </div>
+                <div class="panel panel-border-narrow js-hidden @if(confirmResponseForm.error("confirmResponse-true-hidden-input").isDefined){form-group-error}" id="saAgentCode">
+                    <label class="form-label" for="confirmResponse-true-hidden-input">@Messages("confirmResponse.true.hidden.input.label.sa")</label>
+                    @if(confirmResponseForm.error("confirmResponse-true-hidden-input").isDefined){<span class="error-message">@Messages("error.saAgentCode.invalid")</span>}
+                    <input class="form-control @if(confirmResponseForm.error("confirmResponse-true-hidden-input").isDefined){form-control-error}" name="confirmResponse-true-hidden-input" type="text" id="confirmResponse-true-hidden-input">
+                </div>
+
+                <div class="multiple-choice">
+                    <input id="confirmResponse-false" type="radio" name="confirmResponse" value="false">
+                    <label for="confirmResponse-false">@Messages("invasive.confirmResponse.false.no")</label>
+                </div>
+            </fieldset>
         </div>
 
-        <div class="multiple-choice" data-target="confirmResponse">
-            <input id="confirmResponse" type="radio" name="confirmResponse" value="false">
-            <label for="confirmResponse">@Messages("invasive.confirmResponse.false.no")</label>
-        </div>
-        </fieldset>
-        </div>
         <details class="form-group">
-            <summary><span class="summary">@Messages("invasive.expandable.p1")</span>
+            <summary>
+                <span class="summary">@Messages("invasive.expandable.p1")</span>
             </summary>
             <div class="panel panel-border-narrow">
                 <p>@Messages("invasive.expandable.p1.open")</p>
