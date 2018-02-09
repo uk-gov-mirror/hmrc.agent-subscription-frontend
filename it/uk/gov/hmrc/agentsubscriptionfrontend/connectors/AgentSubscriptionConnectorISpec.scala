@@ -4,70 +4,94 @@ import java.net.URL
 
 import org.scalatestplus.play.OneAppPerSuite
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
-import uk.gov.hmrc.agentsubscriptionfrontend.config.{HttpVerbs}
+import uk.gov.hmrc.agentsubscriptionfrontend.config.HttpVerbs
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub
-import uk.gov.hmrc.agentsubscriptionfrontend.support.WireMockSupport
+import uk.gov.hmrc.agentsubscriptionfrontend.support.{MetricTestSupport, WireMockSupport}
 import uk.gov.hmrc.http.{HeaderCarrier, Upstream4xxResponse, Upstream5xxResponse}
 import uk.gov.hmrc.play.test.UnitSpec
+import com.kenshoo.play.metrics.Metrics
 
-class AgentSubscriptionConnectorISpec extends UnitSpec with OneAppPerSuite with WireMockSupport {
+class AgentSubscriptionConnectorISpec extends UnitSpec with OneAppPerSuite with WireMockSupport with MetricTestSupport {
 
   private implicit val hc = HeaderCarrier()
 
   private lazy val connector: AgentSubscriptionConnector = new AgentSubscriptionConnector(
-    new URL(s"http://localhost:$wireMockPort"), app.injector.instanceOf[HttpVerbs])
+    new URL(s"http://localhost:$wireMockPort"), app.injector.instanceOf[HttpVerbs],app.injector.instanceOf[Metrics])
 
   private val utr = Utr("0123456789")
   "getRegistration" should {
 
     "return a subscribed Registration when agent-subscription returns a 200 response (for a matching UTR and postcode)" in {
+      givenCleanMetricRegistry()
+
       AgentSubscriptionStub.withMatchingUtrAndPostcode(utr, "AA1 1AA", isSubscribedToAgentServices = true)
       val result: Option[Registration] = await(connector.getRegistration(utr, "AA1 1AA"))
       result.isDefined shouldBe true
       result.get.taxpayerName shouldBe Some("My Agency")
       result.get.isSubscribedToAgentServices shouldBe true
+
+      timerShouldExistsAndBeenUpdated("ConsumedAPI-Agent-Subscription-hasAcceptableNumberOfClients-GET")
     }
 
     "return a not subscribed Registration when agent-subscription returns a 200 response (for a matching UTR and postcode)" in {
+      givenCleanMetricRegistry()
       AgentSubscriptionStub.withMatchingUtrAndPostcode(utr, "AA1 1AA", isSubscribedToAgentServices = false)
+
       val result: Option[Registration] = await(connector.getRegistration(utr, "AA1 1AA"))
       result.isDefined shouldBe true
       result.get.taxpayerName shouldBe Some("My Agency")
       result.get.isSubscribedToAgentServices shouldBe false
+
+      timerShouldExistsAndBeenUpdated("ConsumedAPI-Agent-Subscription-hasAcceptableNumberOfClients-GET")
     }
 
     "URL-path-encode path parameters" in {
+      givenCleanMetricRegistry()
       AgentSubscriptionStub.withMatchingUtrAndPostcode(Utr("01234/56789"), "AA1 1AA/&")
+
       val result: Option[Registration] = await(connector.getRegistration(Utr("01234/56789"), "AA1 1AA/&"))
       result.isDefined shouldBe true
+
+      timerShouldExistsAndBeenUpdated("ConsumedAPI-Agent-Subscription-hasAcceptableNumberOfClients-GET")
     }
 
     "return None when agent-subscription returns a 404 response (for a non-matching UTR and postcode)" in {
+      givenCleanMetricRegistry()
       AgentSubscriptionStub.withNonMatchingUtrAndPostcode(utr, "AA1 1AA")
+
       val result: Option[Registration] = await(connector.getRegistration(utr, "AA1 1AA"))
       result shouldBe None
+
+      timerShouldExistsAndBeenUpdated("ConsumedAPI-Agent-Subscription-hasAcceptableNumberOfClients-GET")
     }
 
     "throw an exception when agent-subscription returns a 500 response" in {
+      givenCleanMetricRegistry()
       AgentSubscriptionStub.withErrorForUtrAndPostcode(utr, "AA1 1AA")
+
       intercept[Upstream5xxResponse] {
         await(connector.getRegistration(utr, "AA1 1AA"))
       }
-    }
 
+      timerShouldExistsAndBeenUpdated("ConsumedAPI-Agent-Subscription-hasAcceptableNumberOfClients-GET")
+    }
   }
 
   "subscribe" should {
     "return an ARN" in {
+      givenCleanMetricRegistry()
       AgentSubscriptionStub.subscriptionWillSucceed(utr, subscriptionRequest)
 
       val result = await(connector.subscribeAgencyToMtd(subscriptionRequest))
 
       result shouldBe Arn("ARN00001")
+
+      timerShouldExistsAndBeenUpdated("ConsumedAPI-Agent-Subscription-subscribeAgencyToMtd-POST")
     }
 
     "throw Upstream4xxResponse if subscription already exists" in {
+      givenCleanMetricRegistry()
       AgentSubscriptionStub.subscriptionWillConflict(utr, subscriptionRequest)
 
       val e = intercept[Upstream4xxResponse] {
@@ -75,9 +99,12 @@ class AgentSubscriptionConnectorISpec extends UnitSpec with OneAppPerSuite with 
       }
 
       e.upstreamResponseCode shouldBe 409
+
+      timerShouldExistsAndBeenUpdated("ConsumedAPI-Agent-Subscription-subscribeAgencyToMtd-POST")
     }
 
     "throw Upstream4xxResponse if postcodes don't match" in {
+      givenCleanMetricRegistry()
       AgentSubscriptionStub.subscriptionWillBeForbidden(utr, subscriptionRequest)
 
       val e = intercept[Upstream4xxResponse] {
@@ -85,6 +112,8 @@ class AgentSubscriptionConnectorISpec extends UnitSpec with OneAppPerSuite with 
       }
 
       e.upstreamResponseCode shouldBe 403
+
+      timerShouldExistsAndBeenUpdated("ConsumedAPI-Agent-Subscription-subscribeAgencyToMtd-POST")
     }
   }
 

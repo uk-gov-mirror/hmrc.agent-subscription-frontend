@@ -1,5 +1,6 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.support
 
+import com.codahale.metrics.MetricRegistry
 import com.google.inject.AbstractModule
 import org.scalatestplus.play.OneAppPerSuite
 import play.api.Application
@@ -17,6 +18,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUsers._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.HeaderCarrierConverter
 import uk.gov.hmrc.play.test.UnitSpec
+import com.kenshoo.play.metrics.Metrics
 
 import scala.concurrent.Future
 
@@ -49,16 +51,24 @@ abstract class BaseISpec extends UnitSpec with OneAppPerSuite with MongoApp with
 
   protected lazy val sessionStoreService = new TestSessionStoreService
 
+  private object FakeMetrics extends Metrics {
+    override def defaultRegistry: MetricRegistry = new MetricRegistry
+
+    override def toJson: String = ???
+  }
+
+  protected lazy val testSsoConnector = new SsoConnector(null, null, FakeMetrics) {
+    val whitelistedSSODomains = Set("www.foo.com", "foo.org")
+
+    override def validateExternalDomain(domain: String)(implicit hc: HeaderCarrier): Future[Boolean] = {
+      Future.successful(whitelistedSSODomains.contains(domain))
+    }
+  }
+
   private class TestGuiceModule extends AbstractModule {
     override def configure(): Unit = {
       bind(classOf[SessionStoreService]).toInstance(sessionStoreService)
-      bind(classOf[SsoConnector]).toInstance(new SsoConnector(null, null) {
-        val whitelistedSSODomains = Set("www.foo.com", "foo.org")
-
-        override def validateExternalDomain(domain: String)(implicit hc: HeaderCarrier): Future[Boolean] = {
-          Future.successful(whitelistedSSODomains.contains(domain))
-        }
-      })
+      bind(classOf[SsoConnector]).toInstance(testSsoConnector)
     }
   }
 

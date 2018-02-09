@@ -2,17 +2,19 @@ package uk.gov.hmrc.agentsubscriptionfrontend.connectors
 
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{AddressLookupFrontendAddress, Country}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AddressLookupFrontendStubs.givenAddressLookupReturnsAddress
-import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
+import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, MetricTestSupport}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class AddressLookupFrontendConnectorSpec extends BaseISpec {
+class AddressLookupFrontendConnectorSpec extends BaseISpec with MetricTestSupport {
 
   implicit val hc = HeaderCarrier()
 
   "getAddressDetails" should {
     "convert the JSON returned by address-lookup-frontend into an object" in {
+      givenCleanMetricRegistry()
+
       val addressId = "id"
       val addressLine1 = "10 Other Place"
       val addressLine2 = "Some District"
@@ -32,6 +34,7 @@ class AddressLookupFrontendConnectorSpec extends BaseISpec {
         country = Country("GB",Some("United Kingdom"))
       )
 
+      timerShouldExistsAndBeenUpdated("ConsumedAPI-Address-Lookup-Frontend-getAddressDetails-GET")
     }
   }
 
