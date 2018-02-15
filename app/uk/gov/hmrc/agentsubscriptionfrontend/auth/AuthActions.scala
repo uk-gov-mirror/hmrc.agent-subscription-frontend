@@ -19,6 +19,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.auth
 import play.api.mvc._
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.{ContinueUrlActions, routes}
+import uk.gov.hmrc.agentsubscriptionfrontend.support.Monitoring
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.passcode.authentication.PasscodeAuthentication
 import uk.gov.hmrc.play.HeaderCarrierConverter
@@ -29,7 +30,7 @@ import scala.concurrent.Future
 
 case class AgentRequest[A](enrolments: List[Enrolment], request: Request[A]) extends WrappedRequest[A](request)
 
-trait AuthActions extends Actions with PasscodeAuthentication {
+trait AuthActions extends Actions with PasscodeAuthentication with Monitoring {
   protected type AsyncPlayUserRequest = AuthContext => AgentRequest[AnyContent] => Future[Result]
 
   val continueUrlActions: ContinueUrlActions
@@ -48,12 +49,18 @@ trait AuthActions extends Actions with PasscodeAuthentication {
               } yield (isAgent, activatedEnrol)).flatMap {
                 case (true, true) => {
                   continueUrlActions.extractContinueUrl.map {
-                    case Some(continueUrl) => Redirect(continueUrl.url)
-                    case None => Redirect(appConfig.agentServicesAccountUrl)
+                    case Some(continueUrl) =>
+                      mark("Count-Subscription-AlreadySubscribed-HasEnrolment-ContinueUrl")
+                      Redirect(continueUrl.url)
+                    case None =>
+                      mark("Count-Subscription-AlreadySubscribed-HasEnrolment-AgentServicesAccount")
+                      Redirect(appConfig.agentServicesAccountUrl)
                   }
                 }
                 case (true, false) => body(authContext)(AgentRequest(enrolls, request))
-                case _ => Future successful redirectToNonAgentNextSteps
+                case _ =>
+                  mark("Count-Subscription-NonAgent")
+                  Future successful redirectToNonAgentNextSteps
               }
             }
           }

@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.auth
 
+import com.codahale.metrics.MetricRegistry
+import com.kenshoo.play.metrics.Metrics
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
@@ -23,22 +25,20 @@ import play.api.mvc._
 import play.api.test.FakeRequest
 import uk.gov.hmrc.agentsubscriptionfrontend.audit.AuditService
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentSubscriptionConnector
-import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentAssuranceConnector
+import uk.gov.hmrc.agentsubscriptionfrontend.connectors.{AgentAssuranceConnector, AgentSubscriptionConnector}
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.{CheckAgencyController, ContinueUrlActions}
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestAppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestMessagesApi.testMessagesApi
 import uk.gov.hmrc.agentsubscriptionfrontend.support.passcode.TestPasscodeVerificationConfig
+import uk.gov.hmrc.http.{Request => _, _}
 import uk.gov.hmrc.passcode.authentication.{PasscodeAuthenticationProvider, PasscodeVerificationConfig, TestPasscodeAuthenticationProvider}
 import uk.gov.hmrc.play.frontend.auth._
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.auth.connectors.domain.{Accounts, Authority, ConfidenceLevel}
-import uk.gov.hmrc.play.http._
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.{ExecutionContext, Future}
-import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, HttpResponse, SessionKeys, Upstream5xxResponse}
 
 class AuthActionSpec extends UnitSpec with MockitoSugar {
 
@@ -55,6 +55,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
       val continueUrlActions = mock[ContinueUrlActions]
       val agentAssuranceConnector = mock[AgentAssuranceConnector]
       val auditService = mock[AuditService]
+      val metrics = mock[Metrics]
 
       val failure = Upstream5xxResponse("failure in auth", 500, 500)
 
@@ -66,7 +67,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
 
       val controller = new CheckAgencyController(
         false, agentAssuranceConnector, testMessagesApi, authConnector, passcodeVerificationConfig,
-        passcodeAuthenticationProvider, agentSubscriptionConnector, sessionStoreService, continueUrlActions, auditService)
+        passcodeAuthenticationProvider, agentSubscriptionConnector, sessionStoreService, continueUrlActions, auditService, metrics)
 
       intercept[Upstream5xxResponse] {
         val eventualResult: Future[Result] = controller.showCheckAgencyStatus(mockRequestWithMockAuthSession)
@@ -156,6 +157,10 @@ class TestAuthActions(override val config: PasscodeVerificationConfig, override 
 
   override protected def authConnector: AuthConnector = ???
   override val continueUrlActions: ContinueUrlActions = new ContinueUrlActions(null, null)
+  override val metrics: Metrics = new Metrics {
+    override def toJson: String = ""
+    override def defaultRegistry: MetricRegistry = new MetricRegistry
+  }
 
   override def AuthorisedFor(taxRegime: TaxRegime, pageVisibility: PageVisibilityPredicate): AuthenticatedBy = NoCheckAuthenticatedBy
 

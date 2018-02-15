@@ -10,7 +10,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUsers.{individual, su
 import uk.gov.hmrc.play.test.UnitSpec
 
 trait EndpointBehaviours {
-  me: UnitSpec with WireMockSupport with OneAppPerSuite =>
+  me: UnitSpec with WireMockSupport with OneAppPerSuite with MetricTestSupport =>
   type PlayRequest = Request[AnyContent] => Result
   private implicit val materializer = app.materializer
 
@@ -25,6 +25,7 @@ trait EndpointBehaviours {
 
       status(result) shouldBe 303
       redirectLocation(result).get should include("/gg/sign-in")
+      noMetricExpectedAtThisPoint()
     }
 
     "redirect to the non-Agent next steps page if the current user is logged in and does not have affinity group = Agent" in {
@@ -36,6 +37,7 @@ trait EndpointBehaviours {
 
       status(result) shouldBe 303
       redirectLocation(result).get shouldBe routes.StartController.showNonAgentNextSteps().url
+      metricShouldExistsAndBeenUpdated("Count-Subscription-NonAgent")
     }
   }
 

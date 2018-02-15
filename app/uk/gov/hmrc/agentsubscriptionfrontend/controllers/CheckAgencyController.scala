@@ -18,6 +18,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import javax.inject.{Inject, Named, Singleton}
 
+import com.kenshoo.play.metrics.Metrics
 import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms.mapping
@@ -30,14 +31,15 @@ import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.{AgentAssuranceConnector, AgentSubscriptionConnector}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
+import uk.gov.hmrc.agentsubscriptionfrontend.support.Monitoring
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{invasive_check_start, invasive_input_option}
+import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.passcode.authentication.{PasscodeAuthenticationProvider, PasscodeVerificationConfig}
 import uk.gov.hmrc.play.frontend.auth.AuthContext
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
-import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
-import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.Future
 
@@ -61,9 +63,11 @@ class CheckAgencyController @Inject()
  val agentSubscriptionConnector: AgentSubscriptionConnector,
  val sessionStoreService: SessionStoreService,
  val continueUrlActions: ContinueUrlActions,
- auditService: AuditService)
+ auditService: AuditService,
+ val metrics: Metrics
+)
 (implicit appConfig: AppConfig)
-  extends FrontendController with I18nSupport with AuthActions with SessionDataMissing {
+  extends FrontendController with I18nSupport with AuthActions with SessionDataMissing with Monitoring {
 
   import continueUrlActions._
 
@@ -80,18 +84,16 @@ class CheckAgencyController @Inject()
         implicit request =>
           withMaybeContinueUrlCached {
             hasMtdEnrolment match {
-              case true => Future successful Redirect(routes.CheckAgencyController.showAlreadySubscribed())
-              case false => Future successful Ok(html.check_agency_status(CheckAgencyController.knownFactsForm))
+              case true =>
+                mark("Count-Subscription-AlreadySubscribed-HasEnrolment")
+                Future successful Redirect(routes.CheckAgencyController.showAlreadySubscribed())
+              case false =>
+                mark("Count-Subscription-CheckAgency-Start")
+                Future successful Ok(html.check_agency_status(CheckAgencyController.knownFactsForm))
             }
           }
     }
   }
-
-  private def lookupNextPageUrl(isSubscribedToAgentServices: Boolean): String =
-    if (isSubscribedToAgentServices)
-      routes.CheckAgencyController.showAlreadySubscribed().url
-    else routes.SubscriptionController.showInitialDetails().url
-
 
   val checkAgencyStatus: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync() {
     implicit authContext: AuthContext =>
@@ -119,8 +121,12 @@ class CheckAgencyController @Inject()
     }
 
     def decideBasedOn: Option[AssuranceResults] => Result = {
-      case Some(AssuranceResults(false, false)) => Redirect(routes.CheckAgencyController.invasiveCheckStart)
-      case _  => Redirect(routes.CheckAgencyController.showConfirmYourAgency())
+      case Some(AssuranceResults(false, false)) =>
+        mark("Count-Subscription-InvasiveCheck-Start")
+        Redirect(routes.CheckAgencyController.invasiveCheckStart)
+      case _  =>
+        mark("Count-Subscription-CheckAgency-Success")
+        Redirect(routes.CheckAgencyController.showConfirmYourAgency())
     }
 
     agentSubscriptionConnector.getRegistration(knownFacts.utr, knownFacts.postcode) flatMap { maybeRegistration: Option[Registration] =>
@@ -135,7 +141,9 @@ class CheckAgencyController @Inject()
           } yield decideBasedOn(assuranceResults)
 
         case Some(_) => throw new IllegalStateException(s"The agency with UTR ${knownFacts.utr} has no organisation name.")
-        case None => Future successful Redirect(routes.CheckAgencyController.showNoAgencyFound())
+        case None =>
+          mark("Count-Subscription-NoAgencyFound")
+          Future successful Redirect(routes.CheckAgencyController.showNoAgencyFound())
       }
     }
   }
@@ -159,6 +167,15 @@ class CheckAgencyController @Inject()
           sessionMissingRedirect()
         })
   }
+
+  private def lookupNextPageUrl(isSubscribedToAgentServices: Boolean): String =
+    if (isSubscribedToAgentServices) {
+      mark("Count-Subscription-AlreadySubscribed-RegisteredInETMP")
+      routes.CheckAgencyController.showAlreadySubscribed().url
+    } else {
+      mark("Count-Subscription-CleanCreds-Start")
+      routes.SubscriptionController.showInitialDetails().url
+    }
 
   val showAlreadySubscribed: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync() { implicit authContext =>
     implicit request =>
@@ -188,8 +205,10 @@ class CheckAgencyController @Inject()
                 Future.successful(Ok(invasive_check_start(RadioWithInput
                   .confirmResponseForm.withError("confirmResponse-true-hidden-input", Messages("error.saAgentCode.invalid")))))
               }
-            } else
+            } else {
+              mark("Count-Subscription-InvasiveCheck-Declined")
               Future.successful(Redirect(routes.StartController.setupIncomplete()))
+            }
           })
   }
 
@@ -230,7 +249,7 @@ class CheckAgencyController @Inject()
         )
   }
 
-  private case class TaxIdFormValue(id: String, name: String, formField: String,
+  case class TaxIdFormValue(id: String, name: String, formField: String,
                             validateId: (String) => Boolean,
                             stringAsTaxId: (String) => TaxIdentifier) {
     lazy val taxId = stringAsTaxId(id)
@@ -243,8 +262,12 @@ class CheckAgencyController @Inject()
     if (value.isValid) {
       val saAgentReference = request.session.get("saAgentReferenceToCheck").getOrElse("")
       checkActiveCesaRelationship(value, SaAgentReference(saAgentReference)).map {
-        case true => Redirect(routes.CheckAgencyController.showConfirmYourAgency())
-        case false => Redirect(routes.StartController.setupIncomplete())
+        case true =>
+          mark("Count-Subscription-InvasiveCheck-Success")
+          Redirect(routes.CheckAgencyController.showConfirmYourAgency())
+        case false =>
+          mark("Count-Subscription-InvasiveCheck-Failed")
+          Redirect(routes.StartController.setupIncomplete())
       }
     } else {
       Future.successful(Ok(invasive_input_option(RadioWithInput.confirmResponseForm

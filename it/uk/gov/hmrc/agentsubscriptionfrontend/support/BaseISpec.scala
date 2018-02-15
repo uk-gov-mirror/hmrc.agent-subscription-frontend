@@ -22,7 +22,8 @@ import com.kenshoo.play.metrics.Metrics
 
 import scala.concurrent.Future
 
-abstract class BaseISpec extends UnitSpec with OneAppPerSuite with MongoApp with WireMockSupport with EndpointBehaviours with DataStreamStubs {
+abstract class BaseISpec extends UnitSpec with OneAppPerSuite with MongoApp with WireMockSupport
+  with EndpointBehaviours with DataStreamStubs  with MetricTestSupport {
 
   override implicit lazy val app: Application = appBuilder.build()
 
@@ -45,6 +46,7 @@ abstract class BaseISpec extends UnitSpec with OneAppPerSuite with MongoApp with
 
   override def commonStubs(): Unit = {
     givenAuditConnector()
+    givenCleanMetricRegistry()
   }
 
   protected def passcodeAuthenticationEnabled: Boolean = false

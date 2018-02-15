@@ -33,7 +33,6 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       givenUserIsAnAgentWithAnAcceptableNumberOfPAYEClients
       givenUserIsAnAgentWithAnAcceptableNumberOfSAClients
 
-
       implicit val request = authenticatedRequest(subscribingAgent).withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
 
@@ -43,6 +42,7 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
         KnownFactsResult(validUtr, validPostcode, "My Agency", isSubscribedToAgentServices = false)
       )
       verifyAgentAssuranceAuditRequestSent(passPayeAgentAssuranceCheck = true, passSaAgentAssuranceCheck = true)
+      metricShouldExistsAndBeenUpdated("Count-Subscription-CheckAgency-Success")
     }
 
     "store isSubscribedToAgentServices = false in session when the business registration found by agent-subscription is not already subscribed" in {
@@ -51,7 +51,6 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       givenUserIsAnAgentWithAnAcceptableNumberOfPAYEClients
       givenUserIsAnAgentWithAnAcceptableNumberOfSAClients
 
-
       implicit val request = authenticatedRequest(subscribingAgent).withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
 
@@ -59,6 +58,7 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showConfirmYourAgency().url)
       sessionStoreService.currentSession.knownFactsResult.get.isSubscribedToAgentServices shouldBe false
       verifyAgentAssuranceAuditRequestSent(passPayeAgentAssuranceCheck = true, passSaAgentAssuranceCheck = true)
+      metricShouldExistsAndBeenUpdated("Count-Subscription-CheckAgency-Success")
     }
 
     "store isSubscribedToAgentServices = true in session when the business registration found by agent-subscription is already subscribed" in {
@@ -66,7 +66,6 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       isEnrolledForNonMtdServices(subscribingAgent)
       givenUserIsAnAgentWithAnAcceptableNumberOfPAYEClients
       givenUserIsAnAgentWithAnAcceptableNumberOfSAClients
-
 
       implicit val request = authenticatedRequest(subscribingAgent).withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
@@ -83,7 +82,6 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       givenUserIsNotAnAgentWithAnAcceptableNumberOfPAYEClients
       givenUserIsNotAnAgentWithAnAcceptableNumberOfSAClients
 
-
       implicit val request = authenticatedRequest(subscribingAgent).withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
 
@@ -97,7 +95,6 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       isEnrolledForNonMtdServices(subscribingAgent)
       givenUserIsNotAnAgentWithAnAcceptableNumberOfPAYEClients
       givenUserIsNotAnAgentWithAnAcceptableNumberOfSAClients
-
 
       implicit val request = authenticatedRequest().withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
@@ -113,7 +110,6 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       givenUserIsNotAnAgentWithAnAcceptableNumberOfPAYEClients
       givenUserIsNotAnAgentWithAnAcceptableNumberOfSAClients
 
-
       implicit val request = authenticatedRequest(subscribingAgent).withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
 
@@ -128,7 +124,6 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       givenUserIsNotAnAgentWithAnAcceptableNumberOfPAYEClients
       givenUserIsAnAgentWithAnAcceptableNumberOfSAClients
 
-
       implicit val request = authenticatedRequest(subscribingAgent).withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
 
@@ -142,7 +137,6 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       isEnrolledForNonMtdServices(subscribingAgent)
       givenUserIsAnAgentWithAnAcceptableNumberOfPAYEClients
       givenUserIsNotAnAgentWithAnAcceptableNumberOfSAClients
-
 
       implicit val request = authenticatedRequest(subscribingAgent).withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))

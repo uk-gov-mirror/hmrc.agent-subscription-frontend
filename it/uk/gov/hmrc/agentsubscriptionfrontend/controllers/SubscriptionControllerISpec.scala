@@ -55,6 +55,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       val result = await(controller.showInitialDetails(request))
       status(result) shouldBe 303
       result.header.headers("Location") should include("/agent-subscription/has-other-enrolments")
+      noMetricExpectedAtThisPoint()
     }
 
     "show subscription details page if user has not already subscribed and has clean creds" in {
@@ -65,6 +66,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       val result = await(controller.showInitialDetails(request))
       status(result) shouldBe 200
       checkHtmlResultWithBodyText(result, htmlEscapedMessage("subscriptionDetails.title"))
+      metricShouldExistsAndBeenUpdated("Count-Subscription-CleanCreds-Success")
     }
 
     "populate form with utr and postcode" in {
@@ -263,6 +265,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         val result = await(controller.submitInitialDetails(request))
         status(result) shouldBe 303
         redirectLocation(result).head shouldBe routes.CheckAgencyController.showCheckAgencyStatus().url
+        noMetricExpectedAtThisPoint()
       }
     }
   }
@@ -293,6 +296,10 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         flash(result2).get("arn") shouldBe Some("ARN00001")
 
         verifySubscriptionRequestSent(subscriptionRequest())
+        metricShouldExistsAndBeenUpdated(
+          "Count-Subscription-AddressLookup-Start",
+          "Count-Subscription-AddressLookup-Success",
+          "Count-Subscription-Complete")
 
       }
 
@@ -319,6 +326,10 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
 
         verifySubscriptionRequestSent(subscriptionRequest())
         // add check for Logger.warn here
+        metricShouldExistsAndBeenUpdated(
+          "Count-Subscription-AddressLookup-Start",
+          "Count-Subscription-AddressLookup-Success",
+          "Count-Subscription-Complete")
       }
 
       "town is omitted" in {
@@ -422,6 +433,10 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         status(result) shouldBe 303
         redirectLocation(result).head shouldBe routes.SubscriptionController.showSubscriptionFailed().url
         sessionStoreService.allSessionsRemoved shouldBe false
+        metricShouldExistsAndBeenUpdated("Count-Subscription-AddressLookup-Start",
+          "Count-Subscription-AddressLookup-Success",
+          "Count-Subscription-Failed",
+          "Http4xxErrorCount-ConsumedAPI-Agent-Subscription-subscribeAgencyToMtd-POST")
       }
     }
 
@@ -443,6 +458,10 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         status(result) shouldBe 303
         redirectLocation(result).head shouldBe routes.CheckAgencyController.showAlreadySubscribed().url
         sessionStoreService.allSessionsRemoved shouldBe false
+        metricShouldExistsAndBeenUpdated("Count-Subscription-AddressLookup-Start",
+          "Count-Subscription-AddressLookup-Success",
+          "Count-Subscription-AlreadySubscribed-APIResponse",
+          "Http4xxErrorCount-ConsumedAPI-Agent-Subscription-subscribeAgencyToMtd-POST")
       }
     }
 
@@ -521,6 +540,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
 
       status(result) shouldBe 303
       redirectLocation(result).head shouldBe routes.CheckAgencyController.showCheckAgencyStatus().url
+      noMetricExpectedAtThisPoint()
     }
 
      "redisplay address_form_with_errors and show errors" when {
