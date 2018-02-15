@@ -18,6 +18,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import javax.inject.{Inject, Singleton}
 
+import com.kenshoo.play.metrics.Metrics
 import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms.mapping
@@ -32,7 +33,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.controllers.FieldMappings._
 import uk.gov.hmrc.agentsubscriptionfrontend.form.DesAddressForm
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionService}
-import uk.gov.hmrc.agentsubscriptionfrontend.support.CallOps
+import uk.gov.hmrc.agentsubscriptionfrontend.support.{CallOps, Monitoring}
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.passcode.authentication.{PasscodeAuthenticationProvider, PasscodeVerificationConfig}
@@ -68,10 +69,11 @@ class SubscriptionController @Inject()
  subscriptionService: SubscriptionService,
  sessionStoreService: SessionStoreService,
  addressLookUpConnector: AddressLookupFrontendConnector,
- val continueUrlActions: ContinueUrlActions
+ val continueUrlActions: ContinueUrlActions,
+ val metrics: Metrics
 )
 (implicit appConfig: AppConfig)
-  extends FrontendController with I18nSupport with AuthActions with SessionDataMissing {
+  extends FrontendController with I18nSupport with AuthActions with SessionDataMissing with Monitoring {
 
   private val JourneyName: String = appConfig.journeyName
   private val blacklistedPostCodes: Set[String] = appConfig.blacklistedPostcodes
@@ -96,12 +98,14 @@ class SubscriptionController @Inject()
     implicit request =>
       hasEnrolments match {
         case true => Future(Redirect(routes.CheckAgencyController.showHasOtherEnrolments()))
-        case false => sessionStoreService.fetchKnownFactsResult.map(_.map { knownFactsResult =>
-          Ok(html.subscription_details(knownFactsResult.taxpayerName, initialDetailsForm.fill(
-            InitialDetails(knownFactsResult.utr, knownFactsResult.postcode, null, null, null))))
-        }.getOrElse {
-          sessionMissingRedirect()
-        })
+        case false =>
+          mark("Count-Subscription-CleanCreds-Success")
+          sessionStoreService.fetchKnownFactsResult.map(_.map { knownFactsResult =>
+            Ok(html.subscription_details(knownFactsResult.taxpayerName, initialDetailsForm.fill(
+              InitialDetails(knownFactsResult.utr, knownFactsResult.postcode, null, null, null))))
+          }.getOrElse {
+            sessionMissingRedirect()
+          })
       }
   }
 
@@ -111,12 +115,14 @@ class SubscriptionController @Inject()
         initialDetailsForm.bindFromRequest().fold(
           formWithErrors =>
             redisplayInitialDetails(formWithErrors),
-          form =>
+          form => {
+            mark("Count-Subscription-AddressLookup-Start")
             addressLookUpConnector.initJourney(routes.SubscriptionController.returnFromAddressLookup(), JourneyName).map { x =>
               sessionStoreService.cacheInitialDetails(InitialDetails(form.utr, form.knownFactsPostcode, form.name,
                 form.email, form.telephone))
               Redirect(x)
             }
+          }
         )
   }
 
@@ -143,10 +149,18 @@ class SubscriptionController @Inject()
 
   private def redirectSubscriptionResponse(either: Either[SubscriptionReturnedHttpError, (Arn, String)]): Result = {
     either match {
-      case Right((arn, agencyName)) => Redirect(routes.SubscriptionController.showSubscriptionComplete())
+      case Right((arn, agencyName)) =>
+        mark("Count-Subscription-Complete")
+        Redirect(routes.SubscriptionController.showSubscriptionComplete())
         .flashing("arn" -> arn.arn, "agencyName" -> agencyName)
-      case Left(SubscriptionReturnedHttpError(CONFLICT)) => Redirect(routes.CheckAgencyController.showAlreadySubscribed())
-      case Left(SubscriptionReturnedHttpError(_)) => Redirect(routes.SubscriptionController.showSubscriptionFailed())
+
+      case Left(SubscriptionReturnedHttpError(CONFLICT)) =>
+        mark("Count-Subscription-AlreadySubscribed-APIResponse")
+        Redirect(routes.CheckAgencyController.showAlreadySubscribed())
+
+      case Left(SubscriptionReturnedHttpError(_)) =>
+        mark("Count-Subscription-Failed")
+        Redirect(routes.SubscriptionController.showSubscriptionFailed())
     }
   }
 
@@ -159,7 +173,10 @@ class SubscriptionController @Inject()
             addressLookUpConnector.getAddressDetails(id).flatMap { address =>
               desAddressForm.bindAddressLookupFrontendAddress(details.utr, address).fold(
                 formWithErrors => Future successful Ok(html.address_form_with_errors(formWithErrors)),
-                validDesAddress => subscribe(details, validDesAddress).map(redirectSubscriptionResponse)
+                validDesAddress => {
+                  mark("Count-Subscription-AddressLookup-Success")
+                  subscribe(details, validDesAddress).map(redirectSubscriptionResponse)
+                }
               )
             }
           }.getOrElse(Future.successful(sessionMissingRedirect()))

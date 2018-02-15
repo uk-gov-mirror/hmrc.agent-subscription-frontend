@@ -20,7 +20,24 @@ trait MetricTestSupport {
     metricsRegistry = registry
   }
 
-  def timerShouldExistsAndBeenUpdated(metric: String): Unit = {
-    metricsRegistry.getTimers.get(s"Timer-$metric").getCount should be >= 1L
+  def timerShouldExistsAndBeenUpdated(metricName: String): Unit = {
+    val timers = metricsRegistry.getTimers
+    val metric = timers.get(s"Timer-$metricName")
+    if (metric == null) throw new Exception(s"Metric [$metricName] not found, try one of ${timers.keySet()}")
+    metric.getCount should be >= 1L
+  }
+
+  def metricShouldExistsAndBeenUpdated(metricNames: String*): Unit = {
+    val meters = metricsRegistry.getMeters
+    metricNames.foreach { metricName =>
+      val metric = meters.get(metricName)
+      if (metric == null) throw new Exception(s"Metric [$metricName] not found, try one of ${meters.keySet()}")
+      metric.getCount should be >= 1L
+    }
+  }
+
+  def noMetricExpectedAtThisPoint(): Unit = {
+    val meters = metricsRegistry.getMeters
+    meters.size() shouldBe 0
   }
 }
