@@ -45,7 +45,7 @@ class CheckAgencyControllerWithoutAssuranceFlagISpec extends CheckAgencyControll
       verifyAuditRequestNotSent(AgentSubscriptionFrontendEvent.AgentAssurance)
     }
 
-    "store isSubscribedToAgentServices = true in session when the business registration found by agent-subscription is already subscribed" in {
+    "redirect to already subscribed page when the business registration found by agent-subscription is already subscribed" in {
       withMatchingUtrAndPostcode(validUtr, validPostcode, isSubscribedToAgentServices = true)
       isEnrolledForNonMtdServices(subscribingAgent)
 
@@ -55,8 +55,7 @@ class CheckAgencyControllerWithoutAssuranceFlagISpec extends CheckAgencyControll
       val result = await(controller.checkAgencyStatus(request))
 
       status(result) shouldBe 303
-      redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showConfirmYourAgency().url)
-      sessionStoreService.currentSession.knownFactsResult.get.isSubscribedToAgentServices shouldBe true
+      redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showAlreadySubscribed().url)
       verifyAuditRequestNotSent(AgentSubscriptionFrontendEvent.AgentAssurance)
     }
   }
