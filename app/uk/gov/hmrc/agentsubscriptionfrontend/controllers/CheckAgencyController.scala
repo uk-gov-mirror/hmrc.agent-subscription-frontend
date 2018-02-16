@@ -131,7 +131,7 @@ class CheckAgencyController @Inject()
 
     agentSubscriptionConnector.getRegistration(knownFacts.utr, knownFacts.postcode) flatMap { maybeRegistration: Option[Registration] =>
       maybeRegistration match {
-        case Some(Registration(Some(taxpayerName), isSubscribedToAgentServices)) =>
+        case Some(Registration(Some(taxpayerName), isSubscribedToAgentServices)) if !isSubscribedToAgentServices =>
 
           for {
             assuranceResults <- assureIsAgent()
@@ -140,6 +140,9 @@ class CheckAgencyController @Inject()
             _ <- assuranceResults.map(auditService.sendAgentAssuranceAuditEvent(knownFactsResult, _)).getOrElse(Future.successful(()))
           } yield decideBasedOn(assuranceResults)
 
+        case Some(Registration(_, isSubscribedToAgentServices)) if isSubscribedToAgentServices =>
+          mark("Count-Subscription-AlreadySubscribed-RegisteredInETMP")
+          Future successful Redirect(routes.CheckAgencyController.showAlreadySubscribed())
         case Some(_) => throw new IllegalStateException(s"The agency with UTR ${knownFacts.utr} has no organisation name.")
         case None =>
           mark("Count-Subscription-NoAgencyFound")

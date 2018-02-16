@@ -17,6 +17,7 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import play.api.test.Helpers._
+import uk.gov.hmrc.agentsubscriptionfrontend.audit.AgentSubscriptionFrontendEvent
 import uk.gov.hmrc.agentsubscriptionfrontend.models.KnownFactsResult
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub.withMatchingUtrAndPostcode
@@ -61,7 +62,7 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       metricShouldExistsAndBeenUpdated("Count-Subscription-CheckAgency-Success")
     }
 
-    "store isSubscribedToAgentServices = true in session when the business registration found by agent-subscription is already subscribed" in {
+    "redirect to already subscribed page when the business registration found by agent-subscription is already subscribed" in {
       withMatchingUtrAndPostcode(validUtr, validPostcode, isSubscribedToAgentServices = true)
       isEnrolledForNonMtdServices(subscribingAgent)
       givenUserIsAnAgentWithAnAcceptableNumberOfPAYEClients
@@ -71,9 +72,8 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       val result = await(controller.checkAgencyStatus(request))
 
       status(result) shouldBe 303
-      redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showConfirmYourAgency().url)
-      sessionStoreService.currentSession.knownFactsResult.get.isSubscribedToAgentServices shouldBe true
-      verifyAgentAssuranceAuditRequestSent(passPayeAgentAssuranceCheck = true, passSaAgentAssuranceCheck = true)
+      redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showAlreadySubscribed().url)
+      verifyAuditRequestNotSent(AgentSubscriptionFrontendEvent.AgentAssurance)
     }
 
     "fail when a matching registration is found for the UTR and postcode for an agent without an acceptable number of PAYE clients" in {
@@ -104,7 +104,8 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       verifyAgentAssuranceAuditRequestSent(passPayeAgentAssuranceCheck = false, passSaAgentAssuranceCheck = false)
     }
 
-    "fail when the business registration found by agent-subscription is already subscribed for an agent without an acceptable number of PAYE clients" in {
+    "redirect to already subscribed page when the business registration found by agent-subscription is already subscribed " +
+      "for an agent without an acceptable number of PAYE clients" in {
       withMatchingUtrAndPostcode(validUtr, validPostcode, isSubscribedToAgentServices = true)
       isEnrolledForNonMtdServices(subscribingAgent)
       givenUserIsNotAnAgentWithAnAcceptableNumberOfPAYEClients
@@ -114,8 +115,8 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       val result = await(controller.checkAgencyStatus(request))
 
       status(result) shouldBe 303
-      redirectLocation(result) shouldBe Some(routes.CheckAgencyController.invasiveCheckStart().url)
-      verifyAgentAssuranceAuditRequestSent(passPayeAgentAssuranceCheck = false, passSaAgentAssuranceCheck = false)
+      redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showAlreadySubscribed().url)
+      verifyAuditRequestNotSent(AgentSubscriptionFrontendEvent.AgentAssurance)
     }
 
     "proceed to showConfirmYourAgency when there in not an acceptable number of PAYE client, but there is enough SA Clients" in {
