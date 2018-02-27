@@ -221,7 +221,8 @@ class SubscriptionController @Inject()
               andThen { case _ => sessionStoreService.remove() }.
               map { continueUrlOpt =>
                 val continueUrl = continueUrlOpt.map(_.url).getOrElse(appConfig.agentServicesAccountUrl)
-                Ok(html.subscription_complete(continueUrl, agencyName, arn))
+                val isUrlToASAccount = continueUrlOpt.isEmpty
+                Ok(html.subscription_complete(continueUrl, isUrlToASAccount, agencyName, arn))
               }
           case _ =>
             Future.successful(sessionMissingRedirect())

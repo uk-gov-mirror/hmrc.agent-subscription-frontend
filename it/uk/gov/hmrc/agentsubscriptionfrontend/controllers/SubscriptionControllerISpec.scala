@@ -130,7 +130,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         val result = await(controller.showSubscriptionComplete(request.withFlash("arn" -> "ARN0001", "agencyName" -> "My Agency")))
 
         checkHtmlResultWithBodyText(result,
-          htmlEscapedMessage("subscriptionComplete.button.continueJourney"),
+          s">${htmlEscapedMessage("subscriptionComplete.button.continueJourney")}</a>",
           continueUrl.url)
       }
 
@@ -141,7 +141,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         val result = await(controller.showSubscriptionComplete(request.withFlash("arn" -> "ARN0001", "agencyName" -> "My Agency")))
 
         checkHtmlResultWithBodyText(result,
-          htmlEscapedMessage("subscriptionComplete.button.continueToASAccount"),
+          s">${htmlEscapedMessage("subscriptionComplete.button.continueToASAccount")}</a>",
           redirectUrl)
       }
     }
