@@ -220,7 +220,7 @@ class SubscriptionController @Inject()
               }.
               andThen { case _ => sessionStoreService.remove() }.
               map { continueUrlOpt =>
-                val continueUrl = CallOps.addParamsToUrl(appConfig.agentServicesAccountUrl, "continue" -> continueUrlOpt.map(_.url))
+                val continueUrl = continueUrlOpt.map(_.url).getOrElse(appConfig.agentServicesAccountUrl)
                 Ok(html.subscription_complete(continueUrl, agencyName, arn))
               }
           case _ =>
