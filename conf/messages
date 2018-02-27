@@ -88,11 +88,12 @@ subscriptionComplete.title=You''ve successfully created an Agent Services accoun
 subscriptionComplete.h1=You''ve successfully created an Agent Services account for {0}
 subscriptionComplete.accountName=Your account number is:
 subscriptionComplete.p1=<strong>You must save this number for your agency''s records.</strong> You''ll need it later. HMRC won''t show you this number again.
+subscriptionComplete.button.continueToASAccount=Continue to your Agent Services account
+subscriptionComplete.button.continueJourney=Continue
 
 #Common
 button.startAgain=Try again
 button.continue=Continue
-button.continueToASAccount=Continue to your Agent Services account
 button.yes=Yes
 button.no=No
 button.createAccount=Create account

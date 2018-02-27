@@ -119,28 +119,31 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showCheckAgencyStatus().url)
     }
 
-    "respond with html containing continue Url to be passed to agent services account" in {
-      AuthStub.hasNoEnrolments(subscribingAgent)
-      implicit val request = authenticatedRequest()
+    "contain a button to continue journey" when {
+      "a continue URL exists in the session, show a generic 'Continue' button using that URL" in {
+        AuthStub.hasNoEnrolments(subscribingAgent)
+        implicit val request = authenticatedRequest()
 
-      val continueUrl = ContinueUrl("/test-continue-url")
-      val expectedContinueParam = appConfig.agentServicesAccountUrl + "?continue=" + continueUrl.encodedUrl
+        val continueUrl = ContinueUrl("/test-continue-url")
 
-      sessionStoreService.currentSession(hc(request)).continueUrl = Some(continueUrl)
-      val result = await(controller.showSubscriptionComplete(request.withFlash("arn" -> "ARN0001", "agencyName" -> "My Agency")))
+        sessionStoreService.currentSession(hc(request)).continueUrl = Some(continueUrl)
+        val result = await(controller.showSubscriptionComplete(request.withFlash("arn" -> "ARN0001", "agencyName" -> "My Agency")))
 
-      status(result) shouldBe 200
-      checkHtmlResultWithBodyText(result, expectedContinueParam)
-    }
+        checkHtmlResultWithBodyText(result,
+          s">${htmlEscapedMessage("subscriptionComplete.button.continueJourney")}</a>",
+          continueUrl.url)
+      }
 
-    "contain a link in AS services" in {
-      implicit val request = authenticatedRequest()
-      AuthStub.hasNoEnrolments(subscribingAgent)
+      "no continue URL exists in the session, show a button with a link in AS services" in {
+        AuthStub.hasNoEnrolments(subscribingAgent)
+        implicit val request = authenticatedRequest()
 
-      val result = await(controller.showSubscriptionComplete(request.withFlash("arn" -> "ARN0001", "agencyName" -> "My Agency")))
+        val result = await(controller.showSubscriptionComplete(request.withFlash("arn" -> "ARN0001", "agencyName" -> "My Agency")))
 
-      status(result) shouldBe 200
-      bodyOf(result) should include(redirectUrl)
+        checkHtmlResultWithBodyText(result,
+          s">${htmlEscapedMessage("subscriptionComplete.button.continueToASAccount")}</a>",
+          redirectUrl)
+      }
     }
 
     "remove existing session" in {
