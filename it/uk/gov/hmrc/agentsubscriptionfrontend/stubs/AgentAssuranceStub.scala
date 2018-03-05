@@ -2,9 +2,11 @@ package uk.gov.hmrc.agentsubscriptionfrontend.stubs
 
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 
 object AgentAssuranceStub {
   val checkForAcceptableNumberOfPAYEClientsUrl = "/agent-assurance/acceptableNumberOfClients/service/IR-PAYE"
+  private val r2dwKey = "r2dwTestKey"
 
   def givenUserIsAnAgentWithAnAcceptableNumberOfPAYEClients: StubMapping =
     stubFor(get(urlEqualTo(checkForAcceptableNumberOfPAYEClientsUrl)).willReturn(aResponse().withStatus(204)))
@@ -32,6 +34,33 @@ object AgentAssuranceStub {
   def givenAnExceptionOccursDuringTheSAClientCheck: StubMapping =
     stubFor(get(urlEqualTo(checkForAcceptableNumberOfSAClientsUrl)).willReturn(aResponse().withStatus(404)))
 
+  val r2dwUrl = "/agent-assurance/refusal-to-deal-with/" + r2dwKey
+
+  def givenUtrReturnedInR2DWList(utr: String): StubMapping =
+    stubFor(get(urlEqualTo(r2dwUrl)).willReturn(aResponse()
+      .withStatus(200)
+        .withBody(s"""
+                     |{
+                     |   "key": "$r2dwKey",
+                     |   "value": "2000000000,2000000023,$utr"
+                     |}
+                 """.stripMargin)
+    ))
+
+  def givenR2DWListIsEmpty: StubMapping =
+    stubFor(get(urlEqualTo(r2dwUrl)).willReturn(aResponse()
+      .withStatus(200)
+        .withBody(s"""
+                     |{
+                     |   "key": "$r2dwKey",
+                     |   "value": ""
+                     |}
+                 """.stripMargin)
+    ))
+
+  def given404ReturnedForR2dw: StubMapping =
+    stubFor(get(urlEqualTo(r2dwUrl)).willReturn(aResponse().withStatus(404)))
+
   def givenNinoAGoodCombinationAndUserHasRelationshipInCesa(ninoOrUtr: String, valueOfNinoOrUtr: String, saAgentReference: String): StubMapping =
     stubFor(get(urlEqualTo(s"/agent-assurance/activeCesaRelationship/nino/AA123456A/saAgentReference/SA6012"))
       .willReturn(aResponse().withStatus(200)))
@@ -51,4 +80,5 @@ object AgentAssuranceStub {
   def givenAGoodCombinationAndNinoNotFoundInCesa(ninoOrUtr: String, valueOfNinoOrUtr: String, saAgentReference: String): StubMapping =
     stubFor(get(urlEqualTo(s"/agent-assurance/activeCesaRelationship/$ninoOrUtr/$valueOfNinoOrUtr/saAgentReference/$saAgentReference"))
       .willReturn(aResponse().withStatus(404)))
+
 }

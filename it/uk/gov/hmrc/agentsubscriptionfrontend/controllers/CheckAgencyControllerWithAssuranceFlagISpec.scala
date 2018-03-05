@@ -23,6 +23,8 @@ import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub.withMatchingUtrAndPostcode
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub.isEnrolledForNonMtdServices
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUsers.subscribingAgent
+import com.github.tomakehurst.wiremock.client.WireMock._
+import uk.gov.hmrc.play.encoding.UriPathEncoding.encodePathSegment
 
 class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerISpec {
   override def agentAssuranceFlag = true
@@ -33,6 +35,7 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       isEnrolledForNonMtdServices(subscribingAgent)
       givenUserIsAnAgentWithAnAcceptableNumberOfPAYEClients
       givenUserIsAnAgentWithAnAcceptableNumberOfSAClients
+      givenR2DWListIsEmpty
 
       implicit val request = authenticatedRequest(subscribingAgent).withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
@@ -51,6 +54,7 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       isEnrolledForNonMtdServices(subscribingAgent)
       givenUserIsAnAgentWithAnAcceptableNumberOfPAYEClients
       givenUserIsAnAgentWithAnAcceptableNumberOfSAClients
+      givenR2DWListIsEmpty
 
       implicit val request = authenticatedRequest(subscribingAgent).withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
@@ -67,6 +71,7 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       isEnrolledForNonMtdServices(subscribingAgent)
       givenUserIsAnAgentWithAnAcceptableNumberOfPAYEClients
       givenUserIsAnAgentWithAnAcceptableNumberOfSAClients
+      givenR2DWListIsEmpty
 
       implicit val request = authenticatedRequest(subscribingAgent).withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
@@ -81,6 +86,7 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       isEnrolledForNonMtdServices(subscribingAgent)
       givenUserIsNotAnAgentWithAnAcceptableNumberOfPAYEClients
       givenUserIsNotAnAgentWithAnAcceptableNumberOfSAClients
+      givenR2DWListIsEmpty
 
       implicit val request = authenticatedRequest(subscribingAgent).withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
@@ -95,6 +101,7 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       isEnrolledForNonMtdServices(subscribingAgent)
       givenUserIsNotAnAgentWithAnAcceptableNumberOfPAYEClients
       givenUserIsNotAnAgentWithAnAcceptableNumberOfSAClients
+      givenR2DWListIsEmpty
 
       implicit val request = authenticatedRequest().withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
@@ -110,6 +117,7 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       isEnrolledForNonMtdServices(subscribingAgent)
       givenUserIsNotAnAgentWithAnAcceptableNumberOfPAYEClients
       givenUserIsNotAnAgentWithAnAcceptableNumberOfSAClients
+      givenR2DWListIsEmpty
 
       implicit val request = authenticatedRequest(subscribingAgent).withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
@@ -124,6 +132,7 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       isEnrolledForNonMtdServices(subscribingAgent)
       givenUserIsNotAnAgentWithAnAcceptableNumberOfPAYEClients
       givenUserIsAnAgentWithAnAcceptableNumberOfSAClients
+      givenR2DWListIsEmpty
 
       implicit val request = authenticatedRequest(subscribingAgent).withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
@@ -138,6 +147,7 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       isEnrolledForNonMtdServices(subscribingAgent)
       givenUserIsAnAgentWithAnAcceptableNumberOfPAYEClients
       givenUserIsNotAnAgentWithAnAcceptableNumberOfSAClients
+      givenR2DWListIsEmpty
 
       implicit val request = authenticatedRequest(subscribingAgent).withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
@@ -145,6 +155,37 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showConfirmYourAgency().url)
       verifyAgentAssuranceAuditRequestSent(passPayeAgentAssuranceCheck = true, passSaAgentAssuranceCheck = false)
+    }
+
+    "redirect to setup incomplete when agent's utr is in the R2DW list" in {
+      isEnrolledForNonMtdServices(subscribingAgent)
+      givenUtrReturnedInR2DWList(validUtr.value)
+
+      implicit val request = authenticatedRequest(subscribingAgent).withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
+      val result = await(controller.checkAgencyStatus(request))
+
+      checkHtmlResultWithBodyText(result, htmlEscapedMessage("setupIncomplete.title"))
+      verify(0, getRequestedFor(urlPathEqualTo(s"/agent-subscription/registration/${encodePathSegment(validUtr.value)}/postcode/${encodePathSegment(validPostcode)}")))
+    }
+
+    "continue checks when UTR is not found the R2DW list" in {
+      isEnrolledForNonMtdServices(subscribingAgent)
+      givenR2DWListIsEmpty
+
+      implicit val request = authenticatedRequest(subscribingAgent).withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
+      val result = await(controller.checkAgencyStatus(request))
+
+      verify(1, getRequestedFor(urlPathEqualTo(s"/agent-subscription/registration/${encodePathSegment(validUtr.value)}/postcode/${encodePathSegment(validPostcode)}")))
+    }
+
+    "exception received due to missing config in R2DW" in {
+      isEnrolledForNonMtdServices(subscribingAgent)
+      given404ReturnedForR2dw
+
+      implicit val request = authenticatedRequest(subscribingAgent).withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
+      an[IllegalStateException] shouldBe thrownBy(await(controller.checkAgencyStatus(request)))
+
+      verify(0, getRequestedFor(urlPathEqualTo(s"/agent-subscription/registration/${encodePathSegment(validUtr.value)}/postcode/${encodePathSegment(validPostcode)}")))
     }
   }
 }

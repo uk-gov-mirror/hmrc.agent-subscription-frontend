@@ -156,6 +156,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
     "redirect to no-agency-found page when no matching registration found by agent-subscription" in {
       isEnrolledForNonMtdServices(subscribingAgent)
       withNonMatchingUtrAndPostcode(validUtr, validPostcode)
+      givenR2DWListIsEmpty
       implicit val request = authenticatedRequest()
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
@@ -168,6 +169,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
     "propagate an exception when there is no organisation name" in {
       withNoOrganisationName(validUtr, validPostcode)
       isEnrolledForNonMtdServices(subscribingAgent)
+      givenR2DWListIsEmpty
       implicit val request = authenticatedRequest()
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val e = intercept[IllegalStateException] {

@@ -30,7 +30,9 @@ import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext.fromLoggingDetai
 import scala.concurrent.Future
 
 @Singleton
-class AgentAssuranceConnector @Inject()(@Named("agent-assurance-baseUrl") baseUrl: URL, http: HttpGet, metrics: Metrics) extends HttpAPIMonitor {
+class AgentAssuranceConnector @Inject()(@Named("agent-assurance-baseUrl") baseUrl: URL,
+                                       @Named("r2dw-agentsAssurance-key") r2dwKey: String,
+                                        http: HttpGet, metrics: Metrics) extends HttpAPIMonitor {
   override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
 
   def hasAcceptableNumberOfClients(regime: String)(implicit hc: HeaderCarrier): Future[Boolean] = {
@@ -52,6 +54,19 @@ class AgentAssuranceConnector @Inject()(@Named("agent-assurance-baseUrl") baseUr
           case e: Upstream4xxResponse if e.upstreamResponseCode == 403 => false
           case e: NotFoundException => false
         }
+    }
+  }
+
+  def isR2DWAgent(utr: Utr)(implicit hc: HeaderCarrier): Future[Boolean] = {
+    monitor(s"ConsumedAPI-AgentAssurance-getR2DWAgents-GET") {
+      val r2dwUrl = baseUrl + s"/agent-assurance/refusal-to-deal-with/$r2dwKey"
+      http.GET[HttpResponse](r2dwUrl).map{ response =>
+        val r2dwList = (response.json \ "value").as[String]
+        r2dwList.contains(utr.value)
+      }
+      .recover {
+        case e: NotFoundException => throw new IllegalStateException(s"unable to reach $r2dwUrl")
+      }
     }
   }
 

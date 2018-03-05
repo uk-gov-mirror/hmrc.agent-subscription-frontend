@@ -4,6 +4,7 @@ import play.api.test.Helpers._
 import play.api.test.Helpers.redirectLocation
 import uk.gov.hmrc.agentsubscriptionfrontend.audit.AgentSubscriptionFrontendEvent
 import uk.gov.hmrc.agentsubscriptionfrontend.models.KnownFactsResult
+import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub.givenR2DWListIsEmpty
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub.withMatchingUtrAndPostcode
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub.{hasNoEnrolments, isEnrolledForNonMtdServices}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUsers.subscribingAgent
@@ -16,6 +17,7 @@ class CheckAgencyControllerWithoutAssuranceFlagISpec extends CheckAgencyControll
     "redirect to confirm agency page and store known facts result in the session store when a matching registration is found for the UTR and postcode" in {
       withMatchingUtrAndPostcode(validUtr, validPostcode)
       isEnrolledForNonMtdServices(subscribingAgent)
+      givenR2DWListIsEmpty
 
 
       implicit val request = authenticatedRequest()
@@ -33,6 +35,7 @@ class CheckAgencyControllerWithoutAssuranceFlagISpec extends CheckAgencyControll
     "store isSubscribedToAgentServices = false in session when the business registration found by agent-subscription is not already subscribed" in {
       withMatchingUtrAndPostcode(validUtr, validPostcode)
       isEnrolledForNonMtdServices(subscribingAgent)
+      givenR2DWListIsEmpty
 
 
       implicit val request = authenticatedRequest()
@@ -48,6 +51,7 @@ class CheckAgencyControllerWithoutAssuranceFlagISpec extends CheckAgencyControll
     "redirect to already subscribed page when the business registration found by agent-subscription is already subscribed" in {
       withMatchingUtrAndPostcode(validUtr, validPostcode, isSubscribedToAgentServices = true)
       isEnrolledForNonMtdServices(subscribingAgent)
+      givenR2DWListIsEmpty
 
 
       implicit val request = authenticatedRequest()

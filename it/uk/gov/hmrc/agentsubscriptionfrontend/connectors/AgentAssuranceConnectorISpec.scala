@@ -16,7 +16,7 @@ class AgentAssuranceConnectorISpec extends UnitSpec with OneAppPerSuite with Wir
 
   private implicit val hc = HeaderCarrier()
 
-  private lazy val connector = new AgentAssuranceConnector(new URL(s"http://localhost:$wireMockPort"),
+  private lazy val connector = new AgentAssuranceConnector(new URL(s"http://localhost:$wireMockPort"), "r2dwTestKey",
     app.injector.instanceOf[HttpVerbs], app.injector.instanceOf[Metrics])
 
   "getRegistration PAYE" should {
@@ -102,5 +102,28 @@ class AgentAssuranceConnectorISpec extends UnitSpec with OneAppPerSuite with Wir
       await(connector.hasActiveCesaRelationship(Nino("AB123456A"), "nino", SaAgentReference("SA126013"))) shouldBe false
       timerShouldExistsAndBeenUpdated("ConsumedAPI-AgentAssurance-getActiveCesaRelationship-GET")
     }
+  }
+
+  "getR2DWAgents" should {
+    val utr = Utr("2000000009")
+    "return true is utr found in r2dw list" in {
+      givenUtrReturnedInR2DWList(utr.value)
+      await(connector.isR2DWAgent(utr)) shouldBe true
+    }
+    "return false is utr not found in r2dw list" in {
+      givenUtrReturnedInR2DWList(utr.value)
+      await(connector.isR2DWAgent(Utr("1000000009"))) shouldBe false
+    }
+    "return false is r2dw list is empty" in {
+      givenR2DWListIsEmpty
+      await(connector.isR2DWAgent(Utr("1000000009"))) shouldBe false
+    }
+    "return illegal state exception when " in {
+      given404ReturnedForR2dw
+      intercept[IllegalStateException] {
+        await(connector.isR2DWAgent(Utr("1234567")))
+      }
+    }
+
   }
 }
