@@ -39,8 +39,7 @@ abstract class BaseISpec extends UnitSpec with OneAppPerSuite with MongoApp with
         "microservice.services.agent-assurance.port" -> wireMockPort,
         "auditing.enabled" -> true,
         "auditing.consumer.baseUri.host" -> wireMockHost,
-        "auditing.consumer.baseUri.port" -> wireMockPort,
-        "r2dw" -> "r2dwTestKey"
+        "auditing.consumer.baseUri.port" -> wireMockPort
       )
       .configure(mongoConfiguration)
       .overrides(new TestGuiceModule)

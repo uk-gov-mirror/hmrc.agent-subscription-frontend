@@ -6,7 +6,7 @@ import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 
 object AgentAssuranceStub {
   val checkForAcceptableNumberOfPAYEClientsUrl = "/agent-assurance/acceptableNumberOfClients/service/IR-PAYE"
-  private val r2dwKey = "r2dwTestKey"
+  private val r2dwKey = "r2dw"
 
   def givenUserIsAnAgentWithAnAcceptableNumberOfPAYEClients: StubMapping =
     stubFor(get(urlEqualTo(checkForAcceptableNumberOfPAYEClientsUrl)).willReturn(aResponse().withStatus(204)))

@@ -16,7 +16,7 @@ class AgentAssuranceConnectorISpec extends UnitSpec with OneAppPerSuite with Wir
 
   private implicit val hc = HeaderCarrier()
 
-  private lazy val connector = new AgentAssuranceConnector(new URL(s"http://localhost:$wireMockPort"), "r2dwTestKey",
+  private lazy val connector = new AgentAssuranceConnector(new URL(s"http://localhost:$wireMockPort"),
     app.injector.instanceOf[HttpVerbs], app.injector.instanceOf[Metrics])
 
   "getRegistration PAYE" should {

@@ -31,7 +31,6 @@ import scala.concurrent.Future
 
 @Singleton
 class AgentAssuranceConnector @Inject()(@Named("agent-assurance-baseUrl") baseUrl: URL,
-                                       @Named("r2dw") r2dwKey: String,
                                         http: HttpGet, metrics: Metrics) extends HttpAPIMonitor {
   override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
 
@@ -59,13 +58,13 @@ class AgentAssuranceConnector @Inject()(@Named("agent-assurance-baseUrl") baseUr
 
   def isR2DWAgent(utr: Utr)(implicit hc: HeaderCarrier): Future[Boolean] = {
     monitor(s"ConsumedAPI-AgentAssurance-getR2DWAgents-GET") {
-      val r2dwUrl = baseUrl + s"/agent-assurance/refusal-to-deal-with/$r2dwKey"
+      val r2dwUrl = baseUrl + s"/agent-assurance/refusal-to-deal-with/r2dw"
       http.GET[HttpResponse](r2dwUrl).map{ response =>
         val r2dwList = (response.json \ "value").as[String]
         r2dwList.contains(utr.value)
       }
       .recover {
-        case e: NotFoundException => throw new IllegalStateException(s"unable to reach $r2dwUrl")
+        case e: NotFoundException => throw new IllegalStateException(s"unable to reach $r2dwUrl. R2dw list might not have been configured")
       }
     }
   }
