@@ -124,36 +124,41 @@ class CheckAgencyController @Inject()
       case Some(AssuranceResults(false, false)) =>
         mark("Count-Subscription-InvasiveCheck-Start")
         Redirect(routes.CheckAgencyController.invasiveCheckStart)
-      case _  =>
+      case _ =>
         mark("Count-Subscription-CheckAgency-Success")
         Redirect(routes.CheckAgencyController.showConfirmYourAgency())
     }
 
-    agentAssuranceConnector.isR2DWAgent(knownFacts.utr) flatMap {
-      case true => Future successful Ok(html.setup_incomplete()) //TODO redirect to setupIncomplete
-      case false => {
-        agentSubscriptionConnector.getRegistration(knownFacts.utr, knownFacts.postcode) flatMap { maybeRegistration: Option[Registration] =>
-          maybeRegistration match {
-            case Some(Registration(Some(taxpayerName), isSubscribedToAgentServices)) if !isSubscribedToAgentServices =>
+    def processCheckAgencyStatusWithR2DW() = {
+      agentAssuranceConnector.isR2DWAgent(knownFacts.utr) flatMap {
+        case true => Future successful Redirect(routes.StartController.setupIncomplete())
+        case false => processCheckAgencyStatus
+      }
+    }
 
-              for {
-                assuranceResults <- assureIsAgent()
-                knownFactsResult = KnownFactsResult(knownFacts.utr, knownFacts.postcode, taxpayerName, isSubscribedToAgentServices)
-                _ <- sessionStoreService.cacheKnownFactsResult(knownFactsResult)
-                _ <- assuranceResults.map(auditService.sendAgentAssuranceAuditEvent(knownFactsResult, _)).getOrElse(Future.successful(()))
-              } yield decideBasedOn(assuranceResults)
+    def processCheckAgencyStatus = {
+      agentSubscriptionConnector.getRegistration(knownFacts.utr, knownFacts.postcode) flatMap { maybeRegistration: Option[Registration] =>
+        maybeRegistration match {
+          case Some(Registration(Some(taxpayerName), isSubscribedToAgentServices)) if !isSubscribedToAgentServices =>
+            for {
+              assuranceResults <- assureIsAgent()
+              knownFactsResult = KnownFactsResult(knownFacts.utr, knownFacts.postcode, taxpayerName, isSubscribedToAgentServices)
+              _ <- sessionStoreService.cacheKnownFactsResult(knownFactsResult)
+              _ <- assuranceResults.map(auditService.sendAgentAssuranceAuditEvent(knownFactsResult, _)).getOrElse(Future.successful(()))
+            } yield decideBasedOn(assuranceResults)
 
-            case Some(Registration(_, isSubscribedToAgentServices)) if isSubscribedToAgentServices =>
-              mark("Count-Subscription-AlreadySubscribed-RegisteredInETMP")
-              Future successful Redirect(routes.CheckAgencyController.showAlreadySubscribed())
-            case Some(_) => throw new IllegalStateException(s"The agency with UTR ${knownFacts.utr} has no organisation name.")
-            case None =>
-              mark("Count-Subscription-NoAgencyFound")
-              Future successful Redirect(routes.CheckAgencyController.showNoAgencyFound())
-          }
+          case Some(Registration(_, isSubscribedToAgentServices)) if isSubscribedToAgentServices =>
+            mark("Count-Subscription-AlreadySubscribed-RegisteredInETMP")
+            Future successful Redirect(routes.CheckAgencyController.showAlreadySubscribed())
+          case Some(_) => throw new IllegalStateException(s"The agency with UTR ${knownFacts.utr} has no organisation name.")
+          case None =>
+            mark("Count-Subscription-NoAgencyFound")
+            Future successful Redirect(routes.CheckAgencyController.showNoAgencyFound())
         }
       }
     }
+
+    if(agentAssuranceFlag) processCheckAgencyStatusWithR2DW else processCheckAgencyStatus
 
   }
 

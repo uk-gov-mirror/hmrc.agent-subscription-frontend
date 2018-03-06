@@ -113,7 +113,7 @@ class GuiceModule(environment: Environment, configuration: Configuration) extend
     bindConfigProperty[String]("sosRedirectUrl")
     bindConfigProperty[Int]("mongodb.knownfactsresult.ttl")
     bindConfigProperty[Boolean]("agentAssuranceFlag")
-    bindConfigProperty[String]("r2dw-agentsAssurance-key")
+    bindConfigProperty[String]("r2dw")
     bindServiceProperty("cachable.session-cache.domain")
   }
 

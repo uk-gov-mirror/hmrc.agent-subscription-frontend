@@ -31,7 +31,7 @@ import scala.concurrent.Future
 
 @Singleton
 class AgentAssuranceConnector @Inject()(@Named("agent-assurance-baseUrl") baseUrl: URL,
-                                       @Named("r2dw-agentsAssurance-key") r2dwKey: String,
+                                       @Named("r2dw") r2dwKey: String,
                                         http: HttpGet, metrics: Metrics) extends HttpAPIMonitor {
   override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
 

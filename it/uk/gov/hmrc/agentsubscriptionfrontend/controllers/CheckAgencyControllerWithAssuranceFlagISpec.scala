@@ -164,7 +164,8 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       implicit val request = authenticatedRequest(subscribingAgent).withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
 
-      checkHtmlResultWithBodyText(result, htmlEscapedMessage("setupIncomplete.title"))
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.StartController.setupIncomplete().url)
       verify(0, getRequestedFor(urlPathEqualTo(s"/agent-subscription/registration/${encodePathSegment(validUtr.value)}/postcode/${encodePathSegment(validPostcode)}")))
     }
 
