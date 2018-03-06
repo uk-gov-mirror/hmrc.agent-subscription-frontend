@@ -25,6 +25,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AddressLookupFrontendStubs._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.{AgentSubscriptionStub, AuthStub}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUsers._
+import uk.gov.hmrc.http.HttpException
 import uk.gov.hmrc.play.binders.ContinueUrl
 
 class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec {
@@ -431,10 +432,8 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
 
         stubAddressLookupReturnedAddress("addr1", subscriptionRequest())
 
-        val result = await(controller.returnFromAddressLookup("addr1")(authenticatedRequest()))
+        an[HttpException] should be thrownBy await(controller.returnFromAddressLookup("addr1")(authenticatedRequest()))
 
-        status(result) shouldBe 303
-        redirectLocation(result).head shouldBe routes.SubscriptionController.showSubscriptionFailed().url
         sessionStoreService.allSessionsRemoved shouldBe false
         metricShouldExistsAndBeenUpdated("Count-Subscription-AddressLookup-Start",
           "Count-Subscription-AddressLookup-Success",
@@ -561,17 +560,6 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
        }
     }
   }
-
-  "showSubscriptionFailed" should {
-    "show subscription failed page" in {
-      AuthStub.hasNoEnrolments(subscribingAgent)
-      implicit val request = authenticatedRequest()
-      val result = await(controller.showSubscriptionFailed(request))
-      status(result) shouldBe 200
-      checkHtmlResultWithBodyText(result, "Postcodes do not match")
-    }
-  }
-
 
   private def desAddressForm(addressLine1: String = "1 Some Street", postcode: String = "AA1 1AA",
                              keyToRemove: String = "", additionalParameters: Seq[(String, String)] = Seq()) =

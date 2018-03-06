@@ -35,7 +35,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{CallOps, Monitoring}
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.{HeaderCarrier, HttpException}
 import uk.gov.hmrc.passcode.authentication.{PasscodeAuthenticationProvider, PasscodeVerificationConfig}
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
@@ -158,9 +158,9 @@ class SubscriptionController @Inject()
         mark("Count-Subscription-AlreadySubscribed-APIResponse")
         Redirect(routes.CheckAgencyController.showAlreadySubscribed())
 
-      case Left(SubscriptionReturnedHttpError(_)) =>
+      case Left(SubscriptionReturnedHttpError(status)) =>
         mark("Count-Subscription-Failed")
-        Redirect(routes.SubscriptionController.showSubscriptionFailed())
+        throw new HttpException("Subscription failed", status)
     }
   }
 
@@ -195,12 +195,6 @@ class SubscriptionController @Inject()
               }.getOrElse(Future.successful(sessionMissingRedirect()))
             }
         )
-  }
-
-  val showSubscriptionFailed: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync() {
-    implicit authContext =>
-      implicit request =>
-        Future successful Ok(html.subscription_failed("Postcodes do not match"))
   }
 
   val showSubscriptionComplete: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync() {
