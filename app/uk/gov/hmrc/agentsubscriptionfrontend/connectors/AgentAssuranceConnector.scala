@@ -58,13 +58,15 @@ class AgentAssuranceConnector @Inject()(@Named("agent-assurance-baseUrl") baseUr
 
   def isR2DWAgent(utr: Utr)(implicit hc: HeaderCarrier): Future[Boolean] = {
     monitor(s"ConsumedAPI-AgentAssurance-getR2DWAgents-GET") {
-      val r2dwUrl = baseUrl + s"/agent-assurance/refusal-to-deal-with/r2dw"
-      http.GET[HttpResponse](r2dwUrl).map{ response =>
-        val r2dwList = (response.json \ "value").as[String]
-        r2dwList.contains(utr.value)
+      val endpoint = s"/agent-assurance/refusal-to-deal-with/${utr.value}"
+      http.GET[HttpResponse](new URL(baseUrl, endpoint).toString).map{ response =>
+        response.status == 403
       }
       .recover {
-        case e: NotFoundException => throw new IllegalStateException(s"unable to reach $r2dwUrl. R2dw list might not have been configured")
+        case e: Upstream4xxResponse if e.upstreamResponseCode == 403 => true
+        case e: NotFoundException => {
+          throw new IllegalStateException(s"unable to reach $baseUrl/$endpoint. R2dw list might not have been configured")
+        }
       }
     }
   }

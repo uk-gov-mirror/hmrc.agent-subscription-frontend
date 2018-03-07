@@ -107,21 +107,22 @@ class AgentAssuranceConnectorISpec extends UnitSpec with OneAppPerSuite with Wir
   "getR2DWAgents" should {
     val utr = Utr("2000000009")
     "return true is utr found in r2dw list" in {
-      givenUtrReturnedInR2DWList(utr.value)
+      givenUtrIsForbidden(utr.value)
       await(connector.isR2DWAgent(utr)) shouldBe true
     }
     "return false is utr not found in r2dw list" in {
-      givenUtrReturnedInR2DWList(utr.value)
-      await(connector.isR2DWAgent(Utr("1000000009"))) shouldBe false
+      givenUtrIsNotForbidden(utr.value)
+      await(connector.isR2DWAgent(utr)) shouldBe false
     }
     "return false is r2dw list is empty" in {
-      givenR2DWListIsEmpty
-      await(connector.isR2DWAgent(Utr("1000000009"))) shouldBe false
+      givenUtrIsNotForbidden(utr.value)
+      await(connector.isR2DWAgent(utr)) shouldBe false
     }
     "return illegal state exception when " in {
-      given404ReturnedForR2dw
+      val utr1 = Utr("1234567")
+      given404ReturnedForR2dw(utr1.value)
       intercept[IllegalStateException] {
-        await(connector.isR2DWAgent(Utr("1234567")))
+        await(connector.isR2DWAgent(utr1))
       }
     }
 

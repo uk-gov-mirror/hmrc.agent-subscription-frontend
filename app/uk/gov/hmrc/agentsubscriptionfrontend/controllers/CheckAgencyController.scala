@@ -119,7 +119,6 @@ class CheckAgencyController @Inject()
       }
       else Future.successful(None)
     }
-
     def decideBasedOn: Option[AssuranceResults] => Result = {
       case Some(AssuranceResults(false, false)) =>
         mark("Count-Subscription-InvasiveCheck-Start")
@@ -128,14 +127,12 @@ class CheckAgencyController @Inject()
         mark("Count-Subscription-CheckAgency-Success")
         Redirect(routes.CheckAgencyController.showConfirmYourAgency())
     }
-
     def processCheckAgencyStatusWithR2DW() = {
       agentAssuranceConnector.isR2DWAgent(knownFacts.utr) flatMap {
         case true => Future successful Redirect(routes.StartController.setupIncomplete())
         case false => processCheckAgencyStatus
       }
     }
-
     def processCheckAgencyStatus = {
       agentSubscriptionConnector.getRegistration(knownFacts.utr, knownFacts.postcode) flatMap { maybeRegistration: Option[Registration] =>
         maybeRegistration match {
@@ -157,9 +154,7 @@ class CheckAgencyController @Inject()
         }
       }
     }
-
     if(agentAssuranceFlag) processCheckAgencyStatusWithR2DW else processCheckAgencyStatus
-
   }
 
   val showNoAgencyFound: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync() {
