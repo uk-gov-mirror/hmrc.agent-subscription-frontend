@@ -27,6 +27,7 @@ abstract class BaseISpec extends UnitSpec with OneAppPerSuite with MongoApp with
 
   override implicit lazy val app: Application = appBuilder.build()
 
+
   protected def appBuilder: GuiceApplicationBuilder = {
     new GuiceApplicationBuilder()
       .configure(

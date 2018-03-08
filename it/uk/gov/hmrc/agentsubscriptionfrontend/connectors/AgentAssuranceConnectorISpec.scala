@@ -103,4 +103,28 @@ class AgentAssuranceConnectorISpec extends UnitSpec with OneAppPerSuite with Wir
       timerShouldExistsAndBeenUpdated("ConsumedAPI-AgentAssurance-getActiveCesaRelationship-GET")
     }
   }
+
+  "getR2DWAgents" should {
+    val utr = Utr("2000000009")
+    "return true is utr found in r2dw list" in {
+      givenUtrIsForbidden(utr.value)
+      await(connector.isR2DWAgent(utr)) shouldBe true
+    }
+    "return false is utr not found in r2dw list" in {
+      givenUtrIsNotForbidden(utr.value)
+      await(connector.isR2DWAgent(utr)) shouldBe false
+    }
+    "return false is r2dw list is empty" in {
+      givenUtrIsNotForbidden(utr.value)
+      await(connector.isR2DWAgent(utr)) shouldBe false
+    }
+    "return illegal state exception when " in {
+      val utr1 = Utr("1234567")
+      given404ReturnedForR2dw(utr1.value)
+      intercept[IllegalStateException] {
+        await(connector.isR2DWAgent(utr1))
+      }
+    }
+
+  }
 }

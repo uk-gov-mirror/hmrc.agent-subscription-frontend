@@ -32,6 +32,17 @@ object AgentAssuranceStub {
   def givenAnExceptionOccursDuringTheSAClientCheck: StubMapping =
     stubFor(get(urlEqualTo(checkForAcceptableNumberOfSAClientsUrl)).willReturn(aResponse().withStatus(404)))
 
+  val r2dwUrl = "/agent-assurance/refusal-to-deal-with"
+
+  def givenUtrIsForbidden(utr: String): StubMapping =
+    stubFor(get(urlEqualTo(s"$r2dwUrl/$utr")).willReturn(aResponse().withStatus(403)))
+
+  def givenUtrIsNotForbidden(utr: String): StubMapping =
+    stubFor(get(urlEqualTo(s"$r2dwUrl/$utr")).willReturn(aResponse().withStatus(200)))
+
+  def given404ReturnedForR2dw(utr: String): StubMapping =
+    stubFor(get(urlEqualTo(s"$r2dwUrl/$utr")).willReturn(aResponse().withStatus(404)))
+
   def givenNinoAGoodCombinationAndUserHasRelationshipInCesa(ninoOrUtr: String, valueOfNinoOrUtr: String, saAgentReference: String): StubMapping =
     stubFor(get(urlEqualTo(s"/agent-assurance/activeCesaRelationship/nino/AA123456A/saAgentReference/SA6012"))
       .willReturn(aResponse().withStatus(200)))
@@ -51,4 +62,5 @@ object AgentAssuranceStub {
   def givenAGoodCombinationAndNinoNotFoundInCesa(ninoOrUtr: String, valueOfNinoOrUtr: String, saAgentReference: String): StubMapping =
     stubFor(get(urlEqualTo(s"/agent-assurance/activeCesaRelationship/$ninoOrUtr/$valueOfNinoOrUtr/saAgentReference/$saAgentReference"))
       .willReturn(aResponse().withStatus(404)))
+
 }
