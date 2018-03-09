@@ -59,10 +59,20 @@ trait AuthActions extends Actions with PasscodeAuthentication with Monitoring {
                 }
                 case (true, false) => body(authContext)(AgentRequest(enrolls, request))
                 case _ =>
-                  mark("Count-Subscription-NonAgent")
                   Future successful redirectToNonAgentNextSteps
               }
             }
+          }
+    }
+
+  def AuthorisedWithAgentAffinityAsync(body: AuthContext => Request[AnyContent] => Future[Result])
+                                         (implicit appConfig: AppConfig): Action[AnyContent] =
+    AuthorisedFor(NoOpRegime, pageVisibility = GGConfidence).async {
+      implicit authContext =>
+        implicit request =>
+          isAgentAffinityGroup.flatMap {
+            case true => body(authContext)(request)
+            case false => Future successful redirectToNonAgentNextSteps
           }
     }
 
@@ -81,6 +91,8 @@ trait AuthActions extends Actions with PasscodeAuthentication with Monitoring {
       affinityGroup == "Agent"
     }
 
-  private def redirectToNonAgentNextSteps: Result =
+  private def redirectToNonAgentNextSteps: Result = {
+    mark("Count-Subscription-NonAgent")
     Redirect(routes.StartController.showNonAgentNextSteps())
+  }
 }

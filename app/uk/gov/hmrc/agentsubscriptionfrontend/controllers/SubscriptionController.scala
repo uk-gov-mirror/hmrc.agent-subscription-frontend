@@ -197,7 +197,7 @@ class SubscriptionController @Inject()
         )
   }
 
-  val showSubscriptionComplete: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync() {
+  val showSubscriptionComplete: Action[AnyContent] = AuthorisedWithAgentAffinityAsync {
     implicit authContext =>
       implicit request => {
         val agencyData = for {

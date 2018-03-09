@@ -95,13 +95,13 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
   "showSubscriptionComplete" should {
     behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showSubscriptionComplete(request))
     behave like aPageWithFeedbackLinks(request => {
-      AuthStub.hasNoEnrolments(subscribingAgent)
+      AuthStub.isSubscribedToMtd(subscribingAgent)
       controller.showSubscriptionComplete(request)
     }, authenticatedRequest().withFlash("arn" -> "ARN0001", "agencyName" -> "My Agency"))
 
     "display the agency name and ARN" in {
       implicit val request = authenticatedRequest()
-      AuthStub.hasNoEnrolments(subscribingAgent)
+      AuthStub.isSubscribedToMtd(subscribingAgent)
 
       val result = await(controller.showSubscriptionComplete(request.withFlash("arn" -> "ARN0001", "agencyName" -> "My Agency")))
 
@@ -112,7 +112,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
 
     "redirect to session missing page if there is nothing in the flash scope" in {
       implicit val request = authenticatedRequest()
-      AuthStub.hasNoEnrolments(subscribingAgent)
+      AuthStub.isSubscribedToMtd(subscribingAgent)
 
       val result = await(controller.showSubscriptionComplete(request))
 
@@ -120,9 +120,28 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showCheckAgencyStatus().url)
     }
 
+    "tolerate a possible short delay in the new enrolment becoming visible in auth" when {
+      "there was a delay and the new enrolment is not yet visible in auth" in {
+        implicit val request = authenticatedRequest()
+        AuthStub.hasNoEnrolments(subscribingAgent)
+
+        val result = await(controller.showSubscriptionComplete(request.withFlash("arn" -> "ARN0001", "agencyName" -> "My Agency")))
+
+        checkHtmlResultWithBodyText(result, htmlEscapedMessage("subscriptionComplete.title"))
+      }
+      "there was no delay and the new enrolment is visible in auth" in {
+        implicit val request = authenticatedRequest()
+        AuthStub.isSubscribedToMtd(subscribingAgent)
+
+        val result = await(controller.showSubscriptionComplete(request.withFlash("arn" -> "ARN0001", "agencyName" -> "My Agency")))
+
+        checkHtmlResultWithBodyText(result, htmlEscapedMessage("subscriptionComplete.title"))
+      }
+    }
+
     "contain a button to continue journey" when {
       "a continue URL exists in the session, show a generic 'Continue' button using that URL" in {
-        AuthStub.hasNoEnrolments(subscribingAgent)
+        AuthStub.isSubscribedToMtd(subscribingAgent)
         implicit val request = authenticatedRequest()
 
         val continueUrl = ContinueUrl("/test-continue-url")
@@ -136,7 +155,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       }
 
       "no continue URL exists in the session, show a button with a link in AS services" in {
-        AuthStub.hasNoEnrolments(subscribingAgent)
+        AuthStub.isSubscribedToMtd(subscribingAgent)
         implicit val request = authenticatedRequest()
 
         val result = await(controller.showSubscriptionComplete(request.withFlash("arn" -> "ARN0001", "agencyName" -> "My Agency")))
@@ -149,7 +168,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
 
     "remove existing session" in {
       implicit val request = authenticatedRequest()
-      AuthStub.hasNoEnrolments(subscribingAgent)
+      AuthStub.isSubscribedToMtd(subscribingAgent)
 
       val result = await(controller.showSubscriptionComplete(request.withFlash("arn" -> "ARN0001", "agencyName" -> "My Agency")))
 
