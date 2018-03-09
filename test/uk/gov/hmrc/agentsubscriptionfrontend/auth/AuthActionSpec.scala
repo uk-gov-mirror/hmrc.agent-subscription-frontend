@@ -23,10 +23,11 @@ import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import play.api.mvc._
 import play.api.test.FakeRequest
+import play.api.test.Helpers.redirectLocation
 import uk.gov.hmrc.agentsubscriptionfrontend.audit.AuditService
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.{AgentAssuranceConnector, AgentSubscriptionConnector}
-import uk.gov.hmrc.agentsubscriptionfrontend.controllers.{CheckAgencyController, ContinueUrlActions}
+import uk.gov.hmrc.agentsubscriptionfrontend.controllers.{CheckAgencyController, ContinueUrlActions, routes}
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestAppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestMessagesApi.testMessagesApi
@@ -37,6 +38,7 @@ import uk.gov.hmrc.play.frontend.auth._
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.auth.connectors.domain.{Accounts, Authority, ConfidenceLevel}
 import uk.gov.hmrc.play.test.UnitSpec
+import scala.concurrent.duration._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -44,7 +46,13 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
 
   implicit val appConfig: AppConfig = TestAppConfig
 
-  "AuthorisedWithSubscribingAgent" should {
+  "AuthorisedWithSubscribingAgentAsync" should {
+    val asyncOkBody: AuthContext => AgentRequest[AnyContent] => Future[Result] = {
+      authContext =>
+        request =>
+          Future successful Results.Ok
+    }
+
     "propagate errors that occur when checking affinity group (APB-493-3)" in {
 
       val authConnector = mock[AuthConnector]
@@ -82,32 +90,6 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
       val passcodeAuthenticationProvider = new TestPasscodeAuthenticationProvider(passcodeVerificationConfig, whitelisted = false)
       val testAuthActions = new TestAuthActions(passcodeVerificationConfig, passcodeAuthenticationProvider)
 
-      val result: Result = await(testAuthActions.AuthorisedWithSubscribingAgentAsync()(asyncOkBody).apply(FakeRequest("GET", "/")))
-
-      status(result) shouldBe 303
-    }
-
-    "call the body when the user is whitelisted" in {
-
-      val passcodeVerificationConfig = new TestPasscodeVerificationConfig(enabled = true)
-      val passcodeAuthenticationProvider = new TestPasscodeAuthenticationProvider(passcodeVerificationConfig, whitelisted = true)
-      val testAuthActions = new TestAuthActions(passcodeVerificationConfig, passcodeAuthenticationProvider)
-
-      val result: Result = testAuthActions.AuthorisedWithSubscribingAgentAsync()(asyncOkBody).apply(FakeRequest("GET", "/"))
-
-      status(result) shouldBe 200
-    }
-  }
-
-
-  "AuthorisedWithSubscribingAgentAsync" should {
-
-    "prevent access when the user is not whitelisted" in {
-
-      val passcodeVerificationConfig = new TestPasscodeVerificationConfig(enabled = true)
-      val passcodeAuthenticationProvider = new TestPasscodeAuthenticationProvider(passcodeVerificationConfig, whitelisted = false)
-      val testAuthActions = new TestAuthActions(passcodeVerificationConfig, passcodeAuthenticationProvider)
-
       val result: Future[Result] = testAuthActions.AuthorisedWithSubscribingAgentAsync()(asyncOkBody).apply(FakeRequest("GET", "/"))
 
       status(result) shouldBe 303
@@ -123,13 +105,57 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
 
       status(result) shouldBe 200
     }
-
   }
 
-  private val asyncOkBody: AuthContext => AgentRequest[AnyContent] => Future[Result] = {
-    authContext =>
-      request =>
-        Future successful Results.Ok
+  "AuthorisedWithAgentAffinityAsync" should {
+    val passcodeConf = new TestPasscodeVerificationConfig(enabled = true)
+    val passcodeAuthProvider = new TestPasscodeAuthenticationProvider(passcodeConf, whitelisted = false)
+
+    val asyncOkBody: AuthContext => Request[AnyContent] => Future[Result] = {
+      authContext =>
+        request =>
+          Future successful Results.Ok
+    }
+
+    "check affinity group" when {
+      "has agent affinity" in {
+        val testAuthActions = new TestAuthActions(passcodeConf, passcodeAuthProvider, hasAgentAffinity = true)
+        val result: Future[Result] = testAuthActions.AuthorisedWithAgentAffinityAsync(asyncOkBody).apply(FakeRequest("GET", "/"))
+
+        status(result) shouldBe 200
+      }
+
+      "does not have agent affinity" in {
+        val testAuthActions = new TestAuthActions(passcodeConf, passcodeAuthProvider, hasAgentAffinity = false)
+
+        val result: Future[Result] = testAuthActions.AuthorisedWithAgentAffinityAsync(asyncOkBody).apply(FakeRequest("GET", "/"))
+
+        status(result) shouldBe 303
+
+        redirectLocation(result)(1 second).get should include(routes.StartController.showNonAgentNextSteps.url.toString)
+      }
+    }
+
+    "not be affected by HMRC-AS-AGENT enrolment" when {
+      "user has HMRC-AS-AGENT enrolment" in {
+        val hmrcAsAgentEnrolment = Enrolment("HMRC-AS-AGENT",
+          Seq(EnrolmentIdentifier("AgentReferenceNumber", "TARN0000001")),
+          "Activated",
+          ConfidenceLevel.L200)
+        val testAuthActions = new TestAuthActions(passcodeConf, passcodeAuthProvider, hasAgentAffinity = true, enrolments = List(hmrcAsAgentEnrolment))
+
+        val result: Future[Result] = testAuthActions.AuthorisedWithAgentAffinityAsync(asyncOkBody).apply(FakeRequest("GET", "/"))
+
+        status(result) shouldBe 200
+      }
+      "user does not have HMRC-AS-AGENT enrolment" in {
+        val testAuthActions = new TestAuthActions(passcodeConf, passcodeAuthProvider, hasAgentAffinity = true, enrolments = List.empty)
+
+        val result: Future[Result] = testAuthActions.AuthorisedWithAgentAffinityAsync(asyncOkBody).apply(FakeRequest("GET", "/"))
+
+        status(result) shouldBe 200
+      }
+    }
   }
 
   private val fakeAuthorityUri = "fakeUser"
@@ -152,7 +178,10 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
   }
 }
 
-class TestAuthActions(override val config: PasscodeVerificationConfig, override val passcodeAuthenticationProvider: PasscodeAuthenticationProvider)
+class TestAuthActions(override val config: PasscodeVerificationConfig,
+                      override val passcodeAuthenticationProvider: PasscodeAuthenticationProvider,
+                      hasAgentAffinity: Boolean = true,
+                      enrolments: List[Enrolment] = List.empty)
   extends AuthActions with MockitoSugar {
 
   override protected def authConnector: AuthConnector = ???
@@ -179,8 +208,8 @@ class TestAuthActions(override val config: PasscodeVerificationConfig, override 
 
 
   override protected def isAgentAffinityGroup()(implicit authContext: AuthContext, hc: HeaderCarrier): Future[Boolean] =
-    Future successful true
+    Future successful hasAgentAffinity
 
   override protected def enrolments(implicit authContext: AuthContext, hc: HeaderCarrier): Future[List[Enrolment]] =
-    Future successful List.empty
+    Future successful enrolments
 }
