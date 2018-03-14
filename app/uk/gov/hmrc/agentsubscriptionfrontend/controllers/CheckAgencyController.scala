@@ -28,9 +28,10 @@ import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.audit.AuditService
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.{AgentRequest, AuthActions, NoOpRegimeWithContinueUrl}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.connectors.{AgentAssuranceConnector, AgentSubscriptionConnector}
+import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentSubscriptionConnector
+import uk.gov.hmrc.agentsubscriptionfrontend.models.AssuranceResults._
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
-import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
+import uk.gov.hmrc.agentsubscriptionfrontend.service.{AssuranceService, SessionStoreService}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.Monitoring
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{invasive_check_start, invasive_input_option}
@@ -54,8 +55,7 @@ object CheckAgencyController {
 
 @Singleton
 class CheckAgencyController @Inject()
-(@Named("agentAssuranceFlag") agentAssuranceFlag: Boolean,
- val agentAssuranceConnector: AgentAssuranceConnector,
+(assuranceService: AssuranceService,
  override val messagesApi: MessagesApi,
  override val authConnector: AuthConnector,
  override val config: PasscodeVerificationConfig,
@@ -107,54 +107,45 @@ class CheckAgencyController @Inject()
   }
   private def checkAgencyStatusGivenValidForm(knownFacts: KnownFacts)
                                              (implicit authContext: AuthContext, request: AgentRequest[AnyContent]): Future[Result] = {
-    def assureIsAgent(): Future[Option[AssuranceResults]] = {
-      if (agentAssuranceFlag) {
-        val futurePaye = agentAssuranceConnector.hasAcceptableNumberOfPayeClients
-        val futureSA = agentAssuranceConnector.hasAcceptableNumberOfSAClients
 
-        for {
-          hasAcceptableNumberOfPayeClients <- futurePaye
-          hasAcceptableNumberOfSAClients <- futureSA
-        } yield Some(AssuranceResults(hasAcceptableNumberOfPayeClients, hasAcceptableNumberOfSAClients))
-      }
-      else Future.successful(None)
+    def cacheKnownFactsAndAudit(maybeAssuranceResults: Option[AssuranceResults], taxpayerName: String, isSubscribedToAgentServices: Boolean) = {
+      val knownFactsResult = KnownFactsResult(knownFacts.utr, knownFacts.postcode, taxpayerName, isSubscribedToAgentServices)
+      for {
+        _ <- sessionStoreService.cacheKnownFactsResult(knownFactsResult)
+        _ <- maybeAssuranceResults.map(auditService.sendAgentAssuranceAuditEvent(knownFactsResult, _)).getOrElse(Future.successful(()))
+      } yield ()
     }
-    def decideBasedOn: Option[AssuranceResults] => Result = {
-      case Some(AssuranceResults(false, false)) =>
-        mark("Count-Subscription-InvasiveCheck-Start")
-        Redirect(routes.CheckAgencyController.invasiveCheckStart)
-      case _ =>
-        mark("Count-Subscription-CheckAgency-Success")
-        Redirect(routes.CheckAgencyController.showConfirmYourAgency())
-    }
-    def processCheckAgencyStatusWithR2DW() = {
-      agentAssuranceConnector.isR2DWAgent(knownFacts.utr) flatMap {
-        case true => Future successful Redirect(routes.StartController.setupIncomplete())
-        case false => processCheckAgencyStatus
-      }
-    }
-    def processCheckAgencyStatus = {
-      agentSubscriptionConnector.getRegistration(knownFacts.utr, knownFacts.postcode) flatMap { maybeRegistration: Option[Registration] =>
-        maybeRegistration match {
-          case Some(Registration(Some(taxpayerName), isSubscribedToAgentServices)) if !isSubscribedToAgentServices =>
-            for {
-              assuranceResults <- assureIsAgent()
-              knownFactsResult = KnownFactsResult(knownFacts.utr, knownFacts.postcode, taxpayerName, isSubscribedToAgentServices)
-              _ <- sessionStoreService.cacheKnownFactsResult(knownFactsResult)
-              _ <- assuranceResults.map(auditService.sendAgentAssuranceAuditEvent(knownFactsResult, _)).getOrElse(Future.successful(()))
-            } yield decideBasedOn(assuranceResults)
 
-          case Some(Registration(_, isSubscribedToAgentServices)) if isSubscribedToAgentServices =>
-            mark("Count-Subscription-AlreadySubscribed-RegisteredInETMP")
-            Future successful Redirect(routes.CheckAgencyController.showAlreadySubscribed())
-          case Some(_) => throw new IllegalStateException(s"The agency with UTR ${knownFacts.utr} has no organisation name.")
-          case None =>
-            mark("Count-Subscription-NoAgencyFound")
-            Future successful Redirect(routes.CheckAgencyController.showNoAgencyFound())
+    def processCheckAgencyStatus(utr: Utr, taxpayerName: String, isSubscribedToAgentServices: Boolean): Future[Result] = {
+      assuranceService.assureIsAgent(knownFacts.utr).flatMap {
+        case RefuseToDealWith(_) =>
+          Future.successful(Redirect(routes.StartController.setupIncomplete()))
+        case CheckedInvisibleAssuranceAndFailed(assuranceResults) =>
+          cacheKnownFactsAndAudit(Some(assuranceResults), taxpayerName, isSubscribedToAgentServices).map { _ =>
+            mark("Count-Subscription-InvasiveCheck-Start")
+            Redirect(routes.CheckAgencyController.invasiveCheckStart())
+          }
+        case maybeAssured @ (None | ManuallyAssured(_) | CheckedInvisibleAssuranceAndPassed(_)) => {
+          cacheKnownFactsAndAudit(maybeAssured, taxpayerName, isSubscribedToAgentServices).map { _ =>
+            mark("Count-Subscription-CheckAgency-Success")
+            Redirect(routes.CheckAgencyController.showConfirmYourAgency())
+          }
         }
       }
     }
-    if(agentAssuranceFlag) processCheckAgencyStatusWithR2DW else processCheckAgencyStatus
+
+    agentSubscriptionConnector.getRegistration(knownFacts.utr, knownFacts.postcode) flatMap {
+      case Some(Registration(Some(taxpayerName), isSubscribedToAgentServices)) if !isSubscribedToAgentServices =>
+        processCheckAgencyStatus(knownFacts.utr, taxpayerName, isSubscribedToAgentServices)
+
+      case Some(Registration(_, isSubscribedToAgentServices)) if isSubscribedToAgentServices =>
+        mark("Count-Subscription-AlreadySubscribed-RegisteredInETMP")
+        Future successful Redirect(routes.CheckAgencyController.showAlreadySubscribed())
+      case Some(_) => throw new IllegalStateException(s"The agency with UTR ${knownFacts.utr} has no organisation name.")
+      case None =>
+        mark("Count-Subscription-NoAgencyFound")
+        Future successful Redirect(routes.CheckAgencyController.showNoAgencyFound())
+    }
   }
 
   val showNoAgencyFound: Action[AnyContent] = AuthorisedWithSubscribingAgentAsync() {
@@ -276,7 +267,7 @@ class CheckAgencyController @Inject()
 
     if (value.isValid) {
       val saAgentReference = request.session.get("saAgentReferenceToCheck").getOrElse("")
-      checkActiveCesaRelationship(value, SaAgentReference(saAgentReference)).map {
+      assuranceService.checkActiveCesaRelationship(value.taxId, value.name, SaAgentReference(saAgentReference)).map {
         case true =>
           mark("Count-Subscription-InvasiveCheck-Success")
           Redirect(routes.CheckAgencyController.showConfirmYourAgency())
@@ -290,28 +281,4 @@ class CheckAgencyController @Inject()
     }
   }
 
-  def checkActiveCesaRelationship(taxIdFormValue: TaxIdFormValue,
-                                  inputSaAgentReference: SaAgentReference)(
-    implicit hc: HeaderCarrier, request:  AgentRequest[AnyContent], authContext: AuthContext): Future[Boolean] = {
-    agentAssuranceConnector.hasActiveCesaRelationship(taxIdFormValue.taxId, taxIdFormValue.name, inputSaAgentReference).map { relationshipExists =>
-      val (userEnteredNino, userEnteredUtr) = taxIdFormValue.taxId match {
-        case nino @ Nino(_) => (Some(nino), None)
-        case utr @ Utr(_) => (None, Some(utr))
-      }
-
-      for {
-        knownFactResultOpt <- sessionStoreService.fetchKnownFactsResult
-        _ <- knownFactResultOpt match {
-          case Some(knownFactsResult) =>
-            auditService.sendAgentAssuranceAuditEvent(knownFactsResult,
-              AssuranceResults(false, false),
-              Some(AssuranceCheckInput(Some(relationshipExists), Some(inputSaAgentReference.value), userEnteredUtr, userEnteredNino)))
-          case None =>
-            Future.successful(Logger.warn("Could not send audit events due to empty knownfacts results"))
-        }
-      } yield ()
-
-      relationshipExists
-    }
-  }
 }

@@ -89,8 +89,9 @@ class AuditService @Inject()(val auditConnector: AuditConnector, authConnector: 
 
     auditData.set("utr", knownFactsResult.utr)
       .set("postcode", knownFactsResult.postcode)
-      .set("passSaAgentAssuranceCheck", assuranceResults.hasAcceptableNumberOfSAClients)
-      .set("passPayeAgentAssuranceCheck", assuranceResults.hasAcceptableNumberOfPayeClients)
+
+    assuranceResults.hasAcceptableNumberOfSAClients.foreach(auditData.set("passSaAgentAssuranceCheck", _))
+    assuranceResults.hasAcceptableNumberOfPayeClients.foreach(auditData.set("passPayeAgentAssuranceCheck", _))
 
     //TODO auditData.set("refuseToDealWith", ?)
 

@@ -18,6 +18,9 @@ object AgentAssuranceStub {
   def givenAnExceptionOccursDuringThePAYEClientCheck: StubMapping =
     stubFor(get(urlEqualTo(checkForAcceptableNumberOfPAYEClientsUrl)).willReturn(aResponse().withStatus(404)))
 
+  def verifyCheckForAcceptableNumberOfPAYEClientsUrl(times: Int) =
+    verify(times, getRequestedFor(urlEqualTo(checkForAcceptableNumberOfSAClientsUrl)))
+
   val checkForAcceptableNumberOfSAClientsUrl = "/agent-assurance/acceptableNumberOfClients/service/IR-SA"
 
   def givenUserIsAnAgentWithAnAcceptableNumberOfSAClients: StubMapping =
@@ -32,16 +35,42 @@ object AgentAssuranceStub {
   def givenAnExceptionOccursDuringTheSAClientCheck: StubMapping =
     stubFor(get(urlEqualTo(checkForAcceptableNumberOfSAClientsUrl)).willReturn(aResponse().withStatus(404)))
 
+  def verifyCheckForAcceptableNumberOfSAClients(times: Int) =
+    verify(times, getRequestedFor(urlEqualTo(checkForAcceptableNumberOfSAClientsUrl)))
+
   val r2dwUrl = "/agent-assurance/refusal-to-deal-with"
 
-  def givenUtrIsForbidden(utr: String): StubMapping =
+  def givenRefusalToDealWithUtrIsForbidden(utr: String): StubMapping =
     stubFor(get(urlEqualTo(s"$r2dwUrl/$utr")).willReturn(aResponse().withStatus(403)))
 
-  def givenUtrIsNotForbidden(utr: String): StubMapping =
+  def givenRefusalToDealWithUtrIsNotForbidden(utr: String): StubMapping =
     stubFor(get(urlEqualTo(s"$r2dwUrl/$utr")).willReturn(aResponse().withStatus(200)))
 
-  def given404ReturnedForR2dw(utr: String): StubMapping =
+  def givenRefusalToDealWithReturns404(utr: String): StubMapping =
     stubFor(get(urlEqualTo(s"$r2dwUrl/$utr")).willReturn(aResponse().withStatus(404)))
+
+  def verifyCheckRefusalToDealWith(times: Int, utr: String) =
+    verify(times, getRequestedFor(urlEqualTo(s"$r2dwUrl/$utr")))
+
+  val manuallyAssuredAgentUrl = (utr: String) => urlEqualTo(s"/agent-assurance/manually-assured/$utr")
+
+  def givenAgentIsNotManuallyAssured(utr: String): StubMapping =
+    stubFor(get(manuallyAssuredAgentUrl(utr))
+      .willReturn(aResponse()
+        .withStatus(403)))
+
+  def givenAgentIsManuallyAssured(utr: String): StubMapping =
+    stubFor(get(manuallyAssuredAgentUrl(utr))
+      .willReturn(aResponse()
+        .withStatus(200)))
+
+  def givenManuallyAssuredAgentsReturns(utr: String, status: Int): StubMapping =
+    stubFor(get(manuallyAssuredAgentUrl(utr))
+      .willReturn(aResponse()
+        .withStatus(status)))
+
+  def verifyCheckAgentIsManuallyAssured(times: Int, utr: String) =
+    verify(times, getRequestedFor(manuallyAssuredAgentUrl(utr)))
 
   def givenNinoAGoodCombinationAndUserHasRelationshipInCesa(ninoOrUtr: String, valueOfNinoOrUtr: String, saAgentReference: String): StubMapping =
     stubFor(get(urlEqualTo(s"/agent-assurance/activeCesaRelationship/nino/AA123456A/saAgentReference/SA6012"))

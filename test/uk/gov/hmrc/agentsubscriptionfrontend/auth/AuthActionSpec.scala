@@ -26,9 +26,9 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers.redirectLocation
 import uk.gov.hmrc.agentsubscriptionfrontend.audit.AuditService
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.connectors.{AgentAssuranceConnector, AgentSubscriptionConnector}
+import uk.gov.hmrc.agentsubscriptionfrontend.connectors.{AgentSubscriptionConnector}
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.{CheckAgencyController, ContinueUrlActions, routes}
-import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
+import uk.gov.hmrc.agentsubscriptionfrontend.service.{AssuranceService, SessionStoreService}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestAppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestMessagesApi.testMessagesApi
 import uk.gov.hmrc.agentsubscriptionfrontend.support.passcode.TestPasscodeVerificationConfig
@@ -38,8 +38,8 @@ import uk.gov.hmrc.play.frontend.auth._
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.auth.connectors.domain.{Accounts, Authority, ConfidenceLevel}
 import uk.gov.hmrc.play.test.UnitSpec
-import scala.concurrent.duration._
 
+import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 
 class AuthActionSpec extends UnitSpec with MockitoSugar {
@@ -58,10 +58,10 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
       val authConnector = mock[AuthConnector]
       val agentSubscriptionConnector = mock[AgentSubscriptionConnector]
       val sessionStoreService = mock[SessionStoreService]
+      val assuranceService = mock[AssuranceService]
       val passcodeVerificationConfig = new TestPasscodeVerificationConfig(enabled = false)
       val passcodeAuthenticationProvider = new PasscodeAuthenticationProvider(passcodeVerificationConfig)
       val continueUrlActions = mock[ContinueUrlActions]
-      val agentAssuranceConnector = mock[AgentAssuranceConnector]
       val auditService = mock[AuditService]
       val metrics = mock[Metrics]
 
@@ -73,8 +73,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
       when(authConnector.getEnrolments(any[AuthContext])(any[HeaderCarrier], any[HttpReads[List[Enrolment]]], any[ExecutionContext]))
         .thenReturn(Future successful List.empty[Enrolment])
 
-      val controller = new CheckAgencyController(
-        false, agentAssuranceConnector, testMessagesApi, authConnector, passcodeVerificationConfig,
+      val controller = new CheckAgencyController(assuranceService, testMessagesApi, authConnector, passcodeVerificationConfig,
         passcodeAuthenticationProvider, agentSubscriptionConnector, sessionStoreService, continueUrlActions, auditService, metrics)
 
       intercept[Upstream5xxResponse] {

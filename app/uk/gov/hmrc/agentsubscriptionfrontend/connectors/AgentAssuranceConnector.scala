@@ -71,6 +71,20 @@ class AgentAssuranceConnector @Inject()(@Named("agent-assurance-baseUrl") baseUr
     }
   }
 
+  def isManuallyAssuredAgent(utr: Utr)(implicit hc: HeaderCarrier): Future[Boolean] = {
+    monitor(s"ConsumedAPI-AgentAssurance-getManuallyAssuredAgents-GET") {
+      val endpoint = s"/agent-assurance/manually-assured/${utr.value}"
+      http.GET[HttpResponse](new URL(baseUrl, endpoint).toString).map{ response =>
+        (200 until 300) contains response.status
+      }.recover {
+        case e: Upstream4xxResponse if e.upstreamResponseCode == 403 => false
+        case _: NotFoundException => {
+          throw new IllegalStateException(s"unable to reach $baseUrl/$endpoint. Manually assured agents list might not have been configured")
+        }
+      }
+    }
+  }
+
   private def cesaGetUrl(ninoOrUtr: String, valueOfNinoOrUtr: String, saAgentReference: SaAgentReference): String = {
     s"/agent-assurance/activeCesaRelationship/$ninoOrUtr/$valueOfNinoOrUtr/saAgentReference/${saAgentReference.value}"
   }
