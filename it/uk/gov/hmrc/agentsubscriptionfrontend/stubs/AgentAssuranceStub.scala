@@ -38,7 +38,7 @@ object AgentAssuranceStub {
   def verifyCheckForAcceptableNumberOfSAClients(times: Int) =
     verify(times, getRequestedFor(urlEqualTo(checkForAcceptableNumberOfSAClientsUrl)))
 
-  val r2dwUrl = "/agent-assurance/refusal-to-deal-with"
+  val r2dwUrl = "/agent-assurance/refusal-to-deal-with/utr"
 
   def givenRefusalToDealWithUtrIsForbidden(utr: String): StubMapping =
     stubFor(get(urlEqualTo(s"$r2dwUrl/$utr")).willReturn(aResponse().withStatus(403)))
@@ -52,7 +52,7 @@ object AgentAssuranceStub {
   def verifyCheckRefusalToDealWith(times: Int, utr: String) =
     verify(times, getRequestedFor(urlEqualTo(s"$r2dwUrl/$utr")))
 
-  val manuallyAssuredAgentUrl = (utr: String) => urlEqualTo(s"/agent-assurance/manually-assured/$utr")
+  val manuallyAssuredAgentUrl = (utr: String) => urlEqualTo(s"/agent-assurance/manually-assured/utr/$utr")
 
   def givenAgentIsNotManuallyAssured(utr: String): StubMapping =
     stubFor(get(manuallyAssuredAgentUrl(utr))

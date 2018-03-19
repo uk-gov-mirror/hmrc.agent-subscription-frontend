@@ -58,7 +58,7 @@ class AgentAssuranceConnector @Inject()(@Named("agent-assurance-baseUrl") baseUr
 
   def isR2DWAgent(utr: Utr)(implicit hc: HeaderCarrier): Future[Boolean] = {
     monitor(s"ConsumedAPI-AgentAssurance-getR2DWAgents-GET") {
-      val endpoint = s"/agent-assurance/refusal-to-deal-with/${utr.value}"
+      val endpoint = s"/agent-assurance/refusal-to-deal-with/utr/${utr.value}"
       http.GET[HttpResponse](new URL(baseUrl, endpoint).toString).map{ response =>
         response.status == 403
       }
@@ -73,7 +73,7 @@ class AgentAssuranceConnector @Inject()(@Named("agent-assurance-baseUrl") baseUr
 
   def isManuallyAssuredAgent(utr: Utr)(implicit hc: HeaderCarrier): Future[Boolean] = {
     monitor(s"ConsumedAPI-AgentAssurance-getManuallyAssuredAgents-GET") {
-      val endpoint = s"/agent-assurance/manually-assured/${utr.value}"
+      val endpoint = s"/agent-assurance/manually-assured/utr/${utr.value}"
       http.GET[HttpResponse](new URL(baseUrl, endpoint).toString).map{ response =>
         (200 until 300) contains response.status
       }.recover {
