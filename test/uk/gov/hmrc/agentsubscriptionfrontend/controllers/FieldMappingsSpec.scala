@@ -468,6 +468,10 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
         bind("My Agency & Co") should matchPattern { case Left(List(FormError("testKey", List("error.agency-name.no.ampersand"), _))) => }
         }
 
+      "there is an apostrophe character" in {
+        bind("My Agency's Co") should matchPattern { case Left(List(FormError("testKey", List("error.agency-name.no.apostrophe"), _))) => }
+      }
+
       "there is an invalid character" in {
         shouldRejectFieldValueAsInvalid("My Agency; His Agency #1")
       }
@@ -495,7 +499,6 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
         shouldAcceptFieldValue("My/Agency")
         shouldAcceptFieldValue("My--Agency")
         shouldAcceptFieldValue("My,Agency")
-        shouldAcceptFieldValue("My Agency's")
       }
 
       "there are numbers and letters" in {

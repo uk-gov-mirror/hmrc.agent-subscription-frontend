@@ -82,6 +82,7 @@ package object controllers {
     }
 
     private def noAmpersand(errorMsgKey: String) = Constraints.pattern("[^&]*".r, error = errorMsgKey)
+    private def noApostrophe(errorMsgKey: String) = Constraints.pattern("[^']*".r, error = errorMsgKey)
 
     private[controllers] def desText(msgKeyRequired: String, msgKeyInvalid: String): Constraint[String] = Constraint[String] { fieldValue: String =>
       nonEmptyWithMessage(msgKeyRequired)(fieldValue) match {
@@ -117,6 +118,7 @@ package object controllers {
       .verifying(nonEmptyEmailAddress)
     def agencyName: Mapping[String] = text(maxLength = 40)
       .verifying(noAmpersand("error.agency-name.no.ampersand"))
+      .verifying(noApostrophe("error.agency-name.no.apostrophe"))
       .verifying(desText(msgKeyRequired = "error.agency-name.empty", msgKeyInvalid = "error.agency-name.invalid"))
     def addressLine1: Mapping[String] = text
       .verifying(maxLength(35, "error.address.lines.maxLength"))
