@@ -465,11 +465,11 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
     "reject Agency name" when {
 
       "there is an ampersand character" in {
-        bind("My Agency & Co") should matchPattern { case Left(List(FormError("testKey", List("error.agency-name.no.ampersand"), _))) => }
-        }
+        shouldRejectFieldValueAsInvalid("My Agency & Co")
+      }
 
       "there is an apostrophe character" in {
-        bind("My Agency's Co") should matchPattern { case Left(List(FormError("testKey", List("error.agency-name.no.apostrophe"), _))) => }
+        shouldRejectFieldValueAsInvalid("My Agency's Co")
       }
 
       "there is an invalid character" in {
@@ -491,7 +491,7 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
       "field is not present" in {
         agencyNameMapping.bind(Map.empty).left.value should contain only FormError("testKey", "error.required")
       }
-  }
+    }
 
     "accept Agency name" when {
       "there are valid characters" in {

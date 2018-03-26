@@ -104,6 +104,13 @@ package object controllers {
     private val saAgentReferenceRegex = """([a-zA-Z0-9]{6})"""
     def isValidSaAgentCode(value: String) = value.matches(saAgentReferenceRegex)
 
+    private def checkOneAtATime[T](firstConstraint: Constraint[T], secondConstraint: Constraint[T]) = Constraint[T] { fieldValue: T =>
+      firstConstraint(fieldValue) match {
+        case i @ Invalid(_) => i
+        case Valid => secondConstraint(fieldValue)
+      }
+    }
+
     def utr: Mapping[Utr] = text
       .verifying(nonEmptyWithMessage("error.utr.empty"))
       .transform[Utr](Utr.apply,_.value)
@@ -117,9 +124,10 @@ package object controllers {
     def emailAddress: Mapping[String] = text
       .verifying(nonEmptyEmailAddress)
     def agencyName: Mapping[String] = text(maxLength = 40)
-      .verifying(noAmpersand("error.agency-name.no.ampersand"))
-      .verifying(noApostrophe("error.agency-name.no.apostrophe"))
-      .verifying(desText(msgKeyRequired = "error.agency-name.empty", msgKeyInvalid = "error.agency-name.invalid"))
+      .verifying(
+        checkOneAtATime(noAmpersand("error.agency-name.invalid"),
+          checkOneAtATime(noApostrophe("error.agency-name.invalid"),
+            desText(msgKeyRequired = "error.agency-name.empty", msgKeyInvalid = "error.agency-name.invalid"))))
     def addressLine1: Mapping[String] = text
       .verifying(maxLength(35, "error.address.lines.maxLength"))
       .verifying(desText(msgKeyRequired = "error.address.lines.empty", msgKeyInvalid = "error.address.lines.invalid"))
