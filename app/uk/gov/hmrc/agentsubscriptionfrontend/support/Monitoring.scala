@@ -18,6 +18,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.support
 
 import com.codahale.metrics.MetricRegistry
 import com.kenshoo.play.metrics.Metrics
+import play.api.Logger
 
 trait Monitoring {
 
@@ -26,6 +27,7 @@ trait Monitoring {
   private lazy val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
 
   def mark[T](name: String): Unit = {
+    Logger("metrics").info(name)
     kenshooRegistry.getMeters.getOrDefault(name, kenshooRegistry.meter(name)).mark()
   }
 
