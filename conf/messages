@@ -84,7 +84,7 @@ nonAgent.p2=Registering should take around 5 minutes.
 
 #Subscription complete
 subscriptionComplete.title=You''ve successfully created an Agent Services account
-subscriptionComplete.h1=You''ve successfully created an Agent Services account for {0}
+subscriptionComplete.h1=Agent services account created
 subscriptionComplete.accountName=Your account number is:
 subscriptionComplete.p1=<strong>You must save this number for your agency''s records.</strong> You''ll need it later. HMRC won''t show you this number again.
 subscriptionComplete.button.continueToASAccount=Continue to your Agent Services account
