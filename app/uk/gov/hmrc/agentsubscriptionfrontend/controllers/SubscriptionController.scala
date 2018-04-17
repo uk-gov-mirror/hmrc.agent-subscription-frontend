@@ -152,7 +152,7 @@ class SubscriptionController @Inject()
       case Right((arn, agencyName)) =>
         mark("Count-Subscription-Complete")
         Redirect(routes.SubscriptionController.showSubscriptionComplete())
-        .flashing("arn" -> arn.arn, "agencyName" -> agencyName)
+        .flashing("arn" -> arn.arn)
 
       case Left(SubscriptionReturnedHttpError(CONFLICT)) =>
         mark("Count-Subscription-AlreadySubscribed-APIResponse")
@@ -200,13 +200,10 @@ class SubscriptionController @Inject()
   val showSubscriptionComplete: Action[AnyContent] = AuthorisedWithAgentAffinityAsync {
     implicit authContext =>
       implicit request => {
-        val agencyData = for {
-          agencyName <- request.flash.get("agencyName")
-          arn <- request.flash.get("arn")
-        } yield (agencyName, arn)
+        val arn = request.flash.get("arn")
 
-        agencyData match {
-          case Some((agencyName, arn)) =>
+        arn match {
+          case Some(arn) =>
             sessionStoreService.fetchContinueUrl.
               recover { case NonFatal(ex) =>
                 Logger.warn("Session store service failure", ex)
@@ -216,7 +213,7 @@ class SubscriptionController @Inject()
               map { continueUrlOpt =>
                 val continueUrl = continueUrlOpt.map(_.url).getOrElse(appConfig.agentServicesAccountUrl)
                 val isUrlToASAccount = continueUrlOpt.isEmpty
-                Ok(html.subscription_complete(continueUrl, isUrlToASAccount, agencyName, arn))
+                Ok(html.subscription_complete(continueUrl, isUrlToASAccount, arn))
               }
           case _ =>
             Future.successful(sessionMissingRedirect())
