@@ -1,3 +1,23 @@
+#Common
+servicename.titleSuffix=- Agent services account - GOV.UK
+
+#Startpage
+startpage.title=Agent services account: sign in or set up
+startpage.p1=The agent services account is for professional tax agents.
+startpage.p2=It allows agencies to:
+startpage.l1=connect to HMRC using commercial accounting software
+startpage.l2=access new HMRC online services
+startpage.p3=Setting up an account creates a new agent Government Gateway ID.
+startpage.p4=<strong>You must save this new User ID for your agency''s records</strong>, even if your agency already has one or more
+startpage.h2=To set up an account you need:
+startpage.l3=an existing agent Government Gateway ID - you will have at least one if you have used any HMRC agent services online before
+startpage.l4=your agency''s Unique Taxpayer Reference (UTR) and associated postcode, if you are a sole trader or a member of a partnership
+startpage.l5=your agency''s Corporation Tax reference number and associated postcode, if it is an incorporated company
+startpage.p5=If you have already set up an agent services account, use your new agent Government Gateway ID to sign in.
+startpage.continue=Continue
+startpage.h3=Before you start
+startpage.p6=If you''re charging for services as an agent, you must be supervised for <a href="{0}">anti-money laundering</a>.
+
 ##Errors that override Play default messages
 error.maxLength = You must not enter more than {0} figures
 error.email=You must enter an email address
@@ -51,7 +71,7 @@ noAgencyFound.title=There is no agent business linked to this account
 
 #Already subscribed
 alreadySubscribed.title=Your agency is already subscribed
-alreadySubscribed.p1=Please contact your agency administrator to get access to Agent Services.
+alreadySubscribed.p1=Please contact your agency administrator to get access to agent services.
 
 #Check agency status
 checkAgencyStatus.title=Identify your business
@@ -60,8 +80,8 @@ checkAgencyStatus.label.utr=Self Assessment UTR or Corporation Tax reference
 checkAgencyStatus.label.postcode=Postcode related to that UTR or reference
 
 #Not subscribed
-notSubscribed.title=You can create an Agent Services account
-notSubscribed.p1=We''ve checked <strong class="bold">{0}</strong> and it doesn''t have an Agent Services account.
+notSubscribed.title=You can create an agent services account
+notSubscribed.p1=We''ve checked <strong class="bold">{0}</strong> and it doesn''t have an agent services account.
 
 #Subscription failed
 subscription.failed.title=Subscription failed
@@ -72,22 +92,22 @@ invalidAddress.p1=Sorry, the address is not in a format that our system can acce
 invalidAddress.button.changeAddress=Change address
 
 #Has other enrolments
-hasOtherEnrolments.title=Create your new Agent Services account
+hasOtherEnrolments.title=Create your new agent services account
 hasOtherEnrolments.p1=To do this your agency needs a new Government Gateway ID.
 
 #Non agent
 nonAgent.title=This isn''t an agent account
-nonAgent.p1=Before you can create your Agent Services account, you need to:
+nonAgent.p1=Before you can create your agent services account, you need to:
 nonAgent.l1=register for a new Government Gateway account, selecting the ‘Agents’ option
-nonAgent.l2=use your new account details to log in and create your Agent Services account
+nonAgent.l2=use your new account details to log in and create your agent services account
 nonAgent.p2=Registering should take around 5 minutes.
 
 #Subscription complete
-subscriptionComplete.title=You''ve successfully created an Agent Services account
+subscriptionComplete.title=You''ve successfully created an agent services account
 subscriptionComplete.h1=Agent services account created
 subscriptionComplete.accountName=Your account number is:
 subscriptionComplete.p1=<strong>You must save this number for your agency''s records.</strong> You''ll need it later. HMRC won''t show you this number again.
-subscriptionComplete.button.continueToASAccount=Continue to your Agent Services account
+subscriptionComplete.button.continueToASAccount=Continue to your agent services account
 subscriptionComplete.button.continueJourney=Continue
 
 #Common
@@ -101,7 +121,7 @@ button.register=Register now
 button.signOut=Sign out
 
 #Setup Incomplete
-setupIncomplete.title=You can't set up an Agent services account with the details you entered
+setupIncomplete.title=You can't set up an agent services account with the details you entered
 setupIncomplete.p1=<a href="{0}">Try again using a different agent user ID</a> if your agency uses more than one Government Gateway account, for example for Self Assessment or PAYE.
 
 
