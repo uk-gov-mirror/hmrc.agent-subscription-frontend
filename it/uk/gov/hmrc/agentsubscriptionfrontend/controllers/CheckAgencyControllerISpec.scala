@@ -193,7 +193,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
 
       val result = await(controller.showHasOtherEnrolments(authenticatedRequest()))
 
-      checkHtmlResultWithBodyText(result, "Create your new Agent Services account")
+      checkHtmlResultWithBodyText(result, "Create your new agent services account")
     }
   }
 

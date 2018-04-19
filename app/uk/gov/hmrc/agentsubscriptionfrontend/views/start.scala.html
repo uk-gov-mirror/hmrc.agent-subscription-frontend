@@ -26,41 +26,41 @@
     CheckAgencyController.showCheckAgencyStatus().toURLWithParams("continue" -> continueUrlOpt.map(_.url))
 }
 
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = "Agent Services account: sign in or set up", bodyClasses = None, userIsLoggedIn = false) {
+@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = Messages("startpage.title"), bodyClasses = None, userIsLoggedIn = false) {
 
-    <h1 class="heading-xlarge">Agent Services account: sign in or set up</h1>
+    <h1 class="heading-xlarge">@Messages("startpage.title")</h1>
 
-    <p>The Agent Services account is for professional tax agents.</p>
+    <p>@Messages("startpage.p1")</p>
 
-    <p>It allows agencies to:</p>
+    <p>@Messages("startpage.p2")</p>
 
     <ul class="list list-bullet">
-        <li>connect to HMRC using commercial accounting software</li>
-        <li>access new HMRC online services</li>
+        <li>@Messages("startpage.l1")</li>
+        <li>@Messages("startpage.l2")</li>
     </ul>
 
-    <p>Setting up an account creates a new agent Government Gateway ID.</p>
+    <p>@Messages("startpage.p3")</p>
 
-    <p><strong>You must save this new User ID for your agency's records</strong>, even if your agency already has one or more.</p>
+    <p>@Html(Messages("startpage.p4"))</p>
 
     <br />
 
-    <h2 class="heading-medium">To set up an account you need:</h2>
+    <h2 class="heading-medium">@Messages("startpage.h2")</h2>
 
     <ul class="list list-bullet">
-        <li>an existing agent Government Gateway ID - you will have at least one if you have used any HMRC agent services online before</li>
-        <li>your agency's Unique Taxpayer Reference (UTR) and associated postcode, if you are a sole trader or a member of a partnership</li>
-        <li>your agency's Corporation Tax reference number and associated postcode, if it is an incorporated company</li>
+        <li>@Messages("startpage.l3")</li>
+        <li>@Messages("startpage.l4")</li>
+        <li>@Messages("startpage.l5")</li>
     </ul>
 
-    <p>If you have already set up an Agent Services account, use your new agent Government Gateway ID to sign in.</p>
+    <p>@Messages("startpage.p5")</p>
 
     <p>
-        <a class="button button-start button--get-started" name="start" id="start" href="@continueUrl" role="button">Continue</a>
+        <a class="button button-start button--get-started" name="start" id="start" href="@continueUrl" role="button">@Messages("startpage.continue")</a>
     </p>
 
-    <h2 class="heading-medium">Before you start</h2>
+    <h3 class="heading-medium">@Messages("startpage.h3")</h3>
 
-    <p>If you're charging for services as an agent, you must be supervised for <a href="https://www.gov.uk/topic/business-tax/money-laundering-regulations">anti-money laundering</a>.</p>
+    <p>@Html(Messages("startpage.p6", "https://www.gov.uk/topic/business-tax/money-laundering-regulations"))</p>
 
 }
