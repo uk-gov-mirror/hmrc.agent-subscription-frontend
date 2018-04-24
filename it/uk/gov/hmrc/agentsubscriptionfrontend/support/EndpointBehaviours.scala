@@ -1,20 +1,22 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.support
 
+import akka.stream.Materializer
 import org.scalatestplus.play.OneAppPerSuite
 import play.api.mvc.{AnyContent, AnyContentAsEmpty, Request, Result}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub
-import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUsers.{individual, subscribingAgent}
+import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.individual
 import uk.gov.hmrc.play.test.UnitSpec
 
 trait EndpointBehaviours {
   me: UnitSpec with WireMockSupport with OneAppPerSuite with MetricTestSupport =>
   type PlayRequest = Request[AnyContent] => Result
-  private implicit val materializer = app.materializer
 
-  protected def authenticatedRequest(user: SampleUser = subscribingAgent): FakeRequest[AnyContentAsEmpty.type]
+  private implicit val materializer: Materializer = app.materializer
+
+  protected def authenticatedAs(user: SampleUser): FakeRequest[AnyContentAsEmpty.type]
 
   protected def anAgentAffinityGroupOnlyEndpoint(doRequest: PlayRequest): Unit = {
     "redirect to the company-auth-frontend sign-in page if the current user is not logged in" in {
@@ -29,8 +31,7 @@ trait EndpointBehaviours {
     }
 
     "redirect to the non-Agent next steps page if the current user is logged in and does not have affinity group = Agent" in {
-      val sessionKeys = AuthStub.userIsAuthenticated(individual)
-      AuthStub.isEnrolledForNonMtdServices(individual)
+      val sessionKeys = AuthStub.userIsNotAnAgent(individual)
 
       val request = FakeRequest().withSession(sessionKeys: _*)
       val result = await(doRequest(request))
@@ -59,34 +60,6 @@ trait EndpointBehaviours {
       val result = await(action(request))
 
       bodyOf(result) should include("/contact/beta-feedback")
-    }
-  }
-
-  protected def aWhitelistedEndpoint(doRequest: PlayRequest): Unit = {
-    "prevent access if passcode authorisation fails" in {
-      AuthStub.hasNoEnrolments(subscribingAgent)
-
-      AuthStub.passcodeAuthorisationFails()
-
-      implicit val request = authenticatedRequest()
-      val result = await(doRequest(request))
-
-      status(result) shouldBe 303
-      result.header.headers("Location") should include("verification/otac")
-    }
-
-    "allow access if passcode authorisation succeeds" in {
-      AuthStub.hasNoEnrolments(subscribingAgent)
-
-      val sessionKeys = AuthStub.passcodeAuthorisationSucceeds()
-
-      implicit val request = authenticatedRequest().withSession(sessionKeys: _*)
-      val result = await(doRequest(request))
-
-      redirectLocation(result) match {
-        case Some(location) => location should not include "verification/otac"
-        case None =>
-      }
     }
   }
 }

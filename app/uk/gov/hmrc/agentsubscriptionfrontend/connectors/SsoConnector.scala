@@ -30,13 +30,15 @@ import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import scala.concurrent.Future
 
 @Singleton
-class SsoConnector @Inject()(http: HttpGet, @Named("sso-baseUrl") baseUrl: URL, metrics: Metrics) extends HttpAPIMonitor {
+class SsoConnector @Inject()(http: HttpGet, @Named("sso-baseUrl") baseUrl: URL, metrics: Metrics)
+    extends HttpAPIMonitor {
   override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
 
-  def validateExternalDomain(domain: String)(implicit hc: HeaderCarrier): Future[Boolean] = {
+  def validateExternalDomain(domain: String)(implicit hc: HeaderCarrier): Future[Boolean] =
     monitor(s"ConsumedAPI-SSO-validateExternalDomain-GET") {
       val url = new URL(baseUrl, s"/sso/validate/domain/$domain")
-      http.GET(url.toString)
+      http
+        .GET(url.toString)
         .map(_ => true)
         .recover {
           case _: BadRequestException => false
@@ -45,5 +47,4 @@ class SsoConnector @Inject()(http: HttpGet, @Named("sso-baseUrl") baseUrl: URL, 
             false
         }
     }
-  }
 }

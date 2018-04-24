@@ -12,33 +12,35 @@ trait DataStreamStubs extends Eventually {
 
   override implicit val patienceConfig = PatienceConfig(scaled(Span(5, Seconds)), scaled(Span(500, Millis)))
 
-  def verifyAuditRequestSent(count: Int, event: AgentSubscriptionFrontendEvent,
-                             tags: Map[String, String] = Map.empty,
-                             detail: Map[String, String] = Map.empty): Unit = {
+  def verifyAuditRequestSent(
+    count: Int,
+    event: AgentSubscriptionFrontendEvent,
+    tags: Map[String, String] = Map.empty,
+    detail: Map[String, String] = Map.empty): Unit =
     eventually {
-      verify(count, postRequestedFor(urlPathEqualTo(auditUrl))
-        .withRequestBody(similarToJson(
-          s"""{
-              |  "auditSource": "agent-subscription-frontend",
-              |  "auditType": "$event",
-              |  "tags": ${Json.toJson(tags)},
-              |  "detail": ${Json.toJson(detail)}
-              |}"""
-        )))
+      verify(
+        count,
+        postRequestedFor(urlPathEqualTo(auditUrl))
+          .withRequestBody(similarToJson(s"""{
+                                            |  "auditSource": "agent-subscription-frontend",
+                                            |  "auditType": "$event",
+                                            |  "tags": ${Json.toJson(tags)},
+                                            |  "detail": ${Json.toJson(detail)}
+                                            |}""".stripMargin))
+      )
     }
-  }
 
-  def verifyAuditRequestNotSent(event: AgentSubscriptionFrontendEvent): Unit = {
+  def verifyAuditRequestNotSent(event: AgentSubscriptionFrontendEvent): Unit =
     eventually {
-      verify(0, postRequestedFor(urlPathEqualTo(auditUrl))
-        .withRequestBody(similarToJson(
-          s"""{
-              |  "auditSource": "agent-subscription-frontend",
-              |  "auditType": "$event"
-              |}"""
-        )))
+      verify(
+        0,
+        postRequestedFor(urlPathEqualTo(auditUrl))
+          .withRequestBody(similarToJson(s"""{
+                                            |  "auditSource": "agent-subscription-frontend",
+                                            |  "auditType": "$event"
+                                            |}""".stripMargin))
+      )
     }
-  }
 
   def givenAuditConnector(): Unit = {
     stubFor(post(urlPathEqualTo(auditUrl)).willReturn(aResponse().withStatus(200)))

@@ -18,14 +18,9 @@ package uk.gov.hmrc.agentsubscriptionfrontend.models
 
 import play.api.libs.json._
 
-case class Country(code: String,
-                   name: Option[String])
+case class Country(code: String, name: Option[String])
 
-case class AddressLookupFrontendAddress(
-  lines: Seq[String],
-  postcode: Option[String],
-  country: Country
-)
+case class AddressLookupFrontendAddress(lines: Seq[String], postcode: Option[String], country: Country)
 
 object AddressLookupFrontendAddress {
 

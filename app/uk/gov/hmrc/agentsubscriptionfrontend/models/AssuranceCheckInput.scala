@@ -19,8 +19,8 @@ package uk.gov.hmrc.agentsubscriptionfrontend.models
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.domain.Nino
 
-case class AssuranceCheckInput(passCesaAgentAssuranceCheck: Option[Boolean],
-                                userEnteredSaAgentRef: Option[String] = None,
-                                userEnteredUtr: Option[Utr] = None,
-                                userEnteredNino: Option[Nino] = None)
-
+case class AssuranceCheckInput(
+  passCesaAgentAssuranceCheck: Option[Boolean],
+  userEnteredSaAgentRef: Option[String] = None,
+  userEnteredUtr: Option[Utr] = None,
+  userEnteredNino: Option[Nino] = None)

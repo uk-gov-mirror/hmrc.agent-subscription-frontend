@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,21 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentsubscriptionfrontend.controllers
+package uk.gov.hmrc.agentsubscriptionfrontend.connectors
 
-import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
+import java.net.URL
+import javax.inject.{Inject, Named, Singleton}
 
-class CheckAgencyControllerWhitelistingISpec extends BaseISpec {
+import uk.gov.hmrc.auth.core._
+import uk.gov.hmrc.http.HttpPost
+import uk.gov.hmrc.play.http.ws.WSPost
 
-  override protected def passcodeAuthenticationEnabled = true
+@Singleton
+class FrontendAuthConnector @Inject()(@Named("auth-baseUrl") baseUrl: URL) extends PlayAuthConnector {
 
-  private lazy val controller = app.injector.instanceOf[CheckAgencyController]
+  override val serviceUrl = baseUrl.toString
 
-  "showCheckAgencyStatus" should {
-    behave like aWhitelistedEndpoint(request => controller.showCheckAgencyStatus(request))
+  override def http = new HttpPost with WSPost {
+    override val hooks = NoneRequired
   }
 }

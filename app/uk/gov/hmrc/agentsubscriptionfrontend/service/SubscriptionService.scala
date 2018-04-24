@@ -30,27 +30,33 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class SubscriptionService @Inject()(agentSubscriptionConnector: AgentSubscriptionConnector) {
 
-  def subscribeAgencyToMtd(subscriptionDetails: SubscriptionDetails)
-                          (implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[Int, Arn]] = {
+  def subscribeAgencyToMtd(subscriptionDetails: SubscriptionDetails)(
+    implicit hc: HeaderCarrier,
+    ec: ExecutionContext): Future[Either[Int, Arn]] = {
     val address = if (subscriptionDetails.address.countryCode != "GB") {
-      Logger.warn(s"Non-GB country code chosen by user for UTR ${subscriptionDetails.utr.value}. " +
-        s"Overriding with GB. A better fix for this is coming in APB-1288.")
+      Logger.warn(
+        s"Non-GB country code chosen by user for UTR ${subscriptionDetails.utr.value}. " +
+          s"Overriding with GB. A better fix for this is coming in APB-1288.")
       subscriptionDetails.address.copy(countryCode = "GB")
     } else {
       subscriptionDetails.address
     }
 
-    val request = SubscriptionRequest(subscriptionDetails.utr, SubscriptionRequestKnownFacts(subscriptionDetails.knownFactsPostcode), Agency(
-      name = subscriptionDetails.name,
-      email = subscriptionDetails.email,
-      telephone = subscriptionDetails.telephone,
-      address = address)
+    val request = SubscriptionRequest(
+      subscriptionDetails.utr,
+      SubscriptionRequestKnownFacts(subscriptionDetails.knownFactsPostcode),
+      Agency(
+        name = subscriptionDetails.name,
+        email = subscriptionDetails.email,
+        telephone = subscriptionDetails.telephone,
+        address = address)
     )
 
     agentSubscriptionConnector.subscribeAgencyToMtd(request) map { x =>
       Right(x)
     } recover {
-      case e: Upstream4xxResponse if Seq(Status.FORBIDDEN, Status.CONFLICT) contains e.upstreamResponseCode => Left(e.upstreamResponseCode)
+      case e: Upstream4xxResponse if Seq(Status.FORBIDDEN, Status.CONFLICT) contains e.upstreamResponseCode =>
+        Left(e.upstreamResponseCode)
       case e => throw e
     }
   }

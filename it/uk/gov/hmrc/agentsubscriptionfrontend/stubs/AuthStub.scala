@@ -21,124 +21,44 @@ import uk.gov.hmrc.agentsubscriptionfrontend.support.{SampleUser, SessionKeysFor
 import uk.gov.hmrc.http.SessionKeys
 
 object AuthStub {
-  def authIsDown(): Unit = {
-    stubFor(get(urlEqualTo("/auth/authority"))
-      .willReturn(
-        aResponse()
-          .withStatus(500)
-      )
-    )
-  }
+  def authIsDown(): Unit =
+    stubFor(
+      post(urlEqualTo("/auth/authorise"))
+        .willReturn(aResponse()
+          .withStatus(500)))
 
-  def userIsNotAuthenticated(): Unit = {
-    stubFor(get(urlEqualTo("/auth/authority"))
-      .willReturn(
-        aResponse()
-          .withStatus(401)
-      )
-    )
-  }
+  def userIsNotAuthenticated(): Unit =
+    stubFor(
+      post(urlEqualTo("/auth/authorise"))
+        .willReturn(
+          aResponse()
+            .withStatus(401)
+            .withHeader("WWW-Authenticate", "MDTP detail=\"SessionRecordNotFound\"")))
 
-  /**
-    * @return session keys required for the play-authorised-frontend library to
-    *         recognise that the user is logged in
-    */
-  def userIsAuthenticated(user: SampleUser): Seq[(String, String)] = {
-    stubFor(get(urlEqualTo("/auth/authority"))
-      .willReturn(
-        aResponse()
-          .withStatus(200)
-          .withBody(user.authJson)
-      )
-    )
-
-    stubFor(get(urlMatching("/auth/oid/[^/]+$"))
-      .willReturn(
-        aResponse()
-          .withStatus(200)
-          .withBody(user.authJson)
-      )
-    )
-
-    stubFor(get(urlEqualTo(user.userDetailsLink))
-      .willReturn(
-        aResponse()
-          .withStatus(200)
-          .withBody(user.userDetailsJson)
-      )
-    )
-
+  def userIsNotAnAgent(user: SampleUser): Seq[(String, String)] = {
+    stubFor(
+      post(urlEqualTo("/auth/authorise"))
+        .willReturn(
+          aResponse()
+            .withStatus(401)
+            .withHeader("WWW-Authenticate", "MDTP detail=\"UnsupportedAffinityGroup\"")))
     sessionKeysForMockAuth(user)
   }
 
-  def passcodeAuthorisationSucceeds(regime: String = "agent-subscription", otacToken: String = "dummy-otac-token"): Seq[(String, String)] = {
-    stubPasscodeAuthorisation(regime, 200)
-
-    Seq(SessionKeys.otacToken -> otacToken)
-  }
-
-  def passcodeAuthorisationFails(regime: String = "agent-subscription"): Unit = {
-    stubPasscodeAuthorisation(regime, 404)
-  }
-
-  private def stubPasscodeAuthorisation(regime: String, status: Int) = {
-    stubFor(get(urlEqualTo(s"/authorise/read/$regime"))
-      .willReturn(
-        aResponse()
-          .withStatus(status)))
-  }
-
-  def isSubscribedToMtd(user: SampleUser): Unit = {
-    stubFor(get(urlEqualTo(user.enrolmentsLink))
+  def userIsAuthenticated(user: SampleUser): Seq[(String, String)] = {
+    val response =
+      s"""{${user.allEnrolments},${user.affinityGroup},"credentials": {"providerId": "${user.userId}", "providerType": "GovernmentGateway"}}"""
+    stubFor(
+      post(urlEqualTo("/auth/authorise"))
         .willReturn(
           aResponse()
-              .withStatus(200)
-              .withBody(
-                s"""
-                   |[{"key":"HMRC-AS-AGENT","identifiers":[{"key":"AgentReferenceNumber","value":"JARN1234567"}],"state":"Activated"}]
-                 """.stripMargin
-              )
-        ))
+            .withStatus(200)
+            .withHeader("Content-Type", "application/json")
+            .withBody(response)))
+    sessionKeysForMockAuth(user)
   }
 
-  def isSubscribedToMtdNotActivated(user: SampleUser): Unit = {
-    stubFor(get(urlEqualTo(user.enrolmentsLink))
-      .willReturn(
-        aResponse()
-          .withStatus(200)
-          .withBody(
-            s"""
-               |[{"key":"HMRC-AS-AGENT","identifiers":[{"key":"AgentReferenceNumber","value":"JARN1234567"}],"state":"Not-Activated"}]
-                 """.stripMargin
-          )
-      ))
-  }
-
-  def hasNoEnrolments(user: SampleUser): Unit = {
-    stubFor(get(urlEqualTo(user.enrolmentsLink))
-      .willReturn(
-        aResponse()
-          .withStatus(200)
-          .withBody("[]")
-      ))
-  }
-
-  def isEnrolledForNonMtdServices(user: SampleUser): Unit = {
-    stubFor(get(urlEqualTo(user.enrolmentsLink))
-      .willReturn(
-        aResponse()
-          .withStatus(200)
-          .withBody(
-            s"""
-               |[{"key":"IR-PAYE-AGENT","identifiers":[{"key":"IRAgentReference","value":"HZ1234"}],"state":"Activated"},
-               | {"key":"IR-SA-AGENT","identifiers":[{"key":"IRAgentReference","value":"FOO1234"}],"state":"Activated"}]
-         """.stripMargin
-          )
-      ))
-  }
-
-  private def sessionKeysForMockAuth(user: SampleUser): Seq[(String, String)] = Seq(
-    SessionKeys.userId -> user.authorityUri,
-    SessionKeysForTesting.token -> "fakeToken")
+  private def sessionKeysForMockAuth(user: SampleUser): Seq[(String, String)] =
+    Seq(SessionKeys.userId -> user.userId, SessionKeysForTesting.token -> "fakeToken")
 
 }

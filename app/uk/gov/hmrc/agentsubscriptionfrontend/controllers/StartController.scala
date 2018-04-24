@@ -16,67 +16,66 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
+import com.kenshoo.play.metrics.Metrics
 import javax.inject.Inject
-
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, Result}
-import uk.gov.hmrc.agentsubscriptionfrontend.auth.NoOpRegime
+import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.repository.KnownFactsResultMongoRepository
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
-import uk.gov.hmrc.passcode.authentication.{PasscodeAuthentication, PasscodeAuthenticationProvider, PasscodeVerificationConfig}
-import uk.gov.hmrc.play.frontend.auth.Actions
-import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
-import uk.gov.hmrc.play.frontend.controller.FrontendController
+import uk.gov.hmrc.auth.core.AuthConnector
+import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 import scala.concurrent.Future
 
-class StartController @Inject()(override val messagesApi: MessagesApi,
-                                override val authConnector: AuthConnector,
-                                override val config: PasscodeVerificationConfig,
-                                override val passcodeAuthenticationProvider: PasscodeAuthenticationProvider,
-                                knownFactsResultMongoRepository: KnownFactsResultMongoRepository,
-                                continueUrlActions: ContinueUrlActions,
-                                sessionStoreService: SessionStoreService)
-                               (implicit appConfig: AppConfig)
-    extends FrontendController with I18nSupport with Actions with PasscodeAuthentication {
+class StartController @Inject()(
+  override val messagesApi: MessagesApi,
+  override val authConnector: AuthConnector,
+  knownFactsResultMongoRepository: KnownFactsResultMongoRepository,
+  val continueUrlActions: ContinueUrlActions,
+  val metrics: Metrics,
+  override val appConfig: AppConfig,
+  sessionStoreService: SessionStoreService)(implicit val aConfig: AppConfig)
+    extends FrontendController with I18nSupport with AuthActions {
 
   import continueUrlActions._
   import uk.gov.hmrc.agentsubscriptionfrontend.support.CallOps._
 
-  val root: Action[AnyContent] = PasscodeAuthenticatedActionAsync { implicit request =>
+  val root: Action[AnyContent] = Action.async { implicit request =>
     withMaybeContinueUrl { urlOpt =>
       Future.successful(Redirect(routes.StartController.start().toURLWithParams("continue" -> urlOpt.map(_.url))))
     }
   }
 
-  def start: Action[AnyContent] = PasscodeAuthenticatedActionAsync { implicit request =>
+  def start: Action[AnyContent] = Action.async { implicit request =>
     withMaybeContinueUrl { urlOpt =>
       Future.successful(Ok(html.start(urlOpt)))
     }
   }
 
-  val showNonAgentNextSteps: Action[AnyContent] = AuthorisedFor(NoOpRegime, GGConfidence) { implicit authContext =>
-    implicit request =>
-      Ok(html.non_agent_next_steps())
+  val showNonAgentNextSteps: Action[AnyContent] = Action.async { implicit request =>
+    withAuthenticatedUser {
+      Future.successful(Ok(html.non_agent_next_steps()))
+    }
   }
 
-  def returnAfterGGCredsCreated(id: Option[String] = None): Action[AnyContent] = PasscodeAuthenticatedActionAsync { implicit request =>
+  def returnAfterGGCredsCreated(id: Option[String] = None): Action[AnyContent] = Action.async { implicit request =>
     withMaybeContinueUrlCached {
       id match {
         case Some(knownFactsId) =>
           for {
             knownFactsResultOpt <- knownFactsResultMongoRepository.findKnownFactsResult(knownFactsId)
-            _ <- knownFactsResultMongoRepository.delete(knownFactsId)
+            _                   <- knownFactsResultMongoRepository.delete(knownFactsId)
             _ <- knownFactsResultOpt match {
-              case Some(knownFacts) => sessionStoreService.cacheKnownFactsResult(knownFacts)
-              case None => Future.successful(())
-            }
+                  case Some(knownFacts) => sessionStoreService.cacheKnownFactsResult(knownFacts)
+                  case None             => Future.successful(())
+                }
           } yield {
             knownFactsResultOpt match {
               case Some(_) => Redirect(routes.SubscriptionController.showInitialDetails())
-              case None => Redirect(routes.CheckAgencyController.checkAgencyStatus())
+              case None    => Redirect(routes.CheckAgencyController.checkAgencyStatus())
             }
           }
         case None =>
@@ -85,7 +84,7 @@ class StartController @Inject()(override val messagesApi: MessagesApi,
     }
   }
 
-  def setupIncomplete: Action[AnyContent] = PasscodeAuthenticatedActionAsync { implicit request =>
+  def setupIncomplete: Action[AnyContent] = Action.async { implicit request =>
     Future.successful(Ok(html.setup_incomplete()))
   }
 }

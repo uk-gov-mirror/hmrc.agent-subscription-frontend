@@ -55,41 +55,67 @@ object AgentAssuranceStub {
   val manuallyAssuredAgentUrl = (utr: String) => urlEqualTo(s"/agent-assurance/manually-assured/utr/$utr")
 
   def givenAgentIsNotManuallyAssured(utr: String): StubMapping =
-    stubFor(get(manuallyAssuredAgentUrl(utr))
-      .willReturn(aResponse()
-        .withStatus(403)))
+    stubFor(
+      get(manuallyAssuredAgentUrl(utr))
+        .willReturn(aResponse()
+          .withStatus(403)))
 
   def givenAgentIsManuallyAssured(utr: String): StubMapping =
-    stubFor(get(manuallyAssuredAgentUrl(utr))
-      .willReturn(aResponse()
-        .withStatus(200)))
+    stubFor(
+      get(manuallyAssuredAgentUrl(utr))
+        .willReturn(aResponse()
+          .withStatus(200)))
 
   def givenManuallyAssuredAgentsReturns(utr: String, status: Int): StubMapping =
-    stubFor(get(manuallyAssuredAgentUrl(utr))
-      .willReturn(aResponse()
-        .withStatus(status)))
+    stubFor(
+      get(manuallyAssuredAgentUrl(utr))
+        .willReturn(aResponse()
+          .withStatus(status)))
 
   def verifyCheckAgentIsManuallyAssured(times: Int, utr: String) =
     verify(times, getRequestedFor(manuallyAssuredAgentUrl(utr)))
 
-  def givenNinoAGoodCombinationAndUserHasRelationshipInCesa(ninoOrUtr: String, valueOfNinoOrUtr: String, saAgentReference: String): StubMapping =
-    stubFor(get(urlEqualTo(s"/agent-assurance/activeCesaRelationship/nino/AA123456A/saAgentReference/SA6012"))
-      .willReturn(aResponse().withStatus(200)))
+  def givenNinoAGoodCombinationAndUserHasRelationshipInCesa(
+    ninoOrUtr: String,
+    valueOfNinoOrUtr: String,
+    saAgentReference: String): StubMapping =
+    stubFor(
+      get(urlEqualTo(s"/agent-assurance/activeCesaRelationship/nino/AA123456A/saAgentReference/SA6012"))
+        .willReturn(aResponse().withStatus(200)))
 
-  def givenUtrAGoodCombinationAndUserHasRelationshipInCesa(ninoOrUtr: String, valueOfNinoOrUtr: String, saAgentReference: String): StubMapping =
-    stubFor(get(urlEqualTo(s"/agent-assurance/activeCesaRelationship/utr/4000000009/saAgentReference/SA6012"))
-      .willReturn(aResponse().withStatus(200)))
+  def givenUtrAGoodCombinationAndUserHasRelationshipInCesa(
+    ninoOrUtr: String,
+    valueOfNinoOrUtr: String,
+    saAgentReference: String): StubMapping =
+    stubFor(
+      get(urlEqualTo(s"/agent-assurance/activeCesaRelationship/utr/4000000009/saAgentReference/SA6012"))
+        .willReturn(aResponse().withStatus(200)))
 
-  def givenAUserDoesNotHaveRelationshipInCesa(ninoOrUtr: String, valueOfNinoOrUtr: String, saAgentReference: String): StubMapping =
-    stubFor(get(urlEqualTo(s"/agent-assurance/activeCesaRelationship/$ninoOrUtr/$valueOfNinoOrUtr/saAgentReference/$saAgentReference"))
-      .willReturn(aResponse().withStatus(403)))
+  def givenAUserDoesNotHaveRelationshipInCesa(
+    ninoOrUtr: String,
+    valueOfNinoOrUtr: String,
+    saAgentReference: String): StubMapping =
+    stubFor(
+      get(urlEqualTo(
+        s"/agent-assurance/activeCesaRelationship/$ninoOrUtr/$valueOfNinoOrUtr/saAgentReference/$saAgentReference"))
+        .willReturn(aResponse().withStatus(403)))
 
-  def givenABadCombinationAndUserHasRelationshipInCesa(ninoOrUtr: String, valueOfNinoOrUtr: String, saAgentReference: String): StubMapping =
-    stubFor(get(urlEqualTo(s"/agent-assurance/activeCesaRelationship/$ninoOrUtr/$valueOfNinoOrUtr/saAgentReference/$saAgentReference"))
-      .willReturn(aResponse().withStatus(403)))
+  def givenABadCombinationAndUserHasRelationshipInCesa(
+    ninoOrUtr: String,
+    valueOfNinoOrUtr: String,
+    saAgentReference: String): StubMapping =
+    stubFor(
+      get(urlEqualTo(
+        s"/agent-assurance/activeCesaRelationship/$ninoOrUtr/$valueOfNinoOrUtr/saAgentReference/$saAgentReference"))
+        .willReturn(aResponse().withStatus(403)))
 
-  def givenAGoodCombinationAndNinoNotFoundInCesa(ninoOrUtr: String, valueOfNinoOrUtr: String, saAgentReference: String): StubMapping =
-    stubFor(get(urlEqualTo(s"/agent-assurance/activeCesaRelationship/$ninoOrUtr/$valueOfNinoOrUtr/saAgentReference/$saAgentReference"))
-      .willReturn(aResponse().withStatus(404)))
+  def givenAGoodCombinationAndNinoNotFoundInCesa(
+    ninoOrUtr: String,
+    valueOfNinoOrUtr: String,
+    saAgentReference: String): StubMapping =
+    stubFor(
+      get(urlEqualTo(
+        s"/agent-assurance/activeCesaRelationship/$ninoOrUtr/$valueOfNinoOrUtr/saAgentReference/$saAgentReference"))
+        .willReturn(aResponse().withStatus(404)))
 
 }

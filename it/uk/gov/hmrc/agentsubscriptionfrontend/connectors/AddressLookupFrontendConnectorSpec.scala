@@ -25,14 +25,9 @@ class AddressLookupFrontendConnectorSpec extends BaseISpec with MetricTestSuppor
       val connector = app.injector.instanceOf[AddressLookupFrontendConnector]
       val address = await(connector.getAddressDetails(addressId))
       address shouldBe AddressLookupFrontendAddress(
-        lines = Seq(
-          addressLine1,
-          addressLine2,
-          addressLine3,
-          town),
+        lines = Seq(addressLine1, addressLine2, addressLine3, town),
         postcode = Some(postcode),
-        country = Country("GB",Some("United Kingdom"))
-      )
+        country = Country("GB", Some("United Kingdom")))
 
       timerShouldExistsAndBeenUpdated("ConsumedAPI-Address-Lookup-Frontend-getAddressDetails-GET")
     }

@@ -26,36 +26,35 @@ class KnownFactsFormSpec extends UnitSpec {
   "knownFactsForm" should {
 
     "accept valid utr and postcode fields and produce valid KnownFacts" in {
-      val result = form.bind(Map("utr"->"2000000000","postcode"->"BN147BU")).value
-      result shouldBe Some(KnownFacts(Utr("2000000000"),"BN147BU"))
+      val result = form.bind(Map("utr" -> "2000000000", "postcode" -> "BN147BU")).value
+      result shouldBe Some(KnownFacts(Utr("2000000000"), "BN147BU"))
     }
 
     "fill with valid KnownFacts" in {
-      val result = form.fill(KnownFacts(Utr("2000000000"),"BN147BU")).data
-      result shouldBe Map("utr"->"2000000000","postcode"->"BN147BU")
+      val result = form.fill(KnownFacts(Utr("2000000000"), "BN147BU")).data
+      result shouldBe Map("utr" -> "2000000000", "postcode" -> "BN147BU")
     }
 
     "not produce KnownFacts if utr is missing" in {
-      val result = form.bind(Map("postcode"->"BN147BU")).value
+      val result = form.bind(Map("postcode" -> "BN147BU")).value
       result shouldBe None
     }
 
     "not produce KnownFacts if utr is invalid" in {
-      val result = form.bind(Map("utr"->"foo","postcode"->"BN147BU")).value
+      val result = form.bind(Map("utr" -> "foo", "postcode" -> "BN147BU")).value
       result shouldBe None
     }
 
     "not produce KnownFacts if postcode is missing" in {
-      val result = form.bind(Map("utr"->"2000000000")).value
+      val result = form.bind(Map("utr" -> "2000000000")).value
       result shouldBe None
     }
 
     "not produce KnownFacts if postcode is invalid" in {
-      val result = form.bind(Map("utr"->"2000000000","postcode"->"foo")).value
+      val result = form.bind(Map("utr" -> "2000000000", "postcode" -> "foo")).value
       result shouldBe None
     }
 
   }
-
 
 }

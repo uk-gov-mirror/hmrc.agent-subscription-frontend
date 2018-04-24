@@ -55,7 +55,8 @@ class PostcodesLoaderSpec extends UnitSpec with MockitoSugar {
         PostcodesLoader.load("/invalid_box_postcodes.csv")
       }
 
-      exception.getMessage should include("Invalid entries found in the blacklisted postcodes file: AB10 1ZTInvalid-post-code,AB11 6NWInvalid-post-code")
+      exception.getMessage should include(
+        "Invalid entries found in the blacklisted postcodes file: AB10 1ZTInvalid-post-code,AB11 6NWInvalid-post-code")
     }
   }
 }

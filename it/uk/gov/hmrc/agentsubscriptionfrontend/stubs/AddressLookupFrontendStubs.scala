@@ -23,64 +23,56 @@ import uk.gov.hmrc.agentsubscriptionfrontend.models.AddressLookupFrontendAddress
 
 object AddressLookupFrontendStubs {
 
-  def givenAddressLookupInit(journeyId: String, callbackUrl: String): Unit = {
-    stubFor(post(urlEqualTo(s"/api/init/$journeyId"))
-      .willReturn(
-        aResponse()
-          .withStatus(202)
-          .withHeader(HeaderNames.LOCATION, callbackUrl)
-      )
-    )
-  }
+  def givenAddressLookupInit(journeyId: String, callbackUrl: String): Unit =
+    stubFor(
+      post(urlEqualTo(s"/api/init/$journeyId"))
+        .willReturn(
+          aResponse()
+            .withStatus(202)
+            .withHeader(HeaderNames.LOCATION, callbackUrl)))
 
-  def givenAddressLookupJourneySucceeded(addressId: String): Unit = {
-    stubFor(get(urlEqualTo("/api/dummy/start-journey"))
-      .willReturn(
-        aResponse()
-          .withStatus(302)
-          .withHeader(HeaderNames.LOCATION, s"/get-address/$addressId")
-      )
-    )
-  }
+  def givenAddressLookupJourneySucceeded(addressId: String): Unit =
+    stubFor(
+      get(urlEqualTo("/api/dummy/start-journey"))
+        .willReturn(
+          aResponse()
+            .withStatus(302)
+            .withHeader(HeaderNames.LOCATION, s"/get-address/$addressId")))
 
   def givenAddressLookupReturnsAddress(
-      addressId: String,
-      addressLine1: String = "10 Other Place",
-      addressLine2: String = "Some District",
-      addressLine3: String = "Line 3",
-      town: String = "Sometown",
-      postcode: String = "AA1 1AA",
-      countryCode: String = "GB",
-      unsupportedAddressLines: Seq[String] = Seq.empty): Unit = {
-
-    stubFor(get(urlEqualTo(s"/api/confirmed?id=$addressId"))
-      .willReturn(
-        aResponse()
-          .withStatus(200)
-          .withBody(
-            s"""
+    addressId: String,
+    addressLine1: String = "10 Other Place",
+    addressLine2: String = "Some District",
+    addressLine3: String = "Line 3",
+    town: String = "Sometown",
+    postcode: String = "AA1 1AA",
+    countryCode: String = "GB",
+    unsupportedAddressLines: Seq[String] = Seq.empty): Unit =
+    stubFor(
+      get(urlEqualTo(s"/api/confirmed?id=$addressId"))
+        .willReturn(
+          aResponse()
+            .withStatus(200)
+            .withBody(s"""
               {
-               |    "address": {
-               |        "country": {
-               |            "code": "$countryCode",
-               |            "name": "United Kingdom"
-               |        },
-               |        "lines": [
-               |            "$addressLine1",
-               |            "$addressLine2",
-               |            "$addressLine3",
-               |            "$town"
-               |            ${if(unsupportedAddressLines.isEmpty) "" else unsupportedAddressLines.mkString(",\"","\",\"","\"")}
-               |        ],
-               |        "postcode": "$postcode"
-               |    },
-               |    "auditRef": "4b982d38-32f2-4da8-9d5e-b70c45b401fe",
-               |    "id": "GB990091234524"
-               |}
-              |""".stripMargin
-          )
-      )
-    )
-  }
+                         |    "address": {
+                         |        "country": {
+                         |            "code": "$countryCode",
+                         |            "name": "United Kingdom"
+                         |        },
+                         |        "lines": [
+                         |            "$addressLine1",
+                         |            "$addressLine2",
+                         |            "$addressLine3",
+                         |            "$town"
+                         |            ${if (unsupportedAddressLines.isEmpty) ""
+                         else unsupportedAddressLines.mkString(",\"", "\",\"", "\"")}
+                         |        ],
+                         |        "postcode": "$postcode"
+                         |    },
+                         |    "auditRef": "4b982d38-32f2-4da8-9d5e-b70c45b401fe",
+                         |    "id": "GB990091234524"
+                         |}
+                         |""".stripMargin)))
 
 }

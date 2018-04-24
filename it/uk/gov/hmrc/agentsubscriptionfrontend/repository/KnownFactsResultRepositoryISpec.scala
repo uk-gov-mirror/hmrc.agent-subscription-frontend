@@ -26,8 +26,8 @@ class KnownFactsResultRepositoryISpec extends UnitSpec with OneAppPerSuite with 
   private lazy val repo = app.injector.instanceOf[KnownFactsResultMongoRepository]
 
   private val utr = Utr("0123456789")
-  private val knownFactsResult = KnownFactsResult(utr = utr,
-    postcode = "AA11AA", taxpayerName = "My Agency", isSubscribedToAgentServices = false)
+  private val knownFactsResult =
+    KnownFactsResult(utr = utr, postcode = "AA11AA", taxpayerName = "My Agency", isSubscribedToAgentServices = false)
 
   override def beforeEach() {
     super.beforeEach()
@@ -41,10 +41,7 @@ class KnownFactsResultRepositoryISpec extends UnitSpec with OneAppPerSuite with 
 
       result should not be empty
 
-      await(repo.find("id" -> result)).head should have(
-        'id (result),
-        'knownFactsResult (knownFactsResult)
-      )
+      await(repo.find("id" -> result)).head should have('id (result), 'knownFactsResult (knownFactsResult))
     }
 
     "find a KnownFactsResult record by Id" in {
@@ -84,4 +81,3 @@ class KnownFactsResultRepositoryISpec extends UnitSpec with OneAppPerSuite with 
     }
   }
 }
-

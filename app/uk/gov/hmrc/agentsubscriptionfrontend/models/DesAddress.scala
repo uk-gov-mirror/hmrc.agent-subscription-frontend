@@ -16,9 +16,10 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.models
 
-case class DesAddress(addressLine1: String,
-                      addressLine2: Option[String],
-                      addressLine3: Option[String],
-                      addressLine4: Option[String],
-                      postcode: String,
-                      countryCode: String)
+case class DesAddress(
+  addressLine1: String,
+  addressLine2: Option[String],
+  addressLine3: Option[String],
+  addressLine4: Option[String],
+  postcode: String,
+  countryCode: String)

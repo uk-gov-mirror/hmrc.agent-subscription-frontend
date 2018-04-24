@@ -1,26 +1,20 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
-import play.api.test.Helpers._
-import play.api.test.Helpers.redirectLocation
+import play.api.test.Helpers.{redirectLocation, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.audit.AgentSubscriptionFrontendEvent
 import uk.gov.hmrc.agentsubscriptionfrontend.models.KnownFactsResult
-import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub.givenRefusalToDealWithUtrIsNotForbidden
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub.withMatchingUtrAndPostcode
-import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub.{hasNoEnrolments, isEnrolledForNonMtdServices}
-import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUsers.subscribingAgent
+import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.subscribingAgentEnrolledForNonMTD
 
 class CheckAgencyControllerWithoutAssuranceFlagISpec extends CheckAgencyControllerISpec {
 
-  override val agentAssuranceFlag: Boolean =  false
+  override val agentAssuranceFlag: Boolean = false
 
   "checkAgencyStatus with the agentAssuranceFlag set to false" should {
     "redirect to confirm agency page and store known facts result in the session store when a matching registration is found for the UTR and postcode" in {
       withMatchingUtrAndPostcode(validUtr, validPostcode)
-      isEnrolledForNonMtdServices(subscribingAgent)
-      givenRefusalToDealWithUtrIsNotForbidden(validUtr.value)
 
-
-      implicit val request = authenticatedRequest()
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
 
@@ -34,11 +28,8 @@ class CheckAgencyControllerWithoutAssuranceFlagISpec extends CheckAgencyControll
 
     "store isSubscribedToAgentServices = false in session when the business registration found by agent-subscription is not already subscribed" in {
       withMatchingUtrAndPostcode(validUtr, validPostcode)
-      isEnrolledForNonMtdServices(subscribingAgent)
-      givenRefusalToDealWithUtrIsNotForbidden(validUtr.value)
 
-
-      implicit val request = authenticatedRequest()
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
 
@@ -50,11 +41,8 @@ class CheckAgencyControllerWithoutAssuranceFlagISpec extends CheckAgencyControll
 
     "redirect to already subscribed page when the business registration found by agent-subscription is already subscribed" in {
       withMatchingUtrAndPostcode(validUtr, validPostcode, isSubscribedToAgentServices = true)
-      isEnrolledForNonMtdServices(subscribingAgent)
-      givenRefusalToDealWithUtrIsNotForbidden(validUtr.value)
 
-
-      implicit val request = authenticatedRequest()
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(request))
 

@@ -29,11 +29,7 @@ class FormErrorSummarySpec extends UnitSpec {
 
   private val maxLength = 9
 
-  private val testForm = Form[Model](
-    mapping(
-      "name" -> text(maxLength = maxLength)
-    )(Model.apply)(Model.unapply)
-  )
+  private val testForm = Form[Model](mapping("name" -> text(maxLength = maxLength))(Model.apply)(Model.unapply))
 
   private implicit val messages = Messages(Lang("en"), TestMessagesApi.testMessagesApi)
 
@@ -41,9 +37,11 @@ class FormErrorSummarySpec extends UnitSpec {
     "display error messages including arguments" in {
 
       val formWithError = testForm.bind(Map("name" -> "too long too long"))
-       uk.gov.hmrc.play.views.html.helpers.errorSummary("heading", formWithError).toString should include(htmlEscapedMessage("error.maxLength", maxLength))
+      uk.gov.hmrc.play.views.html.helpers.errorSummary("heading", formWithError).toString should include(
+        htmlEscapedMessage("error.maxLength", maxLength))
     }
   }
 
-  protected def htmlEscapedMessage(key: String, args: Any*): String = HtmlFormat.escape(Messages(key, args: _*)).toString
+  protected def htmlEscapedMessage(key: String, args: Any*): String =
+    HtmlFormat.escape(Messages(key, args: _*)).toString
 }

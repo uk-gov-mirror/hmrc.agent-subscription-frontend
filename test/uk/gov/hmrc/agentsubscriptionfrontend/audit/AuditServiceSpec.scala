@@ -23,14 +23,14 @@ import org.scalatest.concurrent.Eventually
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.time.{Millis, Span}
 import play.api.test.FakeRequest
+import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.DataEvent
-import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.ExecutionContext
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.logging.{ Authorization, RequestId, SessionId }
+import uk.gov.hmrc.http.logging.{Authorization, RequestId, SessionId}
 
 class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
 
@@ -41,17 +41,17 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
     "send an AgentAssurance event with the correct fields" in {
       val mockConnector = mock[AuditConnector]
       val authConnector = mock[AuthConnector]
-      val service = new AuditService(mockConnector, authConnector)
+      val service = new AuditService(mockConnector)
 
       val hc = HeaderCarrier(
         authorization = Some(Authorization("dummy bearer token")),
         sessionId = Some(SessionId("dummy session id")),
-        requestId = Some(RequestId("dummy request id"))
-      )
+        requestId = Some(RequestId("dummy request id")))
 
       val auditData = new AuditData()
 
-      auditData.set("utr", "abcd")
+      auditData
+        .set("utr", "abcd")
         .set("postcode", "AA1 1AA")
         .set("refuseToDealWith", false)
         .set("isEnrolledSAAgent", true)

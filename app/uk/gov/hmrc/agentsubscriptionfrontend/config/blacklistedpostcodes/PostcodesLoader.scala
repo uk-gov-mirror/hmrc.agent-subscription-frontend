@@ -21,28 +21,30 @@ import scala.util.{Failure, Success, Try}
 object PostcodesLoader {
   private val postcodeWithoutSpacesRegex = "^[A-Z]{1,2}[0-9][0-9A-Z]?\\s?[0-9][A-Z]{2}$|BFPO\\s?[0-9]{1,5}$".r
 
-  def load(path: String) = Try {
-    require(path.nonEmpty, "Postcodes file path cannot be empty")
-    require(path.endsWith(".csv"), "Postcodes file should be a csv file")
+  def load(path: String) =
+    Try {
+      require(path.nonEmpty, "Postcodes file path cannot be empty")
+      require(path.endsWith(".csv"), "Postcodes file should be a csv file")
 
-    val header = 1
-    val items = scala.io.Source.fromInputStream(PostcodesLoader.getClass.getResourceAsStream(path), "utf-8")
-    items.getLines().drop(header).toSeq
-  } match {
-    case Success(postcodes) =>
-      val invalidPostcodes =
-        postcodes.filter(x => postcodeWithoutSpacesRegex.unapplySeq(formatPostcode(x)).isEmpty)
+      val header = 1
+      val items = scala.io.Source.fromInputStream(PostcodesLoader.getClass.getResourceAsStream(path), "utf-8")
+      items.getLines().drop(header).toSeq
+    } match {
+      case Success(postcodes) =>
+        val invalidPostcodes =
+          postcodes.filter(x => postcodeWithoutSpacesRegex.unapplySeq(formatPostcode(x)).isEmpty)
 
-      if (invalidPostcodes.isEmpty)
-        postcodes
-      else
-        throw new PostcodeLoaderException(s"Invalid entries found in the blacklisted postcodes file: ${invalidPostcodes.mkString(",")}")
-    case Failure(ex) =>
-      throw new PostcodeLoaderException(ex.getMessage)
-  }
+        if (invalidPostcodes.isEmpty)
+          postcodes
+        else
+          throw new PostcodeLoaderException(
+            s"Invalid entries found in the blacklisted postcodes file: ${invalidPostcodes.mkString(",")}")
+      case Failure(ex) =>
+        throw new PostcodeLoaderException(ex.getMessage)
+    }
 
   def formatPostcode(p: String) = Option(p).map(_.replace(" ", "").toUpperCase).orNull
 
-  final class PostcodeLoaderException(message: String) extends
-    Exception(s"Unknown error code from agent-subscription while loading postcodes: $message")
+  final class PostcodeLoaderException(message: String)
+      extends Exception(s"Unknown error code from agent-subscription while loading postcodes: $message")
 }

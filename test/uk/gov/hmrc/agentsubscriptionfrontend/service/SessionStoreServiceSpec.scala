@@ -37,7 +37,8 @@ class SessionStoreServiceSpec extends UnitSpec {
     "store known facts" in {
       val store = new SessionStoreService(new TestSessionCache())
 
-      val knownFactsResult = KnownFactsResult(Utr("9876543210"), "AA11AA", "Test organisation name", isSubscribedToAgentServices = true)
+      val knownFactsResult =
+        KnownFactsResult(Utr("9876543210"), "AA11AA", "Test organisation name", isSubscribedToAgentServices = true)
 
       await(store.cacheKnownFactsResult(knownFactsResult))
 
@@ -85,7 +86,8 @@ class SessionStoreServiceSpec extends UnitSpec {
     "remove the underlying storage for the current session when remove is called" in {
       val store = new SessionStoreService(new TestSessionCache())
 
-      val knownFactsResult = KnownFactsResult(Utr("9876543210"), "AA11AA", "Test organisation name", isSubscribedToAgentServices = true)
+      val knownFactsResult =
+        KnownFactsResult(Utr("9876543210"), "AA11AA", "Test organisation name", isSubscribedToAgentServices = true)
 
       await(store.cacheKnownFactsResult(knownFactsResult))
 
@@ -115,21 +117,24 @@ class TestSessionCache extends SessionCache {
   private def testCacheId(implicit hc: HeaderCarrier): Future[String] =
     hc.sessionId.fold(noSession)(c => Future.successful(c.value))
 
-  override def cache[A](formId: String, body: A)(implicit wts: Writes[A], hc: HeaderCarrier, executionContext : ExecutionContext): Future[CacheMap] =
+  override def cache[A](
+    formId: String,
+    body: A)(implicit wts: Writes[A], hc: HeaderCarrier, executionContext: ExecutionContext): Future[CacheMap] =
     testCacheId.map { c =>
       store.put(formId, wts.writes(body))
       CacheMap(c, store.toMap)
     }
 
-  override def fetch()(implicit hc: HeaderCarrier, executionContext : ExecutionContext): Future[Option[CacheMap]] =
+  override def fetch()(implicit hc: HeaderCarrier, executionContext: ExecutionContext): Future[Option[CacheMap]] =
     testCacheId.map(c => Some(CacheMap(c, store.toMap)))
 
-  override def fetchAndGetEntry[T](key: String)(implicit hc: HeaderCarrier, rds: Reads[T], executionContext : ExecutionContext): Future[Option[T]] =
+  override def fetchAndGetEntry[T](
+    key: String)(implicit hc: HeaderCarrier, rds: Reads[T], executionContext: ExecutionContext): Future[Option[T]] =
     Future {
       store.get(key).flatMap(jsValue => rds.reads(jsValue).asOpt)
     }
 
-  override def remove()(implicit hc: HeaderCarrier, executionContext : ExecutionContext): Future[HttpResponse] =
+  override def remove()(implicit hc: HeaderCarrier, executionContext: ExecutionContext): Future[HttpResponse] =
     Future {
       store.clear()
       null

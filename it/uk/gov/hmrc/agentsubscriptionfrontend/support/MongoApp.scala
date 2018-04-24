@@ -21,9 +21,8 @@ trait ResetMongoBeforeTest extends BeforeAndAfterEach {
     dropMongoDb()
   }
 
-  def dropMongoDb()(implicit ec: ExecutionContext = global): Unit = {
+  def dropMongoDb()(implicit ec: ExecutionContext = global): Unit =
     Awaiting.await(mongo().drop())
-  }
 }
 
 object Awaiting extends MongoAwaiting

@@ -4,11 +4,10 @@ import java.net.URL
 
 import org.scalatestplus.play.OneAppPerSuite
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
-import uk.gov.hmrc.agentsubscriptionfrontend.config.HttpVerbs
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{MetricTestSupport, WireMockSupport}
-import uk.gov.hmrc.http.{HeaderCarrier, Upstream4xxResponse, Upstream5xxResponse}
+import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.test.UnitSpec
 import com.kenshoo.play.metrics.Metrics
 
@@ -16,8 +15,11 @@ class AgentSubscriptionConnectorISpec extends UnitSpec with OneAppPerSuite with 
 
   private implicit val hc = HeaderCarrier()
 
-  private lazy val connector: AgentSubscriptionConnector = new AgentSubscriptionConnector(
-    new URL(s"http://localhost:$wireMockPort"), app.injector.instanceOf[HttpVerbs],app.injector.instanceOf[Metrics])
+  private lazy val connector: AgentSubscriptionConnector =
+    new AgentSubscriptionConnector(
+      new URL(s"http://localhost:$wireMockPort"),
+      app.injector.instanceOf[HttpGet with HttpPost],
+      app.injector.instanceOf[Metrics])
 
   private val utr = Utr("0123456789")
   "getRegistration" should {
@@ -118,9 +120,11 @@ class AgentSubscriptionConnectorISpec extends UnitSpec with OneAppPerSuite with 
   }
 
   private val subscriptionRequest =
-    SubscriptionRequest(utr = utr,
+    SubscriptionRequest(
+      utr = utr,
       knownFacts = SubscriptionRequestKnownFacts("AA1 2AA"),
-      agency = Agency(name = "My Agency",
+      agency = Agency(
+        name = "My Agency",
         address = DesAddress(
           addressLine1 = "1 Some Street",
           addressLine2 = Some("Anytown"),
@@ -129,5 +133,7 @@ class AgentSubscriptionConnectorISpec extends UnitSpec with OneAppPerSuite with 
           postcode = "AA1 1AA",
           countryCode = "GB"),
         email = "agency@example.com",
-        telephone = "0123 456 7890"))
+        telephone = "0123 456 7890"
+      )
+    )
 }

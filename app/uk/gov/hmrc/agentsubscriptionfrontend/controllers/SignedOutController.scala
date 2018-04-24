@@ -17,43 +17,41 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import javax.inject.{Inject, Named, Singleton}
-
 import play.api.mvc.Action
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.repository.KnownFactsResultMongoRepository
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.agentsubscriptionfrontend.support.CallOps.addParamsToUrl
-import uk.gov.hmrc.play.frontend.controller.FrontendController
+import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 import scala.concurrent.Future
 
 @Singleton
-class SignedOutController @Inject()(@Named("surveyRedirectUrl") surveyUrl: String,
-                                    @Named("sosRedirectUrl") sosUrl: String,
-                                    knownFactsResultMongoRepository: KnownFactsResultMongoRepository,
-                                    sessionStoreService: SessionStoreService)(implicit appConfig: AppConfig)
-  extends FrontendController {
+class SignedOutController @Inject()(
+  knownFactsResultMongoRepository: KnownFactsResultMongoRepository,
+  sessionStoreService: SessionStoreService)(implicit appConfig: AppConfig)
+    extends FrontendController {
 
   def redirectToSos = Action.async { implicit request =>
-
     for {
       knownFactOpt <- sessionStoreService.fetchKnownFactsResult
       id <- knownFactOpt match {
-        case Some(x) => knownFactsResultMongoRepository.create(x).map(Option.apply)
-        case None => Future successful None
-      }
+             case Some(x) => knownFactsResultMongoRepository.create(x).map(Option.apply)
+             case None    => Future successful None
+           }
       agentSubContinueUrl <- sessionStoreService.fetchContinueUrl
     } yield {
       val continueUrl =
         addParamsToUrl(
-          "/agent-subscription/return-after-gg-creds-created","id" -> id.map(_.toString),
+          "/agent-subscription/return-after-gg-creds-created",
+          "id"       -> id.map(_.toString),
           "continue" -> agentSubContinueUrl.map(_.url))
-      SeeOther(addParamsToUrl(sosUrl,  "continue" -> Some(continueUrl))).withNewSession
+      SeeOther(addParamsToUrl(appConfig.sosRedirectUrl, "continue" -> Some(continueUrl))).withNewSession
     }
   }
 
   def startSurvey = Action { implicit request =>
-    SeeOther(surveyUrl).withNewSession
+    SeeOther(appConfig.surveyRedirectUrl).withNewSession
   }
 
   def redirectToASAccountPage = Action { implicit request =>

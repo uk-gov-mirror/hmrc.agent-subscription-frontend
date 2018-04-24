@@ -25,57 +25,48 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class TestSessionStoreService extends SessionStoreService(null) {
 
-  class Session (
+  class Session(
     var knownFactsResult: Option[KnownFactsResult] = None,
     var initialDetails: Option[InitialDetails] = None,
-    var continueUrl: Option[ContinueUrl] = None
-  )
+    var continueUrl: Option[ContinueUrl] = None)
 
-  private val sessions = collection.mutable.Map[String,Session]()
+  private val sessions = collection.mutable.Map[String, Session]()
 
   private def sessionKey(implicit hc: HeaderCarrier): String = hc.userId match {
-      case None => "default"
-      case Some(userId) => userId.toString
-    }
+    case None         => "default"
+    case Some(userId) => userId.toString
+  }
 
-  def currentSession(implicit hc: HeaderCarrier): Session = {
+  def currentSession(implicit hc: HeaderCarrier): Session =
     sessions.getOrElseUpdate(sessionKey, new Session())
-  }
 
-  def clear():Unit = {
+  def clear(): Unit =
     sessions.clear()
-  }
 
-  def allSessionsRemoved: Boolean = {
+  def allSessionsRemoved: Boolean =
     sessions.isEmpty
-  }
 
-  override def fetchKnownFactsResult(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[KnownFactsResult]] = {
+  override def fetchKnownFactsResult(
+    implicit hc: HeaderCarrier,
+    ec: ExecutionContext): Future[Option[KnownFactsResult]] =
     Future successful currentSession.knownFactsResult
-  }
 
-  override def cacheKnownFactsResult(knownFactsResult: KnownFactsResult)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
-    Future.successful(
-      currentSession.knownFactsResult = Some(knownFactsResult)
-    )
+  override def cacheKnownFactsResult(
+    knownFactsResult: KnownFactsResult)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
+    Future.successful(currentSession.knownFactsResult = Some(knownFactsResult))
 
-  override def fetchInitialDetails(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[InitialDetails]] = {
+  override def fetchInitialDetails(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[InitialDetails]] =
     Future successful currentSession.initialDetails
-  }
 
-  override def cacheInitialDetails(details: InitialDetails)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
-    Future.successful(
-      currentSession.initialDetails = Some(details)
-    )
+  override def cacheInitialDetails(
+    details: InitialDetails)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
+    Future.successful(currentSession.initialDetails = Some(details))
 
-  override def fetchContinueUrl(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[ContinueUrl]] = {
+  override def fetchContinueUrl(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[ContinueUrl]] =
     Future successful currentSession.continueUrl
-  }
 
   override def cacheContinueUrl(url: ContinueUrl)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
-    Future.successful(
-      currentSession.continueUrl = Some(url)
-    )
+    Future.successful(currentSession.continueUrl = Some(url))
 
   override def remove()(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
     Future {
