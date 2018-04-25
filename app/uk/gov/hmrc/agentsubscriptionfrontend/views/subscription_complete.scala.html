@@ -31,6 +31,6 @@
     <p class="panel panel-indent">@Html(Messages("subscriptionComplete.p1"))</p>
 
     @defining(if(isUrlToASAccount) "continueToASAccount" else "continueJourney") { continueMsg =>
-        <a href="@continueUrl" class="button" id="continue">@Messages(s"subscriptionComplete.button.$continueMsg")</a>
+        <a href="@continueUrl" class="button" id="continue" role="button">@Messages(s"subscriptionComplete.button.$continueMsg")</a>
     }
 }

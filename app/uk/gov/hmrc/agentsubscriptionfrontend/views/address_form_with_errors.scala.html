@@ -32,54 +32,55 @@
 
     @form(action = routes.SubscriptionController.submitModifiedAddress(), 'class -> "form js-form") {
 
-        <h2>@Messages("address.form.with-errors.heading")</h2>
 
-        <div class="form-group">
-            @input(
-                detailsForm("addressLine1"),
-                '_label -> Messages("address.form.with-errors.address_line_1"),
-                '_inputClass -> "form-control input--cleared",
-                '_labelClass -> "heading-small soft--ends"
-            )
-        </div>
-        <div class="form-group">
-            @input(
-                detailsForm("addressLine2"),
-                '_label -> Messages("address.form.with-errors.address_line_2"),
-                '_inputClass -> "form-control input--cleared",
-                '_labelClass -> "heading-small soft--ends"
-            )
-        </div>
-        <div class="form-group">
-            @input(
-                detailsForm("addressLine3"),
-                '_label -> Messages("address.form.with-errors.address_line_3"),
-                '_inputClass -> "form-control input--cleared",
-                '_labelClass -> "heading-small soft--ends"
-            )
-        </div>
-        <div class="form-group">
-            @input(
-                detailsForm("addressLine4"),
-                '_label -> Messages("address.form.with-errors.town"),
-                '_inputClass -> "form-control input--cleared",
-                '_labelClass -> "heading-small soft--ends"
-            )
-        </div>
-        <div class="form-group">
-            @input(
-                detailsForm("postcode"),
-                '_label -> Messages("address.form.with-errors.postcode"),
-                '_inputClass -> "form-control input--cleared input--small",
-                '_labelClass -> "heading-small soft--ends"
-            )
-        </div>
-        <div class="form-group">
-            @input(
-                detailsForm("countryCode"),
-                '_inputClass -> "hidden"
-            )
-        </div>
+    <fieldset>
+        <legend><h2 class="heading-medium">@Messages("address.form.with-errors.heading")</h2></legend>
+
+            <div class="form-group">
+                @input(
+                    detailsForm("addressLine1"),
+                    '_label -> Messages("address.form.with-errors.address_line_1"),
+                    '_inputClass -> "form-control input--cleared",
+                    '_labelClass -> "heading-small soft--ends"
+                )
+            </div>
+            <div class="form-group">
+                @input(
+                    detailsForm("addressLine2"),
+                    '_label -> Messages("address.form.with-errors.address_line_2"),
+                    '_inputClass -> "form-control input--cleared",
+                    '_labelClass -> "heading-small soft--ends"
+                )
+            </div>
+            <div class="form-group">
+                @input(
+                    detailsForm("addressLine3"),
+                    '_label -> Messages("address.form.with-errors.address_line_3"),
+                    '_inputClass -> "form-control input--cleared",
+                    '_labelClass -> "heading-small soft--ends"
+                )
+            </div>
+            <div class="form-group">
+                @input(
+                    detailsForm("addressLine4"),
+                    '_label -> Messages("address.form.with-errors.town"),
+                    '_inputClass -> "form-control input--cleared",
+                    '_labelClass -> "heading-small soft--ends"
+                )
+            </div>
+            <div class="form-group">
+                @input(
+                    detailsForm("postcode"),
+                    '_label -> Messages("address.form.with-errors.postcode"),
+                    '_inputClass -> "form-control input--cleared input--small",
+                    '_labelClass -> "heading-small soft--ends"
+                )
+            </div>
+
+            <input type="hidden" name="countryCode" id="countryCode" value="@detailsForm("countryCode").value" >
+
+        </fieldset>
+
         <div class="form-group">
             <button class="button" type="submit" id="continue">@Messages("address.form.with-errors.button.confirm_address")</button>
         </div>
