@@ -49,6 +49,7 @@ class ViewsSpec extends MixedPlaySpec {
     override val sosRedirectUrl: String = "sosRedirectUrl"
     override val mongoDbKnownFactsResultTtl: Int = 900
     override val cacheableSessionDomain: String = "cacheableSessionDomain"
+    override val isDevMode: Boolean = true
   }
 
   "error_template view" should {

@@ -86,9 +86,7 @@ trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring
           mark("Count-Subscription-NonAgent")
           Redirect(routes.StartController.showNonAgentNextSteps())
         case _: NoActiveSession =>
-          toGGLogin(
-            if (appConfig.environment.mode.equals(Mode.Dev)) s"http://${request.host}${request.uri}"
-            else s"${request.uri}")
+          toGGLogin(if (appConfig.isDevMode) s"http://${request.host}${request.uri}" else s"${request.uri}")
       }
 
   def withAuthenticatedAgent[A](
@@ -99,9 +97,7 @@ trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring
           mark("Count-Subscription-NonAgent")
           Redirect(routes.StartController.showNonAgentNextSteps())
         case _: NoActiveSession =>
-          toGGLogin(
-            if (appConfig.environment.mode.equals(Mode.Dev)) s"http://${request.host}${request.uri}"
-            else s"${request.uri}")
+          toGGLogin(if (appConfig.isDevMode) s"http://${request.host}${request.uri}" else s"${request.uri}")
       }
 
   def withAuthenticatedUser[A](
@@ -109,9 +105,7 @@ trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring
     authorised(AuthProviders(GovernmentGateway))(body)
       .recover {
         case _: NoActiveSession =>
-          toGGLogin(
-            if (appConfig.environment.mode.equals(Mode.Dev)) s"http://${request.host}${request.uri}"
-            else s"${request.uri}")
+          toGGLogin(if (appConfig.isDevMode) s"http://${request.host}${request.uri}" else s"${request.uri}")
       }
 
   private def isEnrolledForHmrcAsAgent(enrolments: Enrolments): Boolean =

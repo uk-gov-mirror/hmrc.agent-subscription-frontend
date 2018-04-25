@@ -18,7 +18,8 @@ package uk.gov.hmrc.agentsubscriptionfrontend.config
 
 import javax.inject.{Inject, Singleton}
 import java.util.Collections.emptyList
-import play.api.{Configuration, Environment}
+
+import play.api.{Configuration, Environment, Mode}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.blacklistedpostcodes.PostcodesLoader
 import uk.gov.hmrc.play.config.ServicesConfig
 
@@ -27,6 +28,7 @@ import scala.collection.JavaConversions._
 trait AppConfig {
   val environment: Environment
   val configuration: Configuration
+  val isDevMode: Boolean
   val analyticsToken: String
   val analyticsHost: String
   val reportAProblemPartialUrl: String
@@ -52,6 +54,8 @@ class FrontendAppConfig @Inject()(val environment: Environment, val configuratio
 
   override val runModeConfiguration: Configuration = configuration
   override protected def mode = environment.mode
+
+  override val isDevMode: Boolean = env == Mode.Dev.toString
 
   private val servicesAccountUrl = getServicesConfStringOrFail("agent-services-account-frontend.external-url")
   private val servicesAccountPath = getServicesConfStringOrFail("agent-services-account-frontend.start.path")
