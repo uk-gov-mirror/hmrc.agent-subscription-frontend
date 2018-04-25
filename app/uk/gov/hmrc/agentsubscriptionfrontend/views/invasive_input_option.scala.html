@@ -27,15 +27,12 @@
         @errorSummary(Messages("error.summary.heading"),confirmResponseForm, Seq.empty, Some("confirmResponseSomethingTrackingGGA"))
     }
 
-    <h1 class="heading-large">@Messages("invasive.title.option")</h1>
-
-    <p>@Messages("invasive.p1")</p>
-
     @form(action = routes.CheckAgencyController.invasiveTaxPayerOption(), 'class -> "form js-form") {
         <div class="form-group @if(confirmResponseForm.error("confirmResponse").isDefined){form-group-error}" id="confirmResponse">
             <fieldset>
                 <legend>
-                    <span class="visually-hidden">@Messages("invasive.title.option")</span>
+                    <h1 class="heading-large @if(confirmResponseForm.hasErrors){push--top}">@Messages("invasive.title.option")</h1>
+                    <p>@Messages("invasive.p1")</p>
                     @if(confirmResponseForm.error("confirmResponse").isDefined){
                         <span class="error-message">@Messages("error.confirmResponse.invalid")</span>
                     }
