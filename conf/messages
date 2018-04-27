@@ -121,7 +121,7 @@ button.register=Register now
 button.signOut=Sign out
 
 #Setup Incomplete
-setupIncomplete.title=You can't set up an agent services account with the details you entered
+setupIncomplete.title=You cannot set up an agent services account with the details you entered
 setupIncomplete.p1=<a href="{0}">Try again using a different agent user ID</a> if your agency uses more than one Government Gateway account, for example for Self Assessment or PAYE.
 
 
