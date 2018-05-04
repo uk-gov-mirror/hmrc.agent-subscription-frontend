@@ -2,19 +2,29 @@
 
 [![Build Status](https://travis-ci.org/hmrc/agent-subscription-frontend.svg)](https://travis-ci.org/hmrc/agent-subscription-frontend) [ ![Download](https://api.bintray.com/packages/hmrc/releases/agent-subscription-frontend/images/download.svg) ](https://bintray.com/hmrc/releases/agent-subscription-frontend/_latestVersion)
 
-This is a web frontend service whose domain is Subscriptions to Agent Services 
+This is a web frontend service for agent-subscription. After signing in using government-gateway, agents can go through the steps to
+register for Agent Services and obtain an HMRC-AS-AGENT enrolment, giving them access a range of functions available for interacting
+with their clients. The domain is Subscriptions to Agent Services 
 following the ROSM (Register Once Subscribe Many) pattern.
 
 
 ### Running the tests
 
     sbt test it:test
+    
+### Running the tests with coverage
 
+    sbt clean coverageOn test it:test coverageReport    
 
 ### Running the app locally
 
-    ./run-local
     sm --start AGENT_MTD -f
+    sm --stop AGENT_SUBSCRIPTION_FRONTEND
+    sbt run
+    
+It should then be listening on port 9437
+
+    browse http://localhost:9437/agent-subscription/start    
     
 ## Continue URL
 
