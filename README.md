@@ -12,7 +12,7 @@ following the ROSM (Register Once Subscribe Many) pattern.
 
     sbt test it:test
     
-###Running the tests with coverage
+### Running the tests with coverage
 
     sbt clean coverageOn test it:test coverageReport    
 
