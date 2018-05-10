@@ -34,7 +34,7 @@ class SubscriptionService @Inject()(agentSubscriptionConnector: AgentSubscriptio
     implicit hc: HeaderCarrier,
     ec: ExecutionContext): Future[Either[Int, Arn]] = {
     val address = if (subscriptionDetails.address.countryCode != "GB") {
-      Logger.warn(
+      Logger(getClass).warn(
         s"Non-GB country code chosen by user for UTR ${subscriptionDetails.utr.value}. " +
           s"Overriding with GB. A better fix for this is coming in APB-1288.")
       subscriptionDetails.address.copy(countryCode = "GB")

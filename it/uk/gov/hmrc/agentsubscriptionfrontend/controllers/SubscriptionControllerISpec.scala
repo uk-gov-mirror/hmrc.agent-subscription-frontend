@@ -253,7 +253,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
 
         status(result) shouldBe 200
         checkHtmlResultWithBodyText(result, htmlEscapedMessage("subscriptionDetails.title"))
-        // add check for Logger.warn here
+        // add check for Logger(getClass).warn here
       }
 
       "utr is not valid" in {
@@ -265,7 +265,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
 
         status(result) shouldBe 200
         checkHtmlResultWithBodyText(result, htmlEscapedMessage("subscriptionDetails.title"))
-        // add check for Logger.warn here
+        // add check for Logger(getClass).warn here
       }
     }
 
@@ -338,7 +338,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         flash(result2).get("arn") shouldBe Some("ARN00001")
 
         verifySubscriptionRequestSent(subscriptionRequest())
-        // add check for Logger.warn here
+        // add check for Logger(getClass).warn here
         metricShouldExistsAndBeenUpdated(
           "Count-Subscription-AddressLookup-Start",
           "Count-Subscription-AddressLookup-Success",

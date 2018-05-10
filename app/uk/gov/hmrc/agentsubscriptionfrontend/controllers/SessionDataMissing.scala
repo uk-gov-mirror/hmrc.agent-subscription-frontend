@@ -23,7 +23,8 @@ trait SessionDataMissing {
   this: Results =>
 
   def sessionMissingRedirect(): Result = {
-    Logger.warn("No KnownFactsResult and/or InitialDetails in session store, redirecting back to check-agency-status")
+    Logger(getClass).warn(
+      "No KnownFactsResult and/or InitialDetails in session store, redirecting back to check-agency-status")
     Redirect(routes.CheckAgencyController.showCheckAgencyStatus())
   }
 }
