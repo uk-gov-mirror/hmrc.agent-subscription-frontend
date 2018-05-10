@@ -111,7 +111,8 @@ class AssuranceService @Inject()(
                       ))
                   )
                 case None =>
-                  Future.successful(Logger.warn("Could not send audit events due to empty knownfacts results"))
+                  Future.successful(
+                    Logger(getClass).warn("Could not send audit events due to empty knownfacts results"))
               }
         } yield ()
 

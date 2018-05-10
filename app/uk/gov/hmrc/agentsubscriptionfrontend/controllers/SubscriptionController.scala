@@ -210,7 +210,7 @@ class SubscriptionController @Inject()(
           sessionStoreService.fetchContinueUrl
             .recover {
               case NonFatal(ex) =>
-                Logger.warn("Session store service failure", ex)
+                Logger(getClass).warn("Session store service failure", ex)
                 None
             }
             .andThen { case _ => sessionStoreService.remove() }
