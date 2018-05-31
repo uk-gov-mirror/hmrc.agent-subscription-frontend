@@ -32,35 +32,21 @@
 
     <p>@Messages("startpage.p1")</p>
 
-    <p>@Messages("startpage.p2")</p>
-
     <ul class="list list-bullet">
-        <li>@Messages("startpage.l1")</li>
-        <li>@Messages("startpage.l2")</li>
+        <li>@Messages("startpage.l1.1")</li>
+        <li>@Messages("startpage.l1.2")</li>
     </ul>
 
-    <p>@Messages("startpage.p3")</p>
-
-    <p>@Html(Messages("startpage.p4"))</p>
-
-    <br />
+    <a class="button button-start button--get-started" id="start" href="@continueUrl" role="button">@Messages("startpage.continue")</a>
 
     <h2 class="heading-medium">@Messages("startpage.h2")</h2>
 
+    <p>@Html(Messages("startpage.p2", "https://www.gov.uk/guidance/get-an-hmrc-agent-services-account"))</p>
+
     <ul class="list list-bullet">
-        <li>@Messages("startpage.l3")</li>
-        <li>@Messages("startpage.l4")</li>
-        <li>@Messages("startpage.l5")</li>
+        <li>@Messages("startpage.l2.1")</li>
+        <li>@Messages("startpage.l2.2")</li>
+        <li>@Messages("startpage.l2.3")</li>
+        <li>@Messages("startpage.l2.4")</li>
     </ul>
-
-    <p>@Messages("startpage.p5")</p>
-
-    <p>
-        <a class="button button-start button--get-started" id="start" href="@continueUrl" role="button">@Messages("startpage.continue")</a>
-    </p>
-
-    <h3 class="heading-medium">@Messages("startpage.h3")</h3>
-
-    <p>@Html(Messages("startpage.p6", "https://www.gov.uk/topic/business-tax/money-laundering-regulations"))</p>
-
 }

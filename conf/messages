@@ -3,20 +3,16 @@ servicename.titleSuffix=- Agent services account - GOV.UK
 
 #Startpage
 startpage.title=Agent services account: sign in or set up
-startpage.p1=The agent services account is for professional tax agents.
-startpage.p2=It allows agencies to:
-startpage.l1=connect to HMRC using commercial accounting software
-startpage.l2=access new HMRC online services
-startpage.p3=Setting up an account creates a new agent Government Gateway ID.
-startpage.p4=<strong>You must save this new User ID for your agency''s records</strong>, even if your agency already has one or more
-startpage.h2=To set up an account you need:
-startpage.l3=an existing agent Government Gateway ID - you will have at least one if you have used any HMRC agent services online before
-startpage.l4=your agency''s Unique Taxpayer Reference (UTR) and associated postcode, if you are a sole trader or a member of a partnership
-startpage.l5=your agency''s Corporation Tax reference number and associated postcode, if it is an incorporated company
-startpage.p5=If you have already set up an agent services account, use your new agent Government Gateway ID to sign in.
-startpage.continue=Continue
-startpage.h3=Before you start
-startpage.p6=If you''re charging for services as an agent, you must be supervised for <a href="{0}">anti-money laundering</a>.
+startpage.p1=As a professional tax agent firm, you need an agent services account to:
+startpage.l1.1=access new HMRC online services
+startpage.l1.2=use software to communicate directly with HMRC
+startpage.p2=If you do not have an agent services account, <a href="{0}" id="guidance">check the guidance</a> to find out:
+startpage.continue=Set up or sign in
+startpage.h2=Before you start
+startpage.l2.1=what an agent services account does
+startpage.l2.2=how to set up your agent services account
+startpage.l2.3=how to add clients to your agent services account
+startpage.l2.4=when to use your agent services account
 
 ##Errors that override Play default messages
 error.maxLength = You must not enter more than {0} figures
