@@ -44,6 +44,7 @@ object AssuranceResults {
   object CheckedInvisibleAssuranceAndFailed {
     def unapply(maybeAssuranceResults: Some[AssuranceResults]): Option[AssuranceResults] = maybeAssuranceResults match {
       case Some(AssuranceResults(false, false, Some(false), Some(false))) => maybeAssuranceResults
+      case Some(AssuranceResults(false, false, None, Some(false)))        => maybeAssuranceResults
       case _                                                              => None
     }
   }

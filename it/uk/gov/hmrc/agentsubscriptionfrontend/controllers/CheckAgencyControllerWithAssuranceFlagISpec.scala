@@ -26,7 +26,9 @@ import com.github.tomakehurst.wiremock.client.WireMock._
 import uk.gov.hmrc.play.encoding.UriPathEncoding.encodePathSegment
 
 class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerISpec {
-  override def agentAssuranceFlag = true
+  override def agentAssuranceRun = true
+
+  override def agentAssurancePayeCheck: Boolean = true
 
   "checkAgencyStatus with the agentAssuranceFlag set to true" should {
     "redirect to confirm agency page and store known facts result in the session store when a matching registration is found for the UTR and postcode" in {

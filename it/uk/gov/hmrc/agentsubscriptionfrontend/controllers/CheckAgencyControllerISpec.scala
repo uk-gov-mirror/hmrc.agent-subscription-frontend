@@ -36,7 +36,8 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
   val postcode = "AA11AA"
   val registrationName = "My Agency"
 
-  def agentAssuranceFlag: Boolean
+  def agentAssuranceRun: Boolean
+  def agentAssurancePayeCheck: Boolean
 
   private lazy val redirectUrl: String = "http://localhost:9401/agent-services-account"
 
@@ -44,7 +45,9 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
 
   override protected def appBuilder: GuiceApplicationBuilder =
     super.appBuilder
-      .configure("agentAssuranceFlag" -> agentAssuranceFlag, "government-gateway.url" -> configuredGovernmentGatewayUrl)
+      .configure("features.agent-assurance-run" -> agentAssuranceRun,
+        "features.agent-assurance-paye-check" -> agentAssurancePayeCheck,
+        "government-gateway.url" -> configuredGovernmentGatewayUrl)
 
   lazy val controller: CheckAgencyController = app.injector.instanceOf[CheckAgencyController]
 
