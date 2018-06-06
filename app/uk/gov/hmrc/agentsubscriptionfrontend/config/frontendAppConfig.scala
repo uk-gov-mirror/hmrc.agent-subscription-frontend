@@ -40,7 +40,8 @@ trait AppConfig {
   val journeyName: String
   val agentServicesAccountUrl: String
   val domainWhiteList: Set[String]
-  val agentAssuranceFlag: Boolean
+  val agentAssuranceRun: Boolean
+  val agentAssurancePayeCheck: Boolean
   val addressLookupContinueUrl: String
   val surveyRedirectUrl: String
   val sosRedirectUrl: String
@@ -75,7 +76,8 @@ class FrontendAppConfig @Inject()(val environment: Environment, val configuratio
   override val agentServicesAccountUrl: String = s"$servicesAccountUrl$servicesAccountPath"
   override val domainWhiteList: Set[String] =
     runModeConfiguration.getStringList("continueUrl.domainWhiteList").getOrElse(emptyList()).toSet
-  override val agentAssuranceFlag: Boolean = getConfBooleanOrFail("agentAssuranceFlag")
+  override val agentAssuranceRun: Boolean = getConfBooleanOrFail("features.agent-assurance-run")
+  override val agentAssurancePayeCheck: Boolean = getConfBooleanOrFail("features.agent-assurance-paye-check")
   override val addressLookupContinueUrl: String = getServicesConfStringOrFail(
     "address-lookup-frontend.new-address-callback.url")
   override val surveyRedirectUrl: String = getConfStringOrFail(s"$env.surveyRedirectUrl")

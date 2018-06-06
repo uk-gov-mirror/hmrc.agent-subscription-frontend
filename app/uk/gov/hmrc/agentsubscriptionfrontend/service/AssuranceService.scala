@@ -38,7 +38,7 @@ class AssuranceService @Inject()(
   sessionStoreService: SessionStoreService) {
 
   def assureIsAgent(utr: Utr)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[AssuranceResults]] =
-    if (appConfig.agentAssuranceFlag) {
+    if (appConfig.agentAssuranceRun) {
       val futureManuallyAssured = assuranceConnector.isManuallyAssuredAgent(utr)
       val futureR2dw = assuranceConnector.isR2DWAgent(utr)
 
@@ -55,19 +55,21 @@ class AssuranceService @Inject()(
                                    hasAcceptableNumberOfSAClients = None
                                  )))
                            } else {
-                             val futurePaye = assuranceConnector.hasAcceptableNumberOfPayeClients
-                             val futureSA = assuranceConnector.hasAcceptableNumberOfSAClients
 
                              for {
-                               hasAcceptableNumberOfPayeClients <- futurePaye
-                               hasAcceptableNumberOfSAClients   <- futureSA
+                               hasAcceptableNumberOfPayeClientsOpt <- if (appConfig.agentAssurancePayeCheck)
+                                                                       assuranceConnector.hasAcceptableNumberOfPayeClients
+                                                                         .map(Some(_))
+                                                                     else Future.successful(None)
+                               hasAcceptableNumberOfSAClientsOpt <- assuranceConnector.hasAcceptableNumberOfSAClients
+                                                                     .map(Some(_))
                              } yield
                                Some(
                                  AssuranceResults(
                                    isOnRefusalToDealWithList = isOnRefusalToDealWithList,
                                    isManuallyAssured = isManuallyAssured,
-                                   hasAcceptableNumberOfPayeClients = Some(hasAcceptableNumberOfPayeClients),
-                                   hasAcceptableNumberOfSAClients = Some(hasAcceptableNumberOfSAClients)
+                                   hasAcceptableNumberOfPayeClients = hasAcceptableNumberOfPayeClientsOpt,
+                                   hasAcceptableNumberOfSAClients = hasAcceptableNumberOfSAClientsOpt
                                  ))
                            }
       } yield assuranceResults

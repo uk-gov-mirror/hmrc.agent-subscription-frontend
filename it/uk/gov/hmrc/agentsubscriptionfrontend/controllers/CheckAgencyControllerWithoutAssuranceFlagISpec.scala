@@ -8,7 +8,8 @@ import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.subscribingAgent
 
 class CheckAgencyControllerWithoutAssuranceFlagISpec extends CheckAgencyControllerISpec {
 
-  override val agentAssuranceFlag: Boolean = false
+  override val agentAssuranceRun: Boolean = false
+  override def agentAssurancePayeCheck: Boolean = true
 
   "checkAgencyStatus with the agentAssuranceFlag set to false" should {
     "redirect to confirm agency page and store known facts result in the session store when a matching registration is found for the UTR and postcode" in {
