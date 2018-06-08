@@ -24,7 +24,6 @@ import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.mvc.{AnyContent, Request, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.audit.AuditService
-import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent.hasHmrcAsAgentEnrolment
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.{Agent, AuthActions}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.{AgentAssuranceConnector, AgentSubscriptionConnector}
@@ -262,16 +261,22 @@ class CheckAgencyController @Inject()(
     def isValid = validateId(id)
   }
 
-  def checkAndRedirect(value: TaxIdFormValue)(implicit hc: HeaderCarrier, request: Request[AnyContent], agent: Agent) =
+  private def checkAndRedirect(
+    value: TaxIdFormValue)(implicit hc: HeaderCarrier, request: Request[AnyContent], agent: Agent) =
     if (value.isValid) {
-      val saAgentReference = request.session.get("saAgentReferenceToCheck").getOrElse("")
-      assuranceService.checkActiveCesaRelationship(value.taxId, value.name, SaAgentReference(saAgentReference)).map {
-        case true =>
-          mark("Count-Subscription-InvasiveCheck-Success")
-          Redirect(routes.CheckAgencyController.showConfirmYourAgency())
-        case false =>
-          mark("Count-Subscription-InvasiveCheck-Failed")
-          Redirect(routes.StartController.setupIncomplete())
+      request.session.get("saAgentReferenceToCheck") match {
+        case Some(saAgentReference) =>
+          assuranceService
+            .checkActiveCesaRelationship(value.taxId, value.name, SaAgentReference(saAgentReference))
+            .map {
+              case true =>
+                mark("Count-Subscription-InvasiveCheck-Success")
+                Redirect(routes.CheckAgencyController.showConfirmYourAgency())
+              case false =>
+                mark("Count-Subscription-InvasiveCheck-Failed")
+                Redirect(routes.StartController.setupIncomplete())
+            }
+        case None => Future.successful(Redirect(routes.CheckAgencyController.invasiveCheckStart()))
       }
     } else {
       Future.successful(
@@ -279,5 +284,4 @@ class CheckAgencyController @Inject()(
           invasive_input_option(RadioWithInput.confirmResponseForm
             .withError(value.formField, Messages(s"error.${value.name}.invalid")))))
     }
-
 }

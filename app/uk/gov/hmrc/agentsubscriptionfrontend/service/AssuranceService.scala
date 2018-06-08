@@ -102,8 +102,9 @@ class AssuranceService @Inject()(
                     assuranceResults = AssuranceResults(
                       isOnRefusalToDealWithList = false,
                       isManuallyAssured = false,
-                      hasAcceptableNumberOfPayeClients = Some(false),
-                      hasAcceptableNumberOfSAClients = Some(false)),
+                      hasAcceptableNumberOfPayeClients = if (appConfig.agentAssurancePayeCheck) Some(false) else None,
+                      hasAcceptableNumberOfSAClients = Some(false)
+                    ),
                     assuranceCheckInput = Some(
                       AssuranceCheckInput(
                         passCesaAgentAssuranceCheck = Some(relationshipExists),

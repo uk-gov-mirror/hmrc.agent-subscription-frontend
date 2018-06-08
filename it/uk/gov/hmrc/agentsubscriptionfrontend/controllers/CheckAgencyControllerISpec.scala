@@ -335,8 +335,26 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showConfirmYourAgency().url)
 
-      verifyAgentAssuranceAuditRequestSentWithClientIdentifier(Nino("AA123456A"), true, "SA6012")
+      verifyAgentAssuranceAuditRequestSentWithClientIdentifier(Nino("AA123456A"), true, "SA6012", agentAssurancePayeCheck)
       metricShouldExistsAndBeenUpdated("Count-Subscription-InvasiveCheck-Success")
+    }
+
+    "redirect to invasive check start when no SACode in session to obtain it again" in {
+      givenNinoAGoodCombinationAndUserHasRelationshipInCesa("nino", "AA123456A", "SA6012")
+
+      implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+      sessionStoreService.currentSession.knownFactsResult = Some(
+        KnownFactsResult(
+          utr = validUtr,
+          postcode = validPostcode,
+          taxpayerName = "My Agency",
+          isSubscribedToAgentServices = false))
+
+      val result = await(controller.invasiveTaxPayerOption(request
+            .withFormUrlEncodedBody(("confirmResponse", "true"), ("confirmResponse-true-hidden-input", "AA123456A"))))
+
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.CheckAgencyController.invasiveCheckStart().url)
     }
 
     "redirect to setup incomplete page when submitting valid nino with no relationship" in {
@@ -359,7 +377,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.StartController.setupIncomplete().url)
 
-      verifyAgentAssuranceAuditRequestSentWithClientIdentifier(Nino("AA123456A"), false, "SA6012")
+      verifyAgentAssuranceAuditRequestSentWithClientIdentifier(Nino("AA123456A"), false, "SA6012", agentAssurancePayeCheck)
       metricShouldExistsAndBeenUpdated("Count-Subscription-InvasiveCheck-Failed")
     }
 
@@ -392,7 +410,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showConfirmYourAgency().url)
 
-      verifyAgentAssuranceAuditRequestSentWithClientIdentifier(Utr("4000000009"), true, "SA6012")
+      verifyAgentAssuranceAuditRequestSentWithClientIdentifier(Utr("4000000009"), true, "SA6012", agentAssurancePayeCheck)
       metricShouldExistsAndBeenUpdated("Count-Subscription-InvasiveCheck-Success")
     }
 
@@ -416,7 +434,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.StartController.setupIncomplete().url)
 
-      verifyAgentAssuranceAuditRequestSentWithClientIdentifier(Utr("4000000009"), false, "SA6012")
+      verifyAgentAssuranceAuditRequestSentWithClientIdentifier(Utr("4000000009"), false, "SA6012", agentAssurancePayeCheck)
       metricShouldExistsAndBeenUpdated("Count-Subscription-InvasiveCheck-Failed")
     }
 
@@ -471,11 +489,15 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
   def verifyAgentAssuranceAuditRequestSentWithClientIdentifier(
     identifier: TaxIdentifier,
     passCESAAgentAssuranceCheck: Boolean,
-    saAgentRef: String): Unit = {
+    saAgentRef: String,
+    aAssurancePayeCheck: Boolean): Unit = {
+
     val clientIdentifier = identifier match {
       case nino @ Nino(_) => ("userEnteredNino" -> nino.value)
       case utr @ Utr(_)   => ("userEnteredUtr"  -> utr.value)
     }
+    val payeAudit = if (aAssurancePayeCheck) Seq("passPayeAgentAssuranceCheck" -> "false") else Seq.empty
+
     verifyAuditRequestSent(
       1,
       AgentSubscriptionFrontendEvent.AgentAssurance,
@@ -485,14 +507,12 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
         "isEnrolledSAAgent"           -> "false",
         "passSaAgentAssuranceCheck"   -> "false",
         "isEnrolledPAYEAgent"         -> "false",
-        "passPayeAgentAssuranceCheck" -> "false",
         "passCESAAgentAssuranceCheck" -> passCESAAgentAssuranceCheck.toString,
         "authProviderId"              -> "12345-credId",
         "authProviderType"            -> "GovernmentGateway",
         "userEnteredSaAgentRef"       -> saAgentRef
-      ) + clientIdentifier,
+      ) + clientIdentifier ++ payeAudit,
       tags = Map("transactionName" -> "agent-assurance", "path" -> "/")
     )
   }
-
 }
