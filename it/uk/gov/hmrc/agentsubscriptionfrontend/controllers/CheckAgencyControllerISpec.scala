@@ -87,8 +87,8 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
 
       status(result) shouldBe OK
       val responseBody = bodyOf(result)
-      responseBody should include("Identify your business")
-      responseBody should include("Enter a valid 10-digit UTR")
+      responseBody should include(htmlEscapedMessage("checkAgencyStatus.title"))
+      responseBody should include(htmlEscapedMessage("error.utr.invalid.length"))
       responseBody should include(invalidUtr)
       responseBody should include(validPostcode)
       noMetricExpectedAtThisPoint()
@@ -102,8 +102,8 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
 
       status(result) shouldBe OK
       val responseBody = bodyOf(result)
-      responseBody should include("Identify your business")
-      responseBody should include("Enter a valid 10-digit UTR")
+      responseBody should include(htmlEscapedMessage("checkAgencyStatus.title"))
+      responseBody should include(htmlEscapedMessage("error.utr.invalid.format"))
       responseBody should include(invalidUtr)
       responseBody should include(validPostcode)
       noMetricExpectedAtThisPoint()
@@ -131,7 +131,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
       status(result) shouldBe OK
       val responseBody = bodyOf(result)
       responseBody should include("Identify your business")
-      responseBody should include("You must enter a UTR or reference")
+      responseBody should include(htmlEscapedMessage("error.utr.blank"))
       responseBody should include("You must enter a postcode")
       noMetricExpectedAtThisPoint()
     }
@@ -210,8 +210,27 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
         result,
         htmlEscapedMessage("confirmYourAgency.title"),
         s"$postcode",
-        s"${utr.value}",
+        "01234 56789",
         s"$registrationName")
+      metricShouldExistsAndBeenUpdated("Count-Subscription-CleanCreds-Start")
+    }
+
+    "show utr in the correct format" in {
+      val utr = Utr("0123456789")
+      val postcode = "AA11AA"
+      val registrationName = "My Agency"
+
+      implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+      sessionStoreService.currentSession.knownFactsResult = Some(
+        KnownFactsResult(
+          utr = utr,
+          postcode = postcode,
+          taxpayerName = registrationName,
+          isSubscribedToAgentServices = false))
+
+      val result = await(controller.showConfirmYourAgency(request))
+
+      checkHtmlResultWithBodyText(result, "01234 56789")
       metricShouldExistsAndBeenUpdated("Count-Subscription-CleanCreds-Start")
     }
 

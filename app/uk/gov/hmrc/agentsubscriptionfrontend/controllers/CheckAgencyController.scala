@@ -22,7 +22,7 @@ import play.api.data.Form
 import play.api.data.Forms.mapping
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.mvc.{AnyContent, Request, _}
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.agentsubscriptionfrontend.audit.AuditService
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.{Agent, AuthActions}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
@@ -43,7 +43,13 @@ import scala.concurrent.Future
 object CheckAgencyController {
   val knownFactsForm: Form[KnownFacts] =
     Form[KnownFacts](
-      mapping("utr" -> FieldMappings.utr, "postcode" -> FieldMappings.postcode)(KnownFacts.apply)(KnownFacts.unapply))
+      mapping("utr" -> FieldMappings.utr, "postcode" -> FieldMappings.postcode)(
+        (utrStr, postcode) =>
+          FieldMappings
+            .normalizeUtr(utrStr)
+            .map(utr => KnownFacts(utr, postcode))
+            .getOrElse(throw new Exception("Invalid utr found after validation")))(knownFacts =>
+        Some((knownFacts.utr.value, knownFacts.postcode))))
 }
 
 @Singleton
@@ -154,7 +160,7 @@ class CheckAgencyController @Inject()(
           html.confirm_your_agency(
             registrationName = knownFactsResult.taxpayerName,
             postcode = knownFactsResult.postcode,
-            utr = knownFactsResult.utr,
+            utr = FieldMappings.prettify(knownFactsResult.utr),
             nextPageUrl = lookupNextPageUrl(knownFactsResult.isSubscribedToAgentServices)
           ))
       }.getOrElse {

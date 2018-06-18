@@ -1,14 +1,11 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.connectors
 
 import java.net.URL
-
-import org.scalatestplus.play.OneAppPerSuite
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub
-import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, MetricTestSupport, WireMockSupport}
+import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, MetricTestSupport}
 import uk.gov.hmrc.http._
-import uk.gov.hmrc.play.test.UnitSpec
 import com.kenshoo.play.metrics.Metrics
 
 class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {

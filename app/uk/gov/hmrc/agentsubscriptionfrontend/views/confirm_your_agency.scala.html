@@ -15,9 +15,9 @@
  *@
 
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-@import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes._
-@import uk.gov.hmrc.agentmtdidentifiers.model.Utr
-@(registrationName: String, postcode: String, utr: Utr, nextPageUrl: String)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+@import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
+
+@(registrationName: String, postcode: String, utr: String, nextPageUrl: String)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = Messages("confirmYourAgency.title"), bodyClasses = None) {
 
@@ -45,7 +45,7 @@
                 @Messages("confirmYourAgency.heading.utr")
             </dt>
             <dd class="cya-answer" id="utr">
-                @{utr.value}
+                @utr
             </dd>
         </div>
     </dl>
@@ -54,5 +54,5 @@
 
     <p><a id="continue" class="button" href="@nextPageUrl" role="button">@Messages("button.continue")</a></p>
 
-    <p><a id="return" href="@CheckAgencyController.showCheckAgencyStatus">@Messages("confirmYourAgency.cancel")</a></p>
+    <p><a id="return" href="@routes.CheckAgencyController.showCheckAgencyStatus">@Messages("confirmYourAgency.cancel")</a></p>
 }

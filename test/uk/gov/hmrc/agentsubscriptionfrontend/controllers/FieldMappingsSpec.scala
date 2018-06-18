@@ -31,7 +31,7 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
     def bind(fieldValue: String) = utrMapping.bind(Map("testKey" -> fieldValue))
 
     "accept valid UTRs" in {
-      bind("2000000000") shouldBe Right(Utr("2000000000"))
+      bind("2000000000") shouldBe Right("2000000000")
     }
 
     "give \"error.required\" error when it is not supplied" in {
@@ -39,39 +39,41 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
     }
 
     "give \"error.utr.empty\" error when it is empty" in {
-      bind("").left.value should contain only FormError("testKey", "error.utr.empty")
+      bind("").left.value should contain only FormError("testKey", "error.utr.blank")
     }
 
     "give \"error.utr.empty\" error when it only contains a space" in {
-      bind(" ").left.value should contain only FormError("testKey", "error.utr.empty")
+      bind(" ").left.value should contain only FormError("testKey", "error.utr.blank")
     }
 
     "give \"error.utr.invalid\" error" when {
       "it has more than 10 digits" in {
         bind("20000000000") should matchPattern {
-          case Left(List(FormError("testKey", List("error.utr.invalid"), _))) =>
+          case Left(List(FormError("testKey", List("error.utr.invalid.length"), _))) =>
         }
       }
 
       "it has fewer than 10 digits" in {
-        bind("200000") should matchPattern { case Left(List(FormError("testKey", List("error.utr.invalid"), _))) => }
+        bind("200000") should matchPattern {
+          case Left(List(FormError("testKey", List("error.utr.invalid.length"), _))) =>
+        }
       }
 
       "it has non-digit characters" in {
         bind("200000000B") should matchPattern {
-          case Left(List(FormError("testKey", List("error.utr.invalid"), _))) =>
+          case Left(List(FormError("testKey", List("error.utr.invalid.format"), _))) =>
         }
       }
 
       "it has non-alphanumeric characters" in {
         bind("200000000!") should matchPattern {
-          case Left(List(FormError("testKey", List("error.utr.invalid"), _))) =>
+          case Left(List(FormError("testKey", List("error.utr.invalid.format"), _))) =>
         }
       }
 
       "checksum fails" in {
         bind("2000000001") should matchPattern {
-          case Left(List(FormError("testKey", List("error.utr.invalid"), _))) =>
+          case Left(List(FormError("testKey", List("error.utr.invalid.format"), _))) =>
         }
       }
     }

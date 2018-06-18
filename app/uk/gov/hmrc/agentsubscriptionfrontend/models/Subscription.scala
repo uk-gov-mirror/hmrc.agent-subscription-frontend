@@ -20,12 +20,6 @@ import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.domain.SimpleObjectReads
 import play.api.libs.json._
 
-case class Arn(arn: String)
-
-object Arn {
-  implicit val arnReads = new SimpleObjectReads[Arn]("arn", Arn.apply)
-}
-
 case class Agency(name: String, address: DesAddress, telephone: String, email: String)
 
 object Agency {

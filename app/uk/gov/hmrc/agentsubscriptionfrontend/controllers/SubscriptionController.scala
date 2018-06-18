@@ -24,7 +24,7 @@ import play.api.data.Forms.mapping
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.json._
 import play.api.mvc.{AnyContent, _}
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent.hasNonEmptyEnrolments
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
@@ -87,7 +87,13 @@ class SubscriptionController @Inject()(
       "knownFactsPostcode" -> postcode,
       "name"               -> agencyName,
       "email"              -> emailAddress,
-      "telephone"          -> telephone)(InitialDetails.apply)(InitialDetails.unapply))
+      "telephone"          -> telephone)(
+      (utrStr, postcode, name, email, telephone) =>
+        FieldMappings
+          .normalizeUtr(utrStr)
+          .map(utr => InitialDetails(utr, postcode, name, email, telephone))
+          .getOrElse(throw new Exception("Invalid utr found after validation")))(id =>
+      Some(id.utr.value, id.knownFactsPostcode, id.name, id.email, id.telephone)))
 
   private case class SubscriptionReturnedHttpError(httpStatusCode: Int) extends Product with Serializable
 
@@ -141,7 +147,7 @@ class SubscriptionController @Inject()(
     val subscriptionDetails = mapper(details, address)
     subscriptionService.subscribeAgencyToMtd(subscriptionDetails) map {
       case Right(arn) => {
-        Right((arn, subscriptionDetails.name))
+        Right(arn, subscriptionDetails.name)
       }
       case Left(x) => Left(SubscriptionReturnedHttpError(x))
     }
@@ -152,7 +158,7 @@ class SubscriptionController @Inject()(
       case Right((arn, _)) =>
         mark("Count-Subscription-Complete")
         Redirect(routes.SubscriptionController.showSubscriptionComplete())
-          .flashing("arn" -> arn.arn)
+          .flashing("arn" -> arn.value)
 
       case Left(SubscriptionReturnedHttpError(CONFLICT)) =>
         mark("Count-Subscription-AlreadySubscribed-APIResponse")
@@ -217,7 +223,7 @@ class SubscriptionController @Inject()(
             .map { continueUrlOpt =>
               val continueUrl = continueUrlOpt.map(_.url).getOrElse(appConfig.agentServicesAccountUrl)
               val isUrlToASAccount = continueUrlOpt.isEmpty
-              Ok(html.subscription_complete(continueUrl, isUrlToASAccount, arn))
+              Ok(html.subscription_complete(continueUrl, isUrlToASAccount, prettify(Arn(arn))))
             }
         case _ =>
           Future.successful(sessionMissingRedirect())
