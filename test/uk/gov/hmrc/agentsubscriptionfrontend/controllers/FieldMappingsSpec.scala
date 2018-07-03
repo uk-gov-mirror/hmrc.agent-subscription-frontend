@@ -46,7 +46,7 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
       bind(" ").left.value should contain only FormError("testKey", "error.utr.blank")
     }
 
-    "give \"error.utr.invalid\" error" when {
+    "give \"error.utr.invalid.length\" error" when {
       "it has more than 10 digits" in {
         bind("20000000000") should matchPattern {
           case Left(List(FormError("testKey", List("error.utr.invalid.length"), _))) =>

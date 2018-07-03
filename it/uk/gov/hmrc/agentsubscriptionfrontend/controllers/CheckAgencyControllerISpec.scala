@@ -349,7 +349,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
         controller.invasiveTaxPayerOption(
           request
             .withFormUrlEncodedBody(("confirmResponse", "true"), ("confirmResponse-true-hidden-input", "AA123456A"))
-            .withSession(("saAgentReferenceToCheck" -> "SA6012"))))
+            .withSession("saAgentReferenceToCheck" -> "SA6012")))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showConfirmYourAgency().url)
@@ -391,7 +391,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
         controller.invasiveTaxPayerOption(
           request
             .withFormUrlEncodedBody(("confirmResponse", "true"), ("confirmResponse-true-hidden-input", "AA123456A"))
-            .withSession(("saAgentReferenceToCheck" -> "SA6012"))))
+            .withSession("saAgentReferenceToCheck" -> "SA6012")))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.StartController.setupIncomplete().url)
@@ -424,7 +424,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
         controller.invasiveTaxPayerOption(
           request
             .withFormUrlEncodedBody(("confirmResponse", "false"), ("confirmResponse-false-hidden-input", "4000000009"))
-            .withSession(("saAgentReferenceToCheck" -> "SA6012"))))
+            .withSession("saAgentReferenceToCheck" -> "SA6012")))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showConfirmYourAgency().url)
@@ -434,7 +434,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
     }
 
     "redirect to setup incomplete page when submitting valid utr with no relationship" in {
-      givenAUserDoesNotHaveRelationshipInCesa("utr", "4000000009", "SA6012")
+      givenAUserDoesNotHaveRelationshipInCesa("utr", "40000     00  009", "SA6012")
 
       implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
       sessionStoreService.currentSession.knownFactsResult = Some(
@@ -448,7 +448,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
         controller.invasiveTaxPayerOption(
           request
             .withFormUrlEncodedBody(("confirmResponse", "false"), ("confirmResponse-false-hidden-input", "4000000009"))
-            .withSession(("saAgentReferenceToCheck" -> "SA6012"))))
+            .withSession("saAgentReferenceToCheck" -> "SA6012")))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.StartController.setupIncomplete().url)
@@ -457,24 +457,46 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
       metricShouldExistsAndBeenUpdated("Count-Subscription-InvasiveCheck-Failed")
     }
 
-    "utr invalid send back 200 with error page" in {
+    "utr blank invasiveCheck" in {
 
       val result = await(
         controller.invasiveTaxPayerOption(
           authenticatedAs(subscribingCleanAgentWithoutEnrolments)
-            .withFormUrlEncodedBody(("confirmResponse", "false"), ("confirmResponse-false-hidden-input", "42123"))
-            .withSession(("saAgentReferenceToCheck" -> "SA6012"))))
+            .withFormUrlEncodedBody(("confirmResponse", "false"), ("confirmResponse-false-hidden-input", ""))
+            .withSession("saAgentReferenceToCheck" -> "SA6012")))
 
       status(result) shouldBe 200
+      bodyOf(result) should include(htmlEscapedMessage("error.utr.blank"))
+    }
+
+    "utr invalid send back 200 with error page" in {
+      val result = await(
+        controller.invasiveTaxPayerOption(
+          authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+            .withFormUrlEncodedBody(("confirmResponse", "false"), ("confirmResponse-false-hidden-input", "4ABC000009"))
+            .withSession("saAgentReferenceToCheck" -> "SA6012")))
+
+      status(result) shouldBe 200
+      bodyOf(result) should include(htmlEscapedMessage("error.utr.invalid.format"))
+    }
+
+    "utr wrong length" in {
+      val result = await(
+        controller.invasiveTaxPayerOption(
+          authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+            .withFormUrlEncodedBody(("confirmResponse", "false"), ("confirmResponse-false-hidden-input", "40000000090000000"))
+            .withSession("saAgentReferenceToCheck" -> "SA6012")))
+
+      status(result) shouldBe 200
+      bodyOf(result) should include(htmlEscapedMessage("error.utr.invalid.length"))
     }
 
     "return 200 error when submitting without selected radio option" in {
-
       val result = await(
         controller.invasiveTaxPayerOption(
           authenticatedAs(subscribingCleanAgentWithoutEnrolments)
             .withFormUrlEncodedBody()
-            .withSession(("saAgentReferenceToCheck" -> "SA6012"))))
+            .withSession("saAgentReferenceToCheck" -> "SA6012")))
 
       status(result) shouldBe 200
     }

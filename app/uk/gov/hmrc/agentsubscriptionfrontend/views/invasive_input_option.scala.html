@@ -52,7 +52,7 @@
                 </div>
                 <div class="panel panel-border-narrow js-hidden @if(confirmResponseForm.error("confirmResponse-false-hidden-input").isDefined){form-group-error}" id="utrRadioInput">
                     <label class="form-label" for="confirmResponse-false-hidden-input">@Messages("confirmResponse.false.hidden.input.label.utr")</label>
-                    @if(confirmResponseForm.error("confirmResponse-false-hidden-input").isDefined){<span class="error-message">@Messages("error.utr.invalid")</span>}
+                    @if(confirmResponseForm.error("confirmResponse-false-hidden-input").isDefined){<span class="error-message">@Messages(confirmResponseForm.errors.head.message)</span>}
                     <input class="form-control @if(confirmResponseForm.error("confirmResponse-false-hidden-input").isDefined){form-control-error}" name="confirmResponse-false-hidden-input" type="text" id="confirmResponse-false-hidden-input">
                 </div>
             </fieldset>
