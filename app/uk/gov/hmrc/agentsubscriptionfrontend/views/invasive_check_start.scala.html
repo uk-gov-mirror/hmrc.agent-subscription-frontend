@@ -44,7 +44,7 @@
                 </div>
                 <div class="panel panel-border-narrow js-hidden @if(confirmResponseForm.error("confirmResponse-true-hidden-input").isDefined){form-group-error}" id="saAgentCode">
                     <label class="form-label" for="confirmResponse-true-hidden-input">@Messages("confirmResponse.true.hidden.input.label.sa")</label>
-                    @if(confirmResponseForm.error("confirmResponse-true-hidden-input").isDefined){<span class="error-message">@Messages("error.saAgentCode.invalid")</span>}
+                    @confirmResponseForm.error("confirmResponse-true-hidden-input").map { formError => <span class="error-message">@Messages(formError.message)</span> }
                     <input class="form-control @if(confirmResponseForm.error("confirmResponse-true-hidden-input").isDefined){form-control-error}" name="confirmResponse-true-hidden-input" type="text" id="confirmResponse-true-hidden-input">
                 </div>
 

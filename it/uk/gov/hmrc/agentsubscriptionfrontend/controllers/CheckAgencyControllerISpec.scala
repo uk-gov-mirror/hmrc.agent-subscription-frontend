@@ -312,6 +312,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
       redirectLocation(result) shouldBe Some(routes.CheckAgencyController.invasiveTaxPayerOptionGet().url)
       noMetricExpectedAtThisPoint()
     }
+
     "redirect to setup incomplete if selected No" in {
 
       val result = await(
@@ -323,14 +324,47 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
       metricShouldExistsAndBeenUpdated("Count-Subscription-InvasiveCheck-Declined")
     }
 
-    "Send page back with error when failing the validation of SaAgentCode" in {
+    "Send page back with error when failing the validation of SaAgentCode with invalid characters" in {
+
+      val result = await(
+        controller.invasiveSaAgentCodePost(authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+          .withFormUrlEncodedBody(("confirmResponse", "true"), ("confirmResponse-true-hidden-input", "SA601*2AAAA"))))
+
+      status(result) shouldBe 200
+      checkHtmlResultWithBodyText(result, htmlEscapedMessage("error.saAgentCode.invalid"))
+      noMetricExpectedAtThisPoint()
+    }
+
+    "Send page back with error when failing the validation of SaAgentCode with wrong max length" in {
 
       val result = await(
         controller.invasiveSaAgentCodePost(authenticatedAs(subscribingCleanAgentWithoutEnrolments)
           .withFormUrlEncodedBody(("confirmResponse", "true"), ("confirmResponse-true-hidden-input", "SA6012AAAA"))))
 
       status(result) shouldBe 200
-      checkHtmlResultWithBodyText(result, htmlEscapedMessage("error.saAgentCode.invalid"))
+      checkHtmlResultWithBodyText(result, htmlEscapedMessage("error.saAgentCode.length"))
+      noMetricExpectedAtThisPoint()
+    }
+
+    "Send page back with error when failing the validation of SaAgentCode with wrong min length" in {
+
+      val result = await(
+        controller.invasiveSaAgentCodePost(authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+          .withFormUrlEncodedBody(("confirmResponse", "true"), ("confirmResponse-true-hidden-input", "SA"))))
+
+      status(result) shouldBe 200
+      checkHtmlResultWithBodyText(result, htmlEscapedMessage("error.saAgentCode.length"))
+      noMetricExpectedAtThisPoint()
+    }
+
+    "Send page back with error when failing the validation of empty SaAgentCode" in {
+
+      val result = await(
+        controller.invasiveSaAgentCodePost(authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+          .withFormUrlEncodedBody(("confirmResponse", "true"), ("confirmResponse-true-hidden-input", ""))))
+
+      status(result) shouldBe 200
+      checkHtmlResultWithBodyText(result, htmlEscapedMessage("error.saAgentCode.blank"))
       noMetricExpectedAtThisPoint()
     }
 

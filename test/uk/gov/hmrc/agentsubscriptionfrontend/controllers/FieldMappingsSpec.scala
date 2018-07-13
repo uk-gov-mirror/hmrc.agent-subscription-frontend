@@ -31,18 +31,14 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
     def bind(fieldValue: String) = utrMapping.bind(Map("testKey" -> fieldValue))
 
     "accept valid UTRs" in {
-      bind("2000000000") shouldBe Right("2000000000")
+      bind("20000  00000") shouldBe Right("20000  00000")
     }
 
-    "give \"error.required\" error when it is not supplied" in {
-      utrMapping.bind(Map.empty).left.value should contain only FormError("testKey", "error.required")
-    }
-
-    "give \"error.utr.empty\" error when it is empty" in {
+    "give \"error.utr.blank\" error when it is empty" in {
       bind("").left.value should contain only FormError("testKey", "error.utr.blank")
     }
 
-    "give \"error.utr.empty\" error when it only contains a space" in {
+    "give \"error.utr.blank\" error when it only contains a space" in {
       bind(" ").left.value should contain only FormError("testKey", "error.utr.blank")
     }
 
@@ -55,6 +51,10 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
 
       "it has fewer than 10 digits" in {
         bind("200000") should matchPattern {
+          case Left(List(FormError("testKey", List("error.utr.invalid.length"), _))) =>
+        }
+
+        bind("20000000 0") should matchPattern {
           case Left(List(FormError("testKey", List("error.utr.invalid.length"), _))) =>
         }
       }
@@ -511,30 +511,47 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
   }
 
   "SA Agent Reference" should {
-    "pass validation when the length of the sa agent reference is 6 characters and all A-Z0-9" in {
-      FieldMappings.isValidSaAgentCode("123456") shouldBe true
-      FieldMappings.isValidSaAgentCode("AA1234") shouldBe true
-      FieldMappings.isValidSaAgentCode("123AA9") shouldBe true
-      FieldMappings.isValidSaAgentCode("aabb12") shouldBe true
+    val saAgentCodeMapping = FieldMappings.saAgentCode.withPrefix("testKey")
+
+    def bind(fieldValue: String) = saAgentCodeMapping.bind(Map("testKey" -> fieldValue))
+
+    "accept valid SaAgentCode" in {
+      bind("SA1234") shouldBe Right("SA1234")
     }
 
-    "fail validation when the length of the sa agent reference is less than 6 characters" in {
-      FieldMappings.isValidSaAgentCode("12345") shouldBe false
-      FieldMappings.isValidSaAgentCode("AA123") shouldBe false
-      FieldMappings.isValidSaAgentCode("B123") shouldBe false
+    "give \"error.saAgentCode.blank\" error when it is empty" in {
+      bind("").left.value should contain only FormError("testKey", "error.saAgentCode.blank")
     }
 
-    "fail validation when the length of the sa agent reference is more than 6 characters" in {
-      FieldMappings.isValidSaAgentCode("1234567") shouldBe false
-      FieldMappings.isValidSaAgentCode("AAA4567") shouldBe false
-      FieldMappings.isValidSaAgentCode("123456789") shouldBe false
+    "give \"error.saAgentCode.blank\" error when it only contains a space" in {
+      bind(" ").left.value should contain only FormError("testKey", "error.saAgentCode.blank")
     }
 
-    "fail validation when the sa agent reference contains non alphanumeric characters" in {
-      FieldMappings.isValidSaAgentCode("!%1234") shouldBe false
-      FieldMappings.isValidSaAgentCode("AA123.") shouldBe false
-      FieldMappings.isValidSaAgentCode("abc12+") shouldBe false
+    "give \"error.saAgentCode.length\" error" when {
+      "it has more than 6 characters" in {
+        bind("SA20000000000") should matchPattern {
+          case Left(List(FormError("testKey", List("error.saAgentCode.length"), _))) =>
+        }
+      }
+
+      "it has fewer than 6 characters" in {
+        bind("SA200") should matchPattern {
+          case Left(List(FormError("testKey", List("error.saAgentCode.length"), _))) =>
+        }
+      }
+
+      "it has no-alphanumeric characters" in {
+        bind("SA*$") should matchPattern {
+          case Left(List(FormError("testKey", List("error.saAgentCode.invalid"), _))) =>
+        }
+        bind("SA**12") should matchPattern {
+          case Left(List(FormError("testKey", List("error.saAgentCode.invalid"), _))) =>
+        }
+
+        bind("SA**12222") should matchPattern {
+          case Left(List(FormError("testKey", List("error.saAgentCode.invalid"), _))) =>
+        }
+      }
     }
   }
-
 }
