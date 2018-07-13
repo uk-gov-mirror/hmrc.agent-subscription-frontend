@@ -125,16 +125,16 @@ setupIncomplete.p1=<a href="{0}">Try again using a different agent user ID</a> i
 
 
 #Invasive check
-invasive.title.saCode=Do you have a Self Assessment (SA) agent code?
+invasive.title.saCode=Do you have a Self Assessment agent code?
 invasive.title.option=Add some detail about a taxpayer related to the SA agent code you entered
 invasive.p1=You must choose from these 2 options so we can identify one of your current clients.
 invasive.confirmResponse.true.yes=Yes
-confirmResponse.true.hidden.input.label.sa=Enter your SA agent code
+confirmResponse.true.hidden.input.label.sa=Self Assessment agent code
 invasive.confirmResponse.false.no=No
 invasive.confirmResponse.true.nino=Taxpayer''s National Insurance (NI) number
 confirmResponse.true.hidden.input.label.nino=NI number
 invasive.confirmResponse.true.utr=Taxpayer''s Self Assessment Unique Taxpayer Reference (UTR)
 confirmResponse.false.hidden.input.label.utr=Self Assessment UTR
-invasive.expandable.p1=Where can I find my SA agent code?
-invasive.expandable.p1.open=You got your SA agent code when you registered in writing as an agent for Self Assessment. You used your agent code to set up your online service.
+invasive.expandable.p1=Where to find your Self Assessment agent code
+invasive.expandable.p1.open=You got your Self Assessment agent code when you registered in writing as an agent for Self Assessment. You used your agent code to set up your online service.
 error.confirmResponse.invalid=You must choose an option
