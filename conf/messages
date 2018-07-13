@@ -37,7 +37,9 @@ error.summary.heading=There is a problem
 error.prefix=Error:
 error.email.empty=You must enter an email address
 error.nino.invalid=Enter a valid National Insurance number
-error.saAgentCode.invalid=Enter a valid 6 digit Self Assessment Agent Code
+error.saAgentCode.invalid=Self Assessment agent code must only include letters and numbers
+error.saAgentCode.blank=Enter a Self Assessment agent code
+error.saAgentCode.length=Self Assessment agent code must be 6 characters, like A1234A
 
 ##Modifying address
 address.form.with-errors.error.summary = Please check the following:

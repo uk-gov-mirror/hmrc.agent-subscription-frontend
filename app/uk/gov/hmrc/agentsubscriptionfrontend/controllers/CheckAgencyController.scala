@@ -202,12 +202,21 @@ class CheckAgencyController @Inject()(
           correctForm => {
             if (correctForm.value.getOrElse(false)) {
               val saAgentReference = correctForm.messageOfTrueRadioChoice.getOrElse("")
-              if (FieldMappings.isValidSaAgentCode(saAgentReference)) {
-                Future.successful(Redirect(routes.CheckAgencyController.invasiveTaxPayerOptionGet())
-                  .withSession(request.session + ("saAgentReferenceToCheck" -> saAgentReference)))
-              } else {
-                Future.successful(Ok(invasive_check_start(RadioWithInput.confirmResponseForm
-                  .withError("confirmResponse-true-hidden-input", Messages("error.saAgentCode.invalid")))))
+
+              val validationResult = FieldMappings.saAgentCode
+                .withPrefix("confirmResponse-true-hidden-input")
+                .bind(Map("confirmResponse-true-hidden-input" -> saAgentReference.replace(" ", "")))
+
+              validationResult match {
+                case Right(code) =>
+                  Future.successful(Redirect(routes.CheckAgencyController.invasiveTaxPayerOptionGet())
+                    .withSession(request.session + ("saAgentReferenceToCheck" -> code)))
+                case Left(formErrors) =>
+                  formErrors.headOption
+                    .map(error =>
+                      Future.successful(Ok(invasive_check_start(RadioWithInput.confirmResponseForm.withError(error)))))
+                    .getOrElse(
+                      throw new InternalServerException("SaAgentCode form validation returned empty errors object"))
               }
             } else {
               mark("Count-Subscription-InvasiveCheck-Declined")

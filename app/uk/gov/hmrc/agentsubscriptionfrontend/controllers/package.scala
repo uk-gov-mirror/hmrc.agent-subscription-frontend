@@ -20,6 +20,7 @@ import play.api.data.Forms._
 import play.api.data.{Form, FormError, Mapping}
 import play.api.data.format.Formatter
 import play.api.data.validation.{Constraint, Constraints, _}
+import play.api.i18n.Messages
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.blacklistedpostcodes.PostcodesLoader
 
@@ -49,6 +50,7 @@ package object controllers {
     // Same as play.api.data.format.Formats.stringFormat but with a custom message instead of error.required
     private def stringFormatWithMessage(messageKey: String): Formatter[String] = new Formatter[String] {
       def bind(key: String, data: Map[String, String]) = data.get(key).toRight(Seq(FormError(key, messageKey, Nil)))
+
       def unbind(key: String, value: String) = Map(key -> value)
     }
 
@@ -87,6 +89,7 @@ package object controllers {
     }
 
     private def noAmpersand(errorMsgKey: String) = Constraints.pattern("[^&]*".r, error = errorMsgKey)
+
     private def noApostrophe(errorMsgKey: String) = Constraints.pattern("[^']*".r, error = errorMsgKey)
 
     private[controllers] def desText(msgKeyRequired: String, msgKeyInvalid: String): Constraint[String] =
@@ -102,14 +105,22 @@ package object controllers {
       }
 
     private def validateBlacklist(postcode: String, blacklistedPostcodes: Set[String]): Boolean =
-      if (blacklistedPostcodes.contains(PostcodesLoader.formatPostcode(postcode))) {
-        false
-      } else {
-        true
-      }
+      !blacklistedPostcodes.contains(PostcodesLoader.formatPostcode(postcode))
 
-    private val saAgentReferenceRegex = """([a-zA-Z0-9]{6})"""
-    def isValidSaAgentCode(value: String) = value.matches(saAgentReferenceRegex)
+    private val saAgentCodeConstraint: Constraint[String] = Constraint[String] { fieldValue: String =>
+      val formattedCode = fieldValue.replace(" ", "")
+
+      if (formattedCode.isEmpty)
+        Invalid(ValidationError("error.saAgentCode.blank"))
+      else if (!formattedCode.matches("""^[a-zA-Z0-9]*$"""))
+        Invalid(ValidationError("error.saAgentCode.invalid"))
+      else if (formattedCode.length != 6)
+        Invalid(ValidationError("error.saAgentCode.length"))
+      else
+        Valid
+    }
+
+    def saAgentCode = text verifying saAgentCodeConstraint
 
     private def checkOneAtATime[T](firstConstraint: Constraint[T], secondConstraint: Constraint[T]) = Constraint[T] {
       fieldValue: T =>
@@ -144,9 +155,11 @@ package object controllers {
       }
 
     private val utrConstraint: Constraint[String] = Constraint[String] { fieldValue: String =>
-      Constraints.nonEmpty(fieldValue) match {
+      val formattedField = fieldValue.replace(" ", "")
+
+      Constraints.nonEmpty(formattedField) match {
         case _: Invalid => Invalid(ValidationError("error.utr.blank"))
-        case _ if fieldValue.trim.map(_.isDigit).reduce(_ && _) && fieldValue.trim.size != 10 =>
+        case _ if formattedField.map(_.isDigit).reduce(_ && _) && formattedField.size != 10 =>
           Invalid(ValidationError("error.utr.invalid.length"))
         case _ if !isUtrValid(fieldValue) => Invalid(ValidationError("error.utr.invalid.format"))
         case _                            => Valid
@@ -157,16 +170,20 @@ package object controllers {
 
     def postcode: Mapping[String] =
       of[String](stringFormatWithMessage("error.postcode.empty")) verifying nonEmptyPostcode
+
     def postcodeWithBlacklist(blacklistedPostcodes: Set[String]): Mapping[String] =
       postcode
         .verifying("error.postcode.blacklisted", x => validateBlacklist(x, blacklistedPostcodes))
+
     def telephone: Mapping[String] =
       text
         .verifying(maxLength(24, "error.telephone.maxLength"))
         .verifying(telephoneNumber)
+
     def emailAddress: Mapping[String] =
       text
         .verifying(nonEmptyEmailAddress)
+
     def agencyName: Mapping[String] =
       text(maxLength = 40)
         .verifying(
@@ -176,10 +193,12 @@ package object controllers {
               noApostrophe("error.agency-name.invalid"),
               desText(msgKeyRequired = "error.agency-name.empty", msgKeyInvalid = "error.agency-name.invalid"))
           ))
+
     def addressLine1: Mapping[String] =
       text
         .verifying(maxLength(35, "error.address.lines.maxLength"))
         .verifying(desText(msgKeyRequired = "error.address.lines.empty", msgKeyInvalid = "error.address.lines.invalid"))
+
     def addressLine234: Mapping[Option[String]] =
       optional(
         text
@@ -187,4 +206,5 @@ package object controllers {
           .verifying(
             desText(msgKeyRequired = "error.address.lines.empty", msgKeyInvalid = "error.address.lines.invalid")))
   }
+
 }
