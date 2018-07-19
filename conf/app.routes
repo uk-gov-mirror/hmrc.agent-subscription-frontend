@@ -5,6 +5,8 @@ GET         /start                                uk.gov.hmrc.agentsubscriptionf
 GET         /non-agent-next-steps                 uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.showNonAgentNextSteps
 GET         /return-after-gg-creds-created        uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.returnAfterGGCredsCreated(id: Option[String] ?= None)
 
+GET         /check-business-type                  uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.showCheckBusinessType
+POST        /check-business-type                  uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.submitCheckBusinessType
 GET         /check-agency-status                  uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.showCheckAgencyStatus
 POST        /check-agency-status                  uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.checkAgencyStatus
 GET         /no-agency-found                      uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.showNoAgencyFound
@@ -27,6 +29,7 @@ GET         /subscription-complete                uk.gov.hmrc.agentsubscriptionf
 GET         /redirect-to-sos                      uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.redirectToSos
 GET         /redirect-to-asaccount                uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.redirectToASAccountPage
 GET         /start-survey                         uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.startSurvey
+GET         /sign-out                             uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.signOutWithContinueUrl
 
 GET         /setup-incomplete                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.setupIncomplete
 

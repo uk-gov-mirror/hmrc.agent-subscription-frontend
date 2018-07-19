@@ -25,7 +25,6 @@ import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.blacklistedpostcodes.PostcodesLoader
 
 package object controllers {
-
   object FieldMappings {
     private val desPostcodeRegex = "^[A-Z]{1,2}[0-9][0-9A-Z]?\\s?[0-9][A-Z]{2}$|BFPO\\s?[0-9]{1,5}$".r
     private val telephoneNumberRegex = "^[0-9- +()#x ]*$"
@@ -205,6 +204,16 @@ package object controllers {
           .verifying(maxLength(35, "error.address.lines.maxLength"))
           .verifying(
             desText(msgKeyRequired = "error.address.lines.empty", msgKeyInvalid = "error.address.lines.invalid")))
+
+    def radioInputSelected[T]: Constraint[Option[T]] = Constraint[Option[T]] { fieldValue: Option[T] =>
+      if (fieldValue.isDefined)
+        Valid
+      else
+        Invalid(ValidationError("error.no-radio-selected"))
+    }
+
+    def nonEmptyTextWithMsg(errorMessageKey: String): Mapping[String] =
+      text verifying nonEmptyWithMessage(errorMessageKey)
   }
 
 }

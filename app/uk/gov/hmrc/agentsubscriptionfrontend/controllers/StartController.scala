@@ -75,11 +75,11 @@ class StartController @Inject()(
           } yield {
             knownFactsResultOpt match {
               case Some(_) => Redirect(routes.SubscriptionController.showInitialDetails())
-              case None    => Redirect(routes.CheckAgencyController.checkAgencyStatus())
+              case None    => Redirect(routes.CheckAgencyController.showCheckBusinessType())
             }
           }
         case None =>
-          Future.successful(Redirect(routes.CheckAgencyController.checkAgencyStatus()))
+          Future.successful(Redirect(routes.CheckAgencyController.showCheckBusinessType()))
       }
     }
   }

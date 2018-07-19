@@ -34,7 +34,7 @@
                     <h1 class="heading-large @if(confirmResponseForm.hasErrors){push--top}">@Messages("invasive.title.option")</h1>
                     <p>@Messages("invasive.p1")</p>
                     @if(confirmResponseForm.error("confirmResponse").isDefined){
-                        <span class="error-message">@Messages("error.confirmResponse.invalid")</span>
+                        <span class="error-message">@Messages("error.no-radio-selected")</span>
                     }
                 </legend>
                 <div class="multiple-choice" data-target="ninoRadioInput">

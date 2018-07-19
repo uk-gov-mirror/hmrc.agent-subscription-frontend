@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
+import java.net.URLEncoder
+
 import javax.inject.{Inject, Named, Singleton}
 import play.api.mvc.Action
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
@@ -47,6 +49,14 @@ class SignedOutController @Inject()(
           "id"       -> id.map(_.toString),
           "continue" -> agentSubContinueUrl.map(_.url))
       SeeOther(addParamsToUrl(appConfig.sosRedirectUrl, "continue" -> Some(continueUrl))).withNewSession
+    }
+  }
+
+  def signOutWithContinueUrl = Action.async { implicit request =>
+    sessionStoreService.fetchContinueUrl.map { maybeContinueUrl =>
+      val signOutUrlWithContinueUrl =
+        addParamsToUrl(appConfig.companyAuthSignInUrl, "continue" -> maybeContinueUrl.map(_.url))
+      SeeOther(signOutUrlWithContinueUrl).withNewSession
     }
   }
 

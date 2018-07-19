@@ -93,7 +93,7 @@ class SubscriptionController @Inject()(
           .normalizeUtr(utrStr)
           .map(utr => InitialDetails(utr, postcode, name, email, telephone))
           .getOrElse(throw new Exception("Invalid utr found after validation")))(id =>
-      Some(id.utr.value, id.knownFactsPostcode, id.name, id.email, id.telephone)))
+      Some((id.utr.value, id.knownFactsPostcode, id.name, id.email, id.telephone))))
 
   private case class SubscriptionReturnedHttpError(httpStatusCode: Int) extends Product with Serializable
 
@@ -146,10 +146,8 @@ class SubscriptionController @Inject()(
     implicit hc: HeaderCarrier): Future[Either[SubscriptionReturnedHttpError, (Arn, String)]] = {
     val subscriptionDetails = mapper(details, address)
     subscriptionService.subscribeAgencyToMtd(subscriptionDetails) map {
-      case Right(arn) => {
-        Right(arn, subscriptionDetails.name)
-      }
-      case Left(x) => Left(SubscriptionReturnedHttpError(x))
+      case Right(arn) => Right((arn, subscriptionDetails.name))
+      case Left(x)    => Left(SubscriptionReturnedHttpError(x))
     }
   }
 

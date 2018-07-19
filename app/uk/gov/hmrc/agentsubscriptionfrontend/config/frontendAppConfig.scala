@@ -45,6 +45,7 @@ trait AppConfig {
   val addressLookupContinueUrl: String
   val surveyRedirectUrl: String
   val sosRedirectUrl: String
+  val companyAuthSignInUrl: String
   val mongoDbKnownFactsResultTtl: Int
   val cacheableSessionDomain: String
 }
@@ -82,6 +83,7 @@ class FrontendAppConfig @Inject()(val environment: Environment, val configuratio
     "address-lookup-frontend.new-address-callback.url")
   override val surveyRedirectUrl: String = getConfStringOrFail(s"$env.surveyRedirectUrl")
   override val sosRedirectUrl: String = getConfStringOrFail(s"$env.sosRedirectUrl")
+  override val companyAuthSignInUrl: String = getConfStringOrFail(s"$env.companyAuthSignInUrl")
   override val mongoDbKnownFactsResultTtl: Int = getConfIntOrFail(s"$env.mongodb.knownfactsresult.ttl")
   override val cacheableSessionDomain: String = getServicesConfStringOrFail("cachable.session-cache.domain")
 

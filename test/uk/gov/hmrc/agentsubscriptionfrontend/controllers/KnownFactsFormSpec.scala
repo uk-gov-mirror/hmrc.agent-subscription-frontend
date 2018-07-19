@@ -17,6 +17,7 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.agentsubscriptionfrontend.models.KnownFacts
 import uk.gov.hmrc.play.test.UnitSpec
 
 class KnownFactsFormSpec extends UnitSpec {

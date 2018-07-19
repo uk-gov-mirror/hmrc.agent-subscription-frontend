@@ -9,6 +9,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.models.KnownFactsResult
 import uk.gov.hmrc.agentsubscriptionfrontend.repository.KnownFactsResultMongoRepository
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.subscribingAgentEnrolledForNonMTD
+import uk.gov.hmrc.play.HeaderCarrierConverter
 import uk.gov.hmrc.play.binders.ContinueUrl
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -113,6 +114,38 @@ class SignOutControllerISpec extends BaseISpec {
 
       status(result) shouldBe 303
       redirectLocation(result).head should include("agent-services-account")
+
+      result.session.get("sessionId") shouldBe empty
+    }
+  }
+
+  "signOutWithContinueUrl" should {
+
+    "logout and redirect to /gg/sign-in when no continue URL is present in the session" in {
+      testLogoutAndRedirect(expectedRedirectUrl = "/gg/sign-in")
+    }
+
+    "logout and redirect to /gg/sign-in?continue=... when continue URL is present in the session" in {
+      testLogoutAndRedirect(
+        expectedRedirectUrl = "/gg/sign-in?continue=%2Ftest-continue-url",
+        maybeContinueUrl = Some(ContinueUrl("/test-continue-url"))
+      )
+    }
+
+    def testLogoutAndRedirect(expectedRedirectUrl: String, maybeContinueUrl: Option[ContinueUrl] = None): Unit = {
+      implicit val request = fakeRequest.withSession("sessionId" -> "SomeSession")
+
+      maybeContinueUrl.map{ continueUrl =>
+        implicit val hc = HeaderCarrierConverter.fromHeadersAndSession(request.headers, Some(request.session))
+        sessionStoreService.cacheContinueUrl(continueUrl)
+      }
+
+      request.session.get("sessionId") should not be empty
+
+      val result = await(controller.signOutWithContinueUrl(request))
+
+      status(result) shouldBe 303
+      redirectLocation(result).head shouldBe expectedRedirectUrl
 
       result.session.get("sessionId") shouldBe empty
     }

@@ -72,6 +72,16 @@ noAgencyFound.title=There is no agent business linked to this account
 alreadySubscribed.title=Your agency is already subscribed
 alreadySubscribed.p1=Please contact your agency administrator to get access to agent services.
 
+#Check business type
+checkBusinessType.title=What type of business are you?
+checkBusinessType.option.sole-trader=Sole trader
+checkBusinessType.option.limited-company=Limited company
+checkBusinessType.option.partnership=Partnership
+checkBusinessType.option.partnership-llp=Limited liability partnership (LLP)
+checkBusinessType.progressive.title=My business type is not listed here
+checkBusinessType.progressive.content.p1=You can only get an agent services account if your business is a sole trader, limited company, partnership or limited liability partnership.
+checkBusinessType.progressive.content.link=Finish and sign out
+
 #Check agency status
 checkAgencyStatus.title=Identify your business
 checkAgencyStatus.p1=To help us find your business we need its Self Assessment unique tax reference (UTR) or Corporation Tax reference number.
@@ -137,4 +147,4 @@ invasive.confirmResponse.true.utr=Taxpayer''s Self Assessment Unique Taxpayer Re
 confirmResponse.false.hidden.input.label.utr=Self Assessment UTR
 invasive.expandable.p1=Where to find your Self Assessment agent code
 invasive.expandable.p1.open=You got your Self Assessment agent code when you registered in writing as an agent for Self Assessment. You used your agent code to set up your online service.
-error.confirmResponse.invalid=You must choose an option
+error.no-radio-selected.invalid=You must choose an option

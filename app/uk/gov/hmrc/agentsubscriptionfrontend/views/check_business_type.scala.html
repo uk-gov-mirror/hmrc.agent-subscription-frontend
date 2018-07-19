@@ -1,0 +1,70 @@
+@*
+ * Copyright 2018 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
+@import uk.gov.hmrc.play.views.html.helpers._
+@import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
+@import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes.SignedOutController
+@import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType
+
+@(businessTypeRadioForm: Form[BusinessType])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+
+@headerTitle = {
+    <h1 class="heading-large @if(businessTypeRadioForm.hasErrors){push--top}">
+        @Messages("checkBusinessType.title")
+    </h1>
+}
+
+@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = error_prefix(businessTypeRadioForm) + Messages("checkBusinessType.title"), bodyClasses = None) {
+    @if(businessTypeRadioForm.hasErrors) {
+        @errorSummary(Messages("error.summary.heading"), businessTypeRadioForm, Seq.empty, Some("check-business-type"))
+    }
+
+    @form(
+        action = routes.CheckAgencyController.submitCheckBusinessType,
+        'class -> "form js-form") {
+
+        <div class="form-group">
+        @inputRadioGroup(
+            businessTypeRadioForm("businessType"),
+            Seq(
+                "soletrader" -> Messages("checkBusinessType.option.sole-trader"),
+                "limited" -> Messages("checkBusinessType.option.limited-company"),
+                "partnership" -> Messages("checkBusinessType.option.partnership"),
+                "llp" -> Messages("checkBusinessType.option.partnership-llp")
+            ),
+            '_legend -> headerTitle,
+            '_groupDivClass -> "soft--ends"
+        )
+        </div>
+
+        <div class="form-group">
+            <details role="group">
+                <summary role="button" aria-controls="details-content-0" aria-expanded="false">
+                    <span class="summary">@Messages("checkBusinessType.progressive.title")</span>
+                </summary>
+                <div class="panel panel-border-narrow" id="details-content-0" aria-hidden="true">
+                    <p>@Messages("checkBusinessType.progressive.content.p1")</p>
+                    <a href="@SignedOutController.signOutWithContinueUrl" id="sign-out">@Messages("checkBusinessType.progressive.content.link")</a>
+                </div>
+            </details>
+        </div>
+
+        <div class="form-group">
+            <button class="button" type="submit" id="continue">@Messages("button.continue")</button>
+        </div>
+    }
+}

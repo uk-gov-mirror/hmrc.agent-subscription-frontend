@@ -85,7 +85,11 @@ abstract class BaseISpec
     status(result) shouldBe OK
     contentType(result) shouldBe Some("text/html")
     charset(result) shouldBe Some("utf-8")
-    expectedSubstrings.foreach(s => bodyOf(result) should include(s))
+    val resultBody = bodyOf(result)
+    expectedSubstrings.foreach { expectedSubstring =>
+      expectedSubstring.trim should not be ""
+      resultBody should include(expectedSubstring)
+    }
   }
 
   private val messagesApi = app.injector.instanceOf[MessagesApi]

@@ -38,6 +38,8 @@ import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, InternalServerException}
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
+import play.api.data.Forms._
+import play.api.data._
 
 import scala.concurrent.Future
 
@@ -51,6 +53,11 @@ object CheckAgencyController {
             .map(utr => KnownFacts(utr, postcode))
             .getOrElse(throw new Exception("Invalid utr found after validation")))(knownFacts =>
         Some((knownFacts.utr.value, knownFacts.postcode))))
+
+  val businessTypeForm: Form[BusinessType] =
+    Form[BusinessType](
+      mapping("businessType" -> optional(text).verifying(FieldMappings.radioInputSelected))(BusinessType.apply)(
+        BusinessType.unapply))
 }
 
 @Singleton
@@ -72,6 +79,27 @@ class CheckAgencyController @Inject()(
   val showHasOtherEnrolments: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
       Future successful Ok(html.has_other_enrolments())
+    }
+  }
+
+  def showCheckBusinessType: Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { implicit agent =>
+      withMaybeContinueUrlCached {
+        Future successful Ok(html.check_business_type(CheckAgencyController.businessTypeForm))
+      }
+    }
+  }
+
+  def submitCheckBusinessType: Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { implicit agent =>
+      CheckAgencyController.businessTypeForm
+        .bindFromRequest()
+        .fold(
+          formWithErrors => {
+            Future successful Ok(html.check_business_type(formWithErrors))
+          },
+          businessType => Future successful Redirect(routes.CheckAgencyController.checkAgencyStatus())
+        )
     }
   }
 
@@ -135,7 +163,8 @@ class CheckAgencyController @Inject()(
         mark("Count-Subscription-AlreadySubscribed-RegisteredInETMP")
         Future successful Redirect(routes.CheckAgencyController.showAlreadySubscribed())
       case Some(_) =>
-        throw new IllegalStateException(s"The agency with UTR ${knownFacts.utr} has no organisation name.")
+        throw new IllegalStateException(
+          s"The agency with UTR ${knownFacts.utr} has a missing organisation/individual name.")
       case None =>
         mark("Count-Subscription-NoAgencyFound")
         Future successful Redirect(routes.CheckAgencyController.showNoAgencyFound())
