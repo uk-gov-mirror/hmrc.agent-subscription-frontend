@@ -19,42 +19,57 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
 @import uk.gov.hmrc.agentsubscriptionfrontend.models.KnownFacts
 
-@(knownFactsForm: Form[KnownFacts])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+@(knownFactsForm: Form[KnownFacts], businessTypeIdentifier: String)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = error_prefix(knownFactsForm) + Messages("checkAgencyStatus.title"), bodyClasses = None) {
+    <a href="@routes.CheckAgencyController.showCheckBusinessType" class="link-back">@Messages("button.back")</a>
+
     @if(knownFactsForm.hasErrors) {
         @errorSummary(Messages("error.summary.heading"), knownFactsForm, Seq.empty, Some("check-agency-status"))
     }
-    <h1 class="heading-xlarge">@Messages("checkAgencyStatus.title")</h1>
 
-    <p>@Messages("checkAgencyStatus.p1")</p>
+    <h1 class="heading-large">@Messages("checkAgencyStatus.title")</h1>
 
+    @if(businessTypeIdentifier == "llp" || businessTypeIdentifier == "partnership") {
+        <p>@Messages("checkAgencyStatus.p1")</p>
+    }
     @form(
-        action = routes.CheckAgencyController.checkAgencyStatus,
+        action = routes.CheckAgencyController.checkAgencyStatus(Some(businessTypeIdentifier)),
         'class -> "form js-form") {
 
         <div class="form-group">
         @input(
             knownFactsForm("utr"),
-            '_label -> Messages("checkAgencyStatus.label.utr"),
-            '_inputClass -> "form-control input--cleared",
-            '_labelClass -> "heading-small soft--ends"
+            '_label -> Messages(s"checkAgencyStatus.label.utr.$businessTypeIdentifier"),
+            '_inputHint -> Messages(s"checkAgencyStatus.label.utr.hint"),
+            '_inputClass -> "form-control",
+            '_labelClass -> "soft--ends"
         )
+        </div>
+
+        <div class="form-group">
+            <details>
+                <summary>
+                    <span class="summary">@Messages(s"checkAgencyStatus.details.heading.$businessTypeIdentifier")</span>
+                </summary>
+                <div class="panel panel-border-narrow" aria-hidden="true">
+                    <p>@Html(Messages(s"checkAgencyStatus.details.content.$businessTypeIdentifier"))</p>
+                </div>
+            </details>
         </div>
 
         <div class="form-group">
         @input(
             knownFactsForm("postcode"),
             '_label -> Messages("checkAgencyStatus.label.postcode"),
-            '_inputClass -> "form-control input--cleared input--small",
-            '_labelClass -> "heading-small soft--ends"
+            '_inputHint -> Messages(s"checkAgencyStatus.label.postcode.hint"),
+            '_inputClass -> "form-control",
+            '_labelClass -> "soft--ends"
         )
         </div>
 
         <div class="form-group">
             <button class="button" type="submit" id="continue">@Messages("button.continue")</button>
         </div>
-
-
     }
 }

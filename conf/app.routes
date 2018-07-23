@@ -7,8 +7,8 @@ GET         /return-after-gg-creds-created        uk.gov.hmrc.agentsubscriptionf
 
 GET         /check-business-type                  uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.showCheckBusinessType
 POST        /check-business-type                  uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.submitCheckBusinessType
-GET         /check-agency-status                  uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.showCheckAgencyStatus
-POST        /check-agency-status                  uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.checkAgencyStatus
+GET         /check-agency-status                  uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.showCheckAgencyStatus(businessType: Option[String])
+POST        /check-agency-status                  uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.checkAgencyStatus(businessType: Option[String])
 GET         /no-agency-found                      uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.showNoAgencyFound
 GET         /confirm-your-agency                  uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.showConfirmYourAgency
 GET         /already-subscribed                   uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.showAlreadySubscribed

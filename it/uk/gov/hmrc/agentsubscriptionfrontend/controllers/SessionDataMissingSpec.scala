@@ -26,6 +26,6 @@ trait SessionDataMissingSpec {
 
   def resultShouldBeSessionDataMissing(result: Result)(implicit timeout: Timeout): Unit = {
     status(result) shouldBe 303
-    redirectLocation(result).get shouldBe routes.CheckAgencyController.showCheckAgencyStatus().url
+    redirectLocation(result).get shouldBe routes.CheckAgencyController.showCheckBusinessType().url
   }
 }

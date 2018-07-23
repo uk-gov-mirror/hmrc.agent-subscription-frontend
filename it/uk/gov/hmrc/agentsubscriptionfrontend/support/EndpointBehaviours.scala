@@ -157,20 +157,20 @@ trait EndpointBehaviours {
     }
   }
 
-  protected def aPageTakingContinueUrlAndCachingInSessionStore(action: PlayRequest, sessionStoreService: TestSessionStoreService, sessionKeys: => Seq[(String, String)]): Unit = {
+  protected def aPageTakingContinueUrlAndCachingInSessionStore(action: PlayRequest, sessionStoreService: TestSessionStoreService, sessionKeys: => Seq[(String, String)], expectedStatusCode: Int = 200): Unit = {
     aPageTakingContinueUrl(action, sessionKeys, checkContinueUrlIsInCache, checkContinueUrlIsNotInCache)
 
     def hc(request: Request[AnyContent]) = HeaderCarrierConverter.fromHeadersAndSession(request.headers, Some(request.session))
 
     def checkContinueUrlIsInCache(request: Request[AnyContent], result: Result, expectedContinueUrl: String) = {
-      status(result) shouldBe 200
+      status(result) shouldBe expectedStatusCode
       withClue("ContinueUrl was not found in session store, actual: ") {
         sessionStoreService.currentSession(hc(request)).continueUrl shouldBe Some(ContinueUrl(expectedContinueUrl))
       }
     }
 
     def checkContinueUrlIsNotInCache(request: Request[AnyContent], result: Result, expectedContinueUrl: Option[String]) = {
-      status(result) shouldBe 200
+      status(result) shouldBe expectedStatusCode
       withClue("A ContinueUrl was found in session store, it was: ") {
         sessionStoreService.currentSession(hc(request)).continueUrl shouldBe None
       }

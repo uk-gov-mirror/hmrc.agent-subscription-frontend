@@ -19,11 +19,12 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 import javax.inject.{Inject, Singleton}
 
 import com.kenshoo.play.metrics.Metrics
+import play.api.Logger
 import play.api.data.{Form, FormError}
 import play.api.data.Forms.mapping
-import play.api.i18n.{I18nSupport, Messages, MessagesApi}
+import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{AnyContent, Request, _}
-import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.audit.AuditService
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.{Agent, AuthActions}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
@@ -39,11 +40,12 @@ import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, InternalServerException}
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 import play.api.data.Forms._
-import play.api.data._
 
 import scala.concurrent.Future
 
 object CheckAgencyController {
+  val validBusinessTypes = Seq("sole_trader", "limited_company", "partnership", "llp")
+
   val knownFactsForm: Form[KnownFacts] =
     Form[KnownFacts](
       mapping("utr" -> FieldMappings.utr, "postcode" -> FieldMappings.postcode)(
@@ -57,7 +59,10 @@ object CheckAgencyController {
   val businessTypeForm: Form[BusinessType] =
     Form[BusinessType](
       mapping("businessType" -> optional(text).verifying(FieldMappings.radioInputSelected))(BusinessType.apply)(
-        BusinessType.unapply))
+        BusinessType.unapply)
+        .verifying(
+          "error.business-type-value.invalid",
+          submittedBusinessType => validBusinessTypes.contains(submittedBusinessType.businessType.getOrElse(""))))
 }
 
 @Singleton
@@ -96,29 +101,52 @@ class CheckAgencyController @Inject()(
         .bindFromRequest()
         .fold(
           formWithErrors => {
+            if (formWithErrors.errors.exists(_.message == "error.business-type-value.invalid")) {
+              Logger.warn("Select business-type form submitted with invalid identifier")
+              throw new BadRequestException("submitted form value did not contain valid businessType identifier")
+            }
             Future successful Ok(html.check_business_type(formWithErrors))
           },
-          businessType => Future successful Redirect(routes.CheckAgencyController.checkAgencyStatus())
+          validatedBusinessType =>
+            Future successful Redirect(
+              routes.CheckAgencyController.showCheckAgencyStatus(validatedBusinessType.businessType))
         )
     }
   }
 
-  def showCheckAgencyStatus: Action[AnyContent] = Action.async { implicit request =>
+  def showCheckAgencyStatus(businessType: Option[String]): Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { implicit agent =>
+      //withMaybeContinueUrlCached because, Currently still needed as a user might be arriving from: trusts registration flow or gov.uk guidence page, make sure this is not the case anymore before removing
       withMaybeContinueUrlCached {
-        mark("Count-Subscription-CheckAgency-Start")
-        Future successful Ok(html.check_agency_status(CheckAgencyController.knownFactsForm))
+        businessType match {
+          case Some(businessTypeIdentifier)
+              if CheckAgencyController.validBusinessTypes.contains(businessTypeIdentifier) => {
+            mark("Count-Subscription-CheckAgency-Start")
+            Future successful Ok(html.check_agency_status(CheckAgencyController.knownFactsForm, businessTypeIdentifier))
+          }
+          case _ => {
+            Logger.warn("businessTypeIdentifier was missing, redirect and obtain from showCheckBusinessType page")
+            Future successful Redirect(routes.CheckAgencyController.showCheckBusinessType())
+          }
+        }
       }
     }
   }
 
-  val checkAgencyStatus: Action[AnyContent] = Action.async { implicit request =>
+  def checkAgencyStatus(businessType: Option[String]): Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { implicit agent =>
-      CheckAgencyController.knownFactsForm
-        .bindFromRequest()
-        .fold(formWithErrors => {
-          Future successful Ok(html.check_agency_status(formWithErrors))
-        }, knownFacts => checkAgencyStatusGivenValidForm(knownFacts))
+      businessType match {
+        case Some(businessTypeIdentifier)
+            if CheckAgencyController.validBusinessTypes.contains(businessTypeIdentifier) => {
+          CheckAgencyController.knownFactsForm
+            .bindFromRequest()
+            .fold(
+              formWithErrors => Future successful Ok(html.check_agency_status(formWithErrors, businessTypeIdentifier)),
+              knownFacts => checkAgencyStatusGivenValidForm(knownFacts)
+            )
+        }
+        case _ => Future successful Redirect(routes.CheckAgencyController.showCheckBusinessType())
+      }
     }
   }
 

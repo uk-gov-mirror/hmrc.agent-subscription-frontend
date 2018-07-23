@@ -83,10 +83,30 @@ checkBusinessType.progressive.content.p1=You can only get an agent services acco
 checkBusinessType.progressive.content.link=Finish and sign out
 
 #Check agency status
-checkAgencyStatus.title=Identify your business
-checkAgencyStatus.p1=To help us find your business we need its Self Assessment unique tax reference (UTR) or Corporation Tax reference number.
-checkAgencyStatus.label.utr=Self Assessment UTR or Corporation Tax reference
-checkAgencyStatus.label.postcode=Postcode related to that UTR or reference
+checkAgencyStatus.title=Enter your business details
+checkAgencyStatus.p1=This will help us match your details against information we currently hold.
+
+checkAgencyStatus.label.utr.hint=Enter the last 10 digits only. For example, 12345 67890
+
+##dynamic content start
+checkAgencyStatus.label.utr.sole_trader=Your Self Assessment Unique Taxpayer Reference (UTR)
+checkAgencyStatus.label.utr.limited_company=Corporation Tax or company Unique Taxpayer Reference (UTR)
+checkAgencyStatus.label.utr.partnership=Partnership Unique Taxpayer Reference (UTR)
+checkAgencyStatus.label.utr.llp=Partnership Unique Taxpayer Reference (UTR)
+
+checkAgencyStatus.details.heading.sole_trader=Where to find your Self Assessment UTR
+checkAgencyStatus.details.content.sole_trader=You''ll <a href="https://www.gov.uk/find-lost-utr-number" target="_blank" rel="noopener noreferrer">find your UTR (opens in a new window or tab)</a> on the letter HMRC sent you when you registered for Self Assessment. It's a 10-digit number, sometimes with a letter ''K'' on the end.
+checkAgencyStatus.details.heading.limited_company=Where to find your Corporation Tax or company UTR
+checkAgencyStatus.details.content.limited_company=You can usually find your Corporation Tax or company UTR in the header of letters from HM Revenue & Customs (HMRC), next to headings such as ''Tax Reference'', ''UTR'' or ''Official Use''.
+checkAgencyStatus.details.heading.partnership=Where to find your partnership UTR
+checkAgencyStatus.details.content.partnership=You can find your partnership UTR in the header of letters from HM Revenue & Customs (HMRC), next to headings such as 'Tax Reference', 'UTR' or ''Official Use''.
+checkAgencyStatus.details.heading.llp=Where to find your partnership UTR
+checkAgencyStatus.details.content.llp=You can find your partnership UTR in the header of letters from HM Revenue & Customs (HMRC), next to headings such as ''Tax Reference'', ''UTR'' or ''Official Use''.
+
+##dynamic content finish
+
+checkAgencyStatus.label.postcode=Registered business postcode
+checkAgencyStatus.label.postcode.hint=This is the postcode of your registered business address
 
 #Not subscribed
 notSubscribed.title=You can create an agent services account
@@ -128,6 +148,7 @@ button.createAccount=Create account
 button.goToGg=Go to Government Gateway
 button.register=Register now
 button.signOut=Sign out
+button.back=Back
 
 #Setup Incomplete
 setupIncomplete.title=You cannot set up an agent services account with the details you entered
@@ -147,4 +168,4 @@ invasive.confirmResponse.true.utr=Taxpayer''s Self Assessment Unique Taxpayer Re
 confirmResponse.false.hidden.input.label.utr=Self Assessment UTR
 invasive.expandable.p1=Where to find your Self Assessment agent code
 invasive.expandable.p1.open=You got your Self Assessment agent code when you registered in writing as an agent for Self Assessment. You used your agent code to set up your online service.
-error.no-radio-selected.invalid=You must choose an option
+error.no-radio-selected=You must choose an option

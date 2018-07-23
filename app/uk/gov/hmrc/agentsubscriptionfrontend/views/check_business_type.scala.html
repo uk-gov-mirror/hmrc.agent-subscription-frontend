@@ -34,15 +34,15 @@
     }
 
     @form(
-        action = routes.CheckAgencyController.submitCheckBusinessType,
+        action = routes.CheckAgencyController.submitCheckBusinessType(),
         'class -> "form js-form") {
 
         <div class="form-group">
         @inputRadioGroup(
             businessTypeRadioForm("businessType"),
             Seq(
-                "soletrader" -> Messages("checkBusinessType.option.sole-trader"),
-                "limited" -> Messages("checkBusinessType.option.limited-company"),
+                "sole_trader" -> Messages("checkBusinessType.option.sole-trader"),
+                "limited_company" -> Messages("checkBusinessType.option.limited-company"),
                 "partnership" -> Messages("checkBusinessType.option.partnership"),
                 "llp" -> Messages("checkBusinessType.option.partnership-llp")
             ),
