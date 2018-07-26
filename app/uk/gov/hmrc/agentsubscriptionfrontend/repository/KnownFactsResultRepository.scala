@@ -56,7 +56,7 @@ class KnownFactsResultMongoRepository @Inject()(appConfig: AppConfig, mongoCompo
     find("id" -> id).map(_.headOption.map(_.knownFactsResult))
 
   def create(knownFactsResult: KnownFactsResult)(implicit ec: ExecutionContext): Future[StashedKnownFactsResultId] = {
-    val id: StashedKnownFactsResultId = UUID.randomUUID().toString.replace("-", "").take(8)
+    val id: StashedKnownFactsResultId = UUID.randomUUID().toString.replace("-", "")
     insert(StashedKnownFactsResult(id, knownFactsResult)).map(_ => id)
   }
 

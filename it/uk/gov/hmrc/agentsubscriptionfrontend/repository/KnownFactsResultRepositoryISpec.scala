@@ -38,10 +38,11 @@ class KnownFactsResultRepositoryISpec extends UnitSpec with OneAppPerSuite with 
 
     "create a StashedKnownFactsResult record" in {
       val result = await(repo.create(knownFactsResult))
-
       result should not be empty
 
-      await(repo.find("id" -> result)).head should have('id (result), 'knownFactsResult (knownFactsResult))
+      val knownfactResult = await(repo.find("id" -> result)).head
+      knownfactResult should have('id (result), 'knownFactsResult (knownFactsResult))
+      knownfactResult.id.size shouldBe 32
     }
 
     "find a KnownFactsResult record by Id" in {
