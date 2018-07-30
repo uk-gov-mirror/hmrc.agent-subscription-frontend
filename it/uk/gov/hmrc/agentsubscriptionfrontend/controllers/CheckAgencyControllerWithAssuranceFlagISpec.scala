@@ -180,7 +180,6 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
     "redirect to setup incomplete when agent's utr is in the R2DW list" in {
       withMatchingUtrAndPostcode(validUtr, validPostcode)
       givenRefusalToDealWithUtrIsForbidden(validUtr.value)
-      givenAgentIsNotManuallyAssured(validUtr.value)
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
@@ -194,7 +193,7 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
           s"/agent-subscription/registration/${encodePathSegment(validUtr.value)}/postcode/${encodePathSegment(validPostcode)}"))
       )
       verifyCheckRefusalToDealWith(1, validUtr.value)
-      verifyCheckAgentIsManuallyAssured(1, validUtr.value)
+      verifyCheckAgentIsManuallyAssured(0, validUtr.value)
       verifyCheckForAcceptableNumberOfPAYEClientsUrl(0)
       verifyCheckForAcceptableNumberOfSAClients(0)
     }
