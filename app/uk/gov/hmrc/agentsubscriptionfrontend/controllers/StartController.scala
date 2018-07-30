@@ -18,16 +18,17 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.Inject
+
 import play.api.i18n.{I18nSupport, MessagesApi}
-import play.api.mvc.{Action, AnyContent, Result}
+import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{CompletePartialSubscriptionBody, KnownFactsResult, SubscriptionRequestKnownFacts}
 import uk.gov.hmrc.agentsubscriptionfrontend.repository.KnownFactsResultMongoRepository
-import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
+import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionService, SubscriptionState}
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
-
 import scala.concurrent.Future
 
 class StartController @Inject()(
@@ -37,7 +38,8 @@ class StartController @Inject()(
   val continueUrlActions: ContinueUrlActions,
   val metrics: Metrics,
   override val appConfig: AppConfig,
-  sessionStoreService: SessionStoreService)(implicit val aConfig: AppConfig)
+  sessionStoreService: SessionStoreService,
+  subscriptionService: SubscriptionService)(implicit val aConfig: AppConfig)
     extends FrontendController with I18nSupport with AuthActions {
 
   import continueUrlActions._
@@ -63,24 +65,34 @@ class StartController @Inject()(
 
   def returnAfterGGCredsCreated(id: Option[String] = None): Action[AnyContent] = Action.async { implicit request =>
     withMaybeContinueUrlCached {
-      id match {
-        case Some(knownFactsId) =>
+
+      val knownFactsResultOpt: Future[Option[KnownFactsResult]] = if (id.isDefined) {
+        for {
+          knownFactsResultOpt <- knownFactsResultMongoRepository.findKnownFactsResult(id.get)
+          _                   <- knownFactsResultMongoRepository.delete(id.get)
+        } yield knownFactsResultOpt
+      } else Future successful None
+
+      val decideOnSubscription = knownFactsResultOpt.flatMap {
+        case Some(knownFacts) =>
           for {
-            knownFactsResultOpt <- knownFactsResultMongoRepository.findKnownFactsResult(knownFactsId)
-            _                   <- knownFactsResultMongoRepository.delete(knownFactsId)
-            _ <- knownFactsResultOpt match {
-                  case Some(knownFacts) => sessionStoreService.cacheKnownFactsResult(knownFacts)
-                  case None             => Future.successful(())
-                }
-          } yield {
-            knownFactsResultOpt match {
-              case Some(_) => Redirect(routes.SubscriptionController.showInitialDetails())
-              case None    => Redirect(routes.CheckAgencyController.showCheckBusinessType())
-            }
-          }
-        case None =>
-          Future.successful(Redirect(routes.CheckAgencyController.showCheckBusinessType()))
+            _                   <- sessionStoreService.cacheKnownFactsResult(knownFacts)
+            subscriptionProcess <- subscriptionService.getSubscriptionStatus(knownFacts.utr, knownFacts.postcode)
+            isPartiallySubscribed = subscriptionProcess.state == SubscriptionState.SubscribedAndNotEnrolled
+            continuedSubscriptionResponse <- if (isPartiallySubscribed)
+                                              subscriptionService
+                                                .completePartialSubscription(knownFacts.utr, knownFacts.postcode)
+                                                .map { arn =>
+                                                  mark("Count-Subscription-PartialSubscriptionCompleted")
+                                                  Redirect(routes.SubscriptionController.showSubscriptionComplete())
+                                                    .flashing("arn" -> arn.value)
+                                                } else
+                                              Future successful Redirect(
+                                                routes.SubscriptionController.showInitialDetails())
+          } yield continuedSubscriptionResponse
+        case None => Future successful Redirect(routes.CheckAgencyController.showCheckBusinessType())
       }
+      decideOnSubscription
     }
   }
 

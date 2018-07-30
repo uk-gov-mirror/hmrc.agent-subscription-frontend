@@ -20,7 +20,7 @@ import javax.inject.{Inject, Singleton}
 
 import play.api.Logger
 import play.api.http.Status
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentSubscriptionConnector
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionDetails
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
@@ -28,8 +28,29 @@ import uk.gov.hmrc.http.{HeaderCarrier, Upstream4xxResponse}
 
 import scala.concurrent.{ExecutionContext, Future}
 
+case class SubscriptionReturnedHttpError(httpStatusCode: Int) extends Product with Serializable
+
+object SubscriptionState extends Enumeration {
+  type SubscriptionState = Value
+  val Unsubscribed, SubscribedAndNotEnrolled, SubscribedAndEnrolled, NoRegistrationFound = Value
+}
+
+case class SubscriptionProcess(state: SubscriptionState.Value, details: Option[Registration])
+
 @Singleton
 class SubscriptionService @Inject()(agentSubscriptionConnector: AgentSubscriptionConnector) {
+
+  import SubscriptionDetails._
+
+  def subscribe(details: InitialDetails, address: DesAddress)(
+    implicit hc: HeaderCarrier,
+    ec: ExecutionContext): Future[Either[SubscriptionReturnedHttpError, (Arn, String)]] = {
+    val subscriptionDetails = mapper(details, address)
+    subscribeAgencyToMtd(subscriptionDetails) map {
+      case Right(arn) => Right((arn, subscriptionDetails.name))
+      case Left(x)    => Left(SubscriptionReturnedHttpError(x))
+    }
+  }
 
   def subscribeAgencyToMtd(subscriptionDetails: SubscriptionDetails)(
     implicit hc: HeaderCarrier,
@@ -61,4 +82,36 @@ class SubscriptionService @Inject()(agentSubscriptionConnector: AgentSubscriptio
       case e => throw e
     }
   }
+
+  def completePartialSubscription(utr: Utr, businessPostCode: String)(
+    implicit hc: HeaderCarrier,
+    ec: ExecutionContext): Future[Arn] =
+    agentSubscriptionConnector
+      .completePartialSubscription(
+        CompletePartialSubscriptionBody(utr, SubscriptionRequestKnownFacts(businessPostCode)))
+      .recover {
+        case e: Upstream4xxResponse if Seq(Status.FORBIDDEN, Status.CONFLICT) contains e.upstreamResponseCode =>
+          Logger.warn(s"Eligibility checks failed for partialSubscriptionFix, with status: ${e.upstreamResponseCode}")
+          throw e
+      }
+
+  def getSubscriptionStatus(utr: Utr, postcode: String)(
+    implicit hc: HeaderCarrier,
+    ec: ExecutionContext): Future[SubscriptionProcess] =
+    agentSubscriptionConnector.getRegistration(utr, postcode).map {
+
+      case Some(reg) if reg.isSubscribedToAgentServices =>
+        SubscriptionProcess(SubscriptionState.SubscribedAndEnrolled, Some(reg))
+
+      case Some(Registration(None, _, _)) =>
+        throw new IllegalStateException(s"The agency with UTR ${utr.value} has a missing organisation/individual name.")
+
+      case Some(reg) if !reg.isSubscribedToAgentServices && reg.isSubscribedToETMP =>
+        SubscriptionProcess(SubscriptionState.SubscribedAndNotEnrolled, Some(reg))
+
+      case Some(reg) if !reg.isSubscribedToAgentServices && !reg.isSubscribedToETMP =>
+        SubscriptionProcess(SubscriptionState.Unsubscribed, Some(reg))
+
+      case None => SubscriptionProcess(SubscriptionState.NoRegistrationFound, None)
+    }
 }

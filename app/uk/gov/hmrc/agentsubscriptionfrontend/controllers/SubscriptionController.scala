@@ -18,6 +18,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
+
 import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms.mapping
@@ -32,7 +33,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AddressLookupFrontendCon
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.FieldMappings._
 import uk.gov.hmrc.agentsubscriptionfrontend.form.DesAddressForm
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
-import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionService}
+import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionReturnedHttpError, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.Monitoring
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.auth.core.AuthConnector
@@ -95,8 +96,6 @@ class SubscriptionController @Inject()(
           .getOrElse(throw new Exception("Invalid utr found after validation")))(id =>
       Some((id.utr.value, id.knownFactsPostcode, id.name, id.email, id.telephone))))
 
-  private case class SubscriptionReturnedHttpError(httpStatusCode: Int) extends Product with Serializable
-
   val showInitialDetails: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent {
       case hasNonEmptyEnrolments(_) => Future(Redirect(routes.CheckAgencyController.showHasOtherEnrolments()))
@@ -140,18 +139,7 @@ class SubscriptionController @Inject()(
       sessionMissingRedirect()
     })
 
-  import SubscriptionDetails._
-
-  private def subscribe(details: InitialDetails, address: DesAddress)(
-    implicit hc: HeaderCarrier): Future[Either[SubscriptionReturnedHttpError, (Arn, String)]] = {
-    val subscriptionDetails = mapper(details, address)
-    subscriptionService.subscribeAgencyToMtd(subscriptionDetails) map {
-      case Right(arn) => Right((arn, subscriptionDetails.name))
-      case Left(x)    => Left(SubscriptionReturnedHttpError(x))
-    }
-  }
-
-  private def redirectSubscriptionResponse(either: Either[SubscriptionReturnedHttpError, (Arn, String)]): Result =
+  def redirectSubscriptionResponse(either: Either[SubscriptionReturnedHttpError, (Arn, String)]): Result =
     either match {
       case Right((arn, _)) =>
         mark("Count-Subscription-Complete")
@@ -179,7 +167,7 @@ class SubscriptionController @Inject()(
                   formWithErrors => Future successful Ok(html.address_form_with_errors(formWithErrors)),
                   validDesAddress => {
                     mark("Count-Subscription-AddressLookup-Success")
-                    subscribe(details, validDesAddress).map(redirectSubscriptionResponse)
+                    subscriptionService.subscribe(details, validDesAddress).map(redirectSubscriptionResponse)
                   }
                 )
             }
@@ -199,7 +187,7 @@ class SubscriptionController @Inject()(
             sessionStoreService.fetchInitialDetails.flatMap { maybeInitialDetails =>
               maybeInitialDetails
                 .map { initialDetails =>
-                  subscribe(initialDetails, validDesAddress).map(redirectSubscriptionResponse)
+                  subscriptionService.subscribe(initialDetails, validDesAddress).map(redirectSubscriptionResponse)
                 }
                 .getOrElse(Future.successful(sessionMissingRedirect()))
           }

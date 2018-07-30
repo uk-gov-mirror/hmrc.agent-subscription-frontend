@@ -22,4 +22,4 @@ object Registration {
   implicit val formats: Format[Registration] = Json.format[Registration]
 }
 
-case class Registration(taxpayerName: Option[String], isSubscribedToAgentServices: Boolean)
+case class Registration(taxpayerName: Option[String], isSubscribedToAgentServices: Boolean, isSubscribedToETMP: Boolean)

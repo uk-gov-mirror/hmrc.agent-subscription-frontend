@@ -31,7 +31,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.{AgentAssuranceConnector, AgentSubscriptionConnector}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.AssuranceResults._
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
-import uk.gov.hmrc.agentsubscriptionfrontend.service.{AssuranceService, SessionStoreService}
+import uk.gov.hmrc.agentsubscriptionfrontend.service._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.Monitoring
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{invasive_check_start, invasive_input_option}
@@ -40,6 +40,7 @@ import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, InternalServerException}
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 import play.api.data.Forms._
+import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent.hasNonEmptyEnrolments
 
 import scala.concurrent.Future
 
@@ -72,6 +73,7 @@ class CheckAgencyController @Inject()(
   override val messagesApi: MessagesApi,
   override val authConnector: AuthConnector,
   val agentSubscriptionConnector: AgentSubscriptionConnector,
+  val subscriptionService: SubscriptionService,
   val sessionStoreService: SessionStoreService,
   val continueUrlActions: ContinueUrlActions,
   auditService: AuditService,
@@ -151,53 +153,32 @@ class CheckAgencyController @Inject()(
   }
 
   private def checkAgencyStatusGivenValidForm(
-    knownFacts: KnownFacts)(implicit hc: HeaderCarrier, request: Request[AnyContent], agent: Agent): Future[Result] = {
-
-    def cacheKnownFactsAndAudit(
-      maybeAssuranceResults: Option[AssuranceResults],
-      taxpayerName: String,
-      isSubscribedToAgentServices: Boolean) = {
-      val knownFactsResult =
-        KnownFactsResult(knownFacts.utr, knownFacts.postcode, taxpayerName, isSubscribedToAgentServices)
-      for {
-        _ <- sessionStoreService.cacheKnownFactsResult(knownFactsResult)
-        _ <- maybeAssuranceResults
-              .map(auditService.sendAgentAssuranceAuditEvent(knownFactsResult, _))
-              .getOrElse(Future.successful(()))
-      } yield ()
-    }
-
-    def processCheckAgencyStatus(utr: Utr, taxpayerName: String, isSubscribedToAgentServices: Boolean): Future[Result] =
-      assuranceService.assureIsAgent(knownFacts.utr).flatMap {
-        case RefuseToDealWith(_) =>
-          Future.successful(Redirect(routes.StartController.setupIncomplete()))
-        case CheckedInvisibleAssuranceAndFailed(assuranceResults) =>
-          cacheKnownFactsAndAudit(Some(assuranceResults), taxpayerName, isSubscribedToAgentServices).map { _ =>
-            mark("Count-Subscription-InvasiveCheck-Start")
-            Redirect(routes.CheckAgencyController.invasiveCheckStart())
-          }
-        case maybeAssured @ (None | ManuallyAssured(_) | CheckedInvisibleAssuranceAndPassed(_)) => {
-          cacheKnownFactsAndAudit(maybeAssured, taxpayerName, isSubscribedToAgentServices).map { _ =>
-            mark("Count-Subscription-CheckAgency-Success")
-            Redirect(routes.CheckAgencyController.showConfirmYourAgency())
-          }
+    knownFacts: KnownFacts)(implicit hc: HeaderCarrier, request: Request[AnyContent], agent: Agent): Future[Result] =
+    subscriptionService.getSubscriptionStatus(knownFacts.utr, knownFacts.postcode).flatMap {
+      case SubscriptionProcess(SubscriptionState.Unsubscribed, Some(registrationDetails)) =>
+        processCheckAgencyStatus(
+          knownFacts.utr,
+          registrationDetails.taxpayerName.get,
+          registrationDetails.isSubscribedToAgentServices,
+          knownFacts)
+      case SubscriptionProcess(SubscriptionState.SubscribedAndNotEnrolled, Some(_)) =>
+        withCleanCreds {
+          subscriptionService
+            .completePartialSubscription(knownFacts.utr, knownFacts.postcode)
+            .map { arn =>
+              mark("Count-Subscription-PartialSubscriptionCompleted")
+              Redirect(routes.SubscriptionController.showSubscriptionComplete()).flashing("arn" -> arn.value)
+            }
         }
-      }
-
-    agentSubscriptionConnector.getRegistration(knownFacts.utr, knownFacts.postcode) flatMap {
-      case Some(Registration(Some(taxpayerName), isSubscribedToAgentServices)) if !isSubscribedToAgentServices =>
-        processCheckAgencyStatus(knownFacts.utr, taxpayerName, isSubscribedToAgentServices)
-      case Some(Registration(_, isSubscribedToAgentServices)) if isSubscribedToAgentServices =>
+      case SubscriptionProcess(SubscriptionState.SubscribedAndEnrolled, _) => {
         mark("Count-Subscription-AlreadySubscribed-RegisteredInETMP")
         Future successful Redirect(routes.CheckAgencyController.showAlreadySubscribed())
-      case Some(_) =>
-        throw new IllegalStateException(
-          s"The agency with UTR ${knownFacts.utr} has a missing organisation/individual name.")
-      case None =>
+      }
+      case _ => {
         mark("Count-Subscription-NoAgencyFound")
         Future successful Redirect(routes.CheckAgencyController.showNoAgencyFound())
+      }
     }
-  }
 
   val showNoAgencyFound: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
@@ -353,5 +334,49 @@ class CheckAgencyController @Inject()(
               Redirect(routes.StartController.setupIncomplete())
           }
       case None => Future.successful(Redirect(routes.CheckAgencyController.invasiveCheckStart()))
+    }
+
+  private def withCleanCreds(f: => Future[Result])(implicit agent: Agent): Future[Result] =
+    agent match {
+      case hasNonEmptyEnrolments(_) =>
+        Future successful Redirect(routes.CheckAgencyController.showHasOtherEnrolments())
+      case _ => f
+    }
+
+  private def cacheKnownFactsAndAudit(
+    maybeAssuranceResults: Option[AssuranceResults],
+    taxpayerName: String,
+    isSubscribedToAgentServices: Boolean,
+    knownFacts: KnownFacts)(implicit hc: HeaderCarrier, request: Request[AnyContent], agent: Agent): Future[Unit] = {
+    val knownFactsResult =
+      KnownFactsResult(knownFacts.utr, knownFacts.postcode, taxpayerName, isSubscribedToAgentServices)
+    for {
+      _ <- sessionStoreService.cacheKnownFactsResult(knownFactsResult)
+      _ <- maybeAssuranceResults
+            .map(auditService.sendAgentAssuranceAuditEvent(knownFactsResult, _))
+            .getOrElse(Future.successful(()))
+    } yield ()
+  }
+
+  private def processCheckAgencyStatus(
+    utr: Utr,
+    taxpayerName: String,
+    isSubscribedToAgentServices: Boolean,
+    knownFacts: KnownFacts)(implicit hc: HeaderCarrier, request: Request[AnyContent], agent: Agent): Future[Result] =
+    assuranceService.assureIsAgent(knownFacts.utr).flatMap {
+      case RefuseToDealWith(_) =>
+        Future.successful(Redirect(routes.StartController.setupIncomplete()))
+      case CheckedInvisibleAssuranceAndFailed(assuranceResults) =>
+        cacheKnownFactsAndAudit(Some(assuranceResults), taxpayerName, isSubscribedToAgentServices, knownFacts).map {
+          _ =>
+            mark("Count-Subscription-InvasiveCheck-Start")
+            Redirect(routes.CheckAgencyController.invasiveCheckStart())
+        }
+      case maybeAssured @ (None | ManuallyAssured(_) | CheckedInvisibleAssuranceAndPassed(_)) => {
+        cacheKnownFactsAndAudit(maybeAssured, taxpayerName, isSubscribedToAgentServices, knownFacts).map { _ =>
+          mark("Count-Subscription-CheckAgency-Success")
+          Redirect(routes.CheckAgencyController.showConfirmYourAgency())
+        }
+      }
     }
 }

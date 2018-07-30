@@ -41,7 +41,7 @@ class CheckAgencyControllerWithoutAssuranceFlagISpec extends CheckAgencyControll
     }
 
     "redirect to already subscribed page when the business registration found by agent-subscription is already subscribed" in {
-      withMatchingUtrAndPostcode(validUtr, validPostcode, isSubscribedToAgentServices = true)
+      withMatchingUtrAndPostcode(validUtr, validPostcode, isSubscribedToAgentServices = true, isSubscribedToETMP = true)
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)

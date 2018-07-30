@@ -19,28 +19,31 @@ package uk.gov.hmrc.agentsubscriptionfrontend.stubs
 import com.github.tomakehurst.wiremock.client.WireMock._
 import play.api.http.Status
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
-import uk.gov.hmrc.agentsubscriptionfrontend.models.SubscriptionRequest
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{CompletePartialSubscriptionBody, SubscriptionRequest}
 import uk.gov.hmrc.play.encoding.UriPathEncoding.encodePathSegment
 
 object AgentSubscriptionStub {
-  private def response(isSubscribedToAgentServices: Boolean) =
+  private def response(isSubscribedToAgentServices: Boolean, isSubscribedToETMP: Boolean) =
     s"""
        |{
        |  "taxpayerName": "My Agency",
-       |  "isSubscribedToAgentServices": $isSubscribedToAgentServices
+       |  "isSubscribedToAgentServices": $isSubscribedToAgentServices,
+       |  "isSubscribedToETMP": $isSubscribedToETMP
        |}""".stripMargin
 
-  private val noOrganisationNameResponse =
-    """
+  private def noOrganisationNameResponse(isSubscribedToAgentServices: Boolean, isSubscribedToETMP: Boolean) =
+    s"""
       |{
-      |  "isSubscribedToAgentServices": false
+      |  "isSubscribedToAgentServices": false,
+      |  "isSubscribedToETMP": $isSubscribedToETMP
+      |
       |}""".stripMargin
 
-  def withMatchingUtrAndPostcode(utr: Utr, postcode: String, isSubscribedToAgentServices: Boolean = false): Unit =
-    withMatchingUtrAndPostcodeAndBody(utr, postcode, response(isSubscribedToAgentServices))
+  def withMatchingUtrAndPostcode(utr: Utr, postcode: String, isSubscribedToAgentServices: Boolean = false, isSubscribedToETMP: Boolean = false): Unit =
+    withMatchingUtrAndPostcodeAndBody(utr, postcode, response(isSubscribedToAgentServices, isSubscribedToETMP))
 
-  def withNoOrganisationName(utr: Utr, postcode: String): Unit =
-    withMatchingUtrAndPostcodeAndBody(utr, postcode, noOrganisationNameResponse)
+  def withNoOrganisationName(utr: Utr, postcode: String,isSubscribedToAgentServices: Boolean = false, isSubscribedToETMP: Boolean = false): Unit =
+    withMatchingUtrAndPostcodeAndBody(utr, postcode, noOrganisationNameResponse(isSubscribedToAgentServices, isSubscribedToETMP))
 
   private def withMatchingUtrAndPostcodeAndBody(utr: Utr, postcode: String, responseBody: String): Unit =
     stubFor(
@@ -64,6 +67,25 @@ object AgentSubscriptionStub {
         s"/agent-subscription/registration/${encodePathSegment(utr.value)}/postcode/${encodePathSegment(postcode)}"))
         .willReturn(aResponse()
           .withStatus(Status.INTERNAL_SERVER_ERROR)))
+
+  def partialSubscriptionWillSucceed(request: CompletePartialSubscriptionBody, arn: String = "ARN00001"): Unit =
+    stubFor(
+      partialSubscriptionFixRequestFor(request)
+        .willReturn(
+          aResponse()
+            .withStatus(200)
+            .withBody(s"""
+                         |{
+                         |  "arn": "$arn"
+                         |}
+                     """.stripMargin)))
+
+  def partialSubscriptionWillReturnStatus(request: CompletePartialSubscriptionBody, responseCode: Int): Unit =
+    stubFor(
+      partialSubscriptionFixRequestFor(request)
+        .willReturn(
+          aResponse()
+            .withStatus(responseCode)))
 
   def subscriptionWillSucceed(utr: Utr, request: SubscriptionRequest, arn: String = "ARN00001"): Unit =
     stubFor(
@@ -124,6 +146,17 @@ object AgentSubscriptionStub {
                                       |    "telephone": "${agency.telephone}",
                                       |    "email": "${agency.email}"
                                       |  }
+                                      |}""".stripMargin))
+  }
+
+  private def partialSubscriptionFixRequestFor(request: CompletePartialSubscriptionBody) = {
+    put(urlEqualTo(s"/agent-subscription/subscription"))
+      .withRequestBody(equalToJson(s"""
+                                      |{
+                                      |  "utr": "${request.utr.value}",
+                                      |  "knownFacts": {
+                                      |    "postcode": "${request.knownFacts.postcode}"
+                                      |   }
                                       |}""".stripMargin))
   }
 }

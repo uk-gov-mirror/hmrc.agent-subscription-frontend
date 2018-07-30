@@ -21,20 +21,19 @@ import javax.inject.{Inject, Named, Singleton}
 
 import play.api.libs.json.JsValue
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{Registration, SubscriptionRequest}
-import uk.gov.hmrc.http.{HeaderCarrier, HttpGet, HttpPost}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{CompletePartialSubscriptionBody, Registration, SubscriptionRequest}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpGet, HttpPost, HttpPut}
 import uk.gov.hmrc.play.encoding.UriPathEncoding.encodePathSegment
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext.fromLoggingDetails
 import com.codahale.metrics.MetricRegistry
 import com.kenshoo.play.metrics.Metrics
 import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
-
 import scala.concurrent.Future
 
 @Singleton
 class AgentSubscriptionConnector @Inject()(
   @Named("agent-subscription-baseUrl") baseUrl: URL,
-  http: HttpGet with HttpPost,
+  http: HttpGet with HttpPost with HttpPut,
   metrics: Metrics)
     extends HttpAPIMonitor {
   override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
@@ -48,6 +47,13 @@ class AgentSubscriptionConnector @Inject()(
   def subscribeAgencyToMtd(subscriptionRequest: SubscriptionRequest)(implicit hc: HeaderCarrier): Future[Arn] =
     monitor(s"ConsumedAPI-Agent-Subscription-subscribeAgencyToMtd-POST") {
       http.POST[SubscriptionRequest, JsValue](subscriptionUrl.toString, subscriptionRequest) map { js =>
+        (js \ "arn").as[Arn]
+      }
+    }
+
+  def completePartialSubscription(details: CompletePartialSubscriptionBody)(implicit hc: HeaderCarrier): Future[Arn] =
+    monitor(s"ConsumedAPI-Agent-Subscription-completePartialAgencySubscriptionToMtd-PUT") {
+      http.PUT[CompletePartialSubscriptionBody, JsValue](subscriptionUrl.toString, details).map { js =>
         (js \ "arn").as[Arn]
       }
     }

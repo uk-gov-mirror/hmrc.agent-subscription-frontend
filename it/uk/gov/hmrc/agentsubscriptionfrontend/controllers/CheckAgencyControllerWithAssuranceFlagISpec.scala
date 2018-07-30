@@ -73,7 +73,7 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
     }
 
     "redirect to already subscribed page when the business registration found by agent-subscription is already subscribed" in {
-      withMatchingUtrAndPostcode(validUtr, validPostcode, isSubscribedToAgentServices = true)
+      withMatchingUtrAndPostcode(validUtr, validPostcode, isSubscribedToAgentServices = true, isSubscribedToETMP = true)
       givenUserIsAnAgentWithAnAcceptableNumberOfPAYEClients
       givenUserIsAnAgentWithAnAcceptableNumberOfSAClients
       givenRefusalToDealWithUtrIsNotForbidden(validUtr.value)
@@ -126,7 +126,7 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
 
     "redirect to already subscribed page when the business registration found by agent-subscription is already subscribed " +
       "for an agent without an acceptable number of PAYE clients" in {
-      withMatchingUtrAndPostcode(validUtr, validPostcode, isSubscribedToAgentServices = true)
+      withMatchingUtrAndPostcode(validUtr, validPostcode, isSubscribedToAgentServices = true, isSubscribedToETMP = true)
       givenUserIsNotAnAgentWithAnAcceptableNumberOfPAYEClients
       givenUserIsNotAnAgentWithAnAcceptableNumberOfSAClients
       givenRefusalToDealWithUtrIsNotForbidden(validUtr.value)

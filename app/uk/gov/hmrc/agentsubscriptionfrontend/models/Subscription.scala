@@ -38,3 +38,9 @@ case class SubscriptionRequest(utr: Utr, knownFacts: SubscriptionRequestKnownFac
 object SubscriptionRequest {
   implicit val format: Format[SubscriptionRequest] = Json.format[SubscriptionRequest]
 }
+
+case class CompletePartialSubscriptionBody(utr: Utr, knownFacts: SubscriptionRequestKnownFacts)
+
+object CompletePartialSubscriptionBody {
+  implicit val format: Format[CompletePartialSubscriptionBody] = Json.format[CompletePartialSubscriptionBody]
+}

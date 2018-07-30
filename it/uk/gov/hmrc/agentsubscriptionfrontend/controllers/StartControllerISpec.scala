@@ -7,12 +7,14 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{contentType, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
-import uk.gov.hmrc.agentsubscriptionfrontend.models.KnownFactsResult
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{CompletePartialSubscriptionBody, KnownFactsResult, SubscriptionRequestKnownFacts}
 import uk.gov.hmrc.agentsubscriptionfrontend.repository.KnownFactsResultMongoRepository
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.{individual, subscribingAgentEnrolledForHMRCASAGENT}
 import uk.gov.hmrc.play.binders.ContinueUrl
+import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub
+import uk.gov.hmrc.http.{Upstream4xxResponse, Upstream5xxResponse}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -110,10 +112,80 @@ class StartControllerISpec extends BaseISpec {
         KnownFactsResult(Utr("9876543210"), "AA11AA", "Test organisation name", isSubscribedToAgentServices = true)
       val persistedId = await(repo.create(knownFactsResult))
 
+      AgentSubscriptionStub.withMatchingUtrAndPostcode(knownFactsResult.utr, knownFactsResult.postcode, isSubscribedToAgentServices = false, isSubscribedToETMP = false)
+
       val result = await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(FakeRequest()))
 
       status(result) shouldBe 303
       redirectLocation(result).head should include(routes.SubscriptionController.showInitialDetails().url)
+    }
+
+    "redirect to SUBSCRIPTION COMPLETE if given a valid KnownFactsResult ID" in {
+      val knownFactsResult =
+        KnownFactsResult(Utr("9876543210"), "AA11AA", "Test organisation name", isSubscribedToAgentServices = true)
+      val persistedId = await(repo.create(knownFactsResult))
+
+      AgentSubscriptionStub.withMatchingUtrAndPostcode(knownFactsResult.utr, knownFactsResult.postcode, isSubscribedToAgentServices = false, isSubscribedToETMP = true)
+
+      AgentSubscriptionStub.partialSubscriptionWillSucceed(CompletePartialSubscriptionBody(utr = knownFactsResult.utr,
+        knownFacts = SubscriptionRequestKnownFacts(knownFactsResult.postcode)))
+
+      val result = await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(FakeRequest()))
+
+      status(result) shouldBe 303
+      redirectLocation(result).head should include(routes.SubscriptionController.showSubscriptionComplete().url)
+    }
+
+    "User should be fully subscribed, proceed and handle in showInitialDetails" in {
+      val knownFactsResult =
+        KnownFactsResult(Utr("9876543210"), "AA11AA", "Test organisation name", isSubscribedToAgentServices = true)
+      val persistedId = await(repo.create(knownFactsResult))
+
+      AgentSubscriptionStub.withMatchingUtrAndPostcode(knownFactsResult.utr, knownFactsResult.postcode, isSubscribedToAgentServices = true, isSubscribedToETMP = true)
+
+      val result = await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(FakeRequest()))
+
+      status(result) shouldBe 303
+      redirectLocation(result).head should include(routes.SubscriptionController.showInitialDetails().url)
+    }
+
+    "throw Upstream4xxResponse, 403 when executing partialSubscriptionFix" in {
+      val knownFactsResult =
+        KnownFactsResult(Utr("9876543210"), "AA11AA", "Test organisation name", isSubscribedToAgentServices = true)
+      val persistedId = await(repo.create(knownFactsResult))
+
+      AgentSubscriptionStub.withMatchingUtrAndPostcode(knownFactsResult.utr, knownFactsResult.postcode, isSubscribedToAgentServices = false, isSubscribedToETMP = true)
+
+      AgentSubscriptionStub.partialSubscriptionWillReturnStatus(CompletePartialSubscriptionBody(utr = knownFactsResult.utr,
+        knownFacts = SubscriptionRequestKnownFacts(knownFactsResult.postcode)), 403)
+
+      an[Upstream4xxResponse] shouldBe thrownBy(await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(FakeRequest())))
+    }
+
+    "throw Upstream4xxResponse, 409 when executing partialSubscriptionFix" in {
+      val knownFactsResult =
+        KnownFactsResult(Utr("9876543210"), "AA11AA", "Test organisation name", isSubscribedToAgentServices = true)
+      val persistedId = await(repo.create(knownFactsResult))
+
+      AgentSubscriptionStub.withMatchingUtrAndPostcode(knownFactsResult.utr, knownFactsResult.postcode, isSubscribedToAgentServices = false, isSubscribedToETMP = true)
+
+      AgentSubscriptionStub.partialSubscriptionWillReturnStatus(CompletePartialSubscriptionBody(utr = knownFactsResult.utr,
+        knownFacts = SubscriptionRequestKnownFacts(knownFactsResult.postcode)), 409)
+
+      an[Upstream4xxResponse] shouldBe thrownBy(await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(FakeRequest())))
+    }
+
+    "throw Upstream5xxResponse, 500 when executing partialSubscriptionFix" in {
+      val knownFactsResult =
+        KnownFactsResult(Utr("9876543210"), "AA11AA", "Test organisation name", isSubscribedToAgentServices = true)
+      val persistedId = await(repo.create(knownFactsResult))
+
+      AgentSubscriptionStub.withMatchingUtrAndPostcode(knownFactsResult.utr, knownFactsResult.postcode, isSubscribedToAgentServices = false, isSubscribedToETMP = true)
+
+      AgentSubscriptionStub.partialSubscriptionWillReturnStatus(CompletePartialSubscriptionBody(utr = knownFactsResult.utr,
+        knownFacts = SubscriptionRequestKnownFacts(knownFactsResult.postcode)), 500)
+
+      an[Upstream5xxResponse] shouldBe thrownBy(await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(FakeRequest())))
     }
 
     "redirect to the /check-business-type page if given an invalid KnownFactsResult ID" in {
