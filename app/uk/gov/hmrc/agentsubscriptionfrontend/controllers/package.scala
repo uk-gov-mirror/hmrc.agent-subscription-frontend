@@ -17,12 +17,12 @@
 package uk.gov.hmrc.agentsubscriptionfrontend
 
 import play.api.data.Forms._
-import play.api.data.{Form, FormError, Mapping}
+import play.api.data.{FormError, Mapping}
 import play.api.data.format.Formatter
 import play.api.data.validation.{Constraint, Constraints, _}
-import play.api.i18n.Messages
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.blacklistedpostcodes.PostcodesLoader
+import uk.gov.hmrc.domain.Nino
 
 package object controllers {
   object FieldMappings {
@@ -167,6 +167,22 @@ package object controllers {
 
     def utr: Mapping[String] = text verifying utrConstraint
 
+    def normalizeNino(ninoStr: String): Option[Nino] = {
+      val formattedNino = ninoStr.replaceAll("\\s", "")
+      if (Nino.isValid(formattedNino)) Some(Nino(formattedNino)) else None
+    }
+
+    private val ninoConstraint: Constraint[String] = Constraint[String] { fieldValue: String =>
+      val formattedField = fieldValue.replaceAll("\\s", "")
+
+      Nino.isValid(formattedField) match {
+        case true  => Valid
+        case false => Invalid(ValidationError("error.nino.invalid"))
+      }
+    }
+
+    def nino: Mapping[String] = text verifying ninoConstraint
+
     def postcode: Mapping[String] =
       of[String](stringFormatWithMessage("error.postcode.empty")) verifying nonEmptyPostcode
 
@@ -215,5 +231,4 @@ package object controllers {
     def nonEmptyTextWithMsg(errorMessageKey: String): Mapping[String] =
       text verifying nonEmptyWithMessage(errorMessageKey)
   }
-
 }

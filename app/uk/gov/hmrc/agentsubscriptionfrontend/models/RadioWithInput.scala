@@ -18,18 +18,35 @@ package uk.gov.hmrc.agentsubscriptionfrontend.models
 
 import play.api.data.Form
 import play.api.data.Forms._
-import uk.gov.hmrc.agentsubscriptionfrontend.controllers.FieldMappings.radioInputSelected
+import uk.gov.hmrc.agentsubscriptionfrontend.controllers.FieldMappings.{nino, radioInputSelected, saAgentCode, utr}
+import uk.gov.voa.play.form.ConditionalMappings.{mandatoryIfEqual, mandatoryIfTrue}
 
-case class RadioWithInput(
-  value: Option[Boolean],
-  messageOfTrueRadioChoice: Option[String],
-  messageOfFalseRadioChoice: Option[String])
+case class RadioInvasiveStartSaAgentCode(hasSaAgentCode: Option[Boolean], saAgentCode: Option[String])
+case class RadioInvasiveTaxPayerOption(variant: Option[String], utr: Option[String], nino: Option[String])
+
+object ValidVariantsTaxPayerOptionForm extends Enumeration {
+  type ValidVariantsTaxPayerOptionForm = String
+  val UtrV = Value("utr")
+  val NinoV = Value("nino")
+  val CannotProvideV = Value("cannotProvide")
+}
 
 object RadioWithInput {
-  val confirmResponseForm: Form[RadioWithInput] = Form[RadioWithInput](
+  //uses variant "cannotProvide" to determine action if user cannot provide allowed options: utr or nino
+  val invasiveCheckTaxPayerOption: Form[RadioInvasiveTaxPayerOption] = Form[RadioInvasiveTaxPayerOption](
     mapping(
-      "confirmResponse"                    -> optional(boolean).verifying(radioInputSelected),
-      "confirmResponse-true-hidden-input"  -> optional(text),
-      "confirmResponse-false-hidden-input" -> optional(text)
-    )(RadioWithInput.apply)(RadioWithInput.unapply))
+      "variant" -> optional(text).verifying(radioInputSelected),
+      "utr"     -> mandatoryIfEqual("variant", "utr", utr),
+      "nino"    -> mandatoryIfEqual("variant", "nino", nino)
+    )(RadioInvasiveTaxPayerOption.apply)(RadioInvasiveTaxPayerOption.unapply).verifying(
+      "error.radio-variant.invalid",
+      submittedTaxPayerOption =>
+        ValidVariantsTaxPayerOptionForm.values.exists(_.toString == submittedTaxPayerOption.variant.getOrElse(""))
+    ))
+
+  val invasiveCheckStartSaAgentCode: Form[RadioInvasiveStartSaAgentCode] = Form[RadioInvasiveStartSaAgentCode](
+    mapping(
+      "hasSaAgentCode" -> optional(boolean).verifying(radioInputSelected),
+      "saAgentCode"    -> mandatoryIfTrue("hasSaAgentCode", saAgentCode)
+    )(RadioInvasiveStartSaAgentCode.apply)(RadioInvasiveStartSaAgentCode.unapply))
 }

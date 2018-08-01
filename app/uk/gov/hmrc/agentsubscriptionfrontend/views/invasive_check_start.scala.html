@@ -15,42 +15,42 @@
  *@
 
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-@import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioWithInput
+@import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInvasiveStartSaAgentCode
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
 @import uk.gov.hmrc.play.views.html.helpers.{form, errorSummary}
 
-@(confirmResponseForm: Form[RadioWithInput])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+@(radioResponseForm: Form[RadioInvasiveStartSaAgentCode])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title =  error_prefix(confirmResponseForm) + Messages("invasive.title.saCode"), bodyClasses = None) {
+@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title =  error_prefix(radioResponseForm) + Messages("invasive.title.saCode"), bodyClasses = None) {
 
-    @if(confirmResponseForm.hasErrors) {
-        @errorSummary(Messages("error.summary.heading"), confirmResponseForm, Seq.empty, Some("confirmResponseSomethingTrackingGGA"))
+    @if(radioResponseForm.hasErrors) {
+        @errorSummary(Messages("error.summary.heading"), radioResponseForm, Seq.empty, Some("confirmResponseSomethingTrackingGGA"))
     }
 
 
     @form(action = routes.CheckAgencyController.invasiveSaAgentCodePost(), 'class -> "form js-form") {
-        <div class="form-group @if(confirmResponseForm.error("confirmResponse").isDefined){form-group-error}" id="confirmResponse">
+        <div class="form-group @if(radioResponseForm.error("hasSaAgentCode").isDefined){form-group-error}" id="radioResponse">
             <fieldset>
                 <legend>
-                    <h1 class="heading-large  @if(confirmResponseForm.hasErrors){push--top}">@Messages("invasive.title.saCode")</h1>
-                    @if(confirmResponseForm.error("confirmResponse").isDefined){
+                    <h1 class="heading-large  @if(radioResponseForm.hasErrors){push--top}">@Messages("invasive.title.saCode")</h1>
+                    @if(radioResponseForm.error("hasSaAgentCode").isDefined){
                         <span class="error-message">@Messages("error.no-radio-selected")</span>
                     }
                 </legend>
 
-                <div class="multiple-choice" data-target="saAgentCode">
-                    <input id="confirmResponse-true" type="radio" name="confirmResponse" value="true" @if(confirmResponseForm.error("confirmResponse-true-hidden-input").isDefined){checked}>
-                    <label for="confirmResponse-true">@Messages("invasive.confirmResponse.true.yes")</label>
+                <div class="multiple-choice" data-target="hasSaAgentCode">
+                    <input id="hasSaAgentCode_true" type="radio" name="hasSaAgentCode" value="true" @if(radioResponseForm.error("saAgentCode").isDefined){checked}>
+                    <label for="hasSaAgentCode_true">@Messages("invasive.radioResponse.yes")</label>
                 </div>
-                <div class="panel panel-border-narrow js-hidden @if(confirmResponseForm.error("confirmResponse-true-hidden-input").isDefined){form-group-error}" id="saAgentCode">
-                    <label class="form-label" for="confirmResponse-true-hidden-input">@Messages("confirmResponse.true.hidden.input.label.sa")</label>
-                    @confirmResponseForm.error("confirmResponse-true-hidden-input").map { formError => <span class="error-message">@Messages(formError.message)</span> }
-                    <input class="form-control @if(confirmResponseForm.error("confirmResponse-true-hidden-input").isDefined){form-control-error}" name="confirmResponse-true-hidden-input" type="text" id="confirmResponse-true-hidden-input">
+                <div class="panel panel-border-narrow js-hidden @if(radioResponseForm.error("saAgentCode").isDefined){form-group-error}" id="hasSaAgentCode">
+                    <label class="form-label" for="saAgentCode">@Messages("radioResponse.hidden.input.label.sa")</label>
+                    @radioResponseForm.error("saAgentCode").map { formError => <span class="error-message">@Messages(formError.message)</span> }
+                    <input class="form-control @if(radioResponseForm.error("saAgentCode").isDefined){form-control-error}" name="saAgentCode" type="text" id="saAgentCode">
                 </div>
 
                 <div class="multiple-choice">
-                    <input id="confirmResponse-false" type="radio" name="confirmResponse" value="false">
-                    <label for="confirmResponse-false">@Messages("invasive.confirmResponse.false.no")</label>
+                    <input id="hasSaAgentCode_false" type="radio" name="hasSaAgentCode" value="false">
+                    <label for="hasSaAgentCode_false">@Messages("invasive.radioResponse.no")</label>
                 </div>
             </fieldset>
         </div>

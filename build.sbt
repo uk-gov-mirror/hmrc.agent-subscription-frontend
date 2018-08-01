@@ -25,6 +25,7 @@ lazy val compileDeps = Seq(
   "uk.gov.hmrc" %% "agent-mtd-identifiers" % "0.10.0",
   "uk.gov.hmrc" %% "play-reactivemongo" % "6.2.0",
   "uk.gov.hmrc" %% "http-caching-client" % "7.1.0",
+  "uk.gov.hmrc" %% "play-conditional-form-mapping" % "0.2.0",
   "de.threedimensions" %% "metrics-play" % "2.5.13",
   "org.typelevel" %% "cats" % "0.9.0"
 )

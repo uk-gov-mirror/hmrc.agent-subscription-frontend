@@ -20,7 +20,7 @@ import javax.inject.{Inject, Singleton}
 
 import com.kenshoo.play.metrics.Metrics
 import play.api.Logger
-import play.api.data.{Form, FormError}
+import play.api.data.Form
 import play.api.data.Forms.mapping
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{AnyContent, Request, _}
@@ -37,10 +37,11 @@ import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{invasive_check_start, invasive_input_option}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
-import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, InternalServerException}
+import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier}
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 import play.api.data.Forms._
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent.hasNonEmptyEnrolments
+import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidVariantsTaxPayerOptionForm._
 
 import scala.concurrent.Future
 
@@ -225,41 +226,35 @@ class CheckAgencyController @Inject()(
 
   def invasiveCheckStart: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      Future.successful(Ok(invasive_check_start(RadioWithInput.confirmResponseForm)))
+      Future.successful(Ok(invasive_check_start(RadioWithInput.invasiveCheckStartSaAgentCode)))
     }
   }
 
   def invasiveSaAgentCodePost: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      RadioWithInput.confirmResponseForm
+      RadioWithInput.invasiveCheckStartSaAgentCode
         .bindFromRequest()
         .fold(
           formWithErrors => {
             Future.successful(Ok(invasive_check_start(formWithErrors)))
           },
           correctForm => {
-            if (correctForm.value.getOrElse(false)) {
-              val saAgentReference = correctForm.messageOfTrueRadioChoice.getOrElse("")
-
-              val validationResult = FieldMappings.saAgentCode
-                .withPrefix("confirmResponse-true-hidden-input")
-                .bind(Map("confirmResponse-true-hidden-input" -> saAgentReference.replace(" ", "")))
-
-              validationResult match {
-                case Right(code) =>
-                  Future.successful(Redirect(routes.CheckAgencyController.invasiveTaxPayerOptionGet())
-                    .withSession(request.session + ("saAgentReferenceToCheck" -> code)))
-                case Left(formErrors) =>
-                  formErrors.headOption
-                    .map(error =>
-                      Future.successful(Ok(invasive_check_start(RadioWithInput.confirmResponseForm.withError(error)))))
-                    .getOrElse(
-                      throw new InternalServerException("SaAgentCode form validation returned empty errors object"))
+            correctForm.hasSaAgentCode
+              .map {
+                case true => {
+                  val saAgentCode = correctForm.saAgentCode
+                    .getOrElse(throw new IllegalStateException(
+                      "Form validation should enforce saAgentCode is always defined if hasSaAgentCode is true"))
+                  Future successful Redirect(routes.CheckAgencyController.invasiveTaxPayerOptionGet())
+                    .withSession(request.session + ("saAgentReferenceToCheck" -> saAgentCode))
+                }
+                case false => {
+                  mark("Count-Subscription-InvasiveCheck-Declined")
+                  Future successful Redirect(routes.StartController.setupIncomplete())
+                }
               }
-            } else {
-              mark("Count-Subscription-InvasiveCheck-Declined")
-              Future.successful(Redirect(routes.StartController.setupIncomplete()))
-            }
+              .getOrElse(throw new IllegalStateException(
+                "InvasiveCheck invasiveCheckStartSaAgentCode.hasSaAgentCode should always be defined"))
           }
         )
     }
@@ -267,50 +262,33 @@ class CheckAgencyController @Inject()(
 
   def invasiveTaxPayerOptionGet: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      Future.successful(Ok(invasive_input_option(RadioWithInput.confirmResponseForm)))
+      Future.successful(Ok(invasive_input_option(RadioWithInput.invasiveCheckTaxPayerOption)))
     }
   }
 
   def invasiveTaxPayerOption: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { implicit agent =>
-      RadioWithInput.confirmResponseForm
+      RadioWithInput.invasiveCheckTaxPayerOption
         .bindFromRequest()
         .fold(
           formWithErrors => {
-            Future.successful(Ok(invasive_input_option(formWithErrors)))
+            if (formWithErrors.errors.exists(_.message == "error.radio-variant.invalid")) {
+              Logger.warn("Selected invasive tax payer form variant was invalid")
+              throw new BadRequestException("submitted form value did not contain valid tax payer option form variant")
+            }
+            Future successful Ok(invasive_input_option(formWithErrors))
           },
           correctForm => {
-            val trueIsNinoFalseIsUtr = correctForm.value.getOrElse(false)
+            val retrievedVariant = correctForm.variant
+              .getOrElse(throw new IllegalStateException(
+                "Form validation should return error when submitting unavailable variant"))
 
-            val validatedIdentifier = if (trueIsNinoFalseIsUtr) {
-              val id = correctForm.messageOfTrueRadioChoice.getOrElse("")
-              Nino.isValid(id) match {
-                case true  => Right(id)
-                case false => Left(Seq(FormError("confirmResponse-true-hidden-input", "error.nino.invalid")))
-              }
-            } else {
-              val utrStr = correctForm.messageOfFalseRadioChoice.getOrElse("")
-              FieldMappings.utr
-                .withPrefix("confirmResponse-false-hidden-input")
-                .bind(Map("confirmResponse-false-hidden-input" -> utrStr))
-            }
-
-            validatedIdentifier match {
-              case Left(seqErrors) =>
-                Future.successful(
-                  Ok(invasive_input_option(RadioWithInput.confirmResponseForm.withError(seqErrors.headOption
-                    .getOrElse(throw new InternalServerException("could not provide the user with errors found"))))))
-              case Right(identifier) => {
-                val (taxIdentifier, taxIdentifierName) =
-                  if (trueIsNinoFalseIsUtr) (Nino(identifier), "nino")
-                  else
-                    (
-                      FieldMappings
-                        .normalizeUtr(identifier)
-                        .getOrElse(
-                          throw new InternalServerException("Utr passed validation but failed the normalize method")),
-                      "utr")
-                checkAndRedirect(taxIdentifier, taxIdentifierName)
+            ValidVariantsTaxPayerOptionForm.withName(retrievedVariant) match {
+              case UtrV  => checkAndRedirect(FieldMappings.normalizeUtr(correctForm.utr.get).get, "utr")
+              case NinoV => checkAndRedirect(FieldMappings.normalizeNino(correctForm.nino.get).get, "nino")
+              case CannotProvideV => {
+                mark("Count-Subscription-InvasiveCheck-Could-Not-Provide-Tax-Payer-Identifier")
+                Future successful Redirect(routes.StartController.setupIncomplete())
               }
             }
           }

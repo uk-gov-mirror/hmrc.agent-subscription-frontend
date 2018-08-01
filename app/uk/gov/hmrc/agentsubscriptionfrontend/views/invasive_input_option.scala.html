@@ -15,45 +15,49 @@
  *@
 
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-@import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioWithInput
+@import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInvasiveTaxPayerOption
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
 @import uk.gov.hmrc.play.views.html.helpers.{form,errorSummary}
 
-@(confirmResponseForm: Form[RadioWithInput])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+@(radioResponseForm: Form[RadioInvasiveTaxPayerOption])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = error_prefix(confirmResponseForm) + Messages("invasive.title.option"), bodyClasses = None) {
+@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = error_prefix(radioResponseForm) + Messages("invasive.title.option"), bodyClasses = None) {
 
-    @if(confirmResponseForm.hasErrors) {
-        @errorSummary(Messages("error.summary.heading"),confirmResponseForm, Seq.empty, Some("confirmResponseSomethingTrackingGGA"))
+    @if(radioResponseForm.hasErrors) {
+        @errorSummary(Messages("error.summary.heading"),radioResponseForm, Seq.empty, Some("confirmResponseSomethingTrackingGGA"))
     }
 
     @form(action = routes.CheckAgencyController.invasiveTaxPayerOption(), 'class -> "form js-form") {
-        <div class="form-group @if(confirmResponseForm.error("confirmResponse").isDefined){form-group-error}" id="confirmResponse">
+        <div class="form-group @if(radioResponseForm.error("variant").isDefined){form-group-error}" id="radioResponse">
             <fieldset>
                 <legend>
-                    <h1 class="heading-large @if(confirmResponseForm.hasErrors){push--top}">@Messages("invasive.title.option")</h1>
+                    <h1 class="heading-large @if(radioResponseForm.hasErrors){push--top}">@Messages("invasive.title.option")</h1>
                     <p>@Messages("invasive.p1")</p>
-                    @if(confirmResponseForm.error("confirmResponse").isDefined){
+                    @if(radioResponseForm.error("variant").isDefined){
                         <span class="error-message">@Messages("error.no-radio-selected")</span>
                     }
                 </legend>
                 <div class="multiple-choice" data-target="ninoRadioInput">
-                    <input id="confirmResponse-true" type="radio" name="confirmResponse" value="true" @if(confirmResponseForm.error("confirmResponse-true-hidden-input").isDefined){checked} >
-                    <label for="confirmResponse-true">@Messages("invasive.confirmResponse.true.nino")</label>
+                    <input id="variant_nino" type="radio" name="variant" value="nino" @if(radioResponseForm.error("nino").isDefined){checked} >
+                    <label for="variant_nino">@Messages("invasive.radioResponse.nino")</label>
                 </div>
-                <div class="panel panel-border-narrow js-hidden @if(confirmResponseForm.error("confirmResponse-true-hidden-input").isDefined){form-group-error}" id="ninoRadioInput">
-                    <label class="form-label" for="confirmResponse-true-hidden-input">@Messages("confirmResponse.true.hidden.input.label.nino")</label>
-                    @if(confirmResponseForm.error("confirmResponse-true-hidden-input").isDefined){<span class="error-message">@Messages("error.nino.invalid")</span>}
-                    <input class="form-control @if(confirmResponseForm.error("confirmResponse-true-hidden-input").isDefined){form-control-error}" name="confirmResponse-true-hidden-input" type="text" id="confirmResponse-true-hidden-input">
+                <div class="panel panel-border-narrow js-hidden @if(radioResponseForm.error("utr").isDefined){form-group-error}" id="ninoRadioInput">
+                    <label class="form-label" for="nino">@Messages("radioResponse.hidden.input.label.nino")</label>
+                    @if(radioResponseForm.error("nino").isDefined){<span class="error-message">@Messages("error.nino.invalid")</span>}
+                    <input class="form-control @if(radioResponseForm.error("nino").isDefined){form-control-error}" name="nino" type="text" id="nino">
                 </div>
                 <div class="multiple-choice" data-target="utrRadioInput">
-                    <input id="confirmResponse-false" type="radio" name="confirmResponse" value="false" @if(confirmResponseForm.error("confirmResponse-false-hidden-input").isDefined){checked} >
-                    <label for="confirmResponse-false">@Messages("invasive.confirmResponse.true.utr")</label>
+                    <input id="variant_utr" type="radio" name="variant" value="utr" @if(radioResponseForm.error("utr").isDefined){checked} >
+                    <label for="variant_utr">@Messages("invasive.radioResponse.utr")</label>
                 </div>
-                <div class="panel panel-border-narrow js-hidden @if(confirmResponseForm.error("confirmResponse-false-hidden-input").isDefined){form-group-error}" id="utrRadioInput">
-                    <label class="form-label" for="confirmResponse-false-hidden-input">@Messages("confirmResponse.false.hidden.input.label.utr")</label>
-                    @if(confirmResponseForm.error("confirmResponse-false-hidden-input").isDefined){<span class="error-message">@Messages(confirmResponseForm.errors.head.message)</span>}
-                    <input class="form-control @if(confirmResponseForm.error("confirmResponse-false-hidden-input").isDefined){form-control-error}" name="confirmResponse-false-hidden-input" type="text" id="confirmResponse-false-hidden-input">
+                <div class="panel panel-border-narrow js-hidden @if(radioResponseForm.error("utr").isDefined){form-group-error}" id="utrRadioInput">
+                    <label class="form-label" for="utr">@Messages("invasive.radioResponse.hidden.input.label.utr")</label>
+                    @if(radioResponseForm.error("utr").isDefined){<span class="error-message">@Messages(radioResponseForm.errors.head.message)</span>}
+                    <input class="form-control @if(radioResponseForm.error("utr").isDefined){form-control-error}" name="utr" type="text" id="utr">
+                </div>
+                <div class="multiple-choice">
+                    <input id="variant_cannotProvide" type="radio" name="variant" value="cannotProvide">
+                    <label for="variant_cannotProvide">@Messages("invasive.radioResponse.cannotProvide")</label>
                 </div>
             </fieldset>
         </div>

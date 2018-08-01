@@ -40,6 +40,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
   val postcode = "AA11AA"
   val registrationName = "My Agency"
 
+
   def agentAssuranceRun: Boolean
 
   def agentAssurancePayeCheck: Boolean
@@ -477,11 +478,16 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
   }
 
   "invasive check" should {
+    "return 200 and redisplay the invasiveSaAgentCodePost page with an error message for missing radio choice" in {
+      val result = await(controller.invasiveSaAgentCodePost(authenticatedAs(subscribingCleanAgentWithoutEnrolments)))
+      checkHtmlResultWithBodyText(result, htmlEscapedMessage("error.no-radio-selected"))
+    }
+
     "start invasiveCheck if selected Yes with SaAgentCode reference inputted" in {
 
       val result = await(
         controller.invasiveSaAgentCodePost(authenticatedAs(subscribingCleanAgentWithoutEnrolments)
-          .withFormUrlEncodedBody(("confirmResponse", "true"), ("confirmResponse-true-hidden-input", "SA6012"))))
+          .withFormUrlEncodedBody(("hasSaAgentCode", "true"), ("saAgentCode", "SA6012"))))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.CheckAgencyController.invasiveTaxPayerOptionGet().url)
@@ -492,7 +498,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
 
       val result = await(
         controller.invasiveSaAgentCodePost(authenticatedAs(subscribingCleanAgentWithoutEnrolments)
-          .withFormUrlEncodedBody(("confirmResponse", "false"))))
+          .withFormUrlEncodedBody(("hasSaAgentCode", "false"))))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.StartController.setupIncomplete().url)
@@ -503,7 +509,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
 
       val result = await(
         controller.invasiveSaAgentCodePost(authenticatedAs(subscribingCleanAgentWithoutEnrolments)
-          .withFormUrlEncodedBody(("confirmResponse", "true"), ("confirmResponse-true-hidden-input", "SA601*2AAAA"))))
+          .withFormUrlEncodedBody(("hasSaAgentCode", "true"), ("saAgentCode", "SA601*2AAAA"))))
 
       status(result) shouldBe 200
       checkHtmlResultWithBodyText(result, htmlEscapedMessage("error.saAgentCode.invalid"))
@@ -514,7 +520,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
 
       val result = await(
         controller.invasiveSaAgentCodePost(authenticatedAs(subscribingCleanAgentWithoutEnrolments)
-          .withFormUrlEncodedBody(("confirmResponse", "true"), ("confirmResponse-true-hidden-input", "SA6012AAAA"))))
+          .withFormUrlEncodedBody(("hasSaAgentCode", "true"), ("saAgentCode", "SA6012AAAA"))))
 
       status(result) shouldBe 200
       checkHtmlResultWithBodyText(result, htmlEscapedMessage("error.saAgentCode.length"))
@@ -525,7 +531,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
 
       val result = await(
         controller.invasiveSaAgentCodePost(authenticatedAs(subscribingCleanAgentWithoutEnrolments)
-          .withFormUrlEncodedBody(("confirmResponse", "true"), ("confirmResponse-true-hidden-input", "SA"))))
+          .withFormUrlEncodedBody(("hasSaAgentCode", "true"), ("saAgentCode", "SA"))))
 
       status(result) shouldBe 200
       checkHtmlResultWithBodyText(result, htmlEscapedMessage("error.saAgentCode.length"))
@@ -536,7 +542,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
 
       val result = await(
         controller.invasiveSaAgentCodePost(authenticatedAs(subscribingCleanAgentWithoutEnrolments)
-          .withFormUrlEncodedBody(("confirmResponse", "true"), ("confirmResponse-true-hidden-input", ""))))
+          .withFormUrlEncodedBody(("hasSaAgentCode", "true"), ("saAgentCode", ""))))
 
       status(result) shouldBe 200
       checkHtmlResultWithBodyText(result, htmlEscapedMessage("error.saAgentCode.blank"))
@@ -557,7 +563,31 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
       val result = await(
         controller.invasiveTaxPayerOption(
           request
-            .withFormUrlEncodedBody(("confirmResponse", "true"), ("confirmResponse-true-hidden-input", "AA123456A"))
+            .withFormUrlEncodedBody(("variant", "nino"), ("nino", "AA123456A"))
+            .withSession("saAgentReferenceToCheck" -> "SA6012")))
+
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showConfirmYourAgency().url)
+
+      verifyAgentAssuranceAuditRequestSentWithClientIdentifier(Nino("AA123456A"), true, "SA6012", agentAssurancePayeCheck)
+      metricShouldExistsAndBeenUpdated("Count-Subscription-InvasiveCheck-Success")
+    }
+
+    "redirect to confirm your agency when successfully submitting nino WITH RANDOM SPACES IN" in {
+      givenNinoAGoodCombinationAndUserHasRelationshipInCesa("nino", "AA123456A", "SA6012")
+
+      implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+      sessionStoreService.currentSession.knownFactsResult = Some(
+        KnownFactsResult(
+          utr = validUtr,
+          postcode = validPostcode,
+          taxpayerName = "My Agency",
+          isSubscribedToAgentServices = false))
+
+      val result = await(
+        controller.invasiveTaxPayerOption(
+          request
+            .withFormUrlEncodedBody(("variant", "nino"), ("nino", "AA1   2 3 4 5 6        A "))
             .withSession("saAgentReferenceToCheck" -> "SA6012")))
 
       status(result) shouldBe 303
@@ -579,7 +609,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
           isSubscribedToAgentServices = false))
 
       val result = await(controller.invasiveTaxPayerOption(request
-        .withFormUrlEncodedBody(("confirmResponse", "true"), ("confirmResponse-true-hidden-input", "AA123456A"))))
+        .withFormUrlEncodedBody(("variant", "nino"), ("nino", "AA123456A"))))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.CheckAgencyController.invasiveCheckStart().url)
@@ -599,7 +629,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
       val result = await(
         controller.invasiveTaxPayerOption(
           request
-            .withFormUrlEncodedBody(("confirmResponse", "true"), ("confirmResponse-true-hidden-input", "AA123456A"))
+            .withFormUrlEncodedBody(("variant", "nino"), ("nino", "AA123456A"))
             .withSession("saAgentReferenceToCheck" -> "SA6012")))
 
       status(result) shouldBe 303
@@ -613,7 +643,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
 
       val result = await(
         controller.invasiveTaxPayerOption(authenticatedAs(subscribingCleanAgentWithoutEnrolments)
-          .withFormUrlEncodedBody(("confirmResponse", "true"), ("confirmResponse-true-hidden-input", "AA123"))))
+          .withFormUrlEncodedBody(("variant", "nino"), ("nino", "AA123"))))
 
       status(result) shouldBe 200
     }
@@ -632,7 +662,31 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
       val result = await(
         controller.invasiveTaxPayerOption(
           request
-            .withFormUrlEncodedBody(("confirmResponse", "false"), ("confirmResponse-false-hidden-input", "4000000009"))
+            .withFormUrlEncodedBody(("variant", "utr"), ("utr", "4000000009"))
+            .withSession("saAgentReferenceToCheck" -> "SA6012")))
+
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showConfirmYourAgency().url)
+
+      verifyAgentAssuranceAuditRequestSentWithClientIdentifier(Utr("4000000009"), true, "SA6012", agentAssurancePayeCheck)
+      metricShouldExistsAndBeenUpdated("Count-Subscription-InvasiveCheck-Success")
+    }
+
+    "redirect to confirm your agency when successfully submitting UTR with random spaces" in {
+      givenUtrAGoodCombinationAndUserHasRelationshipInCesa("utr", "4000000009", "SA6012")
+
+      implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+      sessionStoreService.currentSession.knownFactsResult = Some(
+        KnownFactsResult(
+          utr = validUtr,
+          postcode = validPostcode,
+          taxpayerName = "My Agency",
+          isSubscribedToAgentServices = false))
+
+      val result = await(
+        controller.invasiveTaxPayerOption(
+          request
+            .withFormUrlEncodedBody(("variant", "utr"), ("utr", "   40000      00     009  "))
             .withSession("saAgentReferenceToCheck" -> "SA6012")))
 
       status(result) shouldBe 303
@@ -656,7 +710,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
       val result = await(
         controller.invasiveTaxPayerOption(
           request
-            .withFormUrlEncodedBody(("confirmResponse", "false"), ("confirmResponse-false-hidden-input", "4000000009"))
+            .withFormUrlEncodedBody(("variant", "utr"), ("utr", "4000000009"))
             .withSession("saAgentReferenceToCheck" -> "SA6012")))
 
       status(result) shouldBe 303
@@ -671,7 +725,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
       val result = await(
         controller.invasiveTaxPayerOption(
           authenticatedAs(subscribingCleanAgentWithoutEnrolments)
-            .withFormUrlEncodedBody(("confirmResponse", "false"), ("confirmResponse-false-hidden-input", ""))
+            .withFormUrlEncodedBody(("variant", "utr"), ("utr", ""))
             .withSession("saAgentReferenceToCheck" -> "SA6012")))
 
       status(result) shouldBe 200
@@ -682,7 +736,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
       val result = await(
         controller.invasiveTaxPayerOption(
           authenticatedAs(subscribingCleanAgentWithoutEnrolments)
-            .withFormUrlEncodedBody(("confirmResponse", "false"), ("confirmResponse-false-hidden-input", "4ABC000009"))
+            .withFormUrlEncodedBody(("variant", "utr"), ("utr", "4ABC000009"))
             .withSession("saAgentReferenceToCheck" -> "SA6012")))
 
       status(result) shouldBe 200
@@ -693,11 +747,33 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
       val result = await(
         controller.invasiveTaxPayerOption(
           authenticatedAs(subscribingCleanAgentWithoutEnrolments)
-            .withFormUrlEncodedBody(("confirmResponse", "false"), ("confirmResponse-false-hidden-input", "40000000090000000"))
+            .withFormUrlEncodedBody(("variant", "utr"), ("utr", "40000000090000000"))
             .withSession("saAgentReferenceToCheck" -> "SA6012")))
 
       status(result) shouldBe 200
       bodyOf(result) should include(htmlEscapedMessage("error.utr.invalid.length"))
+    }
+
+    "Invalid form 'variant' cannot determine which option user selected  " in {
+      an[BadRequestException] shouldBe thrownBy(await(
+        controller.invasiveTaxPayerOption(
+          authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+            .withFormUrlEncodedBody(("variant", "someInvalidVariant"), ("utr", "4000000009"))
+            .withSession("saAgentReferenceToCheck" -> "SA6012"))))
+    }
+
+    "redirect to setUpIncomplete when successfully selecting ICannotProvideEitherOfTheseDetails" in {
+      givenUtrAGoodCombinationAndUserHasRelationshipInCesa("utr", "4000000009", "SA6012")
+
+      val result = await(
+        controller.invasiveTaxPayerOption(authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+            .withFormUrlEncodedBody(("variant", "cannotProvide"))
+            .withSession("saAgentReferenceToCheck" -> "SA6012")))
+
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.StartController.setupIncomplete.url)
+
+      metricShouldExistsAndBeenUpdated("Count-Subscription-InvasiveCheck-Could-Not-Provide-Tax-Payer-Identifier")
     }
 
     "return 200 error when submitting without selected radio option" in {
