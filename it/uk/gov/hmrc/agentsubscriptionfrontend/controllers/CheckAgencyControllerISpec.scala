@@ -30,6 +30,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser._
 import uk.gov.hmrc.domain.{Nino, TaxIdentifier}
 import uk.gov.hmrc.http.{BadRequestException, Upstream4xxResponse, Upstream5xxResponse}
+import uk.gov.hmrc.play.HeaderCarrierConverter
 
 trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
   val validUtr = Utr("2000000000")
@@ -302,6 +303,11 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.checkAgencyStatus(Some(CheckAgencyController.validBusinessTypes.head))(request))
       redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showHasOtherEnrolments().url)
+
+      implicit val hc = HeaderCarrierConverter.fromHeadersAndSession(request.headers, Some(request.session))
+      import scala.concurrent.ExecutionContext.Implicits.global
+
+      await(sessionStoreService.fetchKnownFactsResult) shouldBe Some(KnownFactsResult(Utr("2000000000"), "AA1 1AA", "My Agency", isSubscribedToAgentServices = false))
     }
 
     "Upstream4xxResponse partialSubscriptionFix failed with 403" in {

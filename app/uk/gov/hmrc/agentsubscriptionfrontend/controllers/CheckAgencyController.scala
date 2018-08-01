@@ -162,15 +162,24 @@ class CheckAgencyController @Inject()(
           registrationDetails.taxpayerName.get,
           registrationDetails.isSubscribedToAgentServices,
           knownFacts)
-      case SubscriptionProcess(SubscriptionState.SubscribedAndNotEnrolled, Some(_)) =>
-        withCleanCreds {
-          subscriptionService
-            .completePartialSubscription(knownFacts.utr, knownFacts.postcode)
-            .map { arn =>
-              mark("Count-Subscription-PartialSubscriptionCompleted")
-              Redirect(routes.SubscriptionController.showSubscriptionComplete()).flashing("arn" -> arn.value)
-            }
-        }
+      case SubscriptionProcess(SubscriptionState.SubscribedAndNotEnrolled, Some(reg)) =>
+        for {
+          _ <- sessionStoreService.cacheKnownFactsResult(
+                KnownFactsResult(
+                  knownFacts.utr,
+                  knownFacts.postcode,
+                  reg.taxpayerName.get,
+                  reg.isSubscribedToAgentServices))
+
+          result <- withCleanCreds {
+                     subscriptionService
+                       .completePartialSubscription(knownFacts.utr, knownFacts.postcode)
+                       .map { arn =>
+                         mark("Count-Subscription-PartialSubscriptionCompleted")
+                         Redirect(routes.SubscriptionController.showSubscriptionComplete()).flashing("arn" -> arn.value)
+                       }
+                   }
+        } yield result
       case SubscriptionProcess(SubscriptionState.SubscribedAndEnrolled, _) => {
         mark("Count-Subscription-AlreadySubscribed-RegisteredInETMP")
         Future successful Redirect(routes.CheckAgencyController.showAlreadySubscribed())
