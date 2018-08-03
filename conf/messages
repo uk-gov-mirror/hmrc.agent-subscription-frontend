@@ -157,15 +157,18 @@ setupIncomplete.p1=<a href="{0}">Try again using a different agent user ID</a> i
 
 #Invasive check
 invasive.title.saCode=Do you have a Self Assessment agent code?
-invasive.title.option=Add some detail about a taxpayer related to the SA agent code you entered
-invasive.p1=You must choose from these 2 options so we can identify one of your current clients.
+invasive.title.option=Client details
+invasive.p1=We need to identify one of your current clients, so we can confirm who you are.
+invasive.p2=Enter the National Insurance number or Self Assessment Unique Taxpayer Reference (UTR) of a current client who is related to the Self Assessment agent code that you entered.
 invasive.radioResponse.yes=Yes
 invasive.radioResponse.hidden.input.label.sa=Self Assessment agent code
 invasive.radioResponse.no=No
-invasive.radioResponse.nino=Taxpayer''s National Insurance (NI) number
-invasive.radioResponse.hidden.input.label.nino=NI number
-invasive.radioResponse.utr=Taxpayer''s Self Assessment Unique Taxpayer Reference (UTR)
+invasive.radioResponse.nino=Client''s National Insurance number
+invasive.radioResponse.hidden.input.label.nino=National Insurance number
+invasive.radioResponse.helper.text.nino=For example, QQ 12 34 56 C
+invasive.radioResponse.utr=Client''s Self Assessment UTR
 invasive.radioResponse.hidden.input.label.utr=Self Assessment UTR
+invasive.radioResponse.helper.text.utr=For example, 12345 67890
 invasive.radioResponse.cannotProvide=I cannot provide either of these details
 invasive.expandable.p1=Where to find your Self Assessment agent code
 invasive.expandable.p1.open=You got your Self Assessment agent code when you registered in writing as an agent for Self Assessment. You used your agent code to set up your online service.
