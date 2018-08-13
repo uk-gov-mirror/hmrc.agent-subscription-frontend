@@ -46,7 +46,7 @@ trait AppConfig {
   val surveyRedirectUrl: String
   val sosRedirectUrl: String
   val companyAuthSignInUrl: String
-  val mongoDbKnownFactsResultTtl: Int
+  val chainedSessionDetailsTtl: Int
   val cacheableSessionDomain: String
 }
 
@@ -84,7 +84,7 @@ class FrontendAppConfig @Inject()(val environment: Environment, val configuratio
   override val surveyRedirectUrl: String = getConfStringOrFail(s"$env.surveyRedirectUrl")
   override val sosRedirectUrl: String = getConfStringOrFail(s"$env.sosRedirectUrl")
   override val companyAuthSignInUrl: String = getConfStringOrFail(s"$env.companyAuthSignInUrl")
-  override val mongoDbKnownFactsResultTtl: Int = getConfIntOrFail(s"$env.mongodb.knownfactsresult.ttl")
+  override val chainedSessionDetailsTtl: Int = getConfIntOrFail(s"$env.mongodb.chainedsessiondetails.ttl")
   override val cacheableSessionDomain: String = getServicesConfStringOrFail("cachable.session-cache.domain")
 
   def getServicesConfStringOrFail(key: String): String =

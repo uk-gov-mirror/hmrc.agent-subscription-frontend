@@ -131,11 +131,33 @@ nonAgent.l1=register for a new Government Gateway account, selecting the ‘Agen
 nonAgent.l2=use your new account details to log in and create your agent services account
 nonAgent.p2=Registering should take around 5 minutes.
 
+#Link account
+linkAccount.title=Link your current Self Assessment and VAT clients to your agent services account
+linkAccount.p1=You can allow your agent services account to access your current client relationships linked to the Government Gateway account that you first signed in with.
+linkAccount.p2=If your clients sign up to report their income and expenses, or their VAT returns, through software, you will then be able to:
+linkAccount.bullet-list.1=use software to access information about these clients
+linkAccount.bullet-list.2=act on your client''s behalf for these services without having to ask for their authorisation again
+linkAccount.p3=You can choose to link your clients now, or skip this until later.
+linkAccount.p4=If your businesses uses more than one Government Gateway account, you can link these after you have created your agent services account.
+linkAccount.legend=Do you want to link your clients now?
+linkAccount.option.yes=Yes
+linkAccount.option.no=No
+
 #Subscription complete
-subscriptionComplete.title=You''ve successfully created an agent services account
+subscriptionComplete.title=Agent services account created
 subscriptionComplete.h1=Agent services account created
 subscriptionComplete.accountName=Your account number is:
-subscriptionComplete.p1=<strong>You must save this number for your agency''s records.</strong> You''ll need it later. HMRC won''t show you this number again.
+subscriptionComplete.h2=What you can do next
+subscriptionComplete.p1=You can now use your agent services account to:
+subscriptionComplete.bullet-list.1=access new HMRC online services
+subscriptionComplete.bullet-list.2=use software to communicate directly with HMRC
+subscriptionComplete.link-account.h2=If you linked your clients
+subscriptionComplete.link-account.p1=Your agent services account can now access your current client relationships linked to the Government Gateway account you first signed in with.
+subscriptionComplete.link-account.p2=If your clients are signed up to report their income and expenses, or their VAT returns, through software, you can now:
+subscriptionComplete.link-account.bullet-list.1=use software to access information about these clients
+subscriptionComplete.link-account.bullet-list.2=act on your client''s behalf for these services without having to ask for their authorisation again
+subscriptionComplete.link-account.p3=You will still need to use your software or Government Gateway accounts to manage your client lists.
+
 subscriptionComplete.button.continueToASAccount=Continue to your agent services account
 subscriptionComplete.button.continueJourney=Continue
 

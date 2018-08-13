@@ -60,6 +60,7 @@ class FrontendModule(val environment: Environment, val configuration: Configurat
     bind(classOf[AppConfig]).to(classOf[FrontendAppConfig])
 
     bindBaseUrl("agent-assurance")
+    bindBaseUrl("agent-mapping")
     bindBaseUrl("agent-subscription")
     bindBaseUrl("address-lookup-frontend")
     bindBaseUrl("sso")

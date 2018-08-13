@@ -20,14 +20,14 @@ trait MetricTestSupport {
     metricsRegistry = registry
   }
 
-  def timerShouldExistsAndBeenUpdated(metricName: String): Unit = {
+  def timerShouldExistAndBeUpdated(metricName: String): Unit = {
     val timers = metricsRegistry.getTimers
     val metric = timers.get(s"Timer-$metricName")
     if (metric == null) throw new Exception(s"Metric [$metricName] not found, try one of ${timers.keySet()}")
     metric.getCount should be >= 1L
   }
 
-  def metricShouldExistsAndBeenUpdated(metricNames: String*): Unit = {
+  def metricShouldExistAndBeUpdated(metricNames: String*): Unit = {
     val meters = metricsRegistry.getMeters
     metricNames.foreach { metricName =>
       val metric = meters.get(metricName)

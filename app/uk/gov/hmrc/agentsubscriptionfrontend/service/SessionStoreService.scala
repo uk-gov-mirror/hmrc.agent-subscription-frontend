@@ -48,6 +48,13 @@ class SessionStoreService @Inject()(sessionCache: SessionCache) {
   def cacheContinueUrl(url: ContinueUrl)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
     sessionCache.cache("continueUrl", url).map(_ => ())
 
+  def fetchMappingEligible(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[Boolean]] =
+    sessionCache.fetchAndGetEntry[Boolean]("mappingEligible")
+
+  def cacheMappingEligible(
+    wasEligibleForMapping: Boolean)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
+    sessionCache.cache("mappingEligible", wasEligibleForMapping).map(_ => ())
+
   def remove()(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
     sessionCache.remove().map(_ => ())
 

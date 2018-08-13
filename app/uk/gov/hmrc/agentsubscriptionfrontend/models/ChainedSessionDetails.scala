@@ -19,8 +19,14 @@ package uk.gov.hmrc.agentsubscriptionfrontend.models
 import play.api.libs.json.Json
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 
+case class ChainedSessionDetails(knownFacts: KnownFactsResult, wasEligibleForMapping: Boolean)
+
 case class KnownFactsResult(utr: Utr, postcode: String, taxpayerName: String, isSubscribedToAgentServices: Boolean)
 
 object KnownFactsResult {
-  implicit val format = Json.format[KnownFactsResult]
+  implicit val formatKnownFacts = Json.format[KnownFactsResult]
+}
+
+object ChainedSessionDetails {
+  implicit val formatChainedSession = Json.format[ChainedSessionDetails]
 }

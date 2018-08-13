@@ -17,33 +17,27 @@ class SsoConnectorISpec extends BaseISpec with MetricTestSupport {
 
   "SsoConnector" should {
     "return true for valid domains" in {
-      givenCleanMetricRegistry()
-
-      SsoStub.givenDomainIsWhitelisted("foo.com")
-      val result = await(connector.validateExternalDomain("foo.com"))
-      result shouldBe true
-
-      timerShouldExistsAndBeenUpdated("ConsumedAPI-SSO-validateExternalDomain-GET")
+      withMetricsTimerUpdate("ConsumedAPI-SSO-validateExternalDomain-GET") {
+        SsoStub.givenDomainIsWhitelisted("foo.com")
+        val result = await(connector.validateExternalDomain("foo.com"))
+        result shouldBe true
+      }
     }
 
     "return false for a nonwhitelisted url" in {
-      givenCleanMetricRegistry()
-
-      SsoStub.givenDomainIsNotWhitelisted("invalid-example.com")
-      val result = await(connector.validateExternalDomain("invalid-example.com"))
-      result shouldBe false
-
-      timerShouldExistsAndBeenUpdated("ConsumedAPI-SSO-validateExternalDomain-GET")
+      withMetricsTimerUpdate("ConsumedAPI-SSO-validateExternalDomain-GET") {
+        SsoStub.givenDomainIsNotWhitelisted("invalid-example.com")
+        val result = await(connector.validateExternalDomain("invalid-example.com"))
+        result shouldBe false
+      }
     }
 
     "return false for an invalid url" in {
-      givenCleanMetricRegistry()
-
-      SsoStub.givenDomainCheckFails("invalid-example")
-      val result = await(connector.validateExternalDomain("invalid-example"))
-      result shouldBe false
-
-      timerShouldExistsAndBeenUpdated("ConsumedAPI-SSO-validateExternalDomain-GET")
+      withMetricsTimerUpdate("ConsumedAPI-SSO-validateExternalDomain-GET") {
+        SsoStub.givenDomainCheckFails("invalid-example")
+        val result = await(connector.validateExternalDomain("invalid-example"))
+        result shouldBe false
+      }
     }
   }
 }

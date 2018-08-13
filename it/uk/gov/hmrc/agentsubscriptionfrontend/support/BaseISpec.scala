@@ -3,6 +3,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.support
 import com.codahale.metrics.MetricRegistry
 import com.google.inject.AbstractModule
 import com.kenshoo.play.metrics.Metrics
+import org.scalatest.matchers.{MatchResult, Matcher}
 import org.scalatestplus.play.OneAppPerSuite
 import play.api.Application
 import play.api.i18n.{Lang, Messages, MessagesApi}
@@ -35,6 +36,7 @@ abstract class BaseISpec
         "microservice.services.address-lookup-frontend.port" -> wireMockPort,
         "microservice.services.sso.port"                     -> wireMockPort,
         "microservice.services.agent-assurance.port"         -> wireMockPort,
+        "microservice.services.agent-mapping.port"         -> wireMockPort,
         "auditing.enabled"                                   -> true,
         "auditing.consumer.baseUri.host"                     -> wireMockHost,
         "auditing.consumer.baseUri.port"                     -> wireMockPort
@@ -81,15 +83,60 @@ abstract class BaseISpec
     FakeRequest().withSession(sessionKeys: _*)
   }
 
-  protected def checkHtmlResultWithBodyText(result: Result, expectedSubstrings: String*): Unit = {
-    status(result) shouldBe OK
-    contentType(result) shouldBe Some("text/html")
-    charset(result) shouldBe Some("utf-8")
-    val resultBody = bodyOf(result)
-    expectedSubstrings.foreach { expectedSubstring =>
-      expectedSubstring.trim should not be ""
-      resultBody should include(expectedSubstring)
+  protected def checkMessageIsDefined(messageKey: String) = {
+    withClue(s"Message key ($messageKey) should be defined: ") {
+      Messages.isDefinedAt(messageKey) shouldBe true
     }
+  }
+
+  protected def checkIsHtml200(result: Result) = {
+    status(result) shouldBe OK
+    charset(result) shouldBe Some("utf-8")
+    contentType(result) shouldBe Some("text/html")
+  }
+
+  protected def containSubstrings(expectedSubstrings: String*): Matcher[Result] = {
+    new Matcher[Result] {
+      override def apply(result: Result): MatchResult = {
+        checkIsHtml200(result)
+
+        val resultBody = bodyOf(result)
+        val (strsPresent, strsMissing) = expectedSubstrings.partition{ expectedSubstring =>
+          expectedSubstring.trim should not be ""
+          resultBody.contains(expectedSubstring)
+        }
+
+        MatchResult(strsMissing.isEmpty,
+          s"Expected substrings are missing in the response: ${strsMissing.mkString("\"", "\", \"", "\"")}",
+          s"Expected substrings are present in the response : ${strsPresent.mkString("\"", "\", \"", "\"")}")
+      }
+    }
+  }
+
+  protected def containMessages(expectedMessageKeys: String*): Matcher[Result] = {
+    new Matcher[Result] {
+      override def apply(result: Result): MatchResult = {
+        expectedMessageKeys.foreach(checkMessageIsDefined)
+        checkIsHtml200(result)
+
+        val resultBody = bodyOf(result)
+        val (msgsPresent, msgsMissing) = expectedMessageKeys.partition { messageKey =>
+          resultBody.contains(htmlEscapedMessage(messageKey))
+        }
+
+        MatchResult(
+          msgsMissing.isEmpty,
+          s"Content is missing in the response for message keys: ${msgsMissing.mkString(", ")}",
+          s"Content is present in the response for message keys: ${msgsPresent.mkString(", ")}"
+        )
+      }
+    }
+  }
+
+  protected def withMetricsTimerUpdate(expectedMetricName: String)(testCode: => Unit): Unit = {
+    givenCleanMetricRegistry()
+    testCode
+    timerShouldExistAndBeUpdated(expectedMetricName)
   }
 
   private val messagesApi = app.injector.instanceOf[MessagesApi]

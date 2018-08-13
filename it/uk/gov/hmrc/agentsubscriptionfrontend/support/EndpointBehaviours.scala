@@ -45,7 +45,7 @@ trait EndpointBehaviours {
 
       status(result) shouldBe 303
       redirectLocation(result).get shouldBe routes.StartController.showNonAgentNextSteps().url
-      metricShouldExistsAndBeenUpdated("Count-Subscription-NonAgent")
+      metricShouldExistAndBeUpdated("Count-Subscription-NonAgent")
     }
   }
 

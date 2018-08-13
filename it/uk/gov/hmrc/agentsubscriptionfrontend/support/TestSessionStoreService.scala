@@ -28,7 +28,8 @@ class TestSessionStoreService extends SessionStoreService(null) {
   class Session(
     var knownFactsResult: Option[KnownFactsResult] = None,
     var initialDetails: Option[InitialDetails] = None,
-    var continueUrl: Option[ContinueUrl] = None)
+    var continueUrl: Option[ContinueUrl] = None,
+    var wasEligibleForMapping: Option[Boolean] = None)
 
   private val sessions = collection.mutable.Map[String, Session]()
 
@@ -67,6 +68,12 @@ class TestSessionStoreService extends SessionStoreService(null) {
 
   override def cacheContinueUrl(url: ContinueUrl)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
     Future.successful(currentSession.continueUrl = Some(url))
+
+  override def fetchMappingEligible(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[Boolean]] =
+    Future successful currentSession.wasEligibleForMapping
+
+  override def cacheMappingEligible(wasEligibleForMapping: Boolean)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
+    Future.successful(currentSession.wasEligibleForMapping = Some(wasEligibleForMapping))
 
   override def remove()(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
     Future {

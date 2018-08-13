@@ -49,7 +49,7 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       verifyAgentAssuranceAuditRequestSent(
         passPayeAgentAssuranceCheck = Some(true),
         passSaAgentAssuranceCheck = Some(true))
-      metricShouldExistsAndBeenUpdated("Count-Subscription-CheckAgency-Success")
+      metricShouldExistAndBeUpdated("Count-Subscription-CheckAgency-Success")
     }
 
     "store isSubscribedToAgentServices = false in session when the business registration found by agent-subscription is not already subscribed" in {
@@ -69,7 +69,7 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       verifyAgentAssuranceAuditRequestSent(
         passPayeAgentAssuranceCheck = Some(true),
         passSaAgentAssuranceCheck = Some(true))
-      metricShouldExistsAndBeenUpdated("Count-Subscription-CheckAgency-Success")
+      metricShouldExistAndBeUpdated("Count-Subscription-CheckAgency-Success")
     }
 
     "redirect to already subscribed page when the business registration found by agent-subscription is already subscribed" in {

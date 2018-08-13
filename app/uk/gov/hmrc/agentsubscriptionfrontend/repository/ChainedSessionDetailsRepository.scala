@@ -18,26 +18,26 @@ package uk.gov.hmrc.agentsubscriptionfrontend.repository
 
 import java.util.UUID
 
-import javax.inject.{Inject, Named, Singleton}
+import javax.inject.{Inject, Singleton}
 import org.joda.time.DateTime
 import play.api.libs.json.Json
 import play.modules.reactivemongo.ReactiveMongoComponent
 import reactivemongo.api.indexes.{Index, IndexType}
 import reactivemongo.bson.{BSONDocument, BSONObjectID}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.models.KnownFactsResult
-import uk.gov.hmrc.agentsubscriptionfrontend.repository.StashedKnownFactsResult.StashedKnownFactsResultId
+import uk.gov.hmrc.agentsubscriptionfrontend.models.ChainedSessionDetails
+import uk.gov.hmrc.agentsubscriptionfrontend.repository.StashedChainedSessionDetails.StashedChainnedSessionId
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class KnownFactsResultMongoRepository @Inject()(appConfig: AppConfig, mongoComponent: ReactiveMongoComponent)
-    extends ReactiveRepository[StashedKnownFactsResult, BSONObjectID](
-      "agent-known-facts-results",
+class ChainedSessionDetailsRepository @Inject()(appConfig: AppConfig, mongoComponent: ReactiveMongoComponent)
+    extends ReactiveRepository[StashedChainedSessionDetails, BSONObjectID](
+      "chained-session",
       mongoComponent.mongoConnector.db,
-      StashedKnownFactsResult.format,
+      StashedChainedSessionDetails.format,
       ReactiveMongoFormats.objectIdFormats) {
 
   override def indexes: Seq[Index] =
@@ -47,30 +47,31 @@ class KnownFactsResultMongoRepository @Inject()(appConfig: AppConfig, mongoCompo
         key = Seq("createdDate" -> IndexType.Ascending),
         name = Some("createDate"),
         unique = false,
-        options = BSONDocument("expireAfterSeconds" -> appConfig.mongoDbKnownFactsResultTtl)
+        options = BSONDocument("expireAfterSeconds" -> appConfig.chainedSessionDetailsTtl)
       )
     )
 
-  def findKnownFactsResult(id: StashedKnownFactsResultId)(
-    implicit ec: ExecutionContext): Future[Option[KnownFactsResult]] =
-    find("id" -> id).map(_.headOption.map(_.knownFactsResult))
+  def findChainedSessionDetails(id: StashedChainnedSessionId)(
+    implicit ec: ExecutionContext): Future[Option[ChainedSessionDetails]] =
+    find("id" -> id).map(_.headOption.map(_.chainedSessionDetails))
 
-  def create(knownFactsResult: KnownFactsResult)(implicit ec: ExecutionContext): Future[StashedKnownFactsResultId] = {
-    val id: StashedKnownFactsResultId = UUID.randomUUID().toString.replace("-", "")
-    insert(StashedKnownFactsResult(id, knownFactsResult)).map(_ => id)
+  def create(chainedSessionDetails: ChainedSessionDetails)(
+    implicit ec: ExecutionContext): Future[StashedChainnedSessionId] = {
+    val id: StashedChainnedSessionId = UUID.randomUUID().toString.replace("-", "")
+    insert(StashedChainedSessionDetails(id, chainedSessionDetails)).map(_ => id)
   }
 
-  def delete(id: StashedKnownFactsResultId)(implicit ec: ExecutionContext): Future[Unit] =
+  def delete(id: StashedChainnedSessionId)(implicit ec: ExecutionContext): Future[Unit] =
     remove("id" -> id).map(_ => ())
 }
 
-case class StashedKnownFactsResult(
-  id: StashedKnownFactsResultId,
-  knownFactsResult: KnownFactsResult,
+case class StashedChainedSessionDetails(
+  id: StashedChainnedSessionId,
+  chainedSessionDetails: ChainedSessionDetails,
   createdDate: DateTime = DateTime.now)
 
-object StashedKnownFactsResult {
-  type StashedKnownFactsResultId = String
+object StashedChainedSessionDetails {
+  type StashedChainnedSessionId = String
   implicit val dateFormat = ReactiveMongoFormats.dateTimeFormats
-  implicit val format = Json.format[StashedKnownFactsResult]
+  implicit val format = Json.format[StashedChainedSessionDetails]
 }

@@ -16,12 +16,12 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
-import java.net.URLEncoder
-
-import javax.inject.{Inject, Named, Singleton}
+import javax.inject.{Inject, Singleton}
 import play.api.mvc.Action
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.repository.KnownFactsResultMongoRepository
+import uk.gov.hmrc.agentsubscriptionfrontend.connectors.MappingConnector
+import uk.gov.hmrc.agentsubscriptionfrontend.models.ChainedSessionDetails
+import uk.gov.hmrc.agentsubscriptionfrontend.repository.ChainedSessionDetailsRepository
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.agentsubscriptionfrontend.support.CallOps.addParamsToUrl
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
@@ -30,7 +30,8 @@ import scala.concurrent.Future
 
 @Singleton
 class SignedOutController @Inject()(
-  knownFactsResultMongoRepository: KnownFactsResultMongoRepository,
+  chainedSessionRepository: ChainedSessionDetailsRepository,
+  mappingConnector: MappingConnector,
   sessionStoreService: SessionStoreService)(implicit appConfig: AppConfig)
     extends FrontendController {
 
@@ -38,8 +39,15 @@ class SignedOutController @Inject()(
     for {
       knownFactOpt <- sessionStoreService.fetchKnownFactsResult
       id <- knownFactOpt match {
-             case Some(x) => knownFactsResultMongoRepository.create(x).map(Option.apply)
-             case None    => Future successful None
+             case Some(knownFact) => {
+               for {
+                 isEligibleForMapping <- mappingConnector.isEligibile
+                 _ <- if (isEligibleForMapping) mappingConnector.createPreSubscription(knownFact.utr)
+                     else Future.successful(())
+                 id <- chainedSessionRepository.create(ChainedSessionDetails(knownFact, isEligibleForMapping))
+               } yield Some(id)
+             }
+             case None => Future successful None
            }
       agentSubContinueUrl <- sessionStoreService.fetchContinueUrl
     } yield {

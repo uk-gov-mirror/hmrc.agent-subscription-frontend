@@ -71,38 +71,38 @@ class AgentAssuranceConnectorISpec extends BaseISpec with MetricTestSupport {
 
   "hasActiveCesaRelationship" should {
     "receive 200 if valid combination passed and relationship exists in Cesa Nino" in {
-      givenNinoAGoodCombinationAndUserHasRelationshipInCesa("nino", "AA123456A", "SA6012")
-      givenCleanMetricRegistry()
-      await(connector.hasActiveCesaRelationship(Nino("AA123456A"), "nino", SaAgentReference("SA6012"))) shouldBe true
-      timerShouldExistsAndBeenUpdated("ConsumedAPI-AgentAssurance-getActiveCesaRelationship-GET")
+      withMetricsTimerUpdate("ConsumedAPI-AgentAssurance-getActiveCesaRelationship-GET") {
+        givenNinoAGoodCombinationAndUserHasRelationshipInCesa("nino", "AA123456A", "SA6012")
+        await(connector.hasActiveCesaRelationship(Nino("AA123456A"), "nino", SaAgentReference("SA6012"))) shouldBe true
+      }
     }
 
     "receive 200 if valid combination passed and relationship exists in Cesa Utr" in {
-      givenUtrAGoodCombinationAndUserHasRelationshipInCesa("utr", "4000000009", "SA6012")
-      givenCleanMetricRegistry()
-      await(connector.hasActiveCesaRelationship(Utr("4000000009"), "utr", SaAgentReference("SA6012"))) shouldBe true
-      timerShouldExistsAndBeenUpdated("ConsumedAPI-AgentAssurance-getActiveCesaRelationship-GET")
+      withMetricsTimerUpdate("ConsumedAPI-AgentAssurance-getActiveCesaRelationship-GET") {
+        givenUtrAGoodCombinationAndUserHasRelationshipInCesa("utr", "4000000009", "SA6012")
+        await(connector.hasActiveCesaRelationship(Utr("4000000009"), "utr", SaAgentReference("SA6012"))) shouldBe true
+      }
     }
 
     "receive 403 if valid combination passed and relationship does not exist in Cesa" in {
-      givenAUserDoesNotHaveRelationshipInCesa("nino", "AA123456A", "SA6012")
-      givenCleanMetricRegistry()
-      await(connector.hasActiveCesaRelationship(Nino("AA123456A"), "nino", SaAgentReference("SA6012"))) shouldBe false
-      timerShouldExistsAndBeenUpdated("ConsumedAPI-AgentAssurance-getActiveCesaRelationship-GET")
+      withMetricsTimerUpdate("ConsumedAPI-AgentAssurance-getActiveCesaRelationship-GET") {
+        givenAUserDoesNotHaveRelationshipInCesa("nino", "AA123456A", "SA6012")
+        await(connector.hasActiveCesaRelationship(Nino("AA123456A"), "nino", SaAgentReference("SA6012"))) shouldBe false
+      }
     }
 
     "receive 403 if invalid combination passed" in {
-      givenABadCombinationAndUserHasRelationshipInCesa("nino", "AB123456A", "SA126013")
-      givenCleanMetricRegistry()
-      await(connector.hasActiveCesaRelationship(Nino("AB123456A"), "nino", SaAgentReference("SA126013"))) shouldBe false
-      timerShouldExistsAndBeenUpdated("ConsumedAPI-AgentAssurance-getActiveCesaRelationship-GET")
+      withMetricsTimerUpdate("ConsumedAPI-AgentAssurance-getActiveCesaRelationship-GET") {
+        givenABadCombinationAndUserHasRelationshipInCesa("nino", "AB123456A", "SA126013")
+        await(connector.hasActiveCesaRelationship(Nino("AB123456A"), "nino", SaAgentReference("SA126013"))) shouldBe false
+      }
     }
 
     "receive 404 when valid Nino but is not found in DB" in {
-      givenAGoodCombinationAndNinoNotFoundInCesa("nino", "AB123456B", "SA126012")
-      givenCleanMetricRegistry()
-      await(connector.hasActiveCesaRelationship(Nino("AB123456A"), "nino", SaAgentReference("SA126013"))) shouldBe false
-      timerShouldExistsAndBeenUpdated("ConsumedAPI-AgentAssurance-getActiveCesaRelationship-GET")
+      withMetricsTimerUpdate("ConsumedAPI-AgentAssurance-getActiveCesaRelationship-GET") {
+        givenAGoodCombinationAndNinoNotFoundInCesa("nino", "AB123456B", "SA126012")
+        await(connector.hasActiveCesaRelationship(Nino("AB123456A"), "nino", SaAgentReference("SA126013"))) shouldBe false
+      }
     }
   }
 
@@ -163,11 +163,11 @@ class AgentAssuranceConnectorISpec extends BaseISpec with MetricTestSupport {
       }
     }
     "monitor with metric ConsumedAPI-AgentAssurance-getManuallyAssuredAgents-GET" in {
-      givenCleanMetricRegistry()
-      givenAgentIsManuallyAssured(utr.value)
+      withMetricsTimerUpdate("ConsumedAPI-AgentAssurance-getManuallyAssuredAgents-GET") {
+        givenAgentIsManuallyAssured(utr.value)
 
-      await(connector.isManuallyAssuredAgent(utr))
-      timerShouldExistsAndBeenUpdated("ConsumedAPI-AgentAssurance-getManuallyAssuredAgents-GET")
+        await(connector.isManuallyAssuredAgent(utr))
+      }
     }
   }
 }

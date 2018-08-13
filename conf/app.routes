@@ -23,7 +23,8 @@ GET         /subscription-details                 uk.gov.hmrc.agentsubscriptionf
 POST        /subscription-details                 uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.submitInitialDetails
 GET         /return-from-address-lookup           uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.returnFromAddressLookup(id: String ?= "")
 POST        /submit-modified-address              uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.submitModifiedAddress
-
+GET         /link-account                         uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showLinkAccount
+POST        /link-account                         uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.submitLinkAccount
 GET         /subscription-complete                uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showSubscriptionComplete
 
 GET         /redirect-to-sos                      uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.redirectToSos

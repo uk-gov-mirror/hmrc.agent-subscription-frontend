@@ -29,7 +29,7 @@ class CheckAgencyControllerPayeCheckISpec extends CheckAgencyControllerISpec {
       verifyAgentAssuranceAuditRequestSent(
         passPayeAgentAssuranceCheck = None,
         passSaAgentAssuranceCheck = Some(true))
-      metricShouldExistsAndBeenUpdated("Count-Subscription-CheckAgency-Success")
+      metricShouldExistAndBeUpdated("Count-Subscription-CheckAgency-Success")
     }
 
     "fail when a matching registration is found for the UTR and postcode for an agent when failing the SaAgent check" in {
