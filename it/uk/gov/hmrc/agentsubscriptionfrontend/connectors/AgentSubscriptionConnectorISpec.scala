@@ -30,6 +30,7 @@ class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {
         result.get.taxpayerName shouldBe Some("My Agency")
         result.get.isSubscribedToAgentServices shouldBe true
         result.get.isSubscribedToETMP shouldBe true
+        testBusinessAddress(result.get)
       }
     }
 
@@ -41,6 +42,7 @@ class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {
         result.isDefined shouldBe true
         result.get.taxpayerName shouldBe Some("My Agency")
         result.get.isSubscribedToAgentServices shouldBe false
+        testBusinessAddress(result.get)
       }
     }
 
@@ -54,6 +56,7 @@ class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {
         result.get.taxpayerName shouldBe Some("My Agency")
         result.get.isSubscribedToETMP shouldBe true
         result.get.isSubscribedToAgentServices shouldBe false
+        testBusinessAddress(result.get)
       }
     }
 
@@ -83,6 +86,13 @@ class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {
           await(connector.getRegistration(utr, "AA1 1AA"))
         }
       }
+    }
+
+    def testBusinessAddress(registration: Registration): Unit = {
+      registration.address.addressLine1 shouldBe "AddressLine1 A"
+      registration.address.addressLine2 shouldBe Some("AddressLine2 A")
+      registration.address.addressLine3 shouldBe Some("AddressLine3 A")
+      registration.address.addressLine4 shouldBe Some("AddressLine4 A")
     }
   }
 

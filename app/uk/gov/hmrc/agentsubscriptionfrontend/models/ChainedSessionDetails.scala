@@ -21,7 +21,12 @@ import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 
 case class ChainedSessionDetails(knownFacts: KnownFactsResult, wasEligibleForMapping: Boolean)
 
-case class KnownFactsResult(utr: Utr, postcode: String, taxpayerName: String, isSubscribedToAgentServices: Boolean)
+case class KnownFactsResult(
+  utr: Utr,
+  postcode: String,
+  taxpayerName: String,
+  isSubscribedToAgentServices: Boolean,
+  address: Option[BusinessAddress])
 
 object KnownFactsResult {
   implicit val formatKnownFacts = Json.format[KnownFactsResult]

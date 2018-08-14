@@ -18,7 +18,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.service
 
 import play.api.libs.json.{JsValue, Reads, Writes}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{InitialDetails, KnownFactsResult}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{BusinessAddress, InitialDetails, KnownFactsResult}
 import uk.gov.hmrc.http.cache.client.{CacheMap, NoSessionException, SessionCache}
 import uk.gov.hmrc.play.binders.ContinueUrl
 import uk.gov.hmrc.play.test.UnitSpec
@@ -38,7 +38,14 @@ class SessionStoreServiceSpec extends UnitSpec {
       val store = new SessionStoreService(new TestSessionCache())
 
       val knownFactsResult =
-        KnownFactsResult(Utr("9876543210"), "AA11AA", "Test organisation name", isSubscribedToAgentServices = true)
+        KnownFactsResult(
+          Utr("9876543210"),
+          "AA11AA",
+          "Test organisation name",
+          isSubscribedToAgentServices = true,
+          Some(
+            BusinessAddress("AddressLine1 A", Some("AddressLine2 A"), Some("AddressLine3 A"), Some("AddressLine4 A")))
+        )
 
       await(store.cacheKnownFactsResult(knownFactsResult))
 
@@ -87,7 +94,12 @@ class SessionStoreServiceSpec extends UnitSpec {
       val store = new SessionStoreService(new TestSessionCache())
 
       val knownFactsResult =
-        KnownFactsResult(Utr("9876543210"), "AA11AA", "Test organisation name", isSubscribedToAgentServices = true)
+        KnownFactsResult(
+          Utr("9876543210"),
+          "AA11AA",
+          "Test organisation name",
+          isSubscribedToAgentServices = true,
+          None)
 
       await(store.cacheKnownFactsResult(knownFactsResult))
 

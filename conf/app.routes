@@ -11,6 +11,7 @@ GET         /check-agency-status                  uk.gov.hmrc.agentsubscriptionf
 POST        /check-agency-status                  uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.checkAgencyStatus(businessType: Option[String])
 GET         /no-agency-found                      uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.showNoAgencyFound
 GET         /confirm-your-agency                  uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.showConfirmYourAgency
+POST        /confirm-your-agency                  uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.submitConfirmYourAgency
 GET         /already-subscribed                   uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.showAlreadySubscribed
 GET         /has-other-enrolments                 uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.showHasOtherEnrolments
 

@@ -17,23 +17,25 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.models
 import uk.gov.hmrc.http.BadRequestException
 
-sealed trait LinkAccountAnswer extends Product with Serializable
+sealed trait RadioInputAnswer extends Product with Serializable
 
-object LinkAccountAnswer {
-  case object Yes extends LinkAccountAnswer
-  case object No extends LinkAccountAnswer
+object RadioInputAnswer {
+  case object Yes extends RadioInputAnswer
+  case object No extends RadioInputAnswer
 
-  def apply(str: String): LinkAccountAnswer = str.toLowerCase match {
+  def apply(str: String): RadioInputAnswer = str.toLowerCase match {
     case "yes" => Yes
     case "no"  => No
     case _     => throw new BadRequestException("Strange form input value")
   }
 
-  def unapply(answer: LinkAccountAnswer): Option[String] =
+  def unapply(answer: RadioInputAnswer): Option[String] =
     answer match {
       case Yes => Some("yes")
       case No  => Some("no")
     }
 }
 
-case class LinkAccount(autoMapping: LinkAccountAnswer)
+case class LinkAccount(autoMapping: RadioInputAnswer)
+
+case class ConfirmYourAgency(confirm: RadioInputAnswer)
