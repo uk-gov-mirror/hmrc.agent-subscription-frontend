@@ -247,7 +247,7 @@ class CheckAgencyController @Inject()(
                   registrationName = knownFactsResult.taxpayerName,
                   postcode = knownFactsResult.postcode,
                   utr = FieldMappings.prettify(knownFactsResult.utr),
-                  businessAddress = knownFactsResult.address.get
+                  businessAddress = knownFactsResult.address.getOrElse(throw new Exception("address object missing"))
                 ))
               }
             },

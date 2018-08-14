@@ -53,7 +53,7 @@ address.form.with-errors.button.confirm_address= Confirm address
 
 ##Confirm your agency
 confirmYourAgency.title=Is this your business?
-confirmYourAgency.heading.utr=These are the details we hold for Unique Taxpayer Reference (UTR) <strong class="bold">{0}</strong>. You will be able to change these details in a moment for your agent services account.
+confirmYourAgency.content.utr=These are the details we hold for Unique Taxpayer Reference (UTR) <strong class="bold">{0}</strong>. You will be able to change these details in a moment for your agent services account.
 confirmYourAgency.option.yes=Yes
 confirmYourAgency.option.no=No - I want to enter a different UTR
 
