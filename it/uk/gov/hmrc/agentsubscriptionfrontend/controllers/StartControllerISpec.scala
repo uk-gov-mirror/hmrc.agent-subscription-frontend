@@ -106,7 +106,7 @@ class StartControllerISpec extends BaseISpec {
   "returnAfterGGCredsCreated" should {
     class ValidKnownFactsCached(val wasEligibleForMapping: Boolean = false) {
       val knownFactsResult =
-        KnownFactsResult(Utr("9876543210"), "AA11AA", "Test organisation name", isSubscribedToAgentServices = false)
+        KnownFactsResult(Utr("9876543210"), "AA11AA", "Test organisation name", isSubscribedToAgentServices = false, None)
       val persistedId = await(repo.create(ChainedSessionDetails(knownFactsResult, wasEligibleForMapping)))
     }
 

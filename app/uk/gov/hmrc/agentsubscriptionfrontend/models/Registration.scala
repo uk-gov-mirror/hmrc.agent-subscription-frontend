@@ -18,8 +18,22 @@ package uk.gov.hmrc.agentsubscriptionfrontend.models
 
 import play.api.libs.json.{Format, Json}
 
+case class BusinessAddress(
+  addressLine1: String,
+  addressLine2: Option[String],
+  addressLine3: Option[String] = None,
+  addressLine4: Option[String] = None)
+
+object BusinessAddress {
+  implicit val format = Json.format[BusinessAddress]
+}
+
+case class Registration(
+  taxpayerName: Option[String],
+  isSubscribedToAgentServices: Boolean,
+  isSubscribedToETMP: Boolean,
+  address: BusinessAddress)
+
 object Registration {
   implicit val formats: Format[Registration] = Json.format[Registration]
 }
-
-case class Registration(taxpayerName: Option[String], isSubscribedToAgentServices: Boolean, isSubscribedToETMP: Boolean)

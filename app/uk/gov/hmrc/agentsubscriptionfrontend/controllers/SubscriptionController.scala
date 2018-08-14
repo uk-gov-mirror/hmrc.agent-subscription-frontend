@@ -31,7 +31,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.{AddressLookupFrontendConnector, MappingConnector}
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.FieldMappings._
 import uk.gov.hmrc.agentsubscriptionfrontend.form.DesAddressForm
-import uk.gov.hmrc.agentsubscriptionfrontend.models.LinkAccountAnswer.{No, Yes}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionReturnedHttpError, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.Monitoring
@@ -86,7 +86,7 @@ class SubscriptionController @Inject()(
   private val linkAccountForm: Form[LinkAccount] =
     Form[LinkAccount](
       mapping("autoMapping" -> optional(text).verifying(FieldMappings.radioInputSelected))(ans =>
-        LinkAccount(LinkAccountAnswer.apply(ans.getOrElse(""))))(lc => Some(LinkAccountAnswer.unapply(lc.autoMapping)))
+        LinkAccount(RadioInputAnswer.apply(ans.getOrElse(""))))(lc => Some(RadioInputAnswer.unapply(lc.autoMapping)))
         .verifying(
           "error.link-account-value.invalid",
           submittedLinkAccount => Seq(Yes, No).contains(submittedLinkAccount.autoMapping)))

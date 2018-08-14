@@ -28,14 +28,30 @@ object AgentSubscriptionStub {
        |{
        |  "taxpayerName": "My Agency",
        |  "isSubscribedToAgentServices": $isSubscribedToAgentServices,
-       |  "isSubscribedToETMP": $isSubscribedToETMP
+       |  "isSubscribedToETMP": $isSubscribedToETMP,
+       |  "address": {
+       |        "addressLine1": "AddressLine1 A",
+       |        "addressLine2": "AddressLine2 A",
+       |        "addressLine3": "AddressLine3 A",
+       |        "addressLine4": "AddressLine4 A",
+       |        "countryCode": "GB",
+       |        "postalCode": "AA1 1AA"
+       |    }
        |}""".stripMargin
 
   private def noOrganisationNameResponse(isSubscribedToAgentServices: Boolean, isSubscribedToETMP: Boolean) =
     s"""
       |{
       |  "isSubscribedToAgentServices": false,
-      |  "isSubscribedToETMP": $isSubscribedToETMP
+      |  "isSubscribedToETMP": $isSubscribedToETMP,
+      |  "address": {
+      |        "addressLine1": "AddressLine1 A",
+      |        "addressLine2": "AddressLine2 A",
+      |        "addressLine3": "AddressLine3 A",
+      |        "addressLine4": "AddressLine4 A",
+      |        "countryCode": "GB",
+      |        "postalCode": "AA1 1AA"
+      |    }
       |
       |}""".stripMargin
 

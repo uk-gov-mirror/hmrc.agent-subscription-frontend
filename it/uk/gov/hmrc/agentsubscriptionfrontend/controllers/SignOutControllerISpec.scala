@@ -26,7 +26,7 @@ class SignOutControllerISpec extends BaseISpec {
   private val fakeRequest = FakeRequest()
 
   "redirect to SOS" should {
-    val knownFactsResult = KnownFactsResult(Utr("9876543210"), "AA11AA", "Test organisation name", isSubscribedToAgentServices = true)
+    val knownFactsResult = KnownFactsResult(Utr("9876543210"), "AA11AA", "Test organisation name", isSubscribedToAgentServices = true, None)
     def findByUtr(utr: String): Option[StashedChainedSessionDetails] = {
       await(repo.find("chainedSessionDetails.knownFacts.utr" -> utr).map(_.headOption))
     }

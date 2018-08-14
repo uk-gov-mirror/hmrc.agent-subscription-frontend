@@ -52,12 +52,10 @@ address.form.with-errors.postcode = Postcode
 address.form.with-errors.button.confirm_address= Confirm address
 
 ##Confirm your agency
-confirmYourAgency.title=You are setting up an account for:
-confirmYourAgency.caption=Agency details
-confirmYourAgency.heading.businessName=Name
-confirmYourAgency.heading.postcode=Postcode
-confirmYourAgency.heading.utr=UTR
-confirmYourAgency.cancel=This information is incorrect
+confirmYourAgency.title=Is this your business?
+confirmYourAgency.content.utr=These are the details we hold for Unique Taxpayer Reference (UTR) <strong class="bold">{0}</strong>. You will be able to change these details in a moment for your agent services account.
+confirmYourAgency.option.yes=Yes
+confirmYourAgency.option.no=No - I want to enter a different UTR
 
 ##Subscription details
 subscriptionDetails.title=Add your agent business''s details

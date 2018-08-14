@@ -37,7 +37,9 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       utr = utr,
       postcode = knownFactsPostcode,
       taxpayerName = "My Business",
-      isSubscribedToAgentServices = false)
+      isSubscribedToAgentServices = false,
+      Some(BusinessAddress("AddressLine1 A", Some("AddressLine2 A"), Some("AddressLine3 A"), Some("AddressLine4 A"))))
+  
   private val initialDetails =
     InitialDetails(utr, knownFactsPostcode, "My Agency", "agency@example.com", "0123 456 7890")
 
