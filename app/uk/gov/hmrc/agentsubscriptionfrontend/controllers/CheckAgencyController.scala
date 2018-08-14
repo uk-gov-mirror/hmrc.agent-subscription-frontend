@@ -220,11 +220,11 @@ class CheckAgencyController @Inject()(
       sessionStoreService.fetchKnownFactsResult.map(_.map { knownFactsResult =>
         Ok(
           html.confirm_your_agency(
-            CheckAgencyController.confirmYourAgencyForm,
+            confirmAgencyRadioForm = CheckAgencyController.confirmYourAgencyForm,
             registrationName = knownFactsResult.taxpayerName,
             postcode = knownFactsResult.postcode,
             utr = FieldMappings.prettify(knownFactsResult.utr),
-            businessAddress = knownFactsResult.address.get
+            businessAddress = knownFactsResult.address.getOrElse(throw new Exception("address object missing"))
           ))
       }.getOrElse {
         sessionMissingRedirect()
@@ -243,7 +243,7 @@ class CheckAgencyController @Inject()(
                 throw new BadRequestException("Form submitted with strange input value")
               } else {
                 Ok(html.confirm_your_agency(
-                  formWithErrors,
+                  confirmAgencyRadioForm = formWithErrors,
                   registrationName = knownFactsResult.taxpayerName,
                   postcode = knownFactsResult.postcode,
                   utr = FieldMappings.prettify(knownFactsResult.utr),
