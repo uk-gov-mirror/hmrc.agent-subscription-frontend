@@ -28,9 +28,12 @@
         </p>
     </div>
 
-    <h2 class="heading-medium">@Messages("subscriptionComplete.h2")</h2>
+    <h2 class="heading-medium">@Html(Messages("subscriptionComplete.h2", s"$arn"))</h2>
 
     <p>@Messages("subscriptionComplete.p1")</p>
+
+    <p>@Html(Messages("subscriptionComplete.p2", "https://www.gov.uk/guidance/get-an-hmrc-agent-services-account"))</p>
+
 
     <ul class="list list-bullet">
         <li>@Messages("subscriptionComplete.bullet-list.1")</li>
@@ -41,14 +44,13 @@
         <h2 class="heading-medium">@Messages("subscriptionComplete.link-account.h2")</h2>
 
         <p>@Messages("subscriptionComplete.link-account.p1")</p>
-        <p>@Messages("subscriptionComplete.link-account.p2")</p>
 
         <ul class="list list-bullet">
             <li>@Messages("subscriptionComplete.link-account.bullet-list.1")</li>
             <li>@Messages("subscriptionComplete.link-account.bullet-list.2")</li>
         </ul>
 
-        <p>@Messages("subscriptionComplete.link-account.p3")</p>
+        <p>@Messages("subscriptionComplete.link-account.p2")</p>
     }
 
     @defining(if(isUrlToASAccount) "continueToASAccount" else "continueJourney") { continueMsg =>

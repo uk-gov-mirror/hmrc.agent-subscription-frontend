@@ -21,8 +21,9 @@
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = Messages("hasOtherEnrolments.title"), bodyClasses = None) {
 
     <h1 class="heading-xlarge">@Messages("hasOtherEnrolments.title")</h1>
-    
-    <p>@Messages("hasOtherEnrolments.p1")</p>
 
-    <p><a class="button" href="@SignedOutController.redirectToSos" role="button" id="buttonGoToGg">@Messages("button.goToGg")</a></p>
+    <p>@Messages("hasOtherEnrolments.p1")</p>
+    <p>@Messages("hasOtherEnrolments.p2")</p>
+
+    <p><a class="button" href="@SignedOutController.redirectToSos" role="button" id="buttonGoToGg">@Messages("button.register")</a></p>
 }
