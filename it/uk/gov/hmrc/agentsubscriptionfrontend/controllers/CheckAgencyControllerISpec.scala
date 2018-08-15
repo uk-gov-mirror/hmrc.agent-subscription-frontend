@@ -551,6 +551,11 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
       val result = await(controller.showAlreadySubscribed(authenticatedAs(subscribingCleanAgentWithoutEnrolments)))
 
       result should containMessages("alreadySubscribed.title")
+      val doc = Jsoup.parse(bodyOf(result))
+      val signOutButton = doc.getElementById("finishSignOut")
+      signOutButton.attr("href") shouldBe routes.SignedOutController.signOutWithContinueUrl.url
+      signOutButton.text() shouldBe htmlEscapedMessage("button.finishSignOut")
+
     }
   }
 

@@ -64,11 +64,12 @@ subscriptionDetails.email.label=Business email address
 subscriptionDetails.telephone.label=Business telephone number
 
 #No agency found
-noAgencyFound.title=There is no agent business linked to this account
+noAgencyFound.title=There is a problem
+noAgencyFound.p1=We could not find any records that match the details you entered.
 
 #Already subscribed
-alreadySubscribed.title=Your agency is already subscribed
-alreadySubscribed.p1=Please contact your agency administrator to get access to agent services.
+alreadySubscribed.title=Your business already has an agent services account
+alreadySubscribed.p1=Contact your administrator to get access to your business''s agent services account.
 
 #Check business type
 checkBusinessType.title=What type of business are you?
@@ -119,15 +120,17 @@ invalidAddress.p1=Sorry, the address is not in a format that our system can acce
 invalidAddress.button.changeAddress=Change address
 
 #Has other enrolments
-hasOtherEnrolments.title=Create your new agent services account
-hasOtherEnrolments.p1=To do this your agency needs a new Government Gateway ID.
+hasOtherEnrolments.title=You need a new Government Gateway agent account
+hasOtherEnrolments.p1=You cannot use your current Government Gateway account to create an agent services account.
+hasOtherEnrolments.p2=You will need to create a new Government Gateway agent account. You can do this now.
 
 #Non agent
-nonAgent.title=This isn''t an agent account
-nonAgent.p1=Before you can create your agent services account, you need to:
-nonAgent.l1=register for a new Government Gateway account, selecting the ‘Agents’ option
-nonAgent.l2=use your new account details to log in and create your agent services account
-nonAgent.p2=Registering should take around 5 minutes.
+nonAgent.title=You have not signed in with a Government Gateway agent account
+nonAgent.p1=If you already have a Government Gateway agent account, sign in with your account details.
+nonAgent.p2=If you do not have one, you need to:
+nonAgent.l1=create a new Government Gateway account, selecting the ‘Agent’ option
+nonAgent.l2=use your new account details to sign in and create your agent services account
+
 
 #Link account
 linkAccount.title=Link your current Self Assessment and VAT clients to your agent services account
@@ -144,19 +147,19 @@ linkAccount.option.no=No
 #Subscription complete
 subscriptionComplete.title=Agent services account created
 subscriptionComplete.h1=Agent services account created
-subscriptionComplete.accountName=Your account number is:
+subscriptionComplete.accountName=Your account reference number
 subscriptionComplete.h2=What you can do next
-subscriptionComplete.p1=You can now use your agent services account to:
-subscriptionComplete.bullet-list.1=access new HMRC online services
-subscriptionComplete.bullet-list.2=use software to communicate directly with HMRC
-subscriptionComplete.link-account.h2=If you linked your clients
-subscriptionComplete.link-account.p1=Your agent services account can now access your current client relationships linked to the Government Gateway account you first signed in with.
-subscriptionComplete.link-account.p2=If your clients are signed up to report their income and expenses, or their VAT returns, through software, you can now:
+subscriptionComplete.p1=Make a note of your account reference number <strong class="bold">{0}</strong>. You will need this if you are not able to access your agent services account.
+subscriptionComplete.p2=<a href="{0}">Check the guidance</a> to find out how to:
+subscriptionComplete.bullet-list.1=sign in to your agent services account
+subscriptionComplete.bullet-list.2=use new HMRC services on behalf of your clients
+subscriptionComplete.link-account.h2=Now you have linked your clients
+subscriptionComplete.link-account.p1=If your clients are signed up to report their income and expenses, or their VAT returns, through software, you can now:
+subscriptionComplete.link-account.p2=You will still need to use your software or Government Gateway accounts to manage your client lists.
 subscriptionComplete.link-account.bullet-list.1=use software to access information about these clients
 subscriptionComplete.link-account.bullet-list.2=act on your client''s behalf for these services without having to ask for their authorisation again
-subscriptionComplete.link-account.p3=You will still need to use your software or Government Gateway accounts to manage your client lists.
 
-subscriptionComplete.button.continueToASAccount=Continue to your agent services account
+subscriptionComplete.button.continueToASAccount=Go to your agent services account
 subscriptionComplete.button.continueJourney=Continue
 
 #Common
@@ -165,10 +168,9 @@ button.continue=Continue
 button.yes=Yes
 button.no=No
 button.createAccount=Create account
-button.goToGg=Go to Government Gateway
-button.register=Register now
-button.signOut=Sign out
+button.register=Create a Government Gateway account
 button.back=Back
+button.finishSignOut=Finish and sign out
 
 #Setup Incomplete
 setupIncomplete.title=You cannot set up an agent services account with the details you entered

@@ -39,7 +39,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       taxpayerName = "My Business",
       isSubscribedToAgentServices = false,
       Some(BusinessAddress("AddressLine1 A", Some("AddressLine2 A"), Some("AddressLine3 A"), Some("AddressLine4 A"))))
-  
+
   private val initialDetails =
     InitialDetails(utr, knownFactsPostcode, "My Agency", "agency@example.com", "0123 456 7890")
 
@@ -261,10 +261,9 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       val containLinkedAccountMsgs = containMessages(
         "subscriptionComplete.link-account.h2",
         "subscriptionComplete.link-account.p1",
-        "subscriptionComplete.link-account.p2",
         "subscriptionComplete.link-account.bullet-list.1",
         "subscriptionComplete.link-account.bullet-list.2",
-        "subscriptionComplete.link-account.p3")
+        "subscriptionComplete.link-account.p2")
 
       "they were eligible for mapping, it should be shown" in new RequestWithSessionDetails {
         sessionStoreService.currentSession.wasEligibleForMapping = Some(true)

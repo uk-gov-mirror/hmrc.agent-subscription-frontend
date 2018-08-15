@@ -21,15 +21,16 @@
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = Messages("nonAgent.title"), bodyClasses = None) {
 
     <h1 class="heading-xlarge">@Messages("nonAgent.title")</h1>
-    
+
     <p>@Messages("nonAgent.p1")</p>
+    <p>@Messages("nonAgent.p2")</p>
 
     <ul class="list list-bullet">
         <li>@Messages("nonAgent.l1")</li>
         <li>@Messages("nonAgent.l2")</li>
     </ul>
 
-    <p>@Messages("nonAgent.p2")</p>
+
 
     <p><a class="button" href="@SignedOutController.redirectToSos" role="button" id="buttonRegisterNow">@Messages("button.register")</a></p>
 }
