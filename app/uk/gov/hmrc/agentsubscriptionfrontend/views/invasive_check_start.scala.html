@@ -33,6 +33,7 @@
             <fieldset>
                 <legend>
                     <h1 class="heading-large  @if(radioResponseForm.hasErrors){push--top}">@Messages("invasive.title.saCode")</h1>
+                    <p>@Messages("invasive.check.p1")</p>
                     @if(radioResponseForm.error("hasSaAgentCode").isDefined){
                         <span class="error-message">@Messages("error.no-radio-selected")</span>
                     }

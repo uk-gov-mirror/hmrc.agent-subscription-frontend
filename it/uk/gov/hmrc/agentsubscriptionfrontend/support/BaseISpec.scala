@@ -147,4 +147,6 @@ abstract class BaseISpec
   implicit def hc(implicit request: FakeRequest[_]): HeaderCarrier =
     HeaderCarrierConverter.fromHeadersAndSession(request.headers, Some(request.session))
 
+protected def hasMessage(key: String, args: Any*): String = Messages(key, args: _*).toString
+
 }
