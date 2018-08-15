@@ -30,6 +30,7 @@ import uk.gov.hmrc.http.{BadRequestException, HttpException}
 import uk.gov.hmrc.play.binders.ContinueUrl
 
 class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec {
+
   private val utr = Utr("2000000000")
   private val knownFactsPostcode = "AA1 2AA"
   private val myAgencyKnownFactsResult =
@@ -251,10 +252,15 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         "subscriptionComplete.h1",
         "subscriptionComplete.accountName",
         "subscriptionComplete.h2",
-        "subscriptionComplete.p1",
         "subscriptionComplete.bullet-list.1",
         "subscriptionComplete.bullet-list.2"
       )
+
+      bodyOf(resultOf(request)) should include(hasMessage("subscriptionComplete.p1", "AARN-000-0001"))
+      bodyOf(resultOf(request)) should include(hasMessage("subscriptionComplete.p2", "https://www.gov.uk/guidance/get-an-hmrc-agent-services-account"))
+
+
+
     }
 
     "selectively show linked account content" when {

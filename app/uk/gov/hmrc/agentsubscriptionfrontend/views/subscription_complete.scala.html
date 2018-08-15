@@ -28,9 +28,9 @@
         </p>
     </div>
 
-    <h2 class="heading-medium">@Html(Messages("subscriptionComplete.h2", s"$arn"))</h2>
+    <h2 class="heading-medium">@Messages("subscriptionComplete.h2")</h2>
 
-    <p>@Messages("subscriptionComplete.p1")</p>
+    <p>@Html(Messages("subscriptionComplete.p1", s"$arn"))</p>
 
     <p>@Html(Messages("subscriptionComplete.p2", "https://www.gov.uk/guidance/get-an-hmrc-agent-services-account"))</p>
 

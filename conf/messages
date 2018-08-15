@@ -181,7 +181,8 @@ setupIncomplete.p1=<a href="{0}">Try again using a different agent user ID</a> i
 invasive.title.saCode=Do you have a Self Assessment agent code?
 invasive.title.option=Client details
 invasive.p1=We need to identify one of your current clients, so we can confirm who you are.
-invasive.p2=Enter the National Insurance number or Self Assessment Unique Taxpayer Reference (UTR) of a current client who is related to the Self Assessment agent code that you entered.
+invasive.p2=Enter the National Insurance number or Self Assessment Unique Taxpayer Reference (UTR) of a current client. This client must be related to the Self Assessment agent code that you entered.
+invasive.check.p1=We need this information so that we can check your identity.
 invasive.radioResponse.yes=Yes
 invasive.radioResponse.hidden.input.label.sa=Self Assessment agent code
 invasive.radioResponse.no=No
