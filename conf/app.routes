@@ -2,7 +2,7 @@
 
 GET         /                                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.root
 GET         /start                                uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.start
-GET         /non-agent-next-steps                 uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.showNonAgentNextSteps
+GET         /not-agent-next-steps                 uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.showNonAgentNextSteps
 GET         /return-after-gg-creds-created        uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.returnAfterGGCredsCreated(id: Option[String] ?= None)
 
 GET         /check-business-type                  uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.showCheckBusinessType
@@ -32,6 +32,7 @@ GET         /redirect-to-sos                      uk.gov.hmrc.agentsubscriptionf
 GET         /redirect-to-asaccount                uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.redirectToASAccountPage
 GET         /start-survey                         uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.startSurvey
 GET         /sign-out                             uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.signOutWithContinueUrl
+GET         /redirect-to-checkbusinesstype        uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.redirectToCheckBusinessType
 
 GET         /setup-incomplete                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.setupIncomplete
 
