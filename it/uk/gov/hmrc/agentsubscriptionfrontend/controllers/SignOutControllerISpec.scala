@@ -157,6 +157,22 @@ class SignOutControllerISpec extends BaseISpec {
     }
   }
 
+
+    "redirect to Check Business Type page" should {
+      "logout and redirect to Check Business Type page" in {
+        implicit val request = fakeRequest.withSession("sessionId" -> "SomeSession")
+
+        request.session.get("sessionId") should not be empty
+
+        val result = await(controller.redirectToCheckBusinessType(request))
+
+        status(result) shouldBe 303
+        redirectLocation(result).head should include("check-business-type")
+
+        result.session.get("sessionId") shouldBe empty
+      }
+    }
+
   "signOutWithContinueUrl" should {
 
     "logout and redirect to /gg/sign-in when no continue URL is present in the session" in {
