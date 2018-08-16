@@ -75,4 +75,7 @@ class SignedOutController @Inject()(
   def redirectToASAccountPage = Action { implicit request =>
     SeeOther(appConfig.agentServicesAccountUrl).withNewSession
   }
+  def redirectToCheckBusinessType = Action { implicit request =>
+    Redirect(routes.CheckAgencyController.showCheckBusinessType()).withNewSession
+  }
 }

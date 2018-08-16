@@ -32,6 +32,7 @@ GET         /redirect-to-sos                      uk.gov.hmrc.agentsubscriptionf
 GET         /redirect-to-asaccount                uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.redirectToASAccountPage
 GET         /start-survey                         uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.startSurvey
 GET         /sign-out                             uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.signOutWithContinueUrl
+GET         /redirect-to-checkbusinesstype        uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.redirectToCheckBusinessType
 
 GET         /setup-incomplete                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.setupIncomplete
 

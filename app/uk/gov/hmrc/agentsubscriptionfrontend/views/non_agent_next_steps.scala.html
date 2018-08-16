@@ -15,14 +15,14 @@
  *@
 
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-@import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes.SignedOutController
+@import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
 @()(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = Messages("nonAgent.title"), bodyClasses = None) {
 
     <h1 class="heading-xlarge">@Messages("nonAgent.title")</h1>
 
-    <p>@Messages("nonAgent.p1")</p>
+    <p>@Html(Messages("nonAgent.p1", routes.SignedOutController.redirectToCheckBusinessType))</p>
     <p>@Messages("nonAgent.p2")</p>
 
     <ul class="list list-bullet">
@@ -32,5 +32,5 @@
 
 
 
-    <p><a class="button" href="@SignedOutController.redirectToSos" role="button" id="buttonRegisterNow">@Messages("button.register")</a></p>
+    <p><a class="button" href="@routes.SignedOutController.redirectToSos" role="button" id="buttonRegisterNow">@Messages("button.register")</a></p>
 }
