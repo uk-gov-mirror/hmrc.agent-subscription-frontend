@@ -38,56 +38,80 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       postcode = knownFactsPostcode,
       taxpayerName = "My Business",
       isSubscribedToAgentServices = false,
-      Some(BusinessAddress("AddressLine1 A", Some("AddressLine2 A"), Some("AddressLine3 A"), Some("AddressLine4 A"))))
+      Some(BusinessAddress("AddressLine1 A", Some("AddressLine2 A"), Some("AddressLine3 A"), Some("AddressLine4 A"), Some("AA11AA"), "GB")),
+      Some("someone@example.com"))
 
   private val initialDetails =
-    InitialDetails(utr, knownFactsPostcode, "My Agency", "agency@example.com", "0123 456 7890")
+    InitialDetails(utr, knownFactsPostcode, "My Agency", Some("agency@example.com"),
+      BusinessAddress("AddressLine1 A", Some("AddressLine2 A"), Some("AddressLine3 A"), Some("AddressLine4 A"), Some("AA11AA"), "GB"))
 
   private lazy val controller: SubscriptionController = app.injector.instanceOf[SubscriptionController]
 
   private lazy val redirectUrl = "https://www.gov.uk/"
 
-  "showInitialDetails" should {
-    behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showInitialDetails(request))
+  "showCheckAnswers" should {
+    behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showCheckAnswers(request))
 
     "redirect to unclean credentials page if user has enrolled in any other services" in {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
-      sessionStoreService.currentSession.knownFactsResult = Some(myAgencyKnownFactsResult)
 
-      val result = await(controller.showInitialDetails(request))
+      val result = await(controller.showCheckAnswers(request))
       status(result) shouldBe 303
       result.header.headers("Location") should include("/agent-subscription/has-other-enrolments")
       noMetricExpectedAtThisPoint()
     }
 
-    "show subscription details page if user has not already subscribed and has clean creds" in {
+    "show subscription answers page if user has not already subscribed and has clean creds" in {
       implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
-      sessionStoreService.currentSession.knownFactsResult = Some(myAgencyKnownFactsResult)
+      sessionStoreService.currentSession.initialDetails = Some(initialDetails)
 
-      val result = await(controller.showInitialDetails(request))
-      result should containMessages("subscriptionDetails.title")
+      val result = await(controller.showCheckAnswers(request))
+      result should containMessages("checkAnswers.title",
+        "checkAnswers.description.p1",
+        "checkAnswers.description.p2",
+        "checkAnswers.change.button",
+        "checkAnswers.confirm.button",
+        "checkAnswers.businessName.label",
+        "checkAnswers.businessEmailAddress.label",
+        "checkAnswers.businessAddress.label")
+
+      result should containSubstrings(initialDetails.name, initialDetails.email.get, initialDetails.businessAddress.addressLine1,
+        initialDetails.businessAddress.postalCode.get)
       metricShouldExistAndBeUpdated("Count-Subscription-CleanCreds-Success")
     }
 
-    "populate form with utr and postcode" in {
+    "show business email page if user has not already subscribed and has clean creds and does not have any email in etmp" in {
       implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
-      sessionStoreService.currentSession.knownFactsResult = Some(myAgencyKnownFactsResult)
+      sessionStoreService.currentSession.initialDetails = Some(initialDetails.copy(email = None))
 
-      val result = await(controller.showInitialDetails(request))
-
-      result should containSubstrings(
-        s"""value="${utr.value}"""",
-        s"""value="$knownFactsPostcode"""")
+      val result = await(controller.showCheckAnswers(request))
+      status(result) shouldBe 303
+      result.header.headers("Location") should include("/agent-subscription/business-email")
+      metricShouldExistAndBeUpdated("Count-Subscription-CleanCreds-Success")
     }
 
-    "redirect to the /check-business-type page if there is no KnownFactsResult in session because the user has returned to a bookmark" in {
+    "redirect to the /check-business-type page if there is no InitialDetails in session because the user has returned to a bookmark" in {
       implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
 
-      val result = await(controller.showInitialDetails(request))
+      val result = await(controller.showCheckAnswers(request))
 
       resultShouldBeSessionDataMissing(result)
     }
   }
+
+  "submitCheckAnswers" should {
+    behave like anAgentAffinityGroupOnlyEndpoint(request => controller.submitCheckAnswers(request))
+
+    "redirect to unclean credentials page if user has enrolled in any other services" in {
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+
+      val result = await(controller.submitCheckAnswers(request))
+      status(result) shouldBe 303
+      result.header.headers("Location") should include("/agent-subscription/has-other-enrolments")
+      noMetricExpectedAtThisPoint()
+    }
+  }
+
 
   "showLinkAccountType (GET /link-account)" should {
     trait RequestAndResult {
@@ -334,382 +358,286 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
     }
   }
 
-  "submitInitialDetails" should {
-    "redisplay form" when {
-      "name contains invalid characters" in {
-        implicit val request = subscriptionDetailsRequest("name", Seq("name" -> "InvalidAgencyName!@"))
-        sessionStoreService.currentSession.knownFactsResult = Some(myAgencyKnownFactsResult)
+/*"returnFromAddressLookup" should {
+  behave like anAgentAffinityGroupOnlyEndpoint(request => controller.submitInitialDetails(request))
 
-        val result = await(controller.submitInitialDetails(request))
-
-        result should containMessages("subscriptionDetails.title", "error.agency-name.invalid")
-      }
-
-      "email is omitted" in {
-        implicit val request = subscriptionDetailsRequest("email", Seq("email" -> ""))
-        sessionStoreService.currentSession.knownFactsResult = Some(myAgencyKnownFactsResult)
-
-        val result = await(controller.submitInitialDetails(request))
-
-        result should containMessages("subscriptionDetails.title", "error.email.empty")
-      }
-
-      "email has no text in the domain part" in {
-        implicit val request = subscriptionDetailsRequest("email", Seq("email" -> "local@"))
-        sessionStoreService.currentSession.knownFactsResult = Some(myAgencyKnownFactsResult)
-
-        val result = await(controller.submitInitialDetails(request))
-
-        result should containMessages("subscriptionDetails.title", "error.email")
-      }
-
-      "email does not contain an '@'" in {
-        implicit val request = subscriptionDetailsRequest("email", Seq("email" -> "local"))
-        sessionStoreService.currentSession.knownFactsResult = Some(myAgencyKnownFactsResult)
-
-        val result = await(controller.submitInitialDetails(request))
-
-        result should containMessages("subscriptionDetails.title", "error.email")
-      }
-
-      "email has no text in the local part" in {
-        implicit val request = subscriptionDetailsRequest("email", Seq("email" -> "@domain"))
-        sessionStoreService.currentSession.knownFactsResult = Some(myAgencyKnownFactsResult)
-
-        val result = await(controller.submitInitialDetails(request))
-
-        result should containMessages("subscriptionDetails.title", "error.email")
-      }
-
-      "telephone is invalid with numbers and words" in {
-        implicit val request = subscriptionDetailsRequest("telephone", Seq("telephone" -> "02073457443fff"))
-        sessionStoreService.currentSession.knownFactsResult = Some(myAgencyKnownFactsResult)
-
-        val result = await(controller.submitInitialDetails(request))
-
-        result should containMessages("subscriptionDetails.title", "error.telephone.invalid")
-      }
-    }
-
-    "redisplay form and log a warning - hidden fields should never be invalid because they were validated when originally entered" when {
-      "known facts postcode is not valid" in {
-        pending
-        implicit val request = subscriptionDetailsRequest("knownFactsPostcode", Seq("knownFactsPostcode" -> "1AA AA1"))
-        sessionStoreService.currentSession.knownFactsResult = Some(myAgencyKnownFactsResult)
-
-        val result = await(controller.submitInitialDetails(request))
-
-        result should containMessages("subscriptionDetails.title")
-        // add check for Logger(getClass).warn here
-      }
-
-      "utr is not valid" in {
-        pending
-        implicit val request = subscriptionDetailsRequest("utr", Seq("utr" -> "012345"))
-        sessionStoreService.currentSession.knownFactsResult = Some(myAgencyKnownFactsResult)
-
-        val result = await(controller.submitInitialDetails(request))
-
-        result should containMessages("subscriptionDetails.title")
-        // add check for Logger(getClass).warn here
-      }
-    }
-
-    "redirect back to /check-business-type" when {
-      "subscription form has errors and current session is missing" in {
-        AgentSubscriptionStub.subscriptionWillSucceed(utr, subscriptionRequest())
-
-        givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
-
-        implicit val request = subscriptionDetailsRequest("name", Seq("name" -> "InvalidAgencyName!@"))
-
-        val result = await(controller.submitInitialDetails(request))
-        resultShouldBeSessionDataMissing(result)
-        noMetricExpectedAtThisPoint()
-      }
-    }
-  }
-
-  "returnFromAddressLookup" should {
-    behave like anAgentAffinityGroupOnlyEndpoint(request => controller.submitInitialDetails(request))
-
-    "send subscription request and redirect to subscription complete" when {
-      "all fields are supplied and was not eligible for mapping" in {
-        AgentSubscriptionStub.subscriptionWillSucceed(utr, subscriptionRequest())
-
-        givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
-
-        implicit val request = subscriptionDetailsRequest()
-        sessionStoreService.currentSession.wasEligibleForMapping = Some(false)
-
-        val result = await(controller.submitInitialDetails(request))
-        status(result) shouldBe 303
-        redirectLocation(result).head shouldBe "/api/dummy/callback"
-
-        val addressId = "addr1"
-        stubAddressLookupReturnedAddress(addressId, subscriptionRequest())
-        val result2 =
-          await(controller.returnFromAddressLookup(addressId)(authenticatedAs(subscribingCleanAgentWithoutEnrolments)))
-
-        status(result2) shouldBe 303
-        redirectLocation(result2).head shouldBe routes.SubscriptionController.showSubscriptionComplete().url
-        sessionStoreService.allSessionsRemoved shouldBe false
-        result2.session.get("arn") shouldBe Some("ARN00001")
-
-        verifySubscriptionRequestSent(subscriptionRequest())
-        metricShouldExistAndBeUpdated(
-          "Count-Subscription-AddressLookup-Start",
-          "Count-Subscription-AddressLookup-Success",
-          "Count-Subscription-Complete")
-      }
-
-      "all fields are supplied and was eligible for mapping" in {
-        AgentSubscriptionStub.subscriptionWillSucceed(utr, subscriptionRequest())
-
-        givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
-
-        implicit val request = subscriptionDetailsRequest()
-        sessionStoreService.currentSession.wasEligibleForMapping = Some(true)
-
-        val result = await(controller.submitInitialDetails(request))
-        status(result) shouldBe 303
-        redirectLocation(result).head shouldBe "/api/dummy/callback"
-
-        val addressId = "addr1"
-        stubAddressLookupReturnedAddress(addressId, subscriptionRequest())
-        val result2 =
-          await(controller.returnFromAddressLookup(addressId)(authenticatedAs(subscribingCleanAgentWithoutEnrolments)))
-
-        status(result2) shouldBe 303
-        redirectLocation(result2).head shouldBe routes.SubscriptionController.showLinkAccount().url
-
-        verifySubscriptionRequestSent(subscriptionRequest())
-        metricShouldExistAndBeUpdated(
-          "Count-Subscription-AddressLookup-Start",
-          "Count-Subscription-AddressLookup-Success",
-          "Count-Subscription-Complete")
-      }
-
-      "all fields are supplied but address contains more than 4 lines" in {
-        AgentSubscriptionStub.subscriptionWillSucceed(utr, subscriptionRequest())
-
-        givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
-
-        implicit val request = subscriptionDetailsRequest()
-        sessionStoreService.currentSession.wasEligibleForMapping = Some(false)
-        val result = await(controller.submitInitialDetails(request))
-        status(result) shouldBe 303
-        redirectLocation(result).head shouldBe "/api/dummy/callback"
-
-        val addressId = "addr1"
-        stubAddressLookupReturnedAddress(addressId, subscriptionRequest(), Seq("Line 4", "Line 5"))
-        val result2 =
-          await(controller.returnFromAddressLookup(addressId)(authenticatedAs(subscribingCleanAgentWithoutEnrolments)))
-
-        status(result2) shouldBe 303
-        redirectLocation(result2).head shouldBe routes.SubscriptionController.showSubscriptionComplete().url
-        sessionStoreService.allSessionsRemoved shouldBe false
-        result2.session.get("arn") shouldBe Some("ARN00001")
-
-        verifySubscriptionRequestSent(subscriptionRequest())
-        // add check for Logger(getClass).warn here
-        metricShouldExistAndBeUpdated(
-          "Count-Subscription-AddressLookup-Start",
-          "Count-Subscription-AddressLookup-Success",
-          "Count-Subscription-Complete")
-      }
-
-      "town is omitted" in {
-        val request = subscriptionRequest(town = None)
-        AgentSubscriptionStub.subscriptionWillSucceed(utr, request)
-
-        givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
-        val result = await(controller.submitInitialDetails(subscriptionDetailsRequest()))
-        status(result) shouldBe 303
-        redirectLocation(result).head shouldBe "/api/dummy/callback"
-
-        stubAddressLookupReturnedAddress("addr1", request)
-        val result2 =
-          await(controller.returnFromAddressLookup("addr1")(authenticatedAs(subscribingCleanAgentWithoutEnrolments)))
-
-        status(result2) shouldBe 303
-        redirectLocation(result2).head shouldBe routes.SubscriptionController.showSubscriptionComplete().url
-
-        verifySubscriptionRequestSent(request)
-      }
-    }
-
-    "always send countryCode=GB to the back end as we do not currently allow non-UK addresses" in {
-      AgentSubscriptionStub.subscriptionWillSucceed(utr, subscriptionRequest(countryCode = "GB"))
+  "send subscription request and redirect to subscription complete" when {
+    "all fields are supplied and was not eligible for mapping" in {
+      AgentSubscriptionStub.subscriptionWillSucceed(utr, subscriptionRequest())
 
       givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
 
-      val detailsRequest = subscriptionDetailsRequest()
-      val result = await(controller.submitInitialDetails(detailsRequest))
+      implicit val request = subscriptionDetailsRequest()
+      sessionStoreService.currentSession.wasEligibleForMapping = Some(false)
+
+      val result = await(controller.submitInitialDetails(request))
       status(result) shouldBe 303
       redirectLocation(result).head shouldBe "/api/dummy/callback"
 
       val addressId = "addr1"
-      stubAddressLookupReturnedAddress(addressId, subscriptionRequest(countryCode = "AR"))
+      stubAddressLookupReturnedAddress(addressId, subscriptionRequest())
       val result2 =
         await(controller.returnFromAddressLookup(addressId)(authenticatedAs(subscribingCleanAgentWithoutEnrolments)))
 
       status(result2) shouldBe 303
       redirectLocation(result2).head shouldBe routes.SubscriptionController.showSubscriptionComplete().url
+      sessionStoreService.allSessionsRemoved shouldBe false
+      result2.session.get("arn") shouldBe Some("ARN00001")
 
-      verifySubscriptionRequestSent(subscriptionRequest(countryCode = "GB"))
+      verifySubscriptionRequestSent(subscriptionRequest())
+      metricShouldExistAndBeUpdated(
+        "Count-Subscription-AddressLookup-Start",
+        "Count-Subscription-AddressLookup-Success",
+        "Count-Subscription-Complete")
     }
 
-    "not mix up data from concurrent users" in {
-      val request = subscriptionRequest()
-      AgentSubscriptionStub.subscriptionWillSucceed(utr, request)
+    "all fields are supplied and was eligible for mapping" in {
+      AgentSubscriptionStub.subscriptionWillSucceed(utr, subscriptionRequest())
 
       givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
 
-      val fakeRequest1 = subscriptionDetailsRequest()
-      sessionStoreService.currentSession(hc(fakeRequest1)).wasEligibleForMapping = Some(false)
+      implicit val request = subscriptionDetailsRequest()
+      sessionStoreService.currentSession.wasEligibleForMapping = Some(true)
 
-      val user1Result1 = await(controller.submitInitialDetails(fakeRequest1))
-      status(user1Result1) shouldBe 303
-      redirectLocation(user1Result1).head shouldBe "/api/dummy/callback"
+      val result = await(controller.submitInitialDetails(request))
+      status(result) shouldBe 303
+      redirectLocation(result).head shouldBe "/api/dummy/callback"
 
-      val request2 = subscriptionRequest2()
-      AgentSubscriptionStub.subscriptionWillSucceed(utr, request2, "ARN00002")
+      val addressId = "addr1"
+      stubAddressLookupReturnedAddress(addressId, subscriptionRequest())
+      val result2 =
+        await(controller.returnFromAddressLookup(addressId)(authenticatedAs(subscribingCleanAgentWithoutEnrolments)))
 
-      val fakeRequest2 = subscriptionDetailsRequest2()
-      sessionStoreService.currentSession(hc(fakeRequest2)).wasEligibleForMapping = Some(false)
+      status(result2) shouldBe 303
+      redirectLocation(result2).head shouldBe routes.SubscriptionController.showLinkAccount().url
 
-      val user2Result1 = await(controller.submitInitialDetails(fakeRequest2))
-      status(user2Result1) shouldBe 303
-      redirectLocation(user2Result1).head shouldBe "/api/dummy/callback"
+      verifySubscriptionRequestSent(subscriptionRequest())
+      metricShouldExistAndBeUpdated(
+        "Count-Subscription-AddressLookup-Start",
+        "Count-Subscription-AddressLookup-Success",
+        "Count-Subscription-Complete")
+    }
+
+    "all fields are supplied but address contains more than 4 lines" in {
+      AgentSubscriptionStub.subscriptionWillSucceed(utr, subscriptionRequest())
+
+      givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
+
+      implicit val request = subscriptionDetailsRequest()
+      sessionStoreService.currentSession.wasEligibleForMapping = Some(false)
+      val result = await(controller.submitInitialDetails(request))
+      status(result) shouldBe 303
+      redirectLocation(result).head shouldBe "/api/dummy/callback"
+
+      val addressId = "addr1"
+      stubAddressLookupReturnedAddress(addressId, subscriptionRequest(), Seq("Line 4", "Line 5"))
+      val result2 =
+        await(controller.returnFromAddressLookup(addressId)(authenticatedAs(subscribingCleanAgentWithoutEnrolments)))
+
+      status(result2) shouldBe 303
+      redirectLocation(result2).head shouldBe routes.SubscriptionController.showSubscriptionComplete().url
+      sessionStoreService.allSessionsRemoved shouldBe false
+      result2.session.get("arn") shouldBe Some("ARN00001")
+
+      verifySubscriptionRequestSent(subscriptionRequest())
+      // add check for Logger(getClass).warn here
+      metricShouldExistAndBeUpdated(
+        "Count-Subscription-AddressLookup-Start",
+        "Count-Subscription-AddressLookup-Success",
+        "Count-Subscription-Complete")
+    }
+
+    "town is omitted" in {
+      val request = subscriptionRequest(town = None)
+      AgentSubscriptionStub.subscriptionWillSucceed(utr, request)
+
+      givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
+      val result = await(controller.submitInitialDetails(subscriptionDetailsRequest()))
+      status(result) shouldBe 303
+      redirectLocation(result).head shouldBe "/api/dummy/callback"
 
       stubAddressLookupReturnedAddress("addr1", request)
-      val fakeRequest3 = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
-      val user1Result2 =
-        await(controller.returnFromAddressLookup("addr1")(fakeRequest3))
+      val result2 =
+        await(controller.returnFromAddressLookup("addr1")(authenticatedAs(subscribingCleanAgentWithoutEnrolments)))
 
-      status(user1Result2) shouldBe 303
-      redirectLocation(user1Result2).head shouldBe routes.SubscriptionController.showSubscriptionComplete().url
+      status(result2) shouldBe 303
+      redirectLocation(result2).head shouldBe routes.SubscriptionController.showSubscriptionComplete().url
+
       verifySubscriptionRequestSent(request)
-
-      sessionStoreService.allSessionsRemoved shouldBe false
-      user1Result2.session(fakeRequest3).get("arn") shouldBe Some("ARN00001")
-
-      stubAddressLookupReturnedAddress("addr2", request2)
-      val fakeRequest4 = authenticatedAs(user = subscribing2ndCleanAgentWithoutEnrolments)
-      val user2Result2 = await(
-        controller.returnFromAddressLookup("addr2")(fakeRequest4))
-      verifySubscriptionRequestSent(request)
-
-      status(user2Result2) shouldBe 303
-      redirectLocation(user2Result2).head shouldBe routes.SubscriptionController.showSubscriptionComplete().url
-
-      sessionStoreService.allSessionsRemoved shouldBe false
-      user2Result2.session(fakeRequest4).get("arn") shouldBe Some("ARN00002")
-    }
-
-    "redirect to subscription failed" when {
-      "subscription request fails" in {
-        AgentSubscriptionStub.subscriptionWillBeForbidden(utr, subscriptionRequest())
-
-        givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
-
-        implicit val request = subscriptionDetailsRequest()
-        val result0 = await(controller.submitInitialDetails(request))
-        status(result0) shouldBe 303
-        redirectLocation(result0).head shouldBe "/api/dummy/callback"
-
-        stubAddressLookupReturnedAddress("addr1", subscriptionRequest())
-
-        an[HttpException] should be thrownBy await(
-          controller.returnFromAddressLookup("addr1")(authenticatedAs(subscribingCleanAgentWithoutEnrolments)))
-
-        sessionStoreService.allSessionsRemoved shouldBe false
-        metricShouldExistAndBeUpdated(
-          "Count-Subscription-AddressLookup-Start",
-          "Count-Subscription-AddressLookup-Success",
-          "Count-Subscription-Failed",
-          "Http4xxErrorCount-ConsumedAPI-Agent-Subscription-subscribeAgencyToMtd-POST"
-        )
-      }
-    }
-
-    "redirect to already subscribed" when {
-      "agency is already subscribed to MTD" in {
-        AgentSubscriptionStub.subscriptionWillConflict(utr, subscriptionRequest())
-
-        givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
-
-        implicit val request = subscriptionDetailsRequest()
-        val result0 = await(controller.submitInitialDetails(request))
-        status(result0) shouldBe 303
-        redirectLocation(result0).head shouldBe "/api/dummy/callback"
-
-        stubAddressLookupReturnedAddress("addr1", subscriptionRequest())
-        val result =
-          await(controller.returnFromAddressLookup("addr1")(authenticatedAs(subscribingCleanAgentWithoutEnrolments)))
-
-        status(result) shouldBe 303
-        redirectLocation(result).head shouldBe routes.CheckAgencyController.showAlreadySubscribed().url
-        sessionStoreService.allSessionsRemoved shouldBe false
-        metricShouldExistAndBeUpdated(
-          "Count-Subscription-AddressLookup-Start",
-          "Count-Subscription-AddressLookup-Success",
-          "Count-Subscription-AlreadySubscribed-APIResponse",
-          "Http4xxErrorCount-ConsumedAPI-Agent-Subscription-subscribeAgencyToMtd-POST"
-        )
-      }
-    }
-
-    "display address_form_with_errors and report related errors" when {
-      "postcode is blacklisted" in {
-        implicit val request = subscriptionDetailsRequest()
-        sessionStoreService.currentSession.knownFactsResult = Some(myAgencyKnownFactsResult)
-
-        givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
-        val result0 = await(controller.submitInitialDetails(request))
-        status(result0) shouldBe 303
-        redirectLocation(result0).head shouldBe "/api/dummy/callback"
-
-        givenAddressLookupReturnsAddress("addr1", postcode = "AB10 1ZT")
-        val result =
-          await(controller.returnFromAddressLookup("addr1")(authenticatedAs(subscribingCleanAgentWithoutEnrolments)))
-
-        result should containMessages("error.postcode.blacklisted", "invalidAddress.title")
-      }
-
-      "the address is not valid according to DES's rules" in {
-        implicit val request = subscriptionDetailsRequest()
-        sessionStoreService.currentSession.knownFactsResult = Some(myAgencyKnownFactsResult)
-
-        givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
-        val result0 = await(controller.submitInitialDetails(request))
-        status(result0) shouldBe 303
-        redirectLocation(result0).head shouldBe "/api/dummy/callback"
-
-        val tooLongLine = "123456789012345678901234567890123456"
-        givenAddressLookupReturnsAddress("addr1", addressLine1 = tooLongLine)
-        val result =
-          await(controller.returnFromAddressLookup("addr1")(authenticatedAs(subscribingCleanAgentWithoutEnrolments)))
-
-        result should containSubstrings(htmlEscapedMessage("error.maxLength", 35))
-        result should containMessages("invalidAddress.title")
-      }
-    }
-
-    "redirect to the Check Business Type page if there is no initial details in session because the user has returned to a bookmark" in {
-      implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
-      sessionStoreService.currentSession.knownFactsResult = Some(myAgencyKnownFactsResult)
-      sessionStoreService.currentSession.initialDetails = None
-
-      givenAddressLookupReturnsAddress("addr1")
-      val result = await(controller.returnFromAddressLookup("addr1")(request))
-
-      resultShouldBeSessionDataMissing(result)
     }
   }
 
-  "submitModifiedAddress" should {
+  "always send countryCode=GB to the back end as we do not currently allow non-UK addresses" in {
+    AgentSubscriptionStub.subscriptionWillSucceed(utr, subscriptionRequest(countryCode = "GB"))
+
+    givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
+
+    val detailsRequest = subscriptionDetailsRequest()
+    val result = await(controller.submitInitialDetails(detailsRequest))
+    status(result) shouldBe 303
+    redirectLocation(result).head shouldBe "/api/dummy/callback"
+
+    val addressId = "addr1"
+    stubAddressLookupReturnedAddress(addressId, subscriptionRequest(countryCode = "AR"))
+    val result2 =
+      await(controller.returnFromAddressLookup(addressId)(authenticatedAs(subscribingCleanAgentWithoutEnrolments)))
+
+    status(result2) shouldBe 303
+    redirectLocation(result2).head shouldBe routes.SubscriptionController.showSubscriptionComplete().url
+
+    verifySubscriptionRequestSent(subscriptionRequest(countryCode = "GB"))
+  }
+
+  "not mix up data from concurrent users" in {
+    val request = subscriptionRequest()
+    AgentSubscriptionStub.subscriptionWillSucceed(utr, request)
+
+    givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
+
+    val fakeRequest1 = subscriptionDetailsRequest()
+    sessionStoreService.currentSession(hc(fakeRequest1)).wasEligibleForMapping = Some(false)
+
+    val user1Result1 = await(controller.submitInitialDetails(fakeRequest1))
+    status(user1Result1) shouldBe 303
+    redirectLocation(user1Result1).head shouldBe "/api/dummy/callback"
+
+    val request2 = subscriptionRequest2()
+    AgentSubscriptionStub.subscriptionWillSucceed(utr, request2, "ARN00002")
+
+    val fakeRequest2 = subscriptionDetailsRequest2()
+    sessionStoreService.currentSession(hc(fakeRequest2)).wasEligibleForMapping = Some(false)
+
+    val user2Result1 = await(controller.submitInitialDetails(fakeRequest2))
+    status(user2Result1) shouldBe 303
+    redirectLocation(user2Result1).head shouldBe "/api/dummy/callback"
+
+    stubAddressLookupReturnedAddress("addr1", request)
+    val fakeRequest3 = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+    val user1Result2 =
+      await(controller.returnFromAddressLookup("addr1")(fakeRequest3))
+
+    status(user1Result2) shouldBe 303
+    redirectLocation(user1Result2).head shouldBe routes.SubscriptionController.showSubscriptionComplete().url
+    verifySubscriptionRequestSent(request)
+
+    sessionStoreService.allSessionsRemoved shouldBe false
+    user1Result2.session(fakeRequest3).get("arn") shouldBe Some("ARN00001")
+
+    stubAddressLookupReturnedAddress("addr2", request2)
+    val fakeRequest4 = authenticatedAs(user = subscribing2ndCleanAgentWithoutEnrolments)
+    val user2Result2 = await(
+      controller.returnFromAddressLookup("addr2")(fakeRequest4))
+    verifySubscriptionRequestSent(request)
+
+    status(user2Result2) shouldBe 303
+    redirectLocation(user2Result2).head shouldBe routes.SubscriptionController.showSubscriptionComplete().url
+
+    sessionStoreService.allSessionsRemoved shouldBe false
+    user2Result2.session(fakeRequest4).get("arn") shouldBe Some("ARN00002")
+  }
+
+  "redirect to subscription failed" when {
+    "subscription request fails" in {
+      AgentSubscriptionStub.subscriptionWillBeForbidden(utr, subscriptionRequest())
+
+      givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
+
+      implicit val request = subscriptionDetailsRequest()
+      val result0 = await(controller.submitInitialDetails(request))
+      status(result0) shouldBe 303
+      redirectLocation(result0).head shouldBe "/api/dummy/callback"
+
+      stubAddressLookupReturnedAddress("addr1", subscriptionRequest())
+
+      an[HttpException] should be thrownBy await(
+        controller.returnFromAddressLookup("addr1")(authenticatedAs(subscribingCleanAgentWithoutEnrolments)))
+
+      sessionStoreService.allSessionsRemoved shouldBe false
+      metricShouldExistAndBeUpdated(
+        "Count-Subscription-AddressLookup-Start",
+        "Count-Subscription-AddressLookup-Success",
+        "Count-Subscription-Failed",
+        "Http4xxErrorCount-ConsumedAPI-Agent-Subscription-subscribeAgencyToMtd-POST"
+      )
+    }
+  }
+
+  "redirect to already subscribed" when {
+    "agency is already subscribed to MTD" in {
+      AgentSubscriptionStub.subscriptionWillConflict(utr, subscriptionRequest())
+
+      givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
+
+      implicit val request = subscriptionDetailsRequest()
+      val result0 = await(controller.submitInitialDetails(request))
+      status(result0) shouldBe 303
+      redirectLocation(result0).head shouldBe "/api/dummy/callback"
+
+      stubAddressLookupReturnedAddress("addr1", subscriptionRequest())
+      val result =
+        await(controller.returnFromAddressLookup("addr1")(authenticatedAs(subscribingCleanAgentWithoutEnrolments)))
+
+      status(result) shouldBe 303
+      redirectLocation(result).head shouldBe routes.CheckAgencyController.showAlreadySubscribed().url
+      sessionStoreService.allSessionsRemoved shouldBe false
+      metricShouldExistAndBeUpdated(
+        "Count-Subscription-AddressLookup-Start",
+        "Count-Subscription-AddressLookup-Success",
+        "Count-Subscription-AlreadySubscribed-APIResponse",
+        "Http4xxErrorCount-ConsumedAPI-Agent-Subscription-subscribeAgencyToMtd-POST"
+      )
+    }
+  }
+
+  "display address_form_with_errors and report related errors" when {
+    "postcode is blacklisted" in {
+      implicit val request = subscriptionDetailsRequest()
+      sessionStoreService.currentSession.knownFactsResult = Some(myAgencyKnownFactsResult)
+
+      givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
+      val result0 = await(controller.submitInitialDetails(request))
+      status(result0) shouldBe 303
+      redirectLocation(result0).head shouldBe "/api/dummy/callback"
+
+      givenAddressLookupReturnsAddress("addr1", postcode = "AB10 1ZT")
+      val result =
+        await(controller.returnFromAddressLookup("addr1")(authenticatedAs(subscribingCleanAgentWithoutEnrolments)))
+
+      result should containMessages("error.postcode.blacklisted", "invalidAddress.title")
+    }
+
+    "the address is not valid according to DES's rules" in {
+      implicit val request = subscriptionDetailsRequest()
+      sessionStoreService.currentSession.knownFactsResult = Some(myAgencyKnownFactsResult)
+
+      givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
+      val result0 = await(controller.submitInitialDetails(request))
+      status(result0) shouldBe 303
+      redirectLocation(result0).head shouldBe "/api/dummy/callback"
+
+      val tooLongLine = "123456789012345678901234567890123456"
+      givenAddressLookupReturnsAddress("addr1", addressLine1 = tooLongLine)
+      val result =
+        await(controller.returnFromAddressLookup("addr1")(authenticatedAs(subscribingCleanAgentWithoutEnrolments)))
+
+      result should containSubstrings(htmlEscapedMessage("error.maxLength", 35))
+      result should containMessages("invalidAddress.title")
+    }
+  }
+
+  "redirect to the Check Business Type page if there is no initial details in session because the user has returned to a bookmark" in {
+    implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+    sessionStoreService.currentSession.knownFactsResult = Some(myAgencyKnownFactsResult)
+    sessionStoreService.currentSession.initialDetails = None
+
+    givenAddressLookupReturnsAddress("addr1")
+    val result = await(controller.returnFromAddressLookup("addr1")(request))
+
+    resultShouldBeSessionDataMissing(result)
+  }
+}
+*/
+/*  "submitModifiedAddress" should {
     "subscribe and redirect to /subscription-complete if there are no form errors" in {
       AgentSubscriptionStub.subscriptionWillSucceed(utr, subscriptionRequest())
 
@@ -744,9 +672,9 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
           tooLongAddressLine)
       }
     }
-  }
+  }*/
 
-  private def desAddressForm(
+ /* private def desAddressForm(
     addressLine1: String = "1 Some Street",
     postcode: String = "AA1 1AA",
     keyToRemove: String = "",
@@ -790,7 +718,6 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
           addressLine4 = Some("Address Line 4"),
           postcode = postcode,
           countryCode = countryCode),
-        telephone = "0123 456 7890",
         email = "agency@example.com"
       )
     )
@@ -820,8 +747,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
           addressLine4 = Some("Address Line 4"),
           postcode = postcode,
           countryCode = "GB"),
-        email = "agency2@example.com",
-        telephone = "0123 456 7899"
+        email = "agency2@example.com"
       )
     )
 
@@ -848,5 +774,5 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         .withRequestBody(containing(subscriptionRequest.agency.address.addressLine3.getOrElse("")))
         .withRequestBody(containing(subscriptionRequest.agency.address.addressLine4.getOrElse("")))
         .withRequestBody(containing(subscriptionRequest.agency.address.postcode))
-        .withRequestBody(containing(subscriptionRequest.agency.address.countryCode)))
+        .withRequestBody(containing(subscriptionRequest.agency.address.countryCode)))*/
 }

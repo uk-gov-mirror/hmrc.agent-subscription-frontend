@@ -41,7 +41,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
   val postcode = "AA11AA"
   val registrationName = "My Agency"
   val businessAddress =
-    BusinessAddress("AddressLine1 A", Some("AddressLine2 A"), Some("AddressLine3 A"), Some("AddressLine4 A"))
+    BusinessAddress("AddressLine1 A", Some("AddressLine2 A"), Some("AddressLine3 A"), Some("AddressLine4 A"), Some("AA11AA"), "GB")
 
   def agentAssuranceRun: Boolean
 
@@ -307,7 +307,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
       implicit val hc = HeaderCarrierConverter.fromHeadersAndSession(request.headers, Some(request.session))
       import scala.concurrent.ExecutionContext.Implicits.global
 
-      await(sessionStoreService.fetchKnownFactsResult) shouldBe Some(KnownFactsResult(Utr("2000000000"), "AA1 1AA", "My Agency", isSubscribedToAgentServices = false, None))
+      await(sessionStoreService.fetchKnownFactsResult) shouldBe Some(KnownFactsResult(Utr("2000000000"), "AA1 1AA", "My Agency", isSubscribedToAgentServices = false, None, None))
     }
 
     "Upstream4xxResponse partialSubscriptionFix failed with 403" in {
@@ -385,7 +385,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
           postcode = postcode,
           taxpayerName = registrationName,
           isSubscribedToAgentServices = false,
-          Some(businessAddress)))
+          Some(businessAddress), Some("someone@example.com")))
 
       val result = await(controller.showConfirmYourAgency(request))
 
@@ -415,7 +415,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
           utr = utr,
           postcode = postcode,
           taxpayerName = registrationName,
-          isSubscribedToAgentServices = false, Some(businessAddress)))
+          isSubscribedToAgentServices = false, Some(businessAddress), Some("someone@example.com")))
 
       val result = await(controller.showConfirmYourAgency(request))
 
@@ -429,7 +429,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
           utr = Utr("0123456789"),
           postcode = "AA11AA",
           taxpayerName = "My Agency",
-          isSubscribedToAgentServices = false, Some(businessAddress)))
+          isSubscribedToAgentServices = false, Some(businessAddress), Some("someone@example.com")))
 
       val result = await(controller.showConfirmYourAgency(request))
 
@@ -461,7 +461,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
             postcode = "AA11AA",
             taxpayerName = "My Agency",
             isSubscribedToAgentServices = true,
-              Some(businessAddress)))
+              Some(businessAddress), Some("someone@example.com")))
 
         val result = await(controller.submitConfirmYourAgency(request))
 
@@ -469,7 +469,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
         metricShouldExistAndBeUpdated("Count-Subscription-AlreadySubscribed-RegisteredInETMP")
       }
 
-      "redirect to showInitialDetails if the user has clean creds and isSubscribedToAgentServices=false" in {
+      "redirect to showCheckAnswers if the user has clean creds and isSubscribedToAgentServices=false" in {
         implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
           .withSession("businessType" -> "sole_trader")
           .withFormUrlEncodedBody("confirmYourAgency" -> "yes")
@@ -479,11 +479,13 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
             postcode = "AA11AA",
             taxpayerName = "My Agency",
             isSubscribedToAgentServices = false,
-            Some(businessAddress)))
+            Some(businessAddress), Some("someone@example.com")))
 
         val result = await(controller.submitConfirmYourAgency(request))
 
-        result.header.headers(LOCATION) shouldBe routes.SubscriptionController.showInitialDetails().url
+        sessionStoreService.currentSession.initialDetails should not be empty
+
+        result.header.headers(LOCATION) shouldBe routes.SubscriptionController.showCheckAnswers().url
         metricShouldExistAndBeUpdated("Count-Subscription-CleanCreds-Start")
       }
     }
@@ -498,7 +500,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
         utr = Utr("0123456789"),
         postcode = "AA11AA",
         taxpayerName = "My Agency",
-        isSubscribedToAgentServices = false, Some(businessAddress)))
+        isSubscribedToAgentServices = false, Some(businessAddress), Some("someone@example.com")))
 
         val result = await(controller.submitConfirmYourAgency(request))
 
@@ -517,7 +519,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
             utr = Utr("0123456789"),
             postcode = "AA11AA",
             taxpayerName = "My Agency",
-            isSubscribedToAgentServices = false, Some(businessAddress)))
+            isSubscribedToAgentServices = false, Some(businessAddress), Some("someone@example.com")))
 
         val result = await(controller.submitConfirmYourAgency(request))
 
@@ -535,7 +537,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
             utr = Utr("0123456789"),
             postcode = "AA11AA",
             taxpayerName = "My Agency",
-            isSubscribedToAgentServices = false, Some(businessAddress)))
+            isSubscribedToAgentServices = false, Some(businessAddress), Some("someone@example.com")))
 
         a[BadRequestException] shouldBe thrownBy(await(controller.submitConfirmYourAgency(request)))
       }
@@ -637,7 +639,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
           postcode = validPostcode,
           taxpayerName = "My Agency",
           isSubscribedToAgentServices = false,
-          Some(businessAddress)))
+          Some(businessAddress), Some("someone@example.com")))
 
       val result = await(
         controller.invasiveTaxPayerOption(
@@ -662,7 +664,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
           postcode = validPostcode,
           taxpayerName = "My Agency",
           isSubscribedToAgentServices = false,
-          Some(businessAddress)))
+          Some(businessAddress), Some("someone@example.com")))
 
       val result = await(
         controller.invasiveTaxPayerOption(
@@ -687,7 +689,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
           postcode = validPostcode,
           taxpayerName = "My Agency",
           isSubscribedToAgentServices = false,
-          Some(businessAddress)))
+          Some(businessAddress), Some("someone@example.com")))
 
       val result = await(controller.invasiveTaxPayerOption(request
         .withFormUrlEncodedBody(("variant", "nino"), ("nino", "AA123456A"))))
@@ -705,7 +707,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
           utr = validUtr,
           postcode = validPostcode,
           taxpayerName = "My Agency",
-          isSubscribedToAgentServices = false, None))
+          isSubscribedToAgentServices = false, None, None))
 
       val result = await(
         controller.invasiveTaxPayerOption(
@@ -739,7 +741,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
           postcode = validPostcode,
           taxpayerName = "My Agency",
           isSubscribedToAgentServices = false,
-          Some(businessAddress)))
+          Some(businessAddress), Some("someone@example.com")))
 
       val result = await(
         controller.invasiveTaxPayerOption(
@@ -764,7 +766,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
           postcode = validPostcode,
           taxpayerName = "My Agency",
           isSubscribedToAgentServices = false,
-          Some(businessAddress)))
+          Some(businessAddress), Some("someone@example.com")))
 
       val result = await(
         controller.invasiveTaxPayerOption(
@@ -788,7 +790,7 @@ trait CheckAgencyControllerISpec extends BaseISpec with SessionDataMissingSpec {
           utr = validUtr,
           postcode = validPostcode,
           taxpayerName = "My Agency",
-          isSubscribedToAgentServices = false, None))
+          isSubscribedToAgentServices = false, None, None))
 
       val result = await(
         controller.invasiveTaxPayerOption(

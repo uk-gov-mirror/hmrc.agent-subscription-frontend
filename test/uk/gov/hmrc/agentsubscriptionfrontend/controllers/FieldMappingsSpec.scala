@@ -231,69 +231,6 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
     }
   }
 
-  "telephoneNumber bind" should {
-    val telephoneMapping = FieldMappings.telephone.withPrefix("testKey")
-
-    def bind(fieldValue: String) = telephoneMapping.bind(Map("testKey" -> fieldValue))
-
-    def shouldRejectFieldValueAsInvalid(fieldValue: String): Unit =
-      bind(fieldValue) should matchPattern {
-        case Left(List(FormError("testKey", List("error.telephone.invalid"), _))) =>
-      }
-
-    def shouldRejectFieldValueAsTooLong(fieldValue: String): Unit =
-      bind(fieldValue) should matchPattern {
-        case Left(List(FormError("testKey", List("error.telephone.maxLength"), _))) =>
-      }
-
-    def shouldAcceptFieldValue(fieldValue: String): Unit =
-      bind(fieldValue) shouldBe Right(fieldValue)
-
-    "reject telephone numbers" when {
-      "field is not present" in {
-        telephoneMapping.bind(Map.empty).left.value should contain only FormError("testKey", "error.required")
-      }
-
-      "input is empty" in {
-        bind("").left.value should contain only FormError("testKey", "error.telephone.empty")
-      }
-
-      "input is only whitespace" in {
-        bind("    ").left.value should contain only FormError("testKey", "error.telephone.empty")
-      }
-
-      "more than 24 characters" in {
-        shouldRejectFieldValueAsTooLong("999999999999999999999999999999999")
-      }
-
-      "valid telephone number then invalid characters" in {
-        shouldRejectFieldValueAsInvalid("0207 567 8554dbvv")
-      }
-
-      "there is text in the field" in {
-        shouldRejectFieldValueAsInvalid("0123 456 7890 EXT 123")
-      }
-    }
-
-    "accept telephone numbers" when {
-
-      "there are 3 digits" in {
-        shouldAcceptFieldValue("123")
-      }
-
-      "there are valid symbols in the input" in {
-        shouldAcceptFieldValue("+441234567890")
-        shouldAcceptFieldValue("#441234567890")
-        shouldAcceptFieldValue("(44)1234567890")
-        shouldAcceptFieldValue("++441234567890")
-      }
-
-      "there is whitespace in the field" in {
-        shouldAcceptFieldValue("0123 456 7890")
-      }
-    }
-  }
-
   "desTextConstraint" should {
 
     val desTextConstraint = FieldMappings.desText("error.des.text.empty", "error.des.text.invalid")

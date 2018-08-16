@@ -91,7 +91,7 @@ class StartController @Inject()(
                                                 }
                                             } else {
                                               Future successful Redirect(
-                                                routes.SubscriptionController.showInitialDetails())
+                                                routes.SubscriptionController.showCheckAnswers())
                                             }
           } yield continuedSubscriptionResponse
         case None => Future successful Redirect(routes.CheckAgencyController.showCheckBusinessType())

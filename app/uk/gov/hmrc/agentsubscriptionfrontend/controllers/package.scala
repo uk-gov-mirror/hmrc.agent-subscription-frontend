@@ -27,7 +27,6 @@ import uk.gov.hmrc.domain.Nino
 package object controllers {
   object FieldMappings {
     private val desPostcodeRegex = "^[A-Z]{1,2}[0-9][0-9A-Z]?\\s?[0-9][A-Z]{2}$|BFPO\\s?[0-9]{1,5}$".r
-    private val telephoneNumberRegex = "^[0-9- +()#x ]*$"
     private val desTextRegex = "^[A-Za-z0-9 \\-,.&'\\/]*$"
 
     // Same as play.api.data.validation.Constraints.nonEmpty but with a custom message instead of error.required
@@ -72,18 +71,6 @@ package object controllers {
             .unapplySeq(fieldValue)
             .map(_ => Valid)
             .getOrElse(Invalid(ValidationError(error)))
-      }
-    }
-
-    private val telephoneNumber: Constraint[String] = Constraint[String] { fieldValue: String =>
-      nonEmptyWithMessage("error.telephone.empty")(fieldValue) match {
-        case i: Invalid => i
-        case Valid =>
-          fieldValue match {
-            case value if !value.matches(telephoneNumberRegex) =>
-              Invalid(ValidationError("error.telephone.invalid"))
-            case _ => Valid
-          }
       }
     }
 
@@ -189,11 +176,6 @@ package object controllers {
     def postcodeWithBlacklist(blacklistedPostcodes: Set[String]): Mapping[String] =
       postcode
         .verifying("error.postcode.blacklisted", x => validateBlacklist(x, blacklistedPostcodes))
-
-    def telephone: Mapping[String] =
-      text
-        .verifying(maxLength(24, "error.telephone.maxLength"))
-        .verifying(telephoneNumber)
 
     def emailAddress: Mapping[String] =
       text

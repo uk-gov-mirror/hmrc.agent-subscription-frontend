@@ -23,7 +23,7 @@ class CheckAgencyControllerWithoutAssuranceFlagISpec extends CheckAgencyControll
       redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showConfirmYourAgency().url)
 
       sessionStoreService.currentSession.knownFactsResult shouldBe
-        Some(KnownFactsResult(validUtr, validPostcode, "My Agency", isSubscribedToAgentServices = false, Some(businessAddress)))
+        Some(KnownFactsResult(validUtr, validPostcode, "My Agency", isSubscribedToAgentServices = false, Some(businessAddress), Some("someone@example.com")))
       verifyAuditRequestNotSent(AgentSubscriptionFrontendEvent.AgentAssurance)
     }
 

@@ -43,13 +43,7 @@ import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 import scala.concurrent.Future
 import scala.util.control.NonFatal
 
-case class SubscriptionDetails(
-  utr: Utr,
-  knownFactsPostcode: String,
-  name: String,
-  email: String,
-  telephone: String,
-  address: DesAddress)
+case class SubscriptionDetails(utr: Utr, knownFactsPostcode: String, name: String, email: String, address: DesAddress)
 
 object SubscriptionDetails {
   implicit val formatDesAddress: Format[DesAddress] = Json.format[DesAddress]
@@ -60,8 +54,7 @@ object SubscriptionDetails {
       initDetails.utr,
       initDetails.knownFactsPostcode,
       initDetails.name,
-      initDetails.email,
-      initDetails.telephone,
+      initDetails.email.getOrElse(throw new Exception("email should not be empty")),
       address)
 }
 
@@ -91,62 +84,129 @@ class SubscriptionController @Inject()(
           "error.link-account-value.invalid",
           submittedLinkAccount => Seq(Yes, No).contains(submittedLinkAccount.autoMapping)))
 
-  private val initialDetailsForm = Form[InitialDetails](
+  private val businessNameForm = Form[BusinessName](
     mapping(
-      "utr"                -> utr,
-      "knownFactsPostcode" -> postcode,
-      "name"               -> agencyName,
-      "email"              -> emailAddress,
-      "telephone"          -> telephone)(
-      (utrStr, postcode, name, email, telephone) =>
-        FieldMappings
-          .normalizeUtr(utrStr)
-          .map(utr => InitialDetails(utr, postcode, name, email, telephone))
-          .getOrElse(throw new Exception("Invalid utr found after validation")))(id =>
-      Some((id.utr.value, id.knownFactsPostcode, id.name, id.email, id.telephone))))
+      "name" -> agencyName
+    )(BusinessName.apply)(BusinessName.unapply)
+  )
 
-  val showInitialDetails: Action[AnyContent] = Action.async { implicit request =>
+  private val businessEmailForm = Form[BusinessEmail](
+    mapping(
+      "email" -> emailAddress
+    )(BusinessEmail.apply)(BusinessEmail.unapply)
+  )
+
+  val showCheckAnswers: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent {
-      case hasNonEmptyEnrolments(_) => Future(Redirect(routes.CheckAgencyController.showHasOtherEnrolments()))
+      case hasNonEmptyEnrolments(_) =>
+        Future.successful(Redirect(routes.CheckAgencyController.showHasOtherEnrolments()))
       case _ =>
         mark("Count-Subscription-CleanCreds-Success")
-        sessionStoreService.fetchKnownFactsResult.map(_.map { knownFactsResult =>
-          Ok(html.subscription_details(
-            knownFactsResult.taxpayerName,
-            initialDetailsForm.fill(InitialDetails(knownFactsResult.utr, knownFactsResult.postcode, null, null, null))))
+        sessionStoreService.fetchInitialDetails.map(_.map { details =>
+          if (details.email.nonEmpty)
+            Ok(
+              html.check_answers(
+                registrationName = details.name,
+                address = details.businessAddress,
+                emailAddress = details.email
+              ))
+          else
+            Redirect(routes.SubscriptionController.showBusinessEmailForm())
         }.getOrElse {
           sessionMissingRedirect()
         })
     }
   }
 
-  val submitInitialDetails: Action[AnyContent] = Action.async { implicit request =>
-    withSubscribingAgent { _ =>
-      initialDetailsForm
-        .bindFromRequest()
-        .fold(
-          formWithErrors => redisplayInitialDetails(formWithErrors),
-          form => {
-            mark("Count-Subscription-AddressLookup-Start")
-            addressLookUpConnector
-              .initJourney(routes.SubscriptionController.returnFromAddressLookup(), JourneyName)
-              .map { x =>
-                sessionStoreService.cacheInitialDetails(
-                  InitialDetails(form.utr, form.knownFactsPostcode, form.name, form.email, form.telephone))
-                Redirect(x)
-              }
-          }
-        )
+  val submitCheckAnswers: Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent {
+      case hasNonEmptyEnrolments(_) =>
+        Future.successful(Redirect(routes.CheckAgencyController.showHasOtherEnrolments()))
+      case _ =>
+        sessionStoreService.fetchInitialDetails.flatMap(_.map { details =>
+          val desAddress = DesAddress(
+            details.businessAddress.addressLine1,
+            details.businessAddress.addressLine2,
+            details.businessAddress.addressLine3,
+            details.businessAddress.addressLine4,
+            details.businessAddress.postalCode.getOrElse(throw new Exception("Postcode should not be empty")),
+            details.businessAddress.countryCode
+          )
+          subscriptionService.subscribe(details, desAddress).flatMap(redirectSubscriptionResponse)
+        }.getOrElse {
+          Future.successful(sessionMissingRedirect())
+        })
     }
   }
 
-  private def redisplayInitialDetails(
-    formWithErrors: Form[InitialDetails])(implicit hc: HeaderCarrier, request: Request[_]) =
-    sessionStoreService.fetchKnownFactsResult.map(_.map { knownFactsResult =>
-      Ok(html.subscription_details(knownFactsResult.taxpayerName, formWithErrors))
-    }.getOrElse {
-      sessionMissingRedirect()
-    })
+  val showBusinessNameForm: Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { _ =>
+      sessionStoreService.fetchInitialDetails.map(_.map { _ =>
+        Ok(html.business_name(businessNameForm))
+      }.getOrElse {
+        sessionMissingRedirect()
+      })
+    }
+  }
+
+  val submitBusinessNameForm: Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { _ =>
+      sessionStoreService.fetchInitialDetails.flatMap(_.map { details =>
+        businessNameForm
+          .bindFromRequest()
+          .fold(
+            formWithErrors => Future.successful(Ok(html.business_name(formWithErrors))),
+            validForm =>
+              sessionStoreService
+                .cacheInitialDetails(details.copy(name = validForm.name))
+                .map(_ => Redirect(routes.SubscriptionController.showCheckAnswers()))
+          )
+      }.getOrElse {
+        Future.successful(sessionMissingRedirect())
+      })
+    }
+  }
+
+  val showBusinessEmailForm: Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { _ =>
+      sessionStoreService.fetchInitialDetails.map(_.map { _ =>
+        Ok(html.business_email(businessEmailForm))
+      }.getOrElse {
+        sessionMissingRedirect()
+      })
+
+    }
+  }
+
+  val submitBusinessEmailForm: Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { _ =>
+      sessionStoreService.fetchInitialDetails.flatMap(_.map { details =>
+        businessEmailForm
+          .bindFromRequest()
+          .fold(
+            formWithErrors => Future.successful(Ok(html.business_email(formWithErrors))),
+            validForm =>
+              sessionStoreService
+                .cacheInitialDetails(details.copy(email = Some(validForm.email)))
+                .map(_ => Redirect(routes.SubscriptionController.showCheckAnswers()))
+          )
+      }.getOrElse {
+        Future.successful(sessionMissingRedirect())
+      })
+    }
+  }
+
+  val showBusinessAddressForm: Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { _ =>
+      sessionStoreService.fetchInitialDetails.flatMap(_.map { _ =>
+        addressLookUpConnector
+          .initJourney(routes.SubscriptionController.returnFromAddressLookup(), JourneyName)
+          .map(Redirect(_))
+      }.getOrElse {
+        Future.successful(sessionMissingRedirect())
+      })
+    }
+  }
 
   private def redirectSubscriptionResponse(either: Either[SubscriptionReturnedHttpError, (Arn, String)])(
     implicit request: Request[AnyContent]): Future[Result] =
@@ -186,7 +246,11 @@ class SubscriptionController @Inject()(
                   formWithErrors => Future successful Ok(html.address_form_with_errors(formWithErrors)),
                   validDesAddress => {
                     mark("Count-Subscription-AddressLookup-Success")
-                    subscriptionService.subscribe(details, validDesAddress).flatMap(redirectSubscriptionResponse)
+                    sessionStoreService
+                      .cacheInitialDetails(details.copy(
+                        businessAddress = BusinessAddress(validDesAddress)
+                      ))
+                      .map(_ => Redirect(routes.SubscriptionController.showCheckAnswers()))
                   }
                 )
             }
@@ -206,7 +270,11 @@ class SubscriptionController @Inject()(
             sessionStoreService.fetchInitialDetails.flatMap { maybeInitialDetails =>
               maybeInitialDetails
                 .map { initialDetails =>
-                  subscriptionService.subscribe(initialDetails, validDesAddress).flatMap(redirectSubscriptionResponse)
+                  sessionStoreService
+                    .cacheInitialDetails(initialDetails.copy(
+                      businessAddress = BusinessAddress(validDesAddress)
+                    ))
+                    .map(_ => Redirect(routes.SubscriptionController.showCheckAnswers()))
                 }
                 .getOrElse(Future.successful(sessionMissingRedirect()))
           }

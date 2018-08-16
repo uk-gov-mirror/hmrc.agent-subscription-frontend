@@ -171,9 +171,9 @@ class CheckAgencyController @Inject()(
         processCheckAgencyStatus(
           knownFacts.utr,
           registrationDetails.taxpayerName.get,
-          registrationDetails.isSubscribedToAgentServices,
           knownFacts,
-          Some(registrationDetails.address))
+          registrationDetails
+        )
       case SubscriptionProcess(SubscriptionState.SubscribedAndNotEnrolled, Some(reg)) =>
         for {
           _ <- sessionStoreService.cacheKnownFactsResult(
@@ -182,7 +182,8 @@ class CheckAgencyController @Inject()(
                   knownFacts.postcode,
                   reg.taxpayerName.get,
                   reg.isSubscribedToAgentServices,
-                  None))
+                  address = None,
+                  emailAddress = None))
 
           result <- withCleanCreds {
                      subscriptionService
@@ -222,7 +223,6 @@ class CheckAgencyController @Inject()(
           html.confirm_your_agency(
             confirmAgencyRadioForm = CheckAgencyController.confirmYourAgencyForm,
             registrationName = knownFactsResult.taxpayerName,
-            postcode = knownFactsResult.postcode,
             utr = FieldMappings.prettify(knownFactsResult.utr),
             businessAddress = knownFactsResult.address.getOrElse(throw new Exception("address object missing"))
           ))
@@ -234,7 +234,7 @@ class CheckAgencyController @Inject()(
 
   val submitConfirmYourAgency: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      sessionStoreService.fetchKnownFactsResult.map(_.map { knownFactsResult =>
+      sessionStoreService.fetchKnownFactsResult.flatMap(_.map { knownFactsResult =>
         CheckAgencyController.confirmYourAgencyForm
           .bindFromRequest()
           .fold(
@@ -242,37 +242,48 @@ class CheckAgencyController @Inject()(
               if (formWithErrors.errors.exists(_.message == "error.confirm-agency-value.invalid")) {
                 throw new BadRequestException("Form submitted with strange input value")
               } else {
-                Ok(html.confirm_your_agency(
+                Future.successful(Ok(html.confirm_your_agency(
                   confirmAgencyRadioForm = formWithErrors,
                   registrationName = knownFactsResult.taxpayerName,
-                  postcode = knownFactsResult.postcode,
                   utr = FieldMappings.prettify(knownFactsResult.utr),
                   businessAddress = knownFactsResult.address.getOrElse(throw new Exception("address object missing"))
-                ))
+                )))
               }
             },
             validatedConfirmAgency => {
               val response = validatedConfirmAgency.confirm match {
-                case Yes => lookupNextPage(knownFactsResult.isSubscribedToAgentServices)
-                case No  => routes.CheckAgencyController.checkAgencyStatus(request.session.get("businessType"))
+                case Yes => lookupNextPage(knownFactsResult)
+                case No =>
+                  Future.successful(routes.CheckAgencyController.checkAgencyStatus(request.session.get("businessType")))
               }
 
-              Redirect(response)
+              response.map(Redirect(_))
             }
           )
       }.getOrElse {
-        sessionMissingRedirect()
+        Future.successful(sessionMissingRedirect())
       })
     }
   }
 
-  private def lookupNextPage(isSubscribedToAgentServices: Boolean) =
-    if (isSubscribedToAgentServices) {
+  private def lookupNextPage(knownFactsResult: KnownFactsResult)(implicit hc: HeaderCarrier) =
+    if (knownFactsResult.isSubscribedToAgentServices) {
       mark("Count-Subscription-AlreadySubscribed-RegisteredInETMP")
-      routes.CheckAgencyController.showAlreadySubscribed()
+      Future.successful(routes.CheckAgencyController.showAlreadySubscribed())
     } else {
-      mark("Count-Subscription-CleanCreds-Start")
-      routes.SubscriptionController.showInitialDetails()
+      sessionStoreService
+        .cacheInitialDetails(
+          InitialDetails(
+            knownFactsResult.utr,
+            knownFactsResult.postcode,
+            knownFactsResult.taxpayerName,
+            knownFactsResult.emailAddress,
+            knownFactsResult.address.getOrElse(throw new Exception("address object missing"))
+          ))
+        .map { _ =>
+          mark("Count-Subscription-CleanCreds-Start")
+          routes.SubscriptionController.showCheckAnswers()
+        }
     }
 
   val showAlreadySubscribed: Action[AnyContent] = Action.async { implicit request =>
@@ -381,14 +392,21 @@ class CheckAgencyController @Inject()(
   private def cacheKnownFactsAndAudit(
     maybeAssuranceResults: Option[AssuranceResults],
     taxpayerName: String,
-    isSubscribedToAgentServices: Boolean,
     knownFacts: KnownFacts,
-    businessAddress: Option[BusinessAddress])(
+    registration: Registration)(
     implicit hc: HeaderCarrier,
     request: Request[AnyContent],
     agent: Agent): Future[Unit] = {
+
     val knownFactsResult =
-      KnownFactsResult(knownFacts.utr, knownFacts.postcode, taxpayerName, isSubscribedToAgentServices, businessAddress)
+      KnownFactsResult(
+        knownFacts.utr,
+        knownFacts.postcode,
+        taxpayerName,
+        registration.isSubscribedToAgentServices,
+        Some(registration.address),
+        registration.emailAddress)
+
     for {
       _ <- sessionStoreService.cacheKnownFactsResult(knownFactsResult)
       _ <- maybeAssuranceResults
@@ -400,9 +418,8 @@ class CheckAgencyController @Inject()(
   private def processCheckAgencyStatus(
     utr: Utr,
     taxpayerName: String,
-    isSubscribedToAgentServices: Boolean,
     knownFacts: KnownFacts,
-    businessAddress: Option[BusinessAddress])(
+    registration: Registration)(
     implicit hc: HeaderCarrier,
     request: Request[AnyContent],
     agent: Agent): Future[Result] =
@@ -410,17 +427,12 @@ class CheckAgencyController @Inject()(
       case RefuseToDealWith(_) =>
         Future.successful(Redirect(routes.StartController.setupIncomplete()))
       case CheckedInvisibleAssuranceAndFailed(assuranceResults) =>
-        cacheKnownFactsAndAudit(
-          Some(assuranceResults),
-          taxpayerName,
-          isSubscribedToAgentServices,
-          knownFacts,
-          businessAddress).map { _ =>
+        cacheKnownFactsAndAudit(Some(assuranceResults), taxpayerName, knownFacts, registration).map { _ =>
           mark("Count-Subscription-InvasiveCheck-Start")
           Redirect(routes.CheckAgencyController.invasiveCheckStart())
         }
       case maybeAssured @ (None | ManuallyAssured(_) | CheckedInvisibleAssuranceAndPassed(_)) => {
-        cacheKnownFactsAndAudit(maybeAssured, taxpayerName, isSubscribedToAgentServices, knownFacts, businessAddress)
+        cacheKnownFactsAndAudit(maybeAssured, taxpayerName, knownFacts, registration)
           .map { _ =>
             mark("Count-Subscription-CheckAgency-Success")
             Redirect(routes.CheckAgencyController.showConfirmYourAgency())
