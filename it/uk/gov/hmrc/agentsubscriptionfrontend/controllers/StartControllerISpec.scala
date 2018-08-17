@@ -5,7 +5,7 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{contentType, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{ChainedSessionDetails, CompletePartialSubscriptionBody, KnownFactsResult, SubscriptionRequestKnownFacts}
+import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.repository.ChainedSessionDetailsRepository
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.{AgentSubscriptionStub, AuthStub}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
@@ -20,6 +20,21 @@ class StartControllerISpec extends BaseISpec {
   private lazy val controller: StartController = app.injector.instanceOf[StartController]
   private lazy val configuredGovernmentGatewayUrl = "http://configured-government-gateway.gov.uk/"
   private lazy val repo = app.injector.instanceOf[ChainedSessionDetailsRepository]
+
+  private val initialDetails =
+    InitialDetails(
+      Utr("9876543210"),
+      "AA11AA",
+      "My Agency",
+      Some("agency@example.com"),
+      BusinessAddress(
+        "AddressLine1 A",
+        Some("AddressLine2 A"),
+        Some("AddressLine3 A"),
+        Some("AddressLine4 A"),
+        Some("AA11AA"),
+        "GB")
+    )
 
   override protected def appBuilder: GuiceApplicationBuilder =
     super.appBuilder
@@ -106,7 +121,13 @@ class StartControllerISpec extends BaseISpec {
   "returnAfterGGCredsCreated" should {
     class ValidKnownFactsCached(val wasEligibleForMapping: Boolean = false) {
       val knownFactsResult =
-        KnownFactsResult(Utr("9876543210"), "AA11AA", "Test organisation name", isSubscribedToAgentServices = false, None, None)
+        KnownFactsResult(Utr("9876543210"), "AA11AA", "Test organisation name", isSubscribedToAgentServices = false,  Some(BusinessAddress(
+          "AddressLine1 A",
+          Some("AddressLine2 A"),
+          Some("AddressLine3 A"),
+          Some("AddressLine4 A"),
+          Some("AA11AA"),
+          "GB")), Some("someone@example.com"))
       val persistedId = await(repo.create(ChainedSessionDetails(knownFactsResult, wasEligibleForMapping)))
     }
 
@@ -134,21 +155,25 @@ class StartControllerISpec extends BaseISpec {
         isSubscribedToETMP = true)
     }
 
-   /* "redirect to the /subscription-details page if given a valid StashedChainedSessionDetails ID" when {
+   "redirect to the /check-answers page if given a valid StashedChainedSessionDetails ID" when {
       "agent is unsubscribed" in new ValidKnownFactsCached with UnsubscribedAgentStub {
-        val result = await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(FakeRequest()))
+        implicit val request = FakeRequest()
+        sessionStoreService.currentSession.initialDetails = Some(initialDetails)
+
+        val result = await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(request))
+
 
         status(result) shouldBe 303
-        redirectLocation(result).head should include(routes.SubscriptionController.showInitialDetails().url)
+        redirectLocation(result).head should include(routes.SubscriptionController.showCheckAnswers().url)
       }
 
       "agent is already fully subscribed" in new ValidKnownFactsCached with SubscribedAgentStub {
         val result = await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(FakeRequest()))
 
         status(result) shouldBe 303
-        redirectLocation(result).head should include(routes.SubscriptionController.showInitialDetails().url)
+        redirectLocation(result).head should include(routes.SubscriptionController.showCheckAnswers().url)
       }
-    }*/
+    }
 
     "redirect to correct page if given a valid StashedChainedSessionDetails ID and agent is partially subscribed (subscribed in ETMP but not enrolled)" when {
       "agent was eligible for mapping, should redirect to /link-account" in new ValidKnownFactsCached(wasEligibleForMapping = true) with PartiallySubscribedAgentStub {
