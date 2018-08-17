@@ -22,7 +22,7 @@ import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.models.ChainedSessionDetails
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{ChainedSessionDetails, InitialDetails}
 import uk.gov.hmrc.agentsubscriptionfrontend.repository.ChainedSessionDetailsRepository
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionService, SubscriptionState}
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
@@ -90,8 +90,16 @@ class StartController @Inject()(
                                                   subscriptionCtrlr.redirectUponSuccessfulSubscription(arn)
                                                 }
                                             } else {
-                                              Future successful Redirect(
-                                                routes.SubscriptionController.showCheckAnswers())
+                                              sessionStoreService
+                                                .cacheInitialDetails(InitialDetails(
+                                                  knownFacts.utr,
+                                                  knownFacts.postcode,
+                                                  knownFacts.taxpayerName,
+                                                  knownFacts.emailAddress,
+                                                  knownFacts.address.getOrElse(
+                                                    throw new Exception("address should not be empty"))
+                                                ))
+                                                .map(_ => Redirect(routes.SubscriptionController.showCheckAnswers()))
                                             }
           } yield continuedSubscriptionResponse
         case None => Future successful Redirect(routes.CheckAgencyController.showCheckBusinessType())

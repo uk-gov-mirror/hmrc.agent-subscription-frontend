@@ -170,11 +170,13 @@ class SubscriptionController @Inject()(
   val showBusinessEmailForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
       sessionStoreService.fetchInitialDetails.map(_.map { details =>
-        Ok(html.business_email(businessEmailForm.bind(Map("email" -> details.email.getOrElse("")))))
+        val form =
+          if (details.email.nonEmpty) businessEmailForm.bind(Map("email" -> details.email.get)) else businessEmailForm
+
+        Ok(html.business_email(form, details.email))
       }.getOrElse {
         sessionMissingRedirect()
       })
-
     }
   }
 
@@ -184,7 +186,7 @@ class SubscriptionController @Inject()(
         businessEmailForm
           .bindFromRequest()
           .fold(
-            formWithErrors => Future.successful(Ok(html.business_email(formWithErrors))),
+            formWithErrors => Future.successful(Ok(html.business_email(formWithErrors, details.email))),
             validForm =>
               sessionStoreService
                 .cacheInitialDetails(details.copy(email = Some(validForm.email)))
