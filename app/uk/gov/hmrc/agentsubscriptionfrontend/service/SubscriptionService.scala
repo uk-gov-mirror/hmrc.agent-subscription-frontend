@@ -67,11 +67,7 @@ class SubscriptionService @Inject()(agentSubscriptionConnector: AgentSubscriptio
     val request = SubscriptionRequest(
       subscriptionDetails.utr,
       SubscriptionRequestKnownFacts(subscriptionDetails.knownFactsPostcode),
-      Agency(
-        name = subscriptionDetails.name,
-        email = subscriptionDetails.email,
-        telephone = subscriptionDetails.telephone,
-        address = address)
+      Agency(name = subscriptionDetails.name, email = subscriptionDetails.email, address = address)
     )
 
     agentSubscriptionConnector.subscribeAgencyToMtd(request) map { x =>
@@ -103,7 +99,7 @@ class SubscriptionService @Inject()(agentSubscriptionConnector: AgentSubscriptio
       case Some(reg) if reg.isSubscribedToAgentServices =>
         SubscriptionProcess(SubscriptionState.SubscribedAndEnrolled, Some(reg))
 
-      case Some(Registration(None, _, _, _)) =>
+      case Some(Registration(None, _, _, _, _)) =>
         throw new IllegalStateException(s"The agency with UTR ${utr.value} has a missing organisation/individual name.")
 
       case Some(reg) if !reg.isSubscribedToAgentServices && reg.isSubscribedToETMP =>

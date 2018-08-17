@@ -22,17 +22,30 @@ case class BusinessAddress(
   addressLine1: String,
   addressLine2: Option[String],
   addressLine3: Option[String] = None,
-  addressLine4: Option[String] = None)
+  addressLine4: Option[String] = None,
+  postalCode: Option[String],
+  countryCode: String)
 
 object BusinessAddress {
   implicit val format = Json.format[BusinessAddress]
+
+  def apply(desAddress: DesAddress): BusinessAddress =
+    BusinessAddress(
+      desAddress.addressLine1,
+      desAddress.addressLine2,
+      desAddress.addressLine3,
+      desAddress.addressLine4,
+      Some(desAddress.postcode),
+      desAddress.countryCode
+    )
 }
 
 case class Registration(
   taxpayerName: Option[String],
   isSubscribedToAgentServices: Boolean,
   isSubscribedToETMP: Boolean,
-  address: BusinessAddress)
+  address: BusinessAddress,
+  emailAddress: Option[String])
 
 object Registration {
   implicit val formats: Format[Registration] = Json.format[Registration]

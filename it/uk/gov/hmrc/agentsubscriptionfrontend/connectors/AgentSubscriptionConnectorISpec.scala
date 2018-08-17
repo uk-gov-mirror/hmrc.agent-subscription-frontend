@@ -31,6 +31,7 @@ class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {
         result.get.isSubscribedToAgentServices shouldBe true
         result.get.isSubscribedToETMP shouldBe true
         testBusinessAddress(result.get)
+        result.get.emailAddress shouldBe Some("someone@example.com")
       }
     }
 
@@ -43,6 +44,7 @@ class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {
         result.get.taxpayerName shouldBe Some("My Agency")
         result.get.isSubscribedToAgentServices shouldBe false
         testBusinessAddress(result.get)
+        result.get.emailAddress shouldBe Some("someone@example.com")
       }
     }
 
@@ -57,6 +59,7 @@ class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {
         result.get.isSubscribedToETMP shouldBe true
         result.get.isSubscribedToAgentServices shouldBe false
         testBusinessAddress(result.get)
+        result.get.emailAddress shouldBe Some("someone@example.com")
       }
     }
 
@@ -205,8 +208,7 @@ class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {
           addressLine4 = None,
           postcode = "AA1 1AA",
           countryCode = "GB"),
-        email = "agency@example.com",
-        telephone = "0123 456 7890"
+        email = "agency@example.com"
       )
     )
 

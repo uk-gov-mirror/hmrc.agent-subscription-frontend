@@ -44,7 +44,14 @@ class SessionStoreServiceSpec extends UnitSpec {
           "Test organisation name",
           isSubscribedToAgentServices = true,
           Some(
-            BusinessAddress("AddressLine1 A", Some("AddressLine2 A"), Some("AddressLine3 A"), Some("AddressLine4 A")))
+            BusinessAddress(
+              "AddressLine1 A",
+              Some("AddressLine2 A"),
+              Some("AddressLine3 A"),
+              Some("AddressLine4 A"),
+              Some("AA1AA"),
+              "GB")),
+          Some("someone@example.com")
         )
 
       await(store.cacheKnownFactsResult(knownFactsResult))
@@ -61,7 +68,19 @@ class SessionStoreServiceSpec extends UnitSpec {
     "store initial details" in {
       val store = new SessionStoreService(new TestSessionCache())
 
-      val details = InitialDetails(Utr("9876543210"), "AA11AA", "My Agency", "agency@example.com", "0123 456 7890")
+      val details = InitialDetails(
+        Utr("9876543210"),
+        "AA11AA",
+        "My Agency",
+        Some("agency@example.com"),
+        BusinessAddress(
+          "AddressLine1 A",
+          Some("AddressLine2 A"),
+          Some("AddressLine3 A"),
+          Some("AddressLine4 A"),
+          Some("AA1AA"),
+          "GB")
+      )
 
       await(store.cacheInitialDetails(details))
 
@@ -99,6 +118,7 @@ class SessionStoreServiceSpec extends UnitSpec {
           "AA11AA",
           "Test organisation name",
           isSubscribedToAgentServices = true,
+          None,
           None)
 
       await(store.cacheKnownFactsResult(knownFactsResult))

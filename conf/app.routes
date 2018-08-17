@@ -20,8 +20,16 @@ POST        /enter-agent-code                     uk.gov.hmrc.agentsubscriptionf
 GET         /enter-client-id                      uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.invasiveTaxPayerOptionGet
 POST        /enter-client-id                      uk.gov.hmrc.agentsubscriptionfrontend.controllers.CheckAgencyController.invasiveTaxPayerOption
 
-GET         /subscription-details                 uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showInitialDetails
-POST        /subscription-details                 uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.submitInitialDetails
+GET         /check-answers                        uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showCheckAnswers
+POST        /check-answers                        uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.submitCheckAnswers
+
+GET         /business-name                        uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showBusinessNameForm
+POST        /business-name                        uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.submitBusinessNameForm
+GET         /business-email                       uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showBusinessEmailForm
+POST        /business-email                       uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.submitBusinessEmailForm
+GET         /business-address                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showBusinessAddressForm
+
+
 GET         /return-from-address-lookup           uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.returnFromAddressLookup(id: String ?= "")
 POST        /submit-modified-address              uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.submitModifiedAddress
 GET         /link-account                         uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showLinkAccount

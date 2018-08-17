@@ -35,8 +35,9 @@ object AgentSubscriptionStub {
        |        "addressLine3": "AddressLine3 A",
        |        "addressLine4": "AddressLine4 A",
        |        "countryCode": "GB",
-       |        "postalCode": "AA1 1AA"
-       |    }
+       |        "postalCode": "AA11AA"
+       |    },
+       |    "emailAddress": "someone@example.com"
        |}""".stripMargin
 
   private def noOrganisationNameResponse(isSubscribedToAgentServices: Boolean, isSubscribedToETMP: Boolean) =
@@ -50,8 +51,9 @@ object AgentSubscriptionStub {
       |        "addressLine3": "AddressLine3 A",
       |        "addressLine4": "AddressLine4 A",
       |        "countryCode": "GB",
-      |        "postalCode": "AA1 1AA"
-      |    }
+      |        "postalCode": "AA11AA"
+      |    },
+      |    "emailAddress": "someone@example.com"
       |
       |}""".stripMargin
 
@@ -159,7 +161,6 @@ object AgentSubscriptionStub {
                                       |      "postcode": "${address.postcode}",
                                       |      "countryCode": "${address.countryCode}"
                                       |    },
-                                      |    "telephone": "${agency.telephone}",
                                       |    "email": "${agency.email}"
                                       |  }
                                       |}""".stripMargin))

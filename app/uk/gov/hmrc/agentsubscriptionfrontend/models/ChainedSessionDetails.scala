@@ -26,7 +26,8 @@ case class KnownFactsResult(
   postcode: String,
   taxpayerName: String,
   isSubscribedToAgentServices: Boolean,
-  address: Option[BusinessAddress])
+  address: Option[BusinessAddress],
+  emailAddress: Option[String])
 
 object KnownFactsResult {
   implicit val formatKnownFacts = Json.format[KnownFactsResult]
