@@ -141,8 +141,8 @@ class SubscriptionController @Inject()(
 
   val showBusinessNameForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      sessionStoreService.fetchInitialDetails.map(_.map { _ =>
-        Ok(html.business_name(businessNameForm))
+      sessionStoreService.fetchInitialDetails.map(_.map { details =>
+        Ok(html.business_name(businessNameForm.bind(Map("name" -> details.name))))
       }.getOrElse {
         sessionMissingRedirect()
       })
@@ -169,8 +169,8 @@ class SubscriptionController @Inject()(
 
   val showBusinessEmailForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      sessionStoreService.fetchInitialDetails.map(_.map { _ =>
-        Ok(html.business_email(businessEmailForm))
+      sessionStoreService.fetchInitialDetails.map(_.map { details =>
+        Ok(html.business_email(businessEmailForm.bind(Map("email" -> details.email.getOrElse("")))))
       }.getOrElse {
         sessionMissingRedirect()
       })
@@ -199,6 +199,7 @@ class SubscriptionController @Inject()(
   val showBusinessAddressForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
       sessionStoreService.fetchInitialDetails.flatMap(_.map { _ =>
+        mark("Count-Subscription-AddressLookup-Start")
         addressLookUpConnector
           .initJourney(routes.SubscriptionController.returnFromAddressLookup(), JourneyName)
           .map(Redirect(_))
