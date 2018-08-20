@@ -485,31 +485,6 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
 
     }
 
-    "selectively show linked account content" when {
-      val containLinkedAccountMsgs = containMessages(
-        "subscriptionComplete.link-account.h2",
-        "subscriptionComplete.link-account.p1",
-        "subscriptionComplete.link-account.bullet-list.1",
-        "subscriptionComplete.link-account.bullet-list.2",
-        "subscriptionComplete.link-account.p2"
-      )
-
-      "they were eligible for mapping, it should be shown" in new RequestWithSessionDetails {
-        sessionStoreService.currentSession.wasEligibleForMapping = Some(true)
-        resultOf(request) should containLinkedAccountMsgs
-      }
-
-      "they were not eligible for mapping, it should not be shown" in new RequestWithSessionDetails {
-        sessionStoreService.currentSession.wasEligibleForMapping = Some(false)
-        resultOf(request) shouldNot containLinkedAccountMsgs
-      }
-
-      "the mapping eligibility is unknown in the session store" in new RequestWithSessionDetails {
-        sessionStoreService.currentSession.wasEligibleForMapping = None
-        resultOf(request) shouldNot containLinkedAccountMsgs
-      }
-    }
-
     "redirect to session missing page" when {
       "the arn is missing from the session" in {
         implicit val request = authenticatedAs(subscribingAgentEnrolledForHMRCASAGENT)
