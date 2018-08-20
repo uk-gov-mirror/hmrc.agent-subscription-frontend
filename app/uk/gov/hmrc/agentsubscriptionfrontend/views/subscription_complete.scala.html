@@ -22,10 +22,11 @@
 
     <div class="transaction-banner--complete">
         <h1 class="transaction-banner__heading">@Messages("subscriptionComplete.h1")</h1>
-        <p>
-            <span class="display-block">@Messages("subscriptionComplete.accountName")</span>
-            <strong class="heading-medium">@arn</strong>
-        </p>
+        <div class="govuk-panel__body">
+            @Messages("subscriptionComplete.accountName")
+            <br>
+            <strong class="bold">@arn</strong>
+        </div>
     </div>
 
     <h2 class="heading-medium">@Messages("subscriptionComplete.h2")</h2>
@@ -39,19 +40,6 @@
         <li>@Messages("subscriptionComplete.bullet-list.1")</li>
         <li>@Messages("subscriptionComplete.bullet-list.2")</li>
     </ul>
-
-    @if(wasEligibleForMapping) {
-        <h2 class="heading-medium">@Messages("subscriptionComplete.link-account.h2")</h2>
-
-        <p>@Messages("subscriptionComplete.link-account.p1")</p>
-
-        <ul class="list list-bullet">
-            <li>@Messages("subscriptionComplete.link-account.bullet-list.1")</li>
-            <li>@Messages("subscriptionComplete.link-account.bullet-list.2")</li>
-        </ul>
-
-        <p>@Messages("subscriptionComplete.link-account.p2")</p>
-    }
 
     @defining(if(isUrlToASAccount) "continueToASAccount" else "continueJourney") { continueMsg =>
         <a href="@continueUrl" class="button" id="continue" role="button">@Messages(s"subscriptionComplete.button.$continueMsg")</a>
