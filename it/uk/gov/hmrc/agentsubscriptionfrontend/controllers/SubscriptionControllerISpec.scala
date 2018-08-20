@@ -96,14 +96,16 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         "checkAnswers.confirm.button",
         "checkAnswers.businessName.label",
         "checkAnswers.businessEmailAddress.label",
-        "checkAnswers.businessAddress.label"
+        "checkAnswers.businessAddress.label",
+        "button.back"
       )
 
       result should containSubstrings(
         initialDetails.name,
         initialDetails.email.get,
         initialDetails.businessAddress.addressLine1,
-        initialDetails.businessAddress.postalCode.get)
+        initialDetails.businessAddress.postalCode.get,
+        routes.CheckAgencyController.showConfirmYourAgency().url)
       metricShouldExistAndBeUpdated("Count-Subscription-CleanCreds-Success")
     }
 
