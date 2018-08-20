@@ -190,7 +190,7 @@ error.no-radio-selected=You must choose an option
 
 checkAnswers.title=Check your details before creating your account
 checkAnswers.description.p1=These are the business details we will use for your agent services account.
-checkAnswers.description.p2=Your business name will be the name shown to clients. We will only use your email address to contact you about your agent services account.
+checkAnswers.description.p2=Your business name will be the name shown to clients. We need your business address to check your details. We will only use your email address to contact you about your agent services account.
 checkAnswers.description.p3=By setting up this account, you confirm that, to the best of your knowledge, the details you provided are correct.
 checkAnswers.businessName.label=Business name
 checkAnswers.businessAddress.label=Business address
