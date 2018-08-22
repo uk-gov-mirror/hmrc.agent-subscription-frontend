@@ -174,7 +174,7 @@ class CheckAgencyController @Inject()(
           knownFacts,
           registrationDetails
         )
-      case SubscriptionProcess(SubscriptionState.SubscribedAndNotEnrolled, Some(reg)) =>
+      case SubscriptionProcess(SubscriptionState.SubscribedButNotEnrolled, Some(reg)) =>
         for {
           _ <- sessionStoreService.cacheKnownFactsResult(
                 KnownFactsResult(

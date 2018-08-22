@@ -18,6 +18,8 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.Inject
+
+import play.api.Logger
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
@@ -78,10 +80,17 @@ class StartController @Inject()(
         case Some(chainedSessionDetails) =>
           val knownFacts = chainedSessionDetails.knownFacts
           for {
-            _                   <- sessionStoreService.cacheKnownFactsResult(knownFacts)
-            _                   <- sessionStoreService.cacheMappingEligible(chainedSessionDetails.wasEligibleForMapping)
+            _ <- sessionStoreService.cacheKnownFactsResult(knownFacts)
+            _ <- if (appConfig.autoMapAgentEnrolments) {
+                  sessionStoreService.cacheMappingEligible(
+                    chainedSessionDetails.wasEligibleForMapping.getOrElse {
+                      Logger.warn("chainedSessionDetails did not cache wasEligibleForMapping")
+                      false
+                    }
+                  )
+                } else Future.successful(())
             subscriptionProcess <- subscriptionService.getSubscriptionStatus(knownFacts.utr, knownFacts.postcode)
-            isPartiallySubscribed = subscriptionProcess.state == SubscriptionState.SubscribedAndNotEnrolled
+            isPartiallySubscribed = subscriptionProcess.state == SubscriptionState.SubscribedButNotEnrolled
             continuedSubscriptionResponse <- if (isPartiallySubscribed) {
                                               subscriptionService
                                                 .completePartialSubscription(knownFacts.utr, knownFacts.postcode)

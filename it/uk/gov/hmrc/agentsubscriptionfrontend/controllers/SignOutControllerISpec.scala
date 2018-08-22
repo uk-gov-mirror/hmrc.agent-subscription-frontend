@@ -2,6 +2,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import java.net.URLEncoder
 
+import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{redirectLocation, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
@@ -16,69 +17,29 @@ import uk.gov.hmrc.play.binders.ContinueUrl
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class SignOutControllerISpec extends BaseISpec {
-  private lazy val controller: SignedOutController = app.injector.instanceOf[SignedOutController]
+trait SignOutControllerISpec extends BaseISpec {
+  protected def featureFlagAutoMapping: Boolean
 
-  private lazy val sosRedirectUrl = "/government-gateway-registration-frontend?accountType=agent"
+  protected lazy val sosRedirectUrl = "/government-gateway-registration-frontend?accountType=agent"
+  protected lazy val controller: SignedOutController = app.injector.instanceOf[SignedOutController]
+  protected lazy val repo = app.injector.instanceOf[ChainedSessionDetailsRepository]
 
-  private lazy val repo = app.injector.instanceOf[ChainedSessionDetailsRepository]
+  override protected def appBuilder: GuiceApplicationBuilder =
+    super.appBuilder
+      .configure("features.auto-map-agent-enrolments" -> featureFlagAutoMapping)
 
   private val fakeRequest = FakeRequest()
+  val knownFactsResult = KnownFactsResult(Utr("9876543210"), "AA11AA", "Test organisation name", isSubscribedToAgentServices = true, None, None)
+  def findByUtr(utr: String): Option[StashedChainedSessionDetails] = {
+    await(repo.find("chainedSessionDetails.knownFacts.utr" -> utr).map(_.headOption))
+  }
 
-  "redirect to SOS" should {
-    val knownFactsResult = KnownFactsResult(Utr("9876543210"), "AA11AA", "Test organisation name", isSubscribedToAgentServices = true, None, None)
-    def findByUtr(utr: String): Option[StashedChainedSessionDetails] = {
-      await(repo.find("chainedSessionDetails.knownFacts.utr" -> utr).map(_.headOption))
-    }
-
+  "redirectToSos" should {
     "redirect to SOS page" in {
       val result = await(controller.redirectToSos(authenticatedAs(subscribingAgentEnrolledForNonMTD)))
 
       status(result) shouldBe 303
       redirectLocation(result).head should include(sosRedirectUrl)
-    }
-
-    "save the ChainedSessionDetails in the DB" when {
-
-      "was eligible for mapping" in {
-        implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
-        sessionStoreService.currentSession.knownFactsResult = Some(knownFactsResult)
-        MappingStubs.givenMappingEligibilityIsEligible
-        MappingStubs.givenMappingCreatePreSubscription(Utr("9876543210"))
-
-        await(controller.redirectToSos(request))
-        findByUtr("9876543210").map(_.chainedSessionDetails) shouldBe Some(ChainedSessionDetails(knownFactsResult, wasEligibleForMapping = true))
-        MappingStubs.verifyMappingEligibilityCalled(times = 1)
-        MappingStubs.verifyMappingCreatePreSubscriptionCalled(Utr("9876543210"), times = 1)
-      }
-
-      "was not eligible for mapping" in {
-        implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
-        sessionStoreService.currentSession.knownFactsResult = Some(knownFactsResult)
-        MappingStubs.givenMappingEligibilityIsNotEligible
-
-        await(controller.redirectToSos(request))
-        findByUtr("9876543210").map(_.chainedSessionDetails) shouldBe Some(ChainedSessionDetails(knownFactsResult, wasEligibleForMapping = false))
-        MappingStubs.verifyMappingEligibilityCalled(times = 1)
-        MappingStubs.verifyMappingCreatePreSubscriptionCalled(Utr("9876543210"), times = 0)
-      }
-    }
-
-    "check for mapping eligibility call fails" in {
-      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
-      sessionStoreService.currentSession.knownFactsResult = Some(knownFactsResult)
-      MappingStubs.givenMappingEligibilityCheckFails(500)
-
-      an[Upstream5xxResponse] should be thrownBy await(controller.redirectToSos(request))
-    }
-
-    "was eligible for mapping but create pre-subscription mapping call fails" in {
-      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
-      sessionStoreService.currentSession.knownFactsResult = Some(knownFactsResult)
-      MappingStubs.givenMappingEligibilityIsEligible
-      MappingStubs.givenMappingCreatePreSubscription(Utr("9876543210"), httpReturnCode = 500)
-
-      an[Upstream5xxResponse] should be thrownBy await(controller.redirectToSos(request))
     }
 
     "the SOS redirect URL should include an ID of the saved ChainedSessionDetails" in {
@@ -133,7 +94,7 @@ class SignOutControllerISpec extends BaseISpec {
     }
   }
 
-  "start survey" should {
+  "startSurvey" should {
     "redirect to the survey page" in {
       val result = await(controller.startSurvey(fakeRequest))
 
@@ -142,7 +103,7 @@ class SignOutControllerISpec extends BaseISpec {
     }
   }
 
-  "redirect to Agent Services Account page" should {
+  "redirectToASAccountPage" should {
     "logout and redirect to agent services account" in {
       implicit val request = fakeRequest.withSession("sessionId" -> "SomeSession")
 
@@ -157,21 +118,20 @@ class SignOutControllerISpec extends BaseISpec {
     }
   }
 
+  "redirectToCheckBusinessType" should {
+    "logout and redirect to Check Business Type page" in {
+      implicit val request = fakeRequest.withSession("sessionId" -> "SomeSession")
 
-    "redirect to Check Business Type page" should {
-      "logout and redirect to Check Business Type page" in {
-        implicit val request = fakeRequest.withSession("sessionId" -> "SomeSession")
+      request.session.get("sessionId") should not be empty
 
-        request.session.get("sessionId") should not be empty
+      val result = await(controller.redirectToCheckBusinessType(request))
 
-        val result = await(controller.redirectToCheckBusinessType(request))
+      status(result) shouldBe 303
+      redirectLocation(result).head should include("check-business-type")
 
-        status(result) shouldBe 303
-        redirectLocation(result).head should include("check-business-type")
-
-        result.session.get("sessionId") shouldBe empty
-      }
+      result.session.get("sessionId") shouldBe empty
     }
+  }
 
   "signOutWithContinueUrl" should {
 
@@ -202,6 +162,92 @@ class SignOutControllerISpec extends BaseISpec {
       redirectLocation(result).head shouldBe expectedRedirectUrl
 
       result.session.get("sessionId") shouldBe empty
+    }
+  }
+}
+
+class SignOutControllerWithAutoMappingOn extends SignOutControllerISpec {
+  override def featureFlagAutoMapping: Boolean = true
+
+  "redirectToSos" should {
+    "save the ChainedSessionDetails in the DB" when {
+      "was eligible for mapping" in {
+        implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+        sessionStoreService.currentSession.knownFactsResult = Some(knownFactsResult)
+        MappingStubs.givenMappingEligibilityIsEligible
+        MappingStubs.givenMappingCreatePreSubscription(Utr("9876543210"))
+
+        await(controller.redirectToSos(request))
+        findByUtr("9876543210").map(_.chainedSessionDetails) shouldBe Some(
+          ChainedSessionDetails(
+            knownFactsResult,
+            wasEligibleForMapping = Some(true)
+          )
+        )
+        MappingStubs.verifyMappingEligibilityCalled(times = 1)
+        MappingStubs.verifyMappingCreatePreSubscriptionCalled(Utr("9876543210"), times = 1)
+      }
+
+      "was not eligible for mapping" in {
+        implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+        sessionStoreService.currentSession.knownFactsResult = Some(knownFactsResult)
+        MappingStubs.givenMappingEligibilityIsNotEligible
+
+        await(controller.redirectToSos(request))
+        findByUtr("9876543210").map(_.chainedSessionDetails) shouldBe Some(
+          ChainedSessionDetails(
+            knownFactsResult,
+            wasEligibleForMapping = Some(false)
+          )
+        )
+        MappingStubs.verifyMappingEligibilityCalled(times = 1)
+        MappingStubs.verifyMappingCreatePreSubscriptionCalled(Utr("9876543210"), times = 0)
+      }
+    }
+
+    "call to check mapping eligibility fails" in {
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+      sessionStoreService.currentSession.knownFactsResult = Some(knownFactsResult)
+      MappingStubs.givenMappingEligibilityCheckFails(500)
+
+      an[Upstream5xxResponse] should be thrownBy await(controller.redirectToSos(request))
+    }
+
+    "was eligible for mapping but create pre-subscription mapping call fails" in {
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+      sessionStoreService.currentSession.knownFactsResult = Some(knownFactsResult)
+      MappingStubs.givenMappingEligibilityIsEligible
+      MappingStubs.givenMappingCreatePreSubscription(Utr("9876543210"), httpReturnCode = 500)
+
+      an[Upstream5xxResponse] should be thrownBy await(controller.redirectToSos(request))
+    }
+  }
+}
+
+class SignOutControllerWithAutoMappingOff extends SignOutControllerISpec {
+  override def featureFlagAutoMapping: Boolean = false
+
+  "redirectToSos" should {
+    "save the ChainedSessionDetails in the DB with a missing mapping eligibility result" in {
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+      sessionStoreService.currentSession.knownFactsResult = Some(knownFactsResult)
+
+      await(controller.redirectToSos(request))
+      findByUtr("9876543210").map(_.chainedSessionDetails) shouldBe Some(
+        ChainedSessionDetails(
+          knownFactsResult,
+          wasEligibleForMapping = None
+        )
+      )
+    }
+
+    "not call agent-mapping backend" in {
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+      sessionStoreService.currentSession.knownFactsResult = Some(knownFactsResult)
+
+      await(controller.redirectToSos(request))
+      MappingStubs.verifyMappingEligibilityCalled(times = 0)
+      MappingStubs.verifyMappingCreatePreSubscriptionCalled(Utr("9876543210"), times = 0)
     }
   }
 }

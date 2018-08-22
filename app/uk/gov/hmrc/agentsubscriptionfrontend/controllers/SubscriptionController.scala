@@ -18,6 +18,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
+
 import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms.{mapping, optional, text}
@@ -30,6 +31,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.{AddressLookupFrontendConnector, MappingConnector}
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.FieldMappings._
+import uk.gov.hmrc.agentsubscriptionfrontend.models.StoreEligibility.{IsEligible, IsNotEligible, MappingUnavailable}
 import uk.gov.hmrc.agentsubscriptionfrontend.form.DesAddressForm
 import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
@@ -228,14 +230,19 @@ class SubscriptionController @Inject()(
     }
 
   private[controllers] def redirectUponSuccessfulSubscription(arn: Arn)(implicit request: Request[AnyContent]) =
-    for (wasEligibileForMapping <- sessionStoreService.fetchMappingEligible) yield {
-      val redirectLocation = wasEligibileForMapping match {
-        case Some(true) => routes.SubscriptionController.showLinkAccount()
-        case _          => routes.SubscriptionController.showSubscriptionComplete()
-      }
-
-      Redirect(redirectLocation).withSession(request.session + ("arn" -> arn.value))
-    }
+    for (redirectLocation <- if (appConfig.autoMapAgentEnrolments) {
+                              sessionStoreService.fetchMappingEligible.map {
+                                StoreEligibility.apply(_) match {
+                                  case IsEligible    => routes.SubscriptionController.showLinkAccount()
+                                  case IsNotEligible => routes.SubscriptionController.showSubscriptionComplete()
+                                  case MappingUnavailable => {
+                                    Logger.warn("chainedSessionDetails did not cache wasEligibleForMapping")
+                                    routes.SubscriptionController.showSubscriptionComplete()
+                                  }
+                                }
+                              }
+                            } else Future successful routes.SubscriptionController.showSubscriptionComplete())
+      yield Redirect(redirectLocation).withSession(request.session + ("arn" -> arn.value))
 
   def returnFromAddressLookup(id: String): Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
@@ -286,36 +293,44 @@ class SubscriptionController @Inject()(
   }
 
   val showLinkAccount: Action[AnyContent] = Action.async { implicit request =>
-    withAuthenticatedAgent {
-      Future.successful {
-        request.session.get("arn").fold(sessionMissingRedirect()) { _ =>
-          Ok(html.link_account(linkAccountForm))
+    appConfig.autoMapAgentEnrolments match {
+      case true =>
+        withAuthenticatedAgent {
+          Future.successful {
+            request.session.get("arn").fold(sessionMissingRedirect()) { _ =>
+              Ok(html.link_account(linkAccountForm))
+            }
+          }
         }
-      }
+      case false => Future.successful(InternalServerError)
     }
   }
 
   val submitLinkAccount: Action[AnyContent] = Action.async { implicit request =>
-    withAuthenticatedAgent {
-      request.session.get("arn").fold(Future.successful(sessionMissingRedirect())) { arn =>
-        linkAccountForm
-          .bindFromRequest()
-          .fold(
-            formWithErrors => {
-              if (formWithErrors.errors.exists(_.message == "error.link-account-value.invalid")) {
-                throw new BadRequestException("Form submitted with strange input value")
-              } else {
-                Future.successful(Ok(html.link_account(formWithErrors)))
-              }
-            },
-            validatedLinkAccount => {
-              validatedLinkAccount.autoMapping match {
-                case Yes => linkAccountResponse(mappingConnector.updatePreSubscriptionWithArn)
-                case No  => linkAccountResponse(mappingConnector.deletePreSubscription)
-              }
-            }
-          )
-      }
+    appConfig.autoMapAgentEnrolments match {
+      case true =>
+        withAuthenticatedAgent {
+          request.session.get("arn").fold(Future.successful(sessionMissingRedirect())) { arn =>
+            linkAccountForm
+              .bindFromRequest()
+              .fold(
+                formWithErrors => {
+                  if (formWithErrors.errors.exists(_.message == "error.link-account-value.invalid")) {
+                    throw new BadRequestException("Form submitted with strange input value")
+                  } else {
+                    Future.successful(Ok(html.link_account(formWithErrors)))
+                  }
+                },
+                validatedLinkAccount => {
+                  validatedLinkAccount.autoMapping match {
+                    case Yes => linkAccountResponse(mappingConnector.updatePreSubscriptionWithArn)
+                    case No  => linkAccountResponse(mappingConnector.deletePreSubscription)
+                  }
+                }
+              )
+          }
+        }
+      case false => Future.successful(InternalServerError)
     }
   }
 

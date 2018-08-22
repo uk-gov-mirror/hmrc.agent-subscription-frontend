@@ -17,10 +17,12 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import javax.inject.{Inject, Singleton}
+
 import play.api.mvc.Action
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.MappingConnector
-import uk.gov.hmrc.agentsubscriptionfrontend.models.ChainedSessionDetails
+import uk.gov.hmrc.agentsubscriptionfrontend.models.StoreEligibility.IsEligible
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{ChainedSessionDetails, StoreEligibility}
 import uk.gov.hmrc.agentsubscriptionfrontend.repository.ChainedSessionDetailsRepository
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.agentsubscriptionfrontend.support.CallOps.addParamsToUrl
@@ -41,10 +43,15 @@ class SignedOutController @Inject()(
       id <- knownFactOpt match {
              case Some(knownFact) => {
                for {
-                 isEligibleForMapping <- mappingConnector.isEligibile
-                 _ <- if (isEligibleForMapping) mappingConnector.createPreSubscription(knownFact.utr)
+                 isEligibleForMapping <- if (appConfig.autoMapAgentEnrolments)
+                                          mappingConnector.isEligibile.map(yesOrNo =>
+                                            StoreEligibility.apply(Some(yesOrNo)))
+                                        else Future successful StoreEligibility.MappingUnavailable
+                 _ <- if (appConfig.autoMapAgentEnrolments && isEligibleForMapping == IsEligible)
+                       mappingConnector.createPreSubscription(knownFact.utr)
                      else Future.successful(())
-                 id <- chainedSessionRepository.create(ChainedSessionDetails(knownFact, isEligibleForMapping))
+                 id <- chainedSessionRepository.create(
+                        ChainedSessionDetails(knownFact, isEligibleForMapping.isEligible))
                } yield Some(id)
              }
              case None => Future successful None
@@ -75,6 +82,7 @@ class SignedOutController @Inject()(
   def redirectToASAccountPage = Action { implicit request =>
     SeeOther(appConfig.agentServicesAccountUrl).withNewSession
   }
+
   def redirectToCheckBusinessType = Action { implicit request =>
     Redirect(routes.CheckAgencyController.showCheckBusinessType()).withNewSession
   }

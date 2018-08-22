@@ -43,6 +43,7 @@ class ViewsSpec extends MixedPlaySpec {
     override val domainWhiteList: Set[String] = Set("www.foo.com", "foo.org")
     override val agentAssuranceRun: Boolean = false
     override val agentAssurancePayeCheck: Boolean = false
+    override val autoMapAgentEnrolments: Boolean = false
     override val environment: Environment = null
     override val configuration: Configuration = null
     override val addressLookupContinueUrl: String = "addressLookupContinueUrl"

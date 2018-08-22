@@ -16,23 +16,17 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.models
 
-import play.api.libs.json.Json
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+abstract class StoreEligibility(val isEligible: Option[Boolean])
 
-case class ChainedSessionDetails(knownFacts: KnownFactsResult, wasEligibleForMapping: Option[Boolean])
+object StoreEligibility {
+  case object IsEligible extends StoreEligibility(isEligible = Some(true))
+  case object IsNotEligible extends StoreEligibility(isEligible = Some(false))
+  case object MappingUnavailable extends StoreEligibility(isEligible = None)
 
-case class KnownFactsResult(
-  utr: Utr,
-  postcode: String,
-  taxpayerName: String,
-  isSubscribedToAgentServices: Boolean,
-  address: Option[BusinessAddress],
-  emailAddress: Option[String])
-
-object KnownFactsResult {
-  implicit val formatKnownFacts = Json.format[KnownFactsResult]
-}
-
-object ChainedSessionDetails {
-  implicit val formatChainedSession = Json.format[ChainedSessionDetails]
+  def apply(eligibility: Option[Boolean]): StoreEligibility =
+    eligibility match {
+      case Some(true)  => IsEligible
+      case Some(false) => IsNotEligible
+      case None        => MappingUnavailable
+    }
 }
