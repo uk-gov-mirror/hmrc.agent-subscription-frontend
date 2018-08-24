@@ -84,7 +84,7 @@ class CheckAgencyController @Inject()(
   override val authConnector: AuthConnector,
   val agentSubscriptionConnector: AgentSubscriptionConnector,
   val subscriptionService: SubscriptionService,
-  val sessionStoreService: SessionStoreService,
+  override val sessionStoreService: SessionStoreService,
   val continueUrlActions: ContinueUrlActions,
   auditService: AuditService,
   override val appConfig: AppConfig,
@@ -218,23 +218,21 @@ class CheckAgencyController @Inject()(
 
   val showConfirmYourAgency: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      sessionStoreService.fetchKnownFactsResult.map(_.map { knownFactsResult =>
-        Ok(
+      withKnownFactsResult { knownFactsResult =>
+        Future successful Ok(
           html.confirm_your_agency(
             confirmAgencyRadioForm = CheckAgencyController.confirmYourAgencyForm,
             registrationName = knownFactsResult.taxpayerName,
             utr = FieldMappings.prettify(knownFactsResult.utr),
             businessAddress = knownFactsResult.address.getOrElse(throw new Exception("address object missing"))
           ))
-      }.getOrElse {
-        sessionMissingRedirect()
-      })
+      }
     }
   }
 
   val submitConfirmYourAgency: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      sessionStoreService.fetchKnownFactsResult.flatMap(_.map { knownFactsResult =>
+      withKnownFactsResult { knownFactsResult =>
         CheckAgencyController.confirmYourAgencyForm
           .bindFromRequest()
           .fold(
@@ -260,9 +258,7 @@ class CheckAgencyController @Inject()(
               response.map(Redirect(_))
             }
           )
-      }.getOrElse {
-        Future.successful(sessionMissingRedirect())
-      })
+      }
     }
   }
 

@@ -65,7 +65,7 @@ class SubscriptionController @Inject()(
   override val messagesApi: MessagesApi,
   override val authConnector: AuthConnector,
   subscriptionService: SubscriptionService,
-  sessionStoreService: SessionStoreService,
+  override val sessionStoreService: SessionStoreService,
   addressLookUpConnector: AddressLookupFrontendConnector,
   mappingConnector: MappingConnector,
   val continueUrlActions: ContinueUrlActions,
@@ -104,19 +104,19 @@ class SubscriptionController @Inject()(
         Future.successful(Redirect(routes.CheckAgencyController.showHasOtherEnrolments()))
       case _ =>
         mark("Count-Subscription-CleanCreds-Success")
-        sessionStoreService.fetchInitialDetails.map(_.map { details =>
-          if (details.email.nonEmpty)
-            Ok(
-              html.check_answers(
-                registrationName = details.name,
-                address = details.businessAddress,
-                emailAddress = details.email
-              ))
-          else
-            Redirect(routes.SubscriptionController.showBusinessEmailForm())
-        }.getOrElse {
-          sessionMissingRedirect()
-        })
+        withInitialDetails { details =>
+          Future.successful {
+            if (details.email.nonEmpty)
+              Ok(
+                html.check_answers(
+                  registrationName = details.name,
+                  address = details.businessAddress,
+                  emailAddress = details.email
+                ))
+            else
+              Redirect(routes.SubscriptionController.showBusinessEmailForm())
+          }
+        }
     }
   }
 
@@ -125,7 +125,7 @@ class SubscriptionController @Inject()(
       case hasNonEmptyEnrolments(_) =>
         Future.successful(Redirect(routes.CheckAgencyController.showHasOtherEnrolments()))
       case _ =>
-        sessionStoreService.fetchInitialDetails.flatMap(_.map { details =>
+        withInitialDetails { details =>
           val desAddress = DesAddress(
             details.businessAddress.addressLine1,
             details.businessAddress.addressLine2,
@@ -135,25 +135,21 @@ class SubscriptionController @Inject()(
             details.businessAddress.countryCode
           )
           subscriptionService.subscribe(details, desAddress).flatMap(redirectSubscriptionResponse)
-        }.getOrElse {
-          Future.successful(sessionMissingRedirect())
-        })
+        }
     }
   }
 
   val showBusinessNameForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      sessionStoreService.fetchInitialDetails.map(_.map { details =>
-        Ok(html.business_name(businessNameForm.bind(Map("name" -> details.name))))
-      }.getOrElse {
-        sessionMissingRedirect()
-      })
+      withInitialDetails { details =>
+        Future.successful(Ok(html.business_name(businessNameForm.bind(Map("name" -> details.name)))))
+      }
     }
   }
 
   val submitBusinessNameForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      sessionStoreService.fetchInitialDetails.flatMap(_.map { details =>
+      withInitialDetails { details =>
         businessNameForm
           .bindFromRequest()
           .fold(
@@ -163,28 +159,24 @@ class SubscriptionController @Inject()(
                 .cacheInitialDetails(details.copy(name = validForm.name))
                 .map(_ => Redirect(routes.SubscriptionController.showCheckAnswers()))
           )
-      }.getOrElse {
-        Future.successful(sessionMissingRedirect())
-      })
+      }
     }
   }
 
   val showBusinessEmailForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      sessionStoreService.fetchInitialDetails.map(_.map { details =>
+      withInitialDetails { details =>
         val form =
           if (details.email.nonEmpty) businessEmailForm.bind(Map("email" -> details.email.get)) else businessEmailForm
 
-        Ok(html.business_email(form, details.email))
-      }.getOrElse {
-        sessionMissingRedirect()
-      })
+        Future.successful(Ok(html.business_email(form, details.email)))
+      }
     }
   }
 
   val submitBusinessEmailForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      sessionStoreService.fetchInitialDetails.flatMap(_.map { details =>
+      withInitialDetails { details =>
         businessEmailForm
           .bindFromRequest()
           .fold(
@@ -194,22 +186,18 @@ class SubscriptionController @Inject()(
                 .cacheInitialDetails(details.copy(email = Some(validForm.email)))
                 .map(_ => Redirect(routes.SubscriptionController.showCheckAnswers()))
           )
-      }.getOrElse {
-        Future.successful(sessionMissingRedirect())
-      })
+      }
     }
   }
 
   val showBusinessAddressForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      sessionStoreService.fetchInitialDetails.flatMap(_.map { _ =>
+      withInitialDetails { _ =>
         mark("Count-Subscription-AddressLookup-Start")
         addressLookUpConnector
           .initJourney(routes.SubscriptionController.returnFromAddressLookup(), JourneyName)
           .map(Redirect(_))
-      }.getOrElse {
-        Future.successful(sessionMissingRedirect())
-      })
+      }
     }
   }
 
@@ -246,49 +234,42 @@ class SubscriptionController @Inject()(
 
   def returnFromAddressLookup(id: String): Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      sessionStoreService.fetchInitialDetails.flatMap { maybeDetails =>
-        maybeDetails
-          .map { details =>
-            addressLookUpConnector.getAddressDetails(id).flatMap { address =>
-              desAddressForm
-                .bindAddressLookupFrontendAddress(details.utr, address)
-                .fold(
-                  formWithErrors => Future successful Ok(html.address_form_with_errors(formWithErrors)),
-                  validDesAddress => {
-                    mark("Count-Subscription-AddressLookup-Success")
-                    sessionStoreService
-                      .cacheInitialDetails(details.copy(
-                        businessAddress = BusinessAddress(validDesAddress)
-                      ))
-                      .map(_ => Redirect(routes.SubscriptionController.showCheckAnswers()))
-                  }
-                )
-            }
-          }
-          .getOrElse(Future.successful(sessionMissingRedirect()))
+      withInitialDetails { details =>
+        addressLookUpConnector.getAddressDetails(id).flatMap { address =>
+          desAddressForm
+            .bindAddressLookupFrontendAddress(details.utr, address)
+            .fold(
+              formWithErrors => Future successful Ok(html.address_form_with_errors(formWithErrors)),
+              validDesAddress => {
+                mark("Count-Subscription-AddressLookup-Success")
+                sessionStoreService
+                  .cacheInitialDetails(details.copy(
+                    businessAddress = BusinessAddress(validDesAddress)
+                  ))
+                  .map(_ => Redirect(routes.SubscriptionController.showCheckAnswers()))
+              }
+            )
+        }
       }
     }
   }
 
   def submitModifiedAddress: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      desAddressForm.form
-        .bindFromRequest()
-        .fold(
-          formWithErrors => Future successful Ok(html.address_form_with_errors(formWithErrors)),
-          validDesAddress =>
-            sessionStoreService.fetchInitialDetails.flatMap { maybeInitialDetails =>
-              maybeInitialDetails
-                .map { initialDetails =>
-                  sessionStoreService
-                    .cacheInitialDetails(initialDetails.copy(
-                      businessAddress = BusinessAddress(validDesAddress)
-                    ))
-                    .map(_ => Redirect(routes.SubscriptionController.showCheckAnswers()))
-                }
-                .getOrElse(Future.successful(sessionMissingRedirect()))
-          }
-        )
+      withInitialDetails { initialDetails =>
+        desAddressForm.form
+          .bindFromRequest()
+          .fold(
+            formWithErrors => Future successful Ok(html.address_form_with_errors(formWithErrors)),
+            validDesAddress =>
+              sessionStoreService
+                .cacheInitialDetails(
+                  initialDetails.copy(
+                    businessAddress = BusinessAddress(validDesAddress)
+                  ))
+                .map(_ => Redirect(routes.SubscriptionController.showCheckAnswers()))
+          )
+      }
     }
   }
 
@@ -296,10 +277,8 @@ class SubscriptionController @Inject()(
     appConfig.autoMapAgentEnrolments match {
       case true =>
         withAuthenticatedAgent {
-          Future.successful {
-            request.session.get("arn").fold(sessionMissingRedirect()) { _ =>
-              Ok(html.link_account(linkAccountForm))
-            }
+          withArnFromSession { _ =>
+            Future.successful(Ok(html.link_account(linkAccountForm)))
           }
         }
       case false => Future.successful(InternalServerError)
@@ -310,7 +289,7 @@ class SubscriptionController @Inject()(
     appConfig.autoMapAgentEnrolments match {
       case true =>
         withAuthenticatedAgent {
-          request.session.get("arn").fold(Future.successful(sessionMissingRedirect())) { arn =>
+          withArnFromSession { _ =>
             linkAccountForm
               .bindFromRequest()
               .fold(
@@ -342,31 +321,26 @@ class SubscriptionController @Inject()(
     }
 
     withAuthenticatedAgent {
-      request.session.get("arn") match {
-        case Some(arn) =>
-          for {
-            continueUrlOpt           <- sessionStoreService.fetchContinueUrl.recover(recoverSessionStoreWithNone)
-            wasEligibleForMappingOpt <- sessionStoreService.fetchMappingEligible.recover(recoverSessionStoreWithNone)
-            _                        <- sessionStoreService.remove()
-          } yield {
-            val continueUrl = continueUrlOpt.map(_.url).getOrElse(appConfig.agentServicesAccountUrl)
-            val isUrlToASAccount = continueUrlOpt.isEmpty
-            val wasEligibleForMapping = wasEligibleForMappingOpt.contains(true)
-            val prettifiedArn = prettify(Arn(arn))
-            Ok(html.subscription_complete(continueUrl, isUrlToASAccount, wasEligibleForMapping, prettifiedArn))
-              .removingFromSession("arn")
-          }
-        case _ =>
-          Future.successful(sessionMissingRedirect())
+      withArnFromSession { arn =>
+        for {
+          continueUrlOpt           <- sessionStoreService.fetchContinueUrl.recover(recoverSessionStoreWithNone)
+          wasEligibleForMappingOpt <- sessionStoreService.fetchMappingEligible.recover(recoverSessionStoreWithNone)
+          _                        <- sessionStoreService.remove()
+        } yield {
+          val continueUrl = continueUrlOpt.map(_.url).getOrElse(appConfig.agentServicesAccountUrl)
+          val isUrlToASAccount = continueUrlOpt.isEmpty
+          val wasEligibleForMapping = wasEligibleForMappingOpt.contains(true)
+          val prettifiedArn = prettify(arn)
+          Ok(html.subscription_complete(continueUrl, isUrlToASAccount, wasEligibleForMapping, prettifiedArn))
+            .removingFromSession("arn")
+        }
       }
     }
   }
 
   private def linkAccountResponse[A](
     body: Utr => Future[Unit])(implicit hc: HeaderCarrier, request: Request[A]): Future[Result] =
-    sessionStoreService.fetchKnownFactsResult.flatMap {
-      _.map(_.utr).fold(Future.successful(sessionMissingRedirect())) { utr =>
-        body(utr).map(_ => Redirect(routes.SubscriptionController.showSubscriptionComplete()))
-      }
+    withKnownFactsResult { knownFactResult =>
+      body(knownFactResult.utr).map(_ => Redirect(routes.SubscriptionController.showSubscriptionComplete()))
     }
 }

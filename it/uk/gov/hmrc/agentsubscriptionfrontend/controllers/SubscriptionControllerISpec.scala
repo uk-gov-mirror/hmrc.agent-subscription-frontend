@@ -587,7 +587,7 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       redirectLocation(result).head shouldBe routes.SubscriptionController.showCheckAnswers().url
     }
 
-    "redirect to check-business-type if there is no valid session" in {
+    "redirect to /check-business-type if there is no valid session" in {
       implicit val request = desAddressForm()
       sessionStoreService.currentSession.initialDetails = None
 
@@ -601,6 +601,8 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       "the address is not valid according to DES's rules" in {
         val tooLongAddressLine = "12345678901234567890123456789012345678901234567890"
         implicit val request = desAddressForm(addressLine1 = tooLongAddressLine)
+        sessionStoreService.currentSession.initialDetails = Some(initialDetails)
+
         val result = await(controller.submitModifiedAddress()(request))
 
         result should containSubstrings(htmlEscapedMessage("error.maxLength", 35), tooLongAddressLine)
