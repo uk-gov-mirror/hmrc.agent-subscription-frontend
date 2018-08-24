@@ -31,7 +31,6 @@ import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.{AddressLookupFrontendConnector, MappingConnector}
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.FieldMappings._
-import uk.gov.hmrc.agentsubscriptionfrontend.models.StoreEligibility.{IsEligible, IsNotEligible, MappingUnavailable}
 import uk.gov.hmrc.agentsubscriptionfrontend.form.DesAddressForm
 import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
@@ -68,6 +67,7 @@ class SubscriptionController @Inject()(
   override val sessionStoreService: SessionStoreService,
   addressLookUpConnector: AddressLookupFrontendConnector,
   mappingConnector: MappingConnector,
+  commonRouting: CommonRouting,
   val continueUrlActions: ContinueUrlActions,
   val metrics: Metrics,
   override val appConfig: AppConfig)(implicit val aConfig: AppConfig)
@@ -206,7 +206,7 @@ class SubscriptionController @Inject()(
     either match {
       case Right((arn, _)) =>
         mark("Count-Subscription-Complete")
-        redirectUponSuccessfulSubscription(arn)
+        commonRouting.redirectUponSuccessfulSubscription(arn)
 
       case Left(SubscriptionReturnedHttpError(CONFLICT)) =>
         mark("Count-Subscription-AlreadySubscribed-APIResponse")
@@ -216,21 +216,6 @@ class SubscriptionController @Inject()(
         mark("Count-Subscription-Failed")
         throw new HttpException("Subscription failed", status)
     }
-
-  private[controllers] def redirectUponSuccessfulSubscription(arn: Arn)(implicit request: Request[AnyContent]) =
-    for (redirectLocation <- if (appConfig.autoMapAgentEnrolments) {
-                              sessionStoreService.fetchMappingEligible.map {
-                                StoreEligibility.apply(_) match {
-                                  case IsEligible    => routes.SubscriptionController.showLinkAccount()
-                                  case IsNotEligible => routes.SubscriptionController.showSubscriptionComplete()
-                                  case MappingUnavailable => {
-                                    Logger.warn("chainedSessionDetails did not cache wasEligibleForMapping")
-                                    routes.SubscriptionController.showSubscriptionComplete()
-                                  }
-                                }
-                              }
-                            } else Future successful routes.SubscriptionController.showSubscriptionComplete())
-      yield Redirect(redirectLocation).withSession(request.session + ("arn" -> arn.value))
 
   def returnFromAddressLookup(id: String): Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>

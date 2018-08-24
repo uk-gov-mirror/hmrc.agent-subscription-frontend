@@ -42,7 +42,7 @@ class StartController @Inject()(
   override val appConfig: AppConfig,
   sessionStoreService: SessionStoreService,
   subscriptionService: SubscriptionService,
-  subscriptionCtrlr: SubscriptionController)(implicit val aConfig: AppConfig)
+  commonRouting: CommonRouting)(implicit val aConfig: AppConfig)
     extends FrontendController with I18nSupport with AuthActions {
 
   import continueUrlActions._
@@ -96,7 +96,7 @@ class StartController @Inject()(
                                                 .completePartialSubscription(knownFacts.utr, knownFacts.postcode)
                                                 .flatMap { arn =>
                                                   mark("Count-Subscription-PartialSubscriptionCompleted")
-                                                  subscriptionCtrlr.redirectUponSuccessfulSubscription(arn)
+                                                  commonRouting.redirectUponSuccessfulSubscription(arn)
                                                 }
                                             } else {
                                               sessionStoreService
