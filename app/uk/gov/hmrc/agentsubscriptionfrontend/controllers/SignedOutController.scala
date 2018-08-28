@@ -17,15 +17,14 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import javax.inject.{Inject, Singleton}
-
 import play.api.mvc.Action
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.connectors.MappingConnector
-import uk.gov.hmrc.agentsubscriptionfrontend.models.StoreEligibility.IsEligible
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{ChainedSessionDetails, StoreEligibility}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{ChainedSessionDetails, MappingEligibility}
 import uk.gov.hmrc.agentsubscriptionfrontend.repository.ChainedSessionDetailsRepository
-import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
+import uk.gov.hmrc.agentsubscriptionfrontend.repository.StashedChainedSessionDetails.StashedChainnedSessionId
+import uk.gov.hmrc.agentsubscriptionfrontend.service.{MappingService, SessionStoreService}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.CallOps.addParamsToUrl
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 import scala.concurrent.Future
@@ -33,39 +32,35 @@ import scala.concurrent.Future
 @Singleton
 class SignedOutController @Inject()(
   chainedSessionRepository: ChainedSessionDetailsRepository,
-  mappingConnector: MappingConnector,
+  mappingService: MappingService,
   sessionStoreService: SessionStoreService)(implicit appConfig: AppConfig)
     extends FrontendController {
 
   def redirectToSos = Action.async { implicit request =>
     for {
-      knownFactOpt <- sessionStoreService.fetchKnownFactsResult
-      id <- knownFactOpt match {
-             case Some(knownFact) => {
-               for {
-                 isEligibleForMapping <- if (appConfig.autoMapAgentEnrolments)
-                                          mappingConnector.isEligibile.map(yesOrNo =>
-                                            StoreEligibility.apply(Some(yesOrNo)))
-                                        else Future successful StoreEligibility.MappingUnavailable
-                 _ <- if (appConfig.autoMapAgentEnrolments && isEligibleForMapping == IsEligible)
-                       mappingConnector.createPreSubscription(knownFact.utr)
-                     else Future.successful(())
-                 id <- chainedSessionRepository.create(
-                        ChainedSessionDetails(knownFact, isEligibleForMapping.isEligible))
-               } yield Some(id)
-             }
-             case None => Future successful None
-           }
-      agentSubContinueUrl <- sessionStoreService.fetchContinueUrl
+      mappingEligibility     <- mappingService.captureTempMappingsPreSubscription
+      chainedSessionIdOpt    <- prepareChainedSession(mappingEligibility)
+      agentSubContinueUrlOpt <- sessionStoreService.fetchContinueUrl
     } yield {
       val continueUrl =
         addParamsToUrl(
           "/agent-subscription/return-after-gg-creds-created",
-          "id"       -> id.map(_.toString),
-          "continue" -> agentSubContinueUrl.map(_.url))
+          "id"       -> chainedSessionIdOpt.map(_.toString),
+          "continue" -> agentSubContinueUrlOpt.map(_.url))
       SeeOther(addParamsToUrl(appConfig.sosRedirectUrl, "continue" -> Some(continueUrl))).withNewSession
     }
   }
+
+  private def prepareChainedSession(mappingEligibility: MappingEligibility)(
+    implicit hc: HeaderCarrier): Future[Option[StashedChainnedSessionId]] =
+    sessionStoreService.fetchKnownFactsResult.flatMap {
+      case Some(knownFacts) => {
+        chainedSessionRepository
+          .create(ChainedSessionDetails(knownFacts, mappingEligibility.isEligible))
+          .map(id => Some(id))
+      }
+      case None => Future.successful(None)
+    }
 
   def signOutWithContinueUrl = Action.async { implicit request =>
     sessionStoreService.fetchContinueUrl.map { maybeContinueUrl =>

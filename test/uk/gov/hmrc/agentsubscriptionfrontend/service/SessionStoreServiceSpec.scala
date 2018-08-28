@@ -18,7 +18,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.service
 
 import play.api.libs.json.{JsValue, Reads, Writes}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{BusinessAddress, InitialDetails, KnownFactsResult}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{BusinessAddress, InitialDetails, KnownFactsResult, MappingEligibility}
 import uk.gov.hmrc.http.cache.client.{CacheMap, NoSessionException, SessionCache}
 import uk.gov.hmrc.play.binders.ContinueUrl
 import uk.gov.hmrc.play.test.UnitSpec
@@ -34,25 +34,38 @@ class SessionStoreServiceSpec extends UnitSpec {
   private implicit val hc = HeaderCarrier(sessionId = Some(SessionId("sessionId123456")))
 
   "SessionStoreService" should {
+    val initialDetails = InitialDetails(
+      Utr("9876543210"),
+      "AA11AA",
+      "My Agency",
+      Some("agency@example.com"),
+      BusinessAddress(
+        "AddressLine1 A",
+        Some("AddressLine2 A"),
+        Some("AddressLine3 A"),
+        Some("AddressLine4 A"),
+        Some("AA1AA"),
+        "GB")
+    )
+    val knownFactsResult =
+      KnownFactsResult(
+        Utr("9876543210"),
+        "AA11AA",
+        "Test organisation name",
+        isSubscribedToAgentServices = true,
+        Some(
+          BusinessAddress(
+            "AddressLine1 A",
+            Some("AddressLine2 A"),
+            Some("AddressLine3 A"),
+            Some("AddressLine4 A"),
+            Some("AA1AA"),
+            "GB")),
+        Some("someone@example.com")
+      )
+
     "store known facts" in {
       val store = new SessionStoreService(new TestSessionCache())
-
-      val knownFactsResult =
-        KnownFactsResult(
-          Utr("9876543210"),
-          "AA11AA",
-          "Test organisation name",
-          isSubscribedToAgentServices = true,
-          Some(
-            BusinessAddress(
-              "AddressLine1 A",
-              Some("AddressLine2 A"),
-              Some("AddressLine3 A"),
-              Some("AddressLine4 A"),
-              Some("AA1AA"),
-              "GB")),
-          Some("someone@example.com")
-        )
 
       await(store.cacheKnownFactsResult(knownFactsResult))
 
@@ -68,23 +81,9 @@ class SessionStoreServiceSpec extends UnitSpec {
     "store initial details" in {
       val store = new SessionStoreService(new TestSessionCache())
 
-      val details = InitialDetails(
-        Utr("9876543210"),
-        "AA11AA",
-        "My Agency",
-        Some("agency@example.com"),
-        BusinessAddress(
-          "AddressLine1 A",
-          Some("AddressLine2 A"),
-          Some("AddressLine3 A"),
-          Some("AddressLine4 A"),
-          Some("AA1AA"),
-          "GB")
-      )
+      await(store.cacheInitialDetails(initialDetails))
 
-      await(store.cacheInitialDetails(details))
-
-      await(store.fetchInitialDetails) shouldBe Some(details)
+      await(store.fetchInitialDetails) shouldBe Some(initialDetails)
     }
 
     "return None when no initial details have been stored" in {
@@ -109,19 +108,33 @@ class SessionStoreServiceSpec extends UnitSpec {
       await(store.fetchContinueUrl) shouldBe None
     }
 
+    "store mapping eligibility" when {
+      "mapping eligibility is true" in {
+        val store = new SessionStoreService(new TestSessionCache())
+
+        await(store.cacheMappingEligible(true))
+        await(store.fetchMappingEligible) shouldBe Some(true)
+      }
+      "mapping eligibility is false" in {
+        val store = new SessionStoreService(new TestSessionCache())
+
+        await(store.cacheMappingEligible(false))
+        await(store.fetchMappingEligible) shouldBe Some(false)
+      }
+    }
+
+    "return None when no mapping eligibility has been stored" in {
+      val store = new SessionStoreService(new TestSessionCache())
+
+      await(store.fetchMappingEligible) shouldBe None
+    }
+
     "remove the underlying storage for the current session when remove is called" in {
       val store = new SessionStoreService(new TestSessionCache())
 
-      val knownFactsResult =
-        KnownFactsResult(
-          Utr("9876543210"),
-          "AA11AA",
-          "Test organisation name",
-          isSubscribedToAgentServices = true,
-          None,
-          None)
-
       await(store.cacheKnownFactsResult(knownFactsResult))
+      await(store.cacheInitialDetails(initialDetails))
+      await(store.cacheMappingEligible(true))
 
       val url = ContinueUrl("http://localhost:9000/agent-mapping")
 
@@ -130,6 +143,8 @@ class SessionStoreServiceSpec extends UnitSpec {
       await(store.remove())
 
       await(store.fetchKnownFactsResult) shouldBe None
+      await(store.fetchInitialDetails) shouldBe None
+      await(store.fetchMappingEligible) shouldBe None
       await(store.fetchContinueUrl) shouldBe None
     }
   }

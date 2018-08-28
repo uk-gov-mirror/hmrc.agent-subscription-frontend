@@ -4,6 +4,7 @@ import java.net.URL
 
 import com.kenshoo.play.metrics.Metrics
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.agentsubscriptionfrontend.models.MappingEligibility.{IsEligible, IsNotEligible}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.MappingStubs
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, MetricTestSupport}
 import uk.gov.hmrc.http._
@@ -18,77 +19,46 @@ class MappingConnectorISpec extends BaseISpec with MetricTestSupport {
       app.injector.instanceOf[HttpGet with HttpPost with HttpPut with HttpDelete],
       app.injector.instanceOf[Metrics])
 
-  "isEligible" when {
-    val withMetrics = withMetricsTimerUpdate("ConsumedAPI-Agent-Mapping-eligibility-GET") _
-
-    "agent-mapping returns a 200 response" should {
-      "return true if hasEligibleEnrolments = true" in withMetrics {
-        MappingStubs.givenMappingEligibilityIsEligible
-        await(connector.isEligibile) shouldBe true
-        MappingStubs.verifyMappingEligibilityCalled(1)
-      }
-
-      "return false if hasEligibleEnrolments = false" in withMetrics {
-        MappingStubs.givenMappingEligibilityIsNotEligible
-        await(connector.isEligibile) shouldBe false
-        MappingStubs.verifyMappingEligibilityCalled(1)
-      }
-    }
-
-    "fail with Upstream4xxException if agent-mapping fails with a 401 response" in withMetrics {
-      MappingStubs.givenMappingEligibilityCheckFails(401)
-      intercept[Upstream4xxResponse] { await(connector.isEligibile) }.upstreamResponseCode shouldBe 401
-      MappingStubs.verifyMappingEligibilityCalled(1)
-    }
-
-    "fail with Upstream5xxException if agent-mapping fails with a 503 response" in withMetrics {
-      MappingStubs.givenMappingEligibilityCheckFails(503)
-      intercept[Upstream5xxResponse] { await(connector.isEligibile) }.upstreamResponseCode shouldBe 503
-      MappingStubs.verifyMappingEligibilityCalled(1)
-    }
-  }
-
-  "createPreSubscription" when {
+  "createPreSubscription" should {
     val withMetrics = withMetricsTimerUpdate("ConsumedAPI-Agent-Mapping-createPreSubscription-PUT") _
 
-    "agent-mapping returns a 201 response" should {
-      "return successful future" in withMetrics {
+    "return IsEligible" when {
+      "agent-mapping returns a 201 response" in withMetrics {
         MappingStubs.givenMappingCreatePreSubscription(Utr("1234567890"), httpReturnCode = 201)
-        await(connector.createPreSubscription(Utr("1234567890")))
+        await(connector.createPreSubscription(Utr("1234567890"))) shouldBe IsEligible
         MappingStubs.verifyMappingCreatePreSubscriptionCalled(Utr("1234567890"))
       }
-    }
-
-    "agent-mapping returns a 409 response" should {
-      "return successful future" in withMetrics {
+      "agent-mapping returns a 409 response" in withMetrics {
         MappingStubs.givenMappingCreatePreSubscription(Utr("1234567890"), httpReturnCode = 409)
-        await(connector.createPreSubscription(Utr("1234567890")))
+        await(connector.createPreSubscription(Utr("1234567890"))) shouldBe IsEligible
         MappingStubs.verifyMappingCreatePreSubscriptionCalled(Utr("1234567890"))
       }
     }
 
-    "fail with Upstream4xxException if agent-mapping fails with a 401 response" in withMetrics {
-      MappingStubs.givenMappingCreatePreSubscription(Utr("1234567890"), httpReturnCode = 401)
-      intercept[Upstream4xxResponse] {
-        await(connector.createPreSubscription(Utr("1234567890")))
-      }.upstreamResponseCode shouldBe 401
-      MappingStubs.verifyMappingCreatePreSubscriptionCalled(Utr("1234567890"))
+    "return IsNotEligible" when {
+      "agent-mapping returns a 403 response" in withMetrics {
+        MappingStubs.givenMappingCreatePreSubscription(Utr("1234567890"), httpReturnCode = 403)
+        await(connector.createPreSubscription(Utr("1234567890"))) shouldBe IsNotEligible
+        MappingStubs.verifyMappingCreatePreSubscriptionCalled(Utr("1234567890"))
+      }
     }
 
-    "fail with Upstream4xxException if agent-mapping fails with a 403 response" in withMetrics {
-      MappingStubs.givenMappingCreatePreSubscription(Utr("1234567890"), httpReturnCode = 403)
-      intercept[Upstream4xxResponse] {
-        await(connector.createPreSubscription(Utr("1234567890")))
-      }.upstreamResponseCode shouldBe 403
-      MappingStubs.verifyMappingCreatePreSubscriptionCalled(Utr("1234567890"))
-    }
+    "return failed future" when {
+      "agent-mapping returns a 401 response" in withMetrics {
+        MappingStubs.givenMappingCreatePreSubscription(Utr("1234567890"), httpReturnCode = 401)
+        intercept[Upstream4xxResponse] {
+          await(connector.createPreSubscription(Utr("1234567890")))
+        }.upstreamResponseCode shouldBe 401
+        MappingStubs.verifyMappingCreatePreSubscriptionCalled(Utr("1234567890"))
+      }
 
-    "fail with Upstream5xxException if agent-mapping fails with a 503 response" in withMetrics {
-      MappingStubs.givenMappingCreatePreSubscription(Utr("1234567890"), httpReturnCode = 503)
-      intercept[Upstream5xxResponse] {
-        await(connector.createPreSubscription(Utr("1234567890")))
-      }.upstreamResponseCode shouldBe 503
-      MappingStubs.verifyMappingCreatePreSubscriptionCalled(Utr("1234567890"))
+      "agent-mapping returns a 503 response" in withMetrics {
+        MappingStubs.givenMappingCreatePreSubscription(Utr("1234567890"), httpReturnCode = 503)
+        intercept[Upstream5xxResponse] {
+          await(connector.createPreSubscription(Utr("1234567890")))
+        }.upstreamResponseCode shouldBe 503
+        MappingStubs.verifyMappingCreatePreSubscriptionCalled(Utr("1234567890"))
+      }
     }
   }
 

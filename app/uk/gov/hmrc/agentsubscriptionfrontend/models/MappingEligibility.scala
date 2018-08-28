@@ -16,17 +16,17 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.models
 
-abstract class StoreEligibility(val isEligible: Option[Boolean])
+sealed abstract class MappingEligibility(val isEligible: Option[Boolean])
 
-object StoreEligibility {
-  case object IsEligible extends StoreEligibility(isEligible = Some(true))
-  case object IsNotEligible extends StoreEligibility(isEligible = Some(false))
-  case object MappingUnavailable extends StoreEligibility(isEligible = None)
+object MappingEligibility {
+  case object IsEligible extends MappingEligibility(isEligible = Some(true))
+  case object IsNotEligible extends MappingEligibility(isEligible = Some(false))
+  case object UnknownEligibility extends MappingEligibility(isEligible = None)
 
-  def apply(eligibility: Option[Boolean]): StoreEligibility =
+  def apply(eligibility: Option[Boolean]): MappingEligibility =
     eligibility match {
       case Some(true)  => IsEligible
       case Some(false) => IsNotEligible
-      case None        => MappingUnavailable
+      case None        => UnknownEligibility
     }
 }

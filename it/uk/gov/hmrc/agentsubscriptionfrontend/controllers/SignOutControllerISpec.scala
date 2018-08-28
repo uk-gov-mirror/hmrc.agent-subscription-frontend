@@ -8,7 +8,7 @@ import play.api.test.Helpers.{redirectLocation, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{ChainedSessionDetails, KnownFactsResult}
 import uk.gov.hmrc.agentsubscriptionfrontend.repository.{ChainedSessionDetailsRepository, StashedChainedSessionDetails}
-import uk.gov.hmrc.agentsubscriptionfrontend.stubs.MappingStubs
+import uk.gov.hmrc.agentsubscriptionfrontend.stubs.MappingStubs._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser._
 import uk.gov.hmrc.http.Upstream5xxResponse
@@ -45,7 +45,7 @@ trait SignOutControllerISpec extends BaseISpec {
     "the SOS redirect URL should include an ID of the saved ChainedSessionDetails" in {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
       sessionStoreService.currentSession.knownFactsResult = Some(knownFactsResult)
-      MappingStubs.givenMappingEligibilityIsNotEligible
+      givenMappingCreatePreSubscriptionIsNotEligible(Utr("9876543210"))
 
       val result = await(controller.redirectToSos(request))
       val id = findByUtr("9876543210").map(_.id).get
@@ -55,7 +55,7 @@ trait SignOutControllerISpec extends BaseISpec {
 
     "not include an ID in the SOS redirect URL when KnownFactsResults are not yet known" in {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
-      MappingStubs.givenMappingEligibilityIsNotEligible
+      givenMappingCreatePreSubscriptionIsNotEligible(Utr("9876543210"))
 
       val result = await(controller.redirectToSos(request))
       redirectLocation(result).head should include(s"continue=%2Fagent-subscription%2Freturn-after-gg-creds-created")
@@ -65,7 +65,7 @@ trait SignOutControllerISpec extends BaseISpec {
       val ourContinueUrl = ContinueUrl("/test-continue-url")
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
       sessionStoreService.currentSession(hc(request)).continueUrl = Some(ourContinueUrl)
-      MappingStubs.givenMappingEligibilityIsNotEligible
+      givenMappingCreatePreSubscriptionIsNotEligible(Utr("9876543210"))
 
       val result = await(controller.redirectToSos(authenticatedAs(subscribingAgentEnrolledForNonMTD)))
 
@@ -81,7 +81,7 @@ trait SignOutControllerISpec extends BaseISpec {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
       sessionStoreService.currentSession.knownFactsResult = Some(knownFactsResult)
       sessionStoreService.currentSession.continueUrl = Some(ourContinueUrl)
-      MappingStubs.givenMappingEligibilityIsNotEligible
+      givenMappingCreatePreSubscriptionIsNotEligible(Utr("9876543210"))
 
       val result = await(controller.redirectToSos(request))
       val id = findByUtr("9876543210").map(_.id).get
@@ -174,8 +174,7 @@ class SignOutControllerWithAutoMappingOn extends SignOutControllerISpec {
       "was eligible for mapping" in {
         implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         sessionStoreService.currentSession.knownFactsResult = Some(knownFactsResult)
-        MappingStubs.givenMappingEligibilityIsEligible
-        MappingStubs.givenMappingCreatePreSubscription(Utr("9876543210"))
+        givenMappingCreatePreSubscription(Utr("9876543210"))
 
         await(controller.redirectToSos(request))
         findByUtr("9876543210").map(_.chainedSessionDetails) shouldBe Some(
@@ -184,14 +183,13 @@ class SignOutControllerWithAutoMappingOn extends SignOutControllerISpec {
             wasEligibleForMapping = Some(true)
           )
         )
-        MappingStubs.verifyMappingEligibilityCalled(times = 1)
-        MappingStubs.verifyMappingCreatePreSubscriptionCalled(Utr("9876543210"), times = 1)
+        verifyMappingCreatePreSubscriptionCalled(Utr("9876543210"), times = 1)
       }
 
       "was not eligible for mapping" in {
         implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
         sessionStoreService.currentSession.knownFactsResult = Some(knownFactsResult)
-        MappingStubs.givenMappingEligibilityIsNotEligible
+        givenMappingCreatePreSubscriptionIsNotEligible(Utr("9876543210"))
 
         await(controller.redirectToSos(request))
         findByUtr("9876543210").map(_.chainedSessionDetails) shouldBe Some(
@@ -200,24 +198,14 @@ class SignOutControllerWithAutoMappingOn extends SignOutControllerISpec {
             wasEligibleForMapping = Some(false)
           )
         )
-        MappingStubs.verifyMappingEligibilityCalled(times = 1)
-        MappingStubs.verifyMappingCreatePreSubscriptionCalled(Utr("9876543210"), times = 0)
+        verifyMappingCreatePreSubscriptionCalled(Utr("9876543210"), times = 1)
       }
     }
 
-    "call to check mapping eligibility fails" in {
+    "throw an exception if the call to create pre-subscription mapping fails" in {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
       sessionStoreService.currentSession.knownFactsResult = Some(knownFactsResult)
-      MappingStubs.givenMappingEligibilityCheckFails(500)
-
-      an[Upstream5xxResponse] should be thrownBy await(controller.redirectToSos(request))
-    }
-
-    "was eligible for mapping but create pre-subscription mapping call fails" in {
-      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
-      sessionStoreService.currentSession.knownFactsResult = Some(knownFactsResult)
-      MappingStubs.givenMappingEligibilityIsEligible
-      MappingStubs.givenMappingCreatePreSubscription(Utr("9876543210"), httpReturnCode = 500)
+      givenMappingCreatePreSubscription(Utr("9876543210"), httpReturnCode = 500)
 
       an[Upstream5xxResponse] should be thrownBy await(controller.redirectToSos(request))
     }
@@ -246,8 +234,7 @@ class SignOutControllerWithAutoMappingOff extends SignOutControllerISpec {
       sessionStoreService.currentSession.knownFactsResult = Some(knownFactsResult)
 
       await(controller.redirectToSos(request))
-      MappingStubs.verifyMappingEligibilityCalled(times = 0)
-      MappingStubs.verifyMappingCreatePreSubscriptionCalled(Utr("9876543210"), times = 0)
+      verifyMappingCreatePreSubscriptionCalled(Utr("9876543210"), times = 0)
     }
   }
 }

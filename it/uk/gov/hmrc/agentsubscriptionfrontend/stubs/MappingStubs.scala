@@ -5,32 +5,16 @@ import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 
 object MappingStubs {
-  private val urlEligibility = "/agent-mapping/mappings/eligibility"
   private def urlPreSubscription(utr: String) = s"/agent-mapping/mappings/pre-subscription/utr/$utr"
   private def urlUpdateToPostSubscription(utr: String) = s"/agent-mapping/mappings/post-subscription/utr/$utr"
-
-  def givenMappingEligibilityIsEligible: StubMapping =
-    stubFor(
-      get(urlEqualTo(urlEligibility))
-        .willReturn(ok("""{ "hasEligibleEnrolments" : true }""")))
-
-  def givenMappingEligibilityIsNotEligible: StubMapping =
-    stubFor(
-      get(urlEqualTo(urlEligibility))
-        .willReturn(ok("""{ "hasEligibleEnrolments" : false }""")))
-
-  def givenMappingEligibilityCheckFails(httpReturnCode: Int): StubMapping =
-    stubFor(
-      get(urlEqualTo(urlEligibility))
-        .willReturn(status(httpReturnCode)))
-
-  def verifyMappingEligibilityCalled(times: Int = 1) =
-    verify(times, getRequestedFor(urlEqualTo(urlEligibility)))
 
   def givenMappingCreatePreSubscription(utr: Utr, httpReturnCode: Int = 201): StubMapping =
     stubFor(
       put(urlEqualTo(urlPreSubscription(utr.value)))
         .willReturn(status(httpReturnCode)))
+
+  def givenMappingCreatePreSubscriptionIsNotEligible(utr: Utr): StubMapping =
+    givenMappingCreatePreSubscription(utr, httpReturnCode = 403)
 
   def verifyMappingCreatePreSubscriptionCalled(utr: Utr, times: Int = 1) =
     verify(times, putRequestedFor(urlEqualTo(urlPreSubscription(utr.value))))

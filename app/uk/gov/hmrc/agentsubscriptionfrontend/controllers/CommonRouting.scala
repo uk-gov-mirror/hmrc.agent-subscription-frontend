@@ -21,8 +21,8 @@ import play.api.mvc._
 import play.api.mvc.Results._
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.models.StoreEligibility
-import uk.gov.hmrc.agentsubscriptionfrontend.models.StoreEligibility.{IsEligible, IsNotEligible, MappingUnavailable}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.MappingEligibility
+import uk.gov.hmrc.agentsubscriptionfrontend.models.MappingEligibility.{IsEligible, IsNotEligible, UnknownEligibility}
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -35,10 +35,10 @@ class CommonRouting @Inject()(sessionStoreService: SessionStoreService, appConfi
     arn: Arn)(implicit request: Request[AnyContent], hc: HeaderCarrier, ec: ExecutionContext): Future[Result] =
     for (redirectLocation <- if (appConfig.autoMapAgentEnrolments) {
                               sessionStoreService.fetchMappingEligible.map {
-                                StoreEligibility.apply(_) match {
+                                MappingEligibility.apply(_) match {
                                   case IsEligible    => routes.SubscriptionController.showLinkAccount()
                                   case IsNotEligible => routes.SubscriptionController.showSubscriptionComplete()
-                                  case MappingUnavailable => {
+                                  case UnknownEligibility => {
                                     Logger.warn("chainedSessionDetails did not cache wasEligibleForMapping")
                                     routes.SubscriptionController.showSubscriptionComplete()
                                   }

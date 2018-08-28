@@ -24,6 +24,7 @@ import javax.inject.{Inject, Named, Singleton}
 import play.api.libs.json.JsValue
 import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.agentsubscriptionfrontend.models.MappingEligibility
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext.fromLoggingDetails
 
@@ -39,21 +40,14 @@ class MappingConnector @Inject()(
 
   private val mappingUrl = new URL(baseUrl, s"/agent-mapping/mappings")
 
-  def isEligibile(implicit hc: HeaderCarrier): Future[Boolean] =
-    monitor(s"ConsumedAPI-Agent-Mapping-eligibility-GET") {
-      http
-        .GET[JsValue](s"$mappingUrl/eligibility")
-        .map(_ \ "hasEligibleEnrolments")
-        .map(_.as[Boolean])
-    }
-
-  def createPreSubscription(utr: Utr)(implicit hc: HeaderCarrier): Future[Unit] =
+  def createPreSubscription(utr: Utr)(implicit hc: HeaderCarrier): Future[MappingEligibility] =
     monitor(s"ConsumedAPI-Agent-Mapping-createPreSubscription-PUT") {
       http
         .PUT[String, HttpResponse](s"$mappingUrl/pre-subscription/utr/${utr.value}", "")
-        .map(_ => ())
+        .map(_ => MappingEligibility.IsEligible)
         .recover {
-          case ex: Upstream4xxResponse if ex.upstreamResponseCode == 409 => ()
+          case ex: Upstream4xxResponse if ex.upstreamResponseCode == 409 => MappingEligibility.IsEligible
+          case ex: Upstream4xxResponse if ex.upstreamResponseCode == 403 => MappingEligibility.IsNotEligible
         }
     }
 
