@@ -448,7 +448,7 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
 
   "submitConfirmBusiness" when {
 
-    behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showConfirmBusinessForm(request))
+    behave like anAgentAffinityGroupOnlyEndpoint(request => controller.submitConfirmBusinessForm(request))
 
     "User chooses Yes" should {
       "redirect to showAlreadySubscribed if the user is already subscribed and isSubscribedToAgentServices=true" in {
