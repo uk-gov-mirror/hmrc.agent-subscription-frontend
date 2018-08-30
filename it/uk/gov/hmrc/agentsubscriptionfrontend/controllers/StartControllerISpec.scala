@@ -113,11 +113,11 @@ trait StartControllerISpec extends BaseISpec {
       bodyOf(result) should include("Agent services account: sign in or set up")
     }
 
-    "contain a start button pointing to /check-business-type" in {
+    "contain a start button pointing to /business-type" in {
       val result = await(controller.start(FakeRequest()))
       val doc = Jsoup.parse(bodyOf(result))
       val startLink = doc.getElementById("start")
-      startLink.attr("href") shouldBe routes.CheckAgencyController.showCheckBusinessType().url
+      startLink.attr("href") shouldBe routes.BusinessIdentificationController.showBusinessTypeForm().url
       startLink.text() shouldBe htmlEscapedMessage("startpage.continue")
     }
 
@@ -126,12 +126,12 @@ trait StartControllerISpec extends BaseISpec {
     behave like aPageTakingContinueUrlAndContainingItAsALink(request => controller.start(request))
   }
 
-  "showNonAgentNextSteps" when {
+  "showNotAgent" when {
     "the current user is logged in" should {
 
       "display the non-agent next steps page" in {
         implicit val request = authenticatedAs(individual)
-        val result = await(controller.showNonAgentNextSteps(request))
+        val result = await(controller.showNotAgent(request))
 
         status(result) shouldBe OK
         contentType(result) shouldBe Some("text/html")
@@ -140,7 +140,7 @@ trait StartControllerISpec extends BaseISpec {
       }
 
       "include link to create new account" in {
-        val result = await(controller.showNonAgentNextSteps(authenticatedAs(individual)))
+        val result = await(controller.showNotAgent(authenticatedAs(individual)))
 
         status(result) shouldBe 200
         bodyOf(result) should include("/redirect-to-sos")
@@ -152,7 +152,7 @@ trait StartControllerISpec extends BaseISpec {
         AuthStub.userIsNotAuthenticated()
 
         val request = FakeRequest()
-        val result = await(controller.showNonAgentNextSteps(request))
+        val result = await(controller.showNotAgent(request))
 
         status(result) shouldBe SEE_OTHER
         redirectLocation(result).head should include("gg/sign-in")
@@ -160,7 +160,7 @@ trait StartControllerISpec extends BaseISpec {
     }
 
     behave like aPageWithFeedbackLinks(
-      request => controller.showNonAgentNextSteps(request),
+      request => controller.showNotAgent(request),
       authenticatedAs(individual))
   }
 
@@ -221,20 +221,20 @@ trait StartControllerISpec extends BaseISpec {
       an[Upstream5xxResponse] shouldBe thrownBy(await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(FakeRequest())))
     }
 
-    "redirect to the /check-business-type page if given an invalid ChainedSessionDetails ID" in new ValidKnownFactsCached {
+    "redirect to the /business-type page if given an invalid ChainedSessionDetails ID" in new ValidKnownFactsCached {
       val invalidId = s"A$persistedId"
 
       val result = await(controller.returnAfterGGCredsCreated(id = Some(invalidId))(FakeRequest()))
 
       status(result) shouldBe 303
-      redirectLocation(result).head should include(routes.CheckAgencyController.showCheckBusinessType().url)
+      redirectLocation(result).head should include(routes.BusinessIdentificationController.showBusinessTypeForm().url)
     }
 
-    "redirect to /check-business-type page if there is no valid ChainedSessionDetails ID" in {
+    "redirect to /business-type page if there is no valid ChainedSessionDetails ID" in {
       val result = await(controller.returnAfterGGCredsCreated(id = None)(FakeRequest()))
 
       status(result) shouldBe 303
-      redirectLocation(result).head should include(routes.CheckAgencyController.showCheckBusinessType().url)
+      redirectLocation(result).head should include(routes.BusinessIdentificationController.showBusinessTypeForm().url)
     }
 
     "delete the persisted ChainedSessionDetails if given a valid ChainedSessionDetails ID" in new ValidKnownFactsCached with UnsubscribedAgentStub {

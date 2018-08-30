@@ -38,4 +38,4 @@ object RadioInputAnswer {
 
 case class LinkAccount(autoMapping: RadioInputAnswer)
 
-case class ConfirmYourAgency(confirm: RadioInputAnswer)
+case class ConfirmBusiness(confirm: RadioInputAnswer)

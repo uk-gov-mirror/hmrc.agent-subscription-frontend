@@ -21,27 +21,27 @@
 
 @(knownFactsForm: Form[KnownFacts], businessTypeIdentifier: String)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = error_prefix(knownFactsForm) + Messages("checkAgencyStatus.title"), bodyClasses = None) {
-    <a href="@routes.CheckAgencyController.showCheckBusinessType" class="link-back">@Messages("button.back")</a>
+@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = error_prefix(knownFactsForm) + Messages("businessDetails.title"), bodyClasses = None) {
+    <a href="@routes.BusinessIdentificationController.showBusinessTypeForm()" class="link-back">@Messages("button.back")</a>
 
     @if(knownFactsForm.hasErrors) {
-        @errorSummary(Messages("error.summary.heading"), knownFactsForm, Seq.empty, Some("check-agency-status"))
+        @errorSummary(Messages("error.summary.heading"), knownFactsForm, Seq.empty, Some("business-details"))
     }
 
-    <h1 class="heading-large">@Messages("checkAgencyStatus.title")</h1>
+    <h1 class="heading-large">@Messages("businessDetails.title")</h1>
 
     @if(businessTypeIdentifier == "llp" || businessTypeIdentifier == "partnership") {
-        <p>@Messages("checkAgencyStatus.p1")</p>
+        <p>@Messages("businessDetails.p1")</p>
     }
     @form(
-        action = routes.CheckAgencyController.checkAgencyStatus(Some(businessTypeIdentifier)),
+        action = routes.BusinessIdentificationController.submitBusinessDetailsForm(Some(businessTypeIdentifier)),
         'class -> "form js-form") {
 
         <div class="form-group">
         @input(
             knownFactsForm("utr"),
-            '_label -> Messages(s"checkAgencyStatus.label.utr.$businessTypeIdentifier"),
-            '_inputHint -> Messages(s"checkAgencyStatus.label.utr.hint"),
+            '_label -> Messages(s"businessDetails.label.utr.$businessTypeIdentifier"),
+            '_inputHint -> Messages(s"businessDetails.label.utr.hint"),
             '_inputClass -> "form-control",
             '_labelClass -> "soft--ends"
         )
@@ -50,10 +50,10 @@
         <div class="form-group">
             <details>
                 <summary>
-                    <span class="summary">@Messages(s"checkAgencyStatus.details.heading.$businessTypeIdentifier")</span>
+                    <span class="summary">@Messages(s"businessDetails.details.heading.$businessTypeIdentifier")</span>
                 </summary>
                 <div class="panel panel-border-narrow" aria-hidden="true">
-                    <p>@Html(Messages(s"checkAgencyStatus.details.content.$businessTypeIdentifier"))</p>
+                    <p>@Html(Messages(s"businessDetails.details.content.$businessTypeIdentifier"))</p>
                 </div>
             </details>
         </div>
@@ -61,8 +61,8 @@
         <div class="form-group">
         @input(
             knownFactsForm("postcode"),
-            '_label -> Messages("checkAgencyStatus.label.postcode"),
-            '_inputHint -> Messages(s"checkAgencyStatus.label.postcode.hint"),
+            '_label -> Messages("businessDetails.label.postcode"),
+            '_inputHint -> Messages(s"businessDetails.label.postcode.hint"),
             '_inputClass -> "form-control",
             '_labelClass -> "soft--ends"
         )

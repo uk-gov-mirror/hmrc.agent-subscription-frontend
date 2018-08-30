@@ -15,13 +15,15 @@
  *@
 
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-@import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes.SubscriptionController
-@(message: String)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+@import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes.SignedOutController
+@()(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = Messages("subscription.failed.title"), bodyClasses = None) {
+@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = Messages("createNewAccount.title"), bodyClasses = None) {
 
-    <h1 class="heading-xlarge">@Messages("subscription.failed.title")</h1>
+    <h1 class="heading-xlarge">@Messages("createNewAccount.title")</h1>
 
-    <p>@message</p>
+    <p>@Messages("createNewAccount.p1")</p>
+    <p>@Messages("createNewAccount.p2")</p>
 
+    <p><a class="button" href="@SignedOutController.redirectToSos" role="button" id="buttonGoToGg">@Messages("button.register")</a></p>
 }

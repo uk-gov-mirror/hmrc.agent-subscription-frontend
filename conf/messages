@@ -48,11 +48,11 @@ address.form.with-errors.town = Town
 address.form.with-errors.postcode = Postcode
 address.form.with-errors.button.confirm_address= Confirm address
 
-##Confirm your agency
-confirmYourAgency.title=Is this your business?
-confirmYourAgency.content.utr=These are the details we hold for Unique Taxpayer Reference (UTR) <strong class="bold">{0}</strong>. You will be able to change these details in a moment for your agent services account.
-confirmYourAgency.option.yes=Yes
-confirmYourAgency.option.no=No - I want to enter a different UTR
+##Confirm business
+confirmBusiness.title=Is this your business?
+confirmBusiness.content.utr=These are the details we hold for Unique Taxpayer Reference (UTR) <strong class="bold">{0}</strong>. You will be able to change these details in a moment for your agent services account.
+confirmBusiness.option.yes=Yes
+confirmBusiness.option.no=No - I want to enter a different UTR
 
 #No agency found
 noAgencyFound.title=There is a problem
@@ -63,47 +63,44 @@ alreadySubscribed.title=Your business already has an agent services account
 alreadySubscribed.p1=Contact your administrator to get access to your business''s agent services account.
 
 #Check business type
-checkBusinessType.title=What type of business are you?
-checkBusinessType.option.sole-trader=Sole trader
-checkBusinessType.option.limited-company=Limited company
-checkBusinessType.option.partnership=Partnership
-checkBusinessType.option.partnership-llp=Limited liability partnership (LLP)
-checkBusinessType.progressive.title=My business type is not listed here
-checkBusinessType.progressive.content.p1=You can only get an agent services account if your business is a sole trader, limited company, partnership or limited liability partnership.
-checkBusinessType.progressive.content.link=Finish and sign out
+businessType.title=What type of business are you?
+businessType.option.sole-trader=Sole trader
+businessType.option.limited-company=Limited company
+businessType.option.partnership=Partnership
+businessType.option.partnership-llp=Limited liability partnership (LLP)
+businessType.progressive.title=My business type is not listed here
+businessType.progressive.content.p1=You can only get an agent services account if your business is a sole trader, limited company, partnership or limited liability partnership.
+businessType.progressive.content.link=Finish and sign out
 
-#Check agency status
-checkAgencyStatus.title=Enter your business details
-checkAgencyStatus.p1=This will help us match your details against information we currently hold.
+#Business details
+businessDetails.title=Enter your business details
+businessDetails.p1=This will help us match your details against information we currently hold.
 
-checkAgencyStatus.label.utr.hint=Enter the last 10 digits only. For example, 12345 67890
+businessDetails.label.utr.hint=Enter the last 10 digits only. For example, 12345 67890
 
 ##dynamic content start
-checkAgencyStatus.label.utr.sole_trader=Your Self Assessment Unique Taxpayer Reference (UTR)
-checkAgencyStatus.label.utr.limited_company=Corporation Tax or company Unique Taxpayer Reference (UTR)
-checkAgencyStatus.label.utr.partnership=Partnership Unique Taxpayer Reference (UTR)
-checkAgencyStatus.label.utr.llp=Partnership Unique Taxpayer Reference (UTR)
+businessDetails.label.utr.sole_trader=Your Self Assessment Unique Taxpayer Reference (UTR)
+businessDetails.label.utr.limited_company=Corporation Tax or company Unique Taxpayer Reference (UTR)
+businessDetails.label.utr.partnership=Partnership Unique Taxpayer Reference (UTR)
+businessDetails.label.utr.llp=Partnership Unique Taxpayer Reference (UTR)
 
-checkAgencyStatus.details.heading.sole_trader=Where to find your Self Assessment UTR
-checkAgencyStatus.details.content.sole_trader=You''ll <a href="https://www.gov.uk/find-lost-utr-number" target="_blank" rel="noopener noreferrer">find your UTR (opens in a new window or tab)</a> on the letter HMRC sent you when you registered for Self Assessment. It's a 10-digit number, sometimes with a letter ''K'' on the end.
-checkAgencyStatus.details.heading.limited_company=Where to find your Corporation Tax or company UTR
-checkAgencyStatus.details.content.limited_company=You can usually find your Corporation Tax or company UTR in the header of letters from HM Revenue & Customs (HMRC), next to headings such as ''Tax Reference'', ''UTR'' or ''Official Use''.
-checkAgencyStatus.details.heading.partnership=Where to find your partnership UTR
-checkAgencyStatus.details.content.partnership=You can find your partnership UTR in the header of letters from HM Revenue & Customs (HMRC), next to headings such as 'Tax Reference', 'UTR' or ''Official Use''.
-checkAgencyStatus.details.heading.llp=Where to find your partnership UTR
-checkAgencyStatus.details.content.llp=You can find your partnership UTR in the header of letters from HM Revenue & Customs (HMRC), next to headings such as ''Tax Reference'', ''UTR'' or ''Official Use''.
+businessDetails.details.heading.sole_trader=Where to find your Self Assessment UTR
+businessDetails.details.content.sole_trader=You''ll <a href="https://www.gov.uk/find-lost-utr-number" target="_blank" rel="noopener noreferrer">find your UTR (opens in a new window or tab)</a> on the letter HMRC sent you when you registered for Self Assessment. It's a 10-digit number, sometimes with a letter ''K'' on the end.
+businessDetails.details.heading.limited_company=Where to find your Corporation Tax or company UTR
+businessDetails.details.content.limited_company=You can usually find your Corporation Tax or company UTR in the header of letters from HM Revenue & Customs (HMRC), next to headings such as ''Tax Reference'', ''UTR'' or ''Official Use''.
+businessDetails.details.heading.partnership=Where to find your partnership UTR
+businessDetails.details.content.partnership=You can find your partnership UTR in the header of letters from HM Revenue & Customs (HMRC), next to headings such as 'Tax Reference', 'UTR' or ''Official Use''.
+businessDetails.details.heading.llp=Where to find your partnership UTR
+businessDetails.details.content.llp=You can find your partnership UTR in the header of letters from HM Revenue & Customs (HMRC), next to headings such as ''Tax Reference'', ''UTR'' or ''Official Use''.
 
 ##dynamic content finish
 
-checkAgencyStatus.label.postcode=Registered business postcode
-checkAgencyStatus.label.postcode.hint=This is the postcode of your registered business address
+businessDetails.label.postcode=Registered business postcode
+businessDetails.label.postcode.hint=This is the postcode of your registered business address
 
 #Not subscribed
 notSubscribed.title=You can create an agent services account
 notSubscribed.p1=We''ve checked <strong class="bold">{0}</strong> and it doesn''t have an agent services account.
-
-#Subscription failed
-subscription.failed.title=Subscription failed
 
 #Invalid address
 invalidAddress.title=Invalid address
@@ -111,9 +108,9 @@ invalidAddress.p1=Sorry, the address is not in a format that our system can acce
 invalidAddress.button.changeAddress=Change address
 
 #Has other enrolments
-hasOtherEnrolments.title=You need a new Government Gateway agent account
-hasOtherEnrolments.p1=You cannot use your current Government Gateway account to create an agent services account.
-hasOtherEnrolments.p2=You will need to create a new Government Gateway agent account. You can do this now.
+createNewAccount.title=You need a new Government Gateway agent account
+createNewAccount.p1=You cannot use your current Government Gateway account to create an agent services account.
+createNewAccount.p2=You will need to create a new Government Gateway agent account. You can do this now.
 
 #Non agent
 nonAgent.title=You have not signed in with a Government Gateway agent account
@@ -166,7 +163,6 @@ button.finishSignOut=Finish and sign out
 #Setup Incomplete
 setupIncomplete.title=You cannot set up an agent services account with the details you entered
 setupIncomplete.p1=<a href="{0}">Try again using a different agent user ID</a> if your agency uses more than one Government Gateway account, for example for Self Assessment or PAYE.
-
 
 #Invasive check
 invasive.title.saCode=Do you have a Self Assessment agent code?

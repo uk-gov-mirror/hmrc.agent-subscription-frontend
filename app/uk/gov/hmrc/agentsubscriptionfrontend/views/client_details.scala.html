@@ -24,10 +24,10 @@
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = error_prefix(radioResponseForm) + Messages("invasive.title.option"), bodyClasses = None) {
 
     @if(radioResponseForm.hasErrors) {
-        @errorSummary(Messages("error.summary.heading"),radioResponseForm, Seq.empty, Some("confirmResponseSomethingTrackingGGA"))
+        @errorSummary(Messages("error.summary.heading"),radioResponseForm, Seq.empty, Some("client-details"))
     }
 
-    @form(action = routes.CheckAgencyController.invasiveTaxPayerOption(), 'class -> "form js-form") {
+    @form(action = routes.BusinessIdentificationController.showClientDetailsForm, 'class -> "form js-form") {
         <div class="form-group @if(radioResponseForm.error("variant").isDefined){form-group-error}" id="radioResponse">
             <fieldset>
                 <legend>

@@ -86,7 +86,7 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
 
       val result = await(controller.showCheckAnswers(request))
       status(result) shouldBe 303
-      result.header.headers("Location") should include("/agent-subscription/has-other-enrolments")
+      result.header.headers("Location") should include("/agent-subscription/create-new-account")
       noMetricExpectedAtThisPoint()
     }
 
@@ -124,7 +124,7 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       metricShouldExistAndBeUpdated("Count-Subscription-CleanCreds-Success")
     }
 
-    "redirect to the /check-business-type page if there is no InitialDetails in session because the user has returned to a bookmark" in {
+    "redirect to the /business-type page if there is no InitialDetails in session because the user has returned to a bookmark" in {
       implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
 
       val result = await(controller.showCheckAnswers(request))
@@ -141,7 +141,7 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
 
       val result = await(controller.submitCheckAnswers(request))
       status(result) shouldBe 303
-      result.header.headers("Location") should include("/agent-subscription/has-other-enrolments")
+      result.header.headers("Location") should include("/agent-subscription/create-new-account")
       noMetricExpectedAtThisPoint()
     }
 
@@ -156,7 +156,7 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         val result = await(controller.submitCheckAnswers(request))
 
         status(result) shouldBe 303
-        redirectLocation(result).head shouldBe routes.CheckAgencyController.showAlreadySubscribed().url
+        redirectLocation(result).head shouldBe routes.BusinessIdentificationController.showAlreadySubscribed().url
         sessionStoreService.allSessionsRemoved shouldBe false
         metricShouldExistAndBeUpdated(
           "Count-Subscription-AlreadySubscribed-APIResponse",
@@ -183,7 +183,7 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       form.attr("action") shouldBe routes.SubscriptionController.submitBusinessNameForm().url
     }
 
-    "redirect to the /check-business-type page if there is no InitialDetails in session because the user has returned to a bookmark" in {
+    "redirect to the /business-type page if there is no InitialDetails in session because the user has returned to a bookmark" in {
       implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
 
       val result = await(controller.showBusinessNameForm(request))
@@ -217,7 +217,7 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       result should containMessages("businessName.title", "error.agency-name.empty")
     }
 
-    "redirect to the /check-business-type page if there is no InitialDetails in session because the user has returned to a bookmark" in {
+    "redirect to the /business-type page if there is no InitialDetails in session because the user has returned to a bookmark" in {
       implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
 
       val result = await(controller.submitBusinessNameForm(request))
@@ -243,7 +243,7 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       form.attr("action") shouldBe routes.SubscriptionController.submitBusinessEmailForm().url
     }
 
-    "redirect to the /check-business-type page if there is no InitialDetails in session because the user has returned to a bookmark" in {
+    "redirect to the /business-type page if there is no InitialDetails in session because the user has returned to a bookmark" in {
       implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
 
       val result = await(controller.showBusinessNameForm(request))
@@ -277,7 +277,7 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       result should containMessages("businessEmail.title", "error.email.empty")
     }
 
-    "redirect to the /check-business-type page if there is no InitialDetails in session because the user has returned to a bookmark" in {
+    "redirect to the /business-type page if there is no InitialDetails in session because the user has returned to a bookmark" in {
       implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
 
       val result = await(controller.submitBusinessEmailForm(request))
@@ -587,7 +587,7 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       redirectLocation(result).head shouldBe routes.SubscriptionController.showCheckAnswers().url
     }
 
-    "redirect to /check-business-type if there is no valid session" in {
+    "redirect to /business-type if there is no valid session" in {
       implicit val request = desAddressForm()
       sessionStoreService.currentSession.initialDetails = None
 
@@ -824,7 +824,7 @@ class SubscriptionControllerWithAutoMappingOn extends SubscriptionControllerISpe
         }
       }
 
-      "redirect to /check-business-type if subscribed arn is missing from session" in {
+      "redirect to /business-type if subscribed arn is missing from session" in {
         val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
         resultShouldBeSessionDataMissing(await(controller.showLinkAccount(request)))
       }
@@ -894,7 +894,7 @@ class SubscriptionControllerWithAutoMappingOn extends SubscriptionControllerISpe
       }
 
       "ARN is missing from session" should {
-        "redirect to /check-business-type" in {
+        "redirect to /business-type" in {
           val request = authenticatedAs(subscribingAgentEnrolledForHMRCASAGENT)
             .withFormUrlEncodedBody("autoMapping" -> "yes")
 

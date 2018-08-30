@@ -18,20 +18,20 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
 @import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessAddress
 @import uk.gov.hmrc.play.views.html.helpers._
-@import uk.gov.hmrc.agentsubscriptionfrontend.models.ConfirmYourAgency
+@import uk.gov.hmrc.agentsubscriptionfrontend.models.ConfirmBusiness
 
-@(confirmAgencyRadioForm: Form[ConfirmYourAgency], registrationName: String, utr: String, businessAddress: BusinessAddress)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+@(confirmBusinessRadioForm: Form[ConfirmBusiness], registrationName: String, utr: String, businessAddress: BusinessAddress)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = error_prefix(confirmAgencyRadioForm) +  Messages("confirmYourAgency.title"), bodyClasses = None) {
+@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = error_prefix(confirmBusinessRadioForm) +  Messages("confirmBusiness.title"), bodyClasses = None) {
 
-    <a href="@routes.CheckAgencyController.checkAgencyStatus(request.session.get("businessType"))" class="link-back">@Messages("button.back")</a>
+    <a href="@routes.BusinessIdentificationController.submitBusinessDetailsForm(request.session.get("businessType"))" class="link-back">@Messages("button.back")</a>
 
-    @if(confirmAgencyRadioForm.hasErrors) {
-        @errorSummary(Messages("error.summary.heading"), confirmAgencyRadioForm, Seq.empty, Some("check-agency-status"))
+    @if(confirmBusinessRadioForm.hasErrors) {
+        @errorSummary(Messages("error.summary.heading"), confirmBusinessRadioForm, Seq.empty, Some("confirm-business"))
     }
 
 
-    <h1 class="heading-xlarge">@Messages("confirmYourAgency.title")</h1>
+    <h1 class="heading-xlarge">@Messages("confirmBusiness.title")</h1>
 
 
     <dl style="margin-bottom:30px">
@@ -47,19 +47,19 @@
         </dd>
     </dl>
 
-    <p class="panel panel-border-wide">@Html(Messages("confirmYourAgency.content.utr", utr))</p>
+    <p class="panel panel-border-wide">@Html(Messages("confirmBusiness.content.utr", utr))</p>
   <br />
 
     @form(
-        action = routes.CheckAgencyController.submitConfirmYourAgency(),
+        action = routes.BusinessIdentificationController.submitConfirmBusinessForm(),
         'class -> "form js-form") {
 
         <div class="form-group">
         @inputRadioGroup(
-            confirmAgencyRadioForm("confirmYourAgency"),
+            confirmBusinessRadioForm("confirmBusiness"),
             Seq(
-                "yes" -> Messages("confirmYourAgency.option.yes"),
-                "no" -> Messages("confirmYourAgency.option.no")
+                "yes" -> Messages("confirmBusiness.option.yes"),
+                "no" -> Messages("confirmBusiness.option.no")
             ),
             '_groupDivClass -> "soft--ends"
         )

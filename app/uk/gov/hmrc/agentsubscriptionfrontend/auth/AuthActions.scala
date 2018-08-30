@@ -84,7 +84,7 @@ trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring
       .recover {
         case _: UnsupportedAffinityGroup =>
           mark("Count-Subscription-NonAgent")
-          Redirect(routes.StartController.showNonAgentNextSteps())
+          Redirect(routes.StartController.showNotAgent())
         case _: NoActiveSession =>
           toGGLogin(if (appConfig.isDevMode) s"http://${request.host}${request.uri}" else s"${request.uri}")
       }
@@ -95,7 +95,7 @@ trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring
       .recover {
         case _: UnsupportedAffinityGroup =>
           mark("Count-Subscription-NonAgent")
-          Redirect(routes.StartController.showNonAgentNextSteps())
+          Redirect(routes.StartController.showNotAgent())
         case _: NoActiveSession =>
           toGGLogin(if (appConfig.isDevMode) s"http://${request.host}${request.uri}" else s"${request.uri}")
       }

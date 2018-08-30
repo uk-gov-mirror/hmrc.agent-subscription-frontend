@@ -78,7 +78,7 @@ class SignedOutController @Inject()(
     SeeOther(appConfig.agentServicesAccountUrl).withNewSession
   }
 
-  def redirectToCheckBusinessType = Action { implicit request =>
-    Redirect(routes.CheckAgencyController.showCheckBusinessType()).withNewSession
+  def redirectToBusinessTypeForm = Action { implicit request =>
+    Redirect(routes.BusinessIdentificationController.showBusinessTypeForm()).withNewSession
   }
 }

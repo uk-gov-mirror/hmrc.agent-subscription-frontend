@@ -49,8 +49,7 @@ trait SessionDataMissing {
     }
 
   private def sessionMissingRedirect(missingSessionItem: String): Result = {
-    Logger(getClass).warn(
-      s"Missing $missingSessionItem in session or keystore, redirecting back to /check-business-type")
-    Redirect(routes.CheckAgencyController.showCheckBusinessType())
+    Logger(getClass).warn(s"Missing $missingSessionItem in session or keystore, redirecting back to /business-type")
+    Redirect(routes.BusinessIdentificationController.showBusinessTypeForm())
   }
 }

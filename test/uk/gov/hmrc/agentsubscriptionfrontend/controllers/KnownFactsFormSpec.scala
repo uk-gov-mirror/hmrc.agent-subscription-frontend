@@ -22,7 +22,7 @@ import uk.gov.hmrc.play.test.UnitSpec
 
 class KnownFactsFormSpec extends UnitSpec {
 
-  val form = CheckAgencyController.knownFactsForm
+  val form = BusinessIdentificationController.knownFactsForm
 
   "knownFactsForm" should {
 

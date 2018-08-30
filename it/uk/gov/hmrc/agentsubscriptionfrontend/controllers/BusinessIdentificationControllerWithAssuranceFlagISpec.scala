@@ -25,13 +25,13 @@ import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.subscribingAgent
 import com.github.tomakehurst.wiremock.client.WireMock._
 import uk.gov.hmrc.play.encoding.UriPathEncoding.encodePathSegment
 
-class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerISpec {
+class BusinessIdentificationControllerWithAssuranceFlagISpec extends BusinessIdentificationControllerISpec {
   override def agentAssuranceRun = true
 
   override def agentAssurancePayeCheck: Boolean = true
 
-  "checkAgencyStatus with the agentAssuranceFlag set to true" should {
-    "redirect to confirm agency page and store known facts result in the session store when a matching registration is found for the UTR and postcode" in {
+  "submitBusinessDetailsForm with the agentAssuranceFlag set to true" should {
+    "redirect to /confirm-business page and store known facts result in the session store when a matching registration is found for the UTR and postcode" in {
       withMatchingUtrAndPostcode(validUtr, validPostcode)
       givenUserIsAnAgentWithAnAcceptableNumberOfPAYEClients
       givenUserIsAnAgentWithAnAcceptableNumberOfSAClients
@@ -40,16 +40,16 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
-      val result = await(controller.checkAgencyStatus(Some(CheckAgencyController.validBusinessTypes.head))(request))
+      val result = await(controller.submitBusinessDetailsForm(Some(BusinessIdentificationController.validBusinessTypes.head))(request))
 
       status(result) shouldBe 303
-      redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showConfirmYourAgency().url)
+      redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showConfirmBusinessForm().url)
       sessionStoreService.currentSession.knownFactsResult shouldBe Some(
         KnownFactsResult(validUtr, validPostcode, "My Agency", isSubscribedToAgentServices = false, Some(businessAddress), Some("someone@example.com")))
       verifyAgentAssuranceAuditRequestSent(
         passPayeAgentAssuranceCheck = Some(true),
         passSaAgentAssuranceCheck = Some(true))
-      metricShouldExistAndBeUpdated("Count-Subscription-CheckAgency-Success")
+      metricShouldExistAndBeUpdated("Count-Subscription-ConfirmBusiness-Success")
     }
 
     "store isSubscribedToAgentServices = false in session when the business registration found by agent-subscription is not already subscribed" in {
@@ -61,15 +61,15 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
-      val result = await(controller.checkAgencyStatus(Some(CheckAgencyController.validBusinessTypes.head))(request))
+      val result = await(controller.submitBusinessDetailsForm(Some(BusinessIdentificationController.validBusinessTypes.head))(request))
 
       status(result) shouldBe 303
-      redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showConfirmYourAgency().url)
+      redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showConfirmBusinessForm().url)
       sessionStoreService.currentSession.knownFactsResult.get.isSubscribedToAgentServices shouldBe false
       verifyAgentAssuranceAuditRequestSent(
         passPayeAgentAssuranceCheck = Some(true),
         passSaAgentAssuranceCheck = Some(true))
-      metricShouldExistAndBeUpdated("Count-Subscription-CheckAgency-Success")
+      metricShouldExistAndBeUpdated("Count-Subscription-ConfirmBusiness-Success")
     }
 
     "redirect to already subscribed page when the business registration found by agent-subscription is already subscribed" in {
@@ -81,10 +81,10 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
-      val result = await(controller.checkAgencyStatus(Some(CheckAgencyController.validBusinessTypes.head))(request))
+      val result = await(controller.submitBusinessDetailsForm(Some(BusinessIdentificationController.validBusinessTypes.head))(request))
 
       status(result) shouldBe 303
-      redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showAlreadySubscribed().url)
+      redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showAlreadySubscribed().url)
       verifyAuditRequestNotSent(AgentSubscriptionFrontendEvent.AgentAssurance)
     }
 
@@ -97,10 +97,10 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
-      val result = await(controller.checkAgencyStatus(Some(CheckAgencyController.validBusinessTypes.head))(request))
+      val result = await(controller.submitBusinessDetailsForm(Some(BusinessIdentificationController.validBusinessTypes.head))(request))
 
       status(result) shouldBe 303
-      redirectLocation(result) shouldBe Some(routes.CheckAgencyController.invasiveCheckStart().url)
+      redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.invasiveCheckStart().url)
       verifyAgentAssuranceAuditRequestSent(
         passPayeAgentAssuranceCheck = Some(false),
         passSaAgentAssuranceCheck = Some(false))
@@ -115,10 +115,10 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
-      val result = await(controller.checkAgencyStatus(Some(CheckAgencyController.validBusinessTypes.head))(request))
+      val result = await(controller.submitBusinessDetailsForm(Some(BusinessIdentificationController.validBusinessTypes.head))(request))
 
       status(result) shouldBe 303
-      redirectLocation(result) shouldBe Some(routes.CheckAgencyController.invasiveCheckStart().url)
+      redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.invasiveCheckStart().url)
       verifyAgentAssuranceAuditRequestSent(
         passPayeAgentAssuranceCheck = Some(false),
         passSaAgentAssuranceCheck = Some(false))
@@ -134,14 +134,14 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
-      val result = await(controller.checkAgencyStatus(Some(CheckAgencyController.validBusinessTypes.head))(request))
+      val result = await(controller.submitBusinessDetailsForm(Some(BusinessIdentificationController.validBusinessTypes.head))(request))
 
       status(result) shouldBe 303
-      redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showAlreadySubscribed().url)
+      redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showAlreadySubscribed().url)
       verifyAuditRequestNotSent(AgentSubscriptionFrontendEvent.AgentAssurance)
     }
 
-    "proceed to showConfirmYourAgency when there is not an acceptable number of PAYE client, but there is enough SA Clients" in {
+    "proceed to showConfirmBusiness when there is not an acceptable number of PAYE client, but there is enough SA Clients" in {
       withMatchingUtrAndPostcode(validUtr, validPostcode)
       givenUserIsNotAnAgentWithAnAcceptableNumberOfPAYEClients
       givenUserIsAnAgentWithAnAcceptableNumberOfSAClients
@@ -150,16 +150,16 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
-      val result = await(controller.checkAgencyStatus(Some(CheckAgencyController.validBusinessTypes.head))(request))
+      val result = await(controller.submitBusinessDetailsForm(Some(BusinessIdentificationController.validBusinessTypes.head))(request))
 
       status(result) shouldBe 303
-      redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showConfirmYourAgency().url)
+      redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showConfirmBusinessForm().url)
       verifyAgentAssuranceAuditRequestSent(
         passPayeAgentAssuranceCheck = Some(false),
         passSaAgentAssuranceCheck = Some(true))
     }
 
-    "proceed to showConfirmYourAgency when there in not an acceptable number of SA client, but there is enough PAYE Clients" in {
+    "proceed to showConfirmBusiness when there in not an acceptable number of SA client, but there is enough PAYE Clients" in {
       withMatchingUtrAndPostcode(validUtr, validPostcode)
       givenUserIsAnAgentWithAnAcceptableNumberOfPAYEClients
       givenUserIsNotAnAgentWithAnAcceptableNumberOfSAClients
@@ -168,25 +168,25 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
-      val result = await(controller.checkAgencyStatus(Some(CheckAgencyController.validBusinessTypes.head))(request))
+      val result = await(controller.submitBusinessDetailsForm(Some(BusinessIdentificationController.validBusinessTypes.head))(request))
 
       status(result) shouldBe 303
-      redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showConfirmYourAgency().url)
+      redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showConfirmBusinessForm().url)
       verifyAgentAssuranceAuditRequestSent(
         passPayeAgentAssuranceCheck = Some(true),
         passSaAgentAssuranceCheck = Some(false))
     }
 
-    "redirect to setup incomplete when agent's utr is in the R2DW list" in {
+    "redirect to /cannot-create account when agent's utr is in the R2DW list" in {
       withMatchingUtrAndPostcode(validUtr, validPostcode)
       givenRefusalToDealWithUtrIsForbidden(validUtr.value)
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
-      val result = await(controller.checkAgencyStatus(Some(CheckAgencyController.validBusinessTypes.head))(request))
+      val result = await(controller.submitBusinessDetailsForm(Some(BusinessIdentificationController.validBusinessTypes.head))(request))
 
       status(result) shouldBe 303
-      redirectLocation(result) shouldBe Some(routes.StartController.setupIncomplete().url)
+      redirectLocation(result) shouldBe Some(routes.StartController.showCannotCreateAccount().url)
       verify(
         1,
         getRequestedFor(urlPathEqualTo(
@@ -207,7 +207,7 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
-      val result = await(controller.checkAgencyStatus(Some(CheckAgencyController.validBusinessTypes.head))(request))
+      val result = await(controller.submitBusinessDetailsForm(Some(BusinessIdentificationController.validBusinessTypes.head))(request))
 
       verify(
         1,
@@ -227,7 +227,7 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
-      an[IllegalStateException] shouldBe thrownBy(await(controller.checkAgencyStatus(Some(CheckAgencyController.validBusinessTypes.head))(request)))
+      an[IllegalStateException] shouldBe thrownBy(await(controller.submitBusinessDetailsForm(Some(BusinessIdentificationController.validBusinessTypes.head))(request)))
 
       verify(
         1,
@@ -237,7 +237,7 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
       verifyCheckRefusalToDealWith(1, validUtr.value)
     }
 
-    "proceed direct to showConfirmYourAgency and skip assurance checks " +
+    "proceed direct to showConfirmBusinessForm and skip assurance checks " +
       "when agent's UTR is not in the Refusal to Deal With list but is in the Manually Assured Agents list" in {
       withMatchingUtrAndPostcode(validUtr, validPostcode)
       givenRefusalToDealWithUtrIsNotForbidden(validUtr.value)
@@ -245,10 +245,10 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
-      val result = await(controller.checkAgencyStatus(Some(CheckAgencyController.validBusinessTypes.head))(request))
+      val result = await(controller.submitBusinessDetailsForm(Some(BusinessIdentificationController.validBusinessTypes.head))(request))
 
       status(result) shouldBe 303
-      redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showConfirmYourAgency().url)
+      redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showConfirmBusinessForm().url)
 
       verifyCheckRefusalToDealWith(1, validUtr.value)
       verifyCheckAgentIsManuallyAssured(1, validUtr.value)
@@ -271,10 +271,10 @@ class CheckAgencyControllerWithAssuranceFlagISpec extends CheckAgencyControllerI
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
-      val result = await(controller.checkAgencyStatus(Some(CheckAgencyController.validBusinessTypes.head))(request))
+      val result = await(controller.submitBusinessDetailsForm(Some(BusinessIdentificationController.validBusinessTypes.head))(request))
 
       status(result) shouldBe 303
-      redirectLocation(result) shouldBe Some(routes.CheckAgencyController.showConfirmYourAgency().url)
+      redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showConfirmBusinessForm().url)
 
       verifyCheckRefusalToDealWith(1, validUtr.value)
       verifyCheckAgentIsManuallyAssured(1, validUtr.value)

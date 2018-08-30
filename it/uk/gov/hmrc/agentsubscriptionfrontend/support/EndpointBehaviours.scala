@@ -44,7 +44,7 @@ trait EndpointBehaviours {
       val result = await(doRequest(request))
 
       status(result) shouldBe 303
-      redirectLocation(result).get shouldBe routes.StartController.showNonAgentNextSteps().url
+      redirectLocation(result).get shouldBe routes.StartController.showNotAgent().url
       metricShouldExistAndBeUpdated("Count-Subscription-NonAgent")
     }
   }

@@ -101,7 +101,7 @@ class SubscriptionController @Inject()(
   val showCheckAnswers: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent {
       case hasNonEmptyEnrolments(_) =>
-        Future.successful(Redirect(routes.CheckAgencyController.showHasOtherEnrolments()))
+        Future.successful(Redirect(routes.BusinessIdentificationController.showCreateNewAccount()))
       case _ =>
         mark("Count-Subscription-CleanCreds-Success")
         withInitialDetails { details =>
@@ -123,7 +123,7 @@ class SubscriptionController @Inject()(
   val submitCheckAnswers: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent {
       case hasNonEmptyEnrolments(_) =>
-        Future.successful(Redirect(routes.CheckAgencyController.showHasOtherEnrolments()))
+        Future.successful(Redirect(routes.BusinessIdentificationController.showCreateNewAccount()))
       case _ =>
         withInitialDetails { details =>
           val desAddress = DesAddress(
@@ -210,7 +210,7 @@ class SubscriptionController @Inject()(
 
       case Left(SubscriptionReturnedHttpError(CONFLICT)) =>
         mark("Count-Subscription-AlreadySubscribed-APIResponse")
-        Future.successful(Redirect(routes.CheckAgencyController.showAlreadySubscribed()))
+        Future.successful(Redirect(routes.BusinessIdentificationController.showAlreadySubscribed()))
 
       case Left(SubscriptionReturnedHttpError(status)) =>
         mark("Count-Subscription-Failed")

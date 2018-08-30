@@ -24,11 +24,11 @@
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title =  error_prefix(radioResponseForm) + Messages("invasive.title.saCode"), bodyClasses = None) {
 
     @if(radioResponseForm.hasErrors) {
-        @errorSummary(Messages("error.summary.heading"), radioResponseForm, Seq.empty, Some("confirmResponseSomethingTrackingGGA"))
+        @errorSummary(Messages("error.summary.heading"), radioResponseForm, Seq.empty, Some("enter-agent-code"))
     }
 
 
-    @form(action = routes.CheckAgencyController.invasiveSaAgentCodePost(), 'class -> "form js-form") {
+    @form(action = routes.BusinessIdentificationController.invasiveSaAgentCodePost(), 'class -> "form js-form") {
         <div class="form-group @if(radioResponseForm.error("hasSaAgentCode").isDefined){form-group-error}" id="radioResponse">
             <fieldset>
                 <legend>

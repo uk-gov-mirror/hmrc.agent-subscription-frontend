@@ -60,9 +60,9 @@ class StartController @Inject()(
     }
   }
 
-  val showNonAgentNextSteps: Action[AnyContent] = Action.async { implicit request =>
+  val showNotAgent: Action[AnyContent] = Action.async { implicit request =>
     withAuthenticatedUser {
-      Future.successful(Ok(html.non_agent_next_steps()))
+      Future.successful(Ok(html.not_agent()))
     }
   }
 
@@ -111,12 +111,12 @@ class StartController @Inject()(
                                                 .map(_ => Redirect(routes.SubscriptionController.showCheckAnswers()))
                                             }
           } yield continuedSubscriptionResponse
-        case None => Future successful Redirect(routes.CheckAgencyController.showCheckBusinessType())
+        case None => Future successful Redirect(routes.BusinessIdentificationController.showBusinessTypeForm())
       }
     }
   }
 
-  def setupIncomplete: Action[AnyContent] = Action.async { implicit request =>
-    Future.successful(Ok(html.setup_incomplete()))
+  def showCannotCreateAccount: Action[AnyContent] = Action.async { implicit request =>
+    Future.successful(Ok(html.cannot_create_account()))
   }
 }

@@ -24,27 +24,27 @@
 
 @headerTitle = {
     <h1 class="heading-large @if(businessTypeRadioForm.hasErrors){push--top}">
-        @Messages("checkBusinessType.title")
+        @Messages("businessType.title")
     </h1>
 }
 
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = error_prefix(businessTypeRadioForm) + Messages("checkBusinessType.title"), bodyClasses = None) {
+@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = error_prefix(businessTypeRadioForm) + Messages("businessType.title"), bodyClasses = None) {
     @if(businessTypeRadioForm.hasErrors) {
-        @errorSummary(Messages("error.summary.heading"), businessTypeRadioForm, Seq.empty, Some("check-business-type"))
+        @errorSummary(Messages("error.summary.heading"), businessTypeRadioForm, Seq.empty, Some("business-type"))
     }
 
     @form(
-        action = routes.CheckAgencyController.submitCheckBusinessType(),
+        action = routes.BusinessIdentificationController.submitBusinessTypeForm(),
         'class -> "form js-form") {
 
         <div class="form-group">
         @inputRadioGroup(
             businessTypeRadioForm("businessType"),
             Seq(
-                "sole_trader" -> Messages("checkBusinessType.option.sole-trader"),
-                "limited_company" -> Messages("checkBusinessType.option.limited-company"),
-                "partnership" -> Messages("checkBusinessType.option.partnership"),
-                "llp" -> Messages("checkBusinessType.option.partnership-llp")
+                "sole_trader" -> Messages("businessType.option.sole-trader"),
+                "limited_company" -> Messages("businessType.option.limited-company"),
+                "partnership" -> Messages("businessType.option.partnership"),
+                "llp" -> Messages("businessType.option.partnership-llp")
             ),
             '_legend -> headerTitle,
             '_groupDivClass -> "soft--ends"
@@ -54,11 +54,11 @@
         <div class="form-group">
             <details role="group">
                 <summary role="button" aria-controls="details-content-0" aria-expanded="false">
-                    <span class="summary">@Messages("checkBusinessType.progressive.title")</span>
+                    <span class="summary">@Messages("businessType.progressive.title")</span>
                 </summary>
                 <div class="panel panel-border-narrow" id="details-content-0" aria-hidden="true">
-                    <p>@Messages("checkBusinessType.progressive.content.p1")</p>
-                    <a href="@SignedOutController.signOutWithContinueUrl" id="sign-out">@Messages("checkBusinessType.progressive.content.link")</a>
+                    <p>@Messages("businessType.progressive.content.p1")</p>
+                    <a href="@SignedOutController.signOutWithContinueUrl" id="sign-out">@Messages("businessType.progressive.content.link")</a>
                 </div>
             </details>
         </div>
