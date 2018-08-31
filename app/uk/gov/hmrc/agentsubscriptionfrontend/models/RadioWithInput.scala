@@ -35,7 +35,7 @@ object RadioWithInput {
   //uses variant "cannotProvide" to determine action if user cannot provide allowed options: utr or nino
   val invasiveCheckTaxPayerOption: Form[RadioInvasiveTaxPayerOption] = Form[RadioInvasiveTaxPayerOption](
     mapping(
-      "variant" -> optional(text).verifying(radioInputSelected),
+      "variant" -> optional(text).verifying(radioInputSelected("clientDetails.error.no-radio.selected")),
       "utr"     -> mandatoryIfEqual("variant", "utr", utr),
       "nino"    -> mandatoryIfEqual("variant", "nino", nino)
     )(RadioInvasiveTaxPayerOption.apply)(RadioInvasiveTaxPayerOption.unapply).verifying(
@@ -46,7 +46,7 @@ object RadioWithInput {
 
   val invasiveCheckStartSaAgentCode: Form[RadioInvasiveStartSaAgentCode] = Form[RadioInvasiveStartSaAgentCode](
     mapping(
-      "hasSaAgentCode" -> optional(boolean).verifying(radioInputSelected),
+      "hasSaAgentCode" -> optional(boolean).verifying(radioInputSelected("invasive.error.no-radio.selected")),
       "saAgentCode"    -> mandatoryIfTrue("hasSaAgentCode", saAgentCode)
     )(RadioInvasiveStartSaAgentCode.apply)(RadioInvasiveStartSaAgentCode.unapply))
 }

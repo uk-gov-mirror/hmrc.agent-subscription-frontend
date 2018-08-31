@@ -60,15 +60,16 @@ object BusinessIdentificationController {
 
   val businessTypeForm: Form[BusinessType] =
     Form[BusinessType](
-      mapping("businessType" -> optional(text).verifying(FieldMappings.radioInputSelected))(BusinessType.apply)(
-        BusinessType.unapply)
+      mapping("businessType" -> optional(text).verifying(FieldMappings.radioInputSelected(
+        "businessType.error.no-radio-selected")))(BusinessType.apply)(BusinessType.unapply)
         .verifying(
           "error.business-type-value.invalid",
           submittedBusinessType => validBusinessTypes.contains(submittedBusinessType.businessType.getOrElse(""))))
 
   val confirmBusinessForm: Form[ConfirmBusiness] =
     Form[ConfirmBusiness](
-      mapping("confirmBusiness" -> optional(text).verifying(FieldMappings.radioInputSelected))(answer =>
+      mapping("confirmBusiness" -> optional(text).verifying(
+        FieldMappings.radioInputSelected("confirmBusiness.error.no-radio-selected")))(answer =>
         ConfirmBusiness(RadioInputAnswer.apply(answer.getOrElse(""))))(answer =>
         Some(RadioInputAnswer.unapply(answer.confirm)))
         .verifying(

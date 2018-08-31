@@ -114,7 +114,7 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
       "return 200 and redisplay the /business-type page with an error message for missing choice" in {
         implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         val result = await(controller.submitBusinessTypeForm(request))
-        result should containMessages("error.no-radio-selected")
+        result should containMessages("businessType.error.no-radio-selected")
       }
     }
 
@@ -250,7 +250,7 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
       val responseBody = bodyOf(result)
       responseBody should include(htmlEscapedMessage("businessDetails.title"))
       responseBody should include(htmlEscapedMessage("error.utr.blank"))
-      responseBody should include("You must enter a postcode")
+      responseBody should include("Enter a postcode")
       noMetricExpectedAtThisPoint()
     }
 
@@ -523,7 +523,7 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
 
         val result = await(controller.submitConfirmBusinessForm(request))
 
-        result should containMessages("confirmBusiness.title", "error.no-radio-selected")
+        result should containMessages("confirmBusiness.title", "confirmBusiness.error.no-radio-selected")
       }
     }
 
@@ -564,7 +564,7 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
   "invasive check" should {
     "return 200 and redisplay the invasiveSaAgentCodePost page with an error message for missing radio choice" in {
       val result = await(controller.invasiveSaAgentCodePost(authenticatedAs(subscribingCleanAgentWithoutEnrolments)))
-      result should containMessages("error.no-radio-selected")
+      result should containMessages("invasive.error.no-radio.selected")
     }
 
     "start invasiveCheck if selected Yes with SaAgentCode reference inputted" in {

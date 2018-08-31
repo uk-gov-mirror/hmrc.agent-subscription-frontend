@@ -53,7 +53,7 @@ package object controllers {
     }
 
     private def nonEmptyEmailAddress = Constraint { fieldValue: String =>
-      nonEmptyWithMessage("error.email.empty")(fieldValue) match {
+      nonEmptyWithMessage("error.business-email.empty")(fieldValue) match {
         case i: Invalid =>
           i
         case Valid =>
@@ -181,14 +181,15 @@ package object controllers {
       text
         .verifying(nonEmptyEmailAddress)
 
-    def agencyName: Mapping[String] =
-      text(maxLength = 40)
+    def businessName: Mapping[String] =
+      text
+        .verifying(maxLength(40, "error.business-name.maxlength"))
         .verifying(
           checkOneAtATime(
-            noAmpersand("error.agency-name.invalid"),
+            noAmpersand("error.business-name.invalid"),
             checkOneAtATime(
-              noApostrophe("error.agency-name.invalid"),
-              desText(msgKeyRequired = "error.agency-name.empty", msgKeyInvalid = "error.agency-name.invalid"))
+              noApostrophe("error.business-name.invalid"),
+              desText(msgKeyRequired = "error.business-name.empty", msgKeyInvalid = "error.business-name.invalid"))
           ))
 
     def addressLine1: Mapping[String] =
@@ -203,12 +204,13 @@ package object controllers {
           .verifying(
             desText(msgKeyRequired = "error.address.lines.empty", msgKeyInvalid = "error.address.lines.invalid")))
 
-    def radioInputSelected[T]: Constraint[Option[T]] = Constraint[Option[T]] { fieldValue: Option[T] =>
-      if (fieldValue.isDefined)
-        Valid
-      else
-        Invalid(ValidationError("error.no-radio-selected"))
-    }
+    def radioInputSelected[T](message: String = "error.no-radio-selected"): Constraint[Option[T]] =
+      Constraint[Option[T]] { fieldValue: Option[T] =>
+        if (fieldValue.isDefined)
+          Valid
+        else
+          Invalid(ValidationError(message))
+      }
 
     def nonEmptyTextWithMsg(errorMessageKey: String): Mapping[String] =
       text verifying nonEmptyWithMessage(errorMessageKey)

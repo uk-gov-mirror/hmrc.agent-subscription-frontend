@@ -214,11 +214,11 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
       }
 
       "input is empty" in {
-        bind("").left.value should contain only FormError("testKey", "error.email.empty")
+        bind("").left.value should contain only FormError("testKey", "error.business-email.empty")
       }
 
       "input is only whitespace" in {
-        bind("    ").left.value should contain only FormError("testKey", "error.email.empty")
+        bind("    ").left.value should contain only FormError("testKey", "error.business-email.empty")
       }
 
       "not a valid email" in {
@@ -385,24 +385,26 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
     }
   }
 
-  "agencyName bind" should {
+  "businessName bind" should {
 
-    val agencyNameMapping = FieldMappings.agencyName.withPrefix("testKey")
+    val businessNameMapping = FieldMappings.businessName.withPrefix("testKey")
 
-    def bind(fieldValue: String) = agencyNameMapping.bind(Map("testKey" -> fieldValue))
+    def bind(fieldValue: String) = businessNameMapping.bind(Map("testKey" -> fieldValue))
 
     def shouldRejectFieldValueAsInvalid(fieldValue: String): Unit =
       bind(fieldValue) should matchPattern {
-        case Left(List(FormError("testKey", List("error.agency-name.invalid"), _))) =>
+        case Left(List(FormError("testKey", List("error.business-name.invalid"), _))) =>
       }
 
     def shouldRejectFieldValueAsTooLong(fieldValue: String): Unit =
-      bind(fieldValue) should matchPattern { case Left(List(FormError("testKey", List("error.maxLength"), _))) => }
+      bind(fieldValue) should matchPattern {
+        case Left(List(FormError("testKey", List("error.business-name.maxlength"), _))) =>
+      }
 
     def shouldAcceptFieldValue(fieldValue: String): Unit =
       bind(fieldValue) shouldBe Right(fieldValue)
 
-    "reject Agency name" when {
+    "reject business name" when {
 
       "there is an ampersand character" in {
         shouldRejectFieldValueAsInvalid("My Agency & Co")
@@ -421,19 +423,19 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
       }
 
       "input is empty" in {
-        bind("").left.value should contain(FormError("testKey", "error.agency-name.empty"))
+        bind("").left.value should contain(FormError("testKey", "error.business-name.empty"))
       }
 
       "input is only whitespace" in {
-        bind("    ").left.value should contain only FormError("testKey", "error.agency-name.empty")
+        bind("    ").left.value should contain only FormError("testKey", "error.business-name.empty")
       }
 
       "field is not present" in {
-        agencyNameMapping.bind(Map.empty).left.value should contain only FormError("testKey", "error.required")
+        businessNameMapping.bind(Map.empty).left.value should contain only FormError("testKey", "error.required")
       }
     }
 
-    "accept Agency name" when {
+    "accept business name" when {
       "there are valid characters" in {
         shouldAcceptFieldValue("My Agency")
         shouldAcceptFieldValue("My/Agency")

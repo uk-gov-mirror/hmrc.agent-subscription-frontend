@@ -80,7 +80,8 @@ class SubscriptionController @Inject()(
 
   private val linkAccountForm: Form[LinkAccount] =
     Form[LinkAccount](
-      mapping("autoMapping" -> optional(text).verifying(FieldMappings.radioInputSelected))(ans =>
+      mapping("autoMapping" -> optional(text).verifying(
+        FieldMappings.radioInputSelected("linkAccount.error.no-radio-selected")))(ans =>
         LinkAccount(RadioInputAnswer.apply(ans.getOrElse(""))))(lc => Some(RadioInputAnswer.unapply(lc.autoMapping)))
         .verifying(
           "error.link-account-value.invalid",
@@ -88,7 +89,7 @@ class SubscriptionController @Inject()(
 
   private val businessNameForm = Form[BusinessName](
     mapping(
-      "name" -> agencyName
+      "name" -> businessName
     )(BusinessName.apply)(BusinessName.unapply)
   )
 

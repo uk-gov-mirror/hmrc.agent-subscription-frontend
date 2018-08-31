@@ -214,7 +214,7 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
 
       val result = await(controller.submitBusinessNameForm(request))
 
-      result should containMessages("businessName.title", "error.agency-name.empty")
+      result should containMessages("businessName.title", "error.business-name.empty")
     }
 
     "redirect to the /business-type page if there is no InitialDetails in session because the user has returned to a bookmark" in {
@@ -274,7 +274,7 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
 
       val result = await(controller.submitBusinessEmailForm(request))
 
-      result should containMessages("businessEmail.title", "error.email.empty")
+      result should containMessages("businessEmail.title", "error.business-email.empty")
     }
 
     "redirect to the /business-type page if there is no InitialDetails in session because the user has returned to a bookmark" in {
@@ -883,7 +883,7 @@ class SubscriptionControllerWithAutoMappingOn extends SubscriptionControllerISpe
           val request = authenticatedAs(subscribingAgentEnrolledForHMRCASAGENT)
             .withSession("arn" -> "AARN0000001")
 
-          resultOf(request) should containMessages("linkAccount.title", "error.no-radio-selected")
+          resultOf(request) should containMessages("linkAccount.title", "linkAccount.error.no-radio-selected")
         }
       }
 

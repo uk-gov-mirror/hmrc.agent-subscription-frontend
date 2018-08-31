@@ -16,27 +16,28 @@ startpage.l2.4=when to use your agent services account
 
 ##Errors that override Play default messages
 error.maxLength = You must not enter more than {0} figures
-error.email=You must enter an email address
+error.email= Enter a valid email address, like yourname@example.com
 
 ##Errors
 error.postcode.invalid = Enter a valid postcode, for example AA1 1AA
 error.postcode.blacklisted = You can''t use the postcode you''ve entered
-error.postcode.empty = You must enter a postcode
+error.postcode.empty = Enter a postcode
 error.address.lines.empty = The address must have at least 1 line
 error.address.lines.invalid = The address must only include letters a to z, numbers, spaces, hyphens, commas, apostrophes, full stops and forward slashes
 error.address.lines.maxLength = You must not enter more than {0} figures
 error.utr.blank= Enter your business''s Unique Taxpayer Reference (UTR)
 error.utr.invalid.format = Unique Taxpayer Reference (UTR) must only include numbers and spaces
 error.utr.invalid.length = Unique Taxpayer Reference (UTR) must be 10 numbers
-error.agency-name.empty = You must enter a business name
-error.agency-name.invalid = Agent business name must only include letters a to z, numbers, spaces, hyphens, commas, full stops and forward slashes
+error.business-name.empty = Enter your business name
+error.business-name.invalid = Business name must only include letters a to z, numbers, commas, full stops, apostrophes, hyphens, ampersands, forward and backward slashes, and spaces
+error.business-name.maxlength = Business name must be 40 characters or less
+error.business-email.empty=Enter your business email address
 error.summary.heading=There is a problem
 error.prefix=Error:
-error.email.empty=You must enter an email address
 error.nino.invalid=Enter a valid National Insurance number
 error.saAgentCode.invalid=Self Assessment agent code must only include letters and numbers
 error.saAgentCode.blank=Enter a Self Assessment agent code
-error.saAgentCode.length=Self Assessment agent code must be 6 characters, like A1234A
+error.saAgentCode.length=Self Assessment agent code must be 6 characters, like SA1234
 
 ##Modifying address
 address.form.with-errors.error.summary = Please check the following:
@@ -53,6 +54,7 @@ confirmBusiness.title=Is this your business?
 confirmBusiness.content.utr=These are the details we hold for Unique Taxpayer Reference (UTR) <strong class="bold">{0}</strong>. You will be able to change these details in a moment for your agent services account.
 confirmBusiness.option.yes=Yes
 confirmBusiness.option.no=No - I want to enter a different UTR
+confirmBusiness.error.no-radio-selected = Select yes if this is your business
 
 #No agency found
 noAgencyFound.title=There is a problem
@@ -71,6 +73,7 @@ businessType.option.partnership-llp=Limited liability partnership (LLP)
 businessType.progressive.title=My business type is not listed here
 businessType.progressive.content.p1=You can only get an agent services account if your business is a sole trader, limited company, partnership or limited liability partnership.
 businessType.progressive.content.link=Finish and sign out
+businessType.error.no-radio-selected = Select your business type
 
 #Business details
 businessDetails.title=Enter your business details
@@ -131,6 +134,7 @@ linkAccount.p4=If your business uses more than one Government Gateway account, y
 linkAccount.legend=Do you want to link your clients now?
 linkAccount.option.yes=Yes
 linkAccount.option.no=No
+linkAccount.error.no-radio-selected= Select yes if you want to link your clients now
 
 #Subscription complete
 subscriptionComplete.title=Agent services account created
@@ -183,6 +187,8 @@ invasive.radioResponse.cannotProvide=I cannot provide either of these details
 invasive.expandable.p1=Where to find your Self Assessment agent code
 invasive.expandable.p1.open=You got your Self Assessment agent code when you registered in writing as an agent for Self Assessment. You used your agent code to set up your online service.
 error.no-radio-selected=You must choose an option
+invasive.error.no-radio.selected=Select yes if you have a Self Assessment agent code
+clientDetails.error.no-radio.selected=Select which details you want to enter
 
 checkAnswers.title=Check your details before creating your account
 checkAnswers.description.p1=These are the business details we will use for your agent services account.
