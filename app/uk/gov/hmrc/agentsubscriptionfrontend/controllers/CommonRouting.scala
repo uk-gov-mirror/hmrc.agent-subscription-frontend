@@ -36,7 +36,7 @@ class CommonRouting @Inject()(sessionStoreService: SessionStoreService, appConfi
     for (redirectLocation <- if (appConfig.autoMapAgentEnrolments) {
                               sessionStoreService.fetchMappingEligible.map {
                                 MappingEligibility.apply(_) match {
-                                  case IsEligible    => routes.SubscriptionController.showLinkAccount()
+                                  case IsEligible    => routes.SubscriptionController.showLinkClients()
                                   case IsNotEligible => routes.SubscriptionController.showSubscriptionComplete()
                                   case UnknownEligibility => {
                                     Logger.warn("chainedSessionDetails did not cache wasEligibleForMapping")

@@ -760,35 +760,35 @@ class SubscriptionControllerWithAutoMappingOn extends SubscriptionControllerISpe
 
         val result = await(controller.submitCheckAnswers(request))
         status(result) shouldBe 303
-        redirectLocation(result).head shouldBe routes.SubscriptionController.showLinkAccount().url
+        redirectLocation(result).head shouldBe routes.SubscriptionController.showLinkClients().url
 
         verifySubscriptionRequestSent(subscriptionRequestWithNoEdit(initialDetails))
         metricShouldExistAndBeUpdated("Count-Subscription-Complete")
       }
     }
 
-    "showLinkAccount (GET /link-account)" should {
+    "showLinkClients (GET /link-clients)" should {
       trait RequestAndResult {
         val request = authenticatedAs(subscribingAgentEnrolledForHMRCASAGENT)
           .withSession("arn" -> "AARN0000001")
-        val result = await(controller.showLinkAccount(request))
+        val result = await(controller.showLinkClients(request))
         val doc = Jsoup.parse(bodyOf(result))
       }
 
-      behave like anAgentAffinityGroupOnlyEndpoint(controller.showLinkAccount(_))
+      behave like anAgentAffinityGroupOnlyEndpoint(controller.showLinkClients(_))
 
       "contain page titles and content" in new RequestAndResult {
         result should containMessages(
-          "linkAccount.title",
-          "linkAccount.p1",
-          "linkAccount.p2",
-          "linkAccount.bullet-list.1",
-          "linkAccount.bullet-list.2",
-          "linkAccount.p3",
-          "linkAccount.p4",
-          "linkAccount.legend",
-          "linkAccount.option.yes",
-          "linkAccount.option.no"
+          "linkClients.title",
+          "linkClients.p1",
+          "linkClients.p2",
+          "linkClients.bullet-list.1",
+          "linkClients.bullet-list.2",
+          "linkClients.p3",
+          "linkClients.p4",
+          "linkClients.legend",
+          "linkClients.option.yes",
+          "linkClients.option.no"
         )
       }
 
@@ -798,10 +798,10 @@ class SubscriptionControllerWithAutoMappingOn extends SubscriptionControllerISpe
         doc.getElementById("autoMapping-no").`val`() shouldBe "no"
       }
 
-      "form should POST to /link-account" in new RequestAndResult {
+      "form should POST to /link-clients" in new RequestAndResult {
         val form = doc.select("form").first()
         form.attr("method") shouldBe "POST"
-        form.attr("action") shouldBe routes.SubscriptionController.submitLinkAccount().url
+        form.attr("action") shouldBe routes.SubscriptionController.submitLinkClients().url
       }
 
       "contain a continue button to submit form" in new RequestAndResult {
@@ -814,23 +814,23 @@ class SubscriptionControllerWithAutoMappingOn extends SubscriptionControllerISpe
       "tolerate a possible short delay in the new enrolment becoming visible in auth" when {
         "there was a delay and the new enrolment is not yet visible in auth" in {
           val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments).withSession("arn" -> "AARN0000001")
-          val result = await(controller.showLinkAccount(request))
-          result should containMessages("linkAccount.title")
+          val result = await(controller.showLinkClients(request))
+          result should containMessages("linkClients.title")
         }
         "there was no delay and the new enrolment is visible in auth" in {
           val request = authenticatedAs(subscribingAgentEnrolledForHMRCASAGENT).withSession("arn" -> "AARN0000001")
-          val result = await(controller.showLinkAccount(request))
-          result should containMessages("linkAccount.title")
+          val result = await(controller.showLinkClients(request))
+          result should containMessages("linkClients.title")
         }
       }
 
       "redirect to /business-type if subscribed arn is missing from session" in {
         val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
-        resultShouldBeSessionDataMissing(await(controller.showLinkAccount(request)))
+        resultShouldBeSessionDataMissing(await(controller.showLinkClients(request)))
       }
     }
 
-    "submitLinkAccount (POST /link-account)" when {
+    "submitLinkClients (POST /link-clients)" when {
       class RequestWithSessionDetails(autoMappingFormValue: String) {
         implicit val request = authenticatedAs(subscribingAgentEnrolledForHMRCASAGENT)
           .withFormUrlEncodedBody("autoMapping" -> autoMappingFormValue)
@@ -838,7 +838,7 @@ class SubscriptionControllerWithAutoMappingOn extends SubscriptionControllerISpe
         sessionStoreService.currentSession.knownFactsResult = Some(myAgencyKnownFactsResult)
       }
 
-      def resultOf(request: Request[AnyContent]) = await(controller.submitLinkAccount(request))
+      def resultOf(request: Request[AnyContent]) = await(controller.submitLinkClients(request))
 
       behave like anAgentAffinityGroupOnlyEndpoint(resultOf)
 
@@ -879,11 +879,11 @@ class SubscriptionControllerWithAutoMappingOn extends SubscriptionControllerISpe
       }
 
       "choice is missing" should {
-        "return 200 and redisplay the /link-account page with an error message for missing choice" in {
+        "return 200 and redisplay the /link-clients page with an error message for missing choice" in {
           val request = authenticatedAs(subscribingAgentEnrolledForHMRCASAGENT)
             .withSession("arn" -> "AARN0000001")
 
-          resultOf(request) should containMessages("linkAccount.title", "linkAccount.error.no-radio-selected")
+          resultOf(request) should containMessages("linkClients.title", "linkClients.error.no-radio-selected")
         }
       }
 
@@ -925,16 +925,16 @@ class SubscriptionControllerWithAutoMappingOff extends SubscriptionControllerISp
     }
   }
 
-  "showLinkAccount (GET /link-account)" should {
+  "showLinkClients (GET /link-clients)" should {
     "500 internal server error" in {
-      val result = await(controller.showLinkAccount(FakeRequest()))
+      val result = await(controller.showLinkClients(FakeRequest()))
       status(result) shouldBe 500
     }
   }
 
-  "submitLinkAccount (POST /link-account)" should {
+  "submitLinkClients (POST /link-clients)" should {
     "500 internal server error" in {
-      val result = await(controller.submitLinkAccount(FakeRequest()))
+      val result = await(controller.submitLinkClients(FakeRequest()))
       status(result) shouldBe 500
     }
   }

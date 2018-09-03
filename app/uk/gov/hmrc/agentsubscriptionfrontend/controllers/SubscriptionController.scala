@@ -78,14 +78,14 @@ class SubscriptionController @Inject()(
 
   val desAddressForm = new DesAddressForm(Logger, blacklistedPostCodes)
 
-  private val linkAccountForm: Form[LinkAccount] =
-    Form[LinkAccount](
+  private val linkClientsForm: Form[LinkClients] =
+    Form[LinkClients](
       mapping("autoMapping" -> optional(text).verifying(
-        FieldMappings.radioInputSelected("linkAccount.error.no-radio-selected")))(ans =>
-        LinkAccount(RadioInputAnswer.apply(ans.getOrElse(""))))(lc => Some(RadioInputAnswer.unapply(lc.autoMapping)))
+        FieldMappings.radioInputSelected("linkClients.error.no-radio-selected")))(ans =>
+        LinkClients(RadioInputAnswer.apply(ans.getOrElse(""))))(lc => Some(RadioInputAnswer.unapply(lc.autoMapping)))
         .verifying(
-          "error.link-account-value.invalid",
-          submittedLinkAccount => Seq(Yes, No).contains(submittedLinkAccount.autoMapping)))
+          "error.link-clients-value.invalid",
+          submittedLinkClients => Seq(Yes, No).contains(submittedLinkClients.autoMapping)))
 
   private val businessNameForm = Form[BusinessName](
     mapping(
@@ -259,37 +259,37 @@ class SubscriptionController @Inject()(
     }
   }
 
-  val showLinkAccount: Action[AnyContent] = Action.async { implicit request =>
+  val showLinkClients: Action[AnyContent] = Action.async { implicit request =>
     appConfig.autoMapAgentEnrolments match {
       case true =>
         withAuthenticatedAgent {
           withArnFromSession { _ =>
-            Future.successful(Ok(html.link_account(linkAccountForm)))
+            Future.successful(Ok(html.link_clients(linkClientsForm)))
           }
         }
       case false => Future.successful(InternalServerError)
     }
   }
 
-  val submitLinkAccount: Action[AnyContent] = Action.async { implicit request =>
+  val submitLinkClients: Action[AnyContent] = Action.async { implicit request =>
     appConfig.autoMapAgentEnrolments match {
       case true =>
         withAuthenticatedAgent {
           withArnFromSession { _ =>
-            linkAccountForm
+            linkClientsForm
               .bindFromRequest()
               .fold(
                 formWithErrors => {
-                  if (formWithErrors.errors.exists(_.message == "error.link-account-value.invalid")) {
+                  if (formWithErrors.errors.exists(_.message == "error.link-clients-value.invalid")) {
                     throw new BadRequestException("Form submitted with strange input value")
                   } else {
-                    Future.successful(Ok(html.link_account(formWithErrors)))
+                    Future.successful(Ok(html.link_clients(formWithErrors)))
                   }
                 },
-                validatedLinkAccount => {
-                  validatedLinkAccount.autoMapping match {
-                    case Yes => linkAccountResponse(mappingConnector.updatePreSubscriptionWithArn)
-                    case No  => linkAccountResponse(mappingConnector.deletePreSubscription)
+                validatedLinkClients => {
+                  validatedLinkClients.autoMapping match {
+                    case Yes => linkClientsResponse(mappingConnector.updatePreSubscriptionWithArn)
+                    case No  => linkClientsResponse(mappingConnector.deletePreSubscription)
                   }
                 }
               )
@@ -324,7 +324,7 @@ class SubscriptionController @Inject()(
     }
   }
 
-  private def linkAccountResponse[A](
+  private def linkClientsResponse[A](
     body: Utr => Future[Unit])(implicit hc: HeaderCarrier, request: Request[A]): Future[Result] =
     withKnownFactsResult { knownFactResult =>
       body(knownFactResult.utr).map(_ => Redirect(routes.SubscriptionController.showSubscriptionComplete()))

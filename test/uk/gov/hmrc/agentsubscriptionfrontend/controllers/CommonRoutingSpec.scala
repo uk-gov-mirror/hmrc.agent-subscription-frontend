@@ -42,7 +42,7 @@ class CommonRoutingSpec extends UnitSpec with ResettingMockitoSugar with WithFak
   implicit val request = FakeRequest()
 
   "redirectUponSuccessfulSubscription" should {
-    "redirect to showLinkAccount" when {
+    "redirect to showLinkClients" when {
       "autoMapping is on and they are eligible for mapping" in {
         when(mockSessionStoreService.fetchMappingEligible(any[HeaderCarrier], any[ExecutionContext]))
           .thenReturn(Future.successful(Some(true)))
@@ -51,7 +51,7 @@ class CommonRoutingSpec extends UnitSpec with ResettingMockitoSugar with WithFak
         val result = commonRouting.redirectUponSuccessfulSubscription(arn)
         status(result) shouldBe 303
 
-        redirectLocation(result).get shouldBe routes.SubscriptionController.showLinkAccount().url
+        redirectLocation(result).get shouldBe routes.SubscriptionController.showLinkClients().url
       }
     }
 

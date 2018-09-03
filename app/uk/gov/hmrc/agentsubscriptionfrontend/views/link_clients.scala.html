@@ -17,46 +17,46 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 @import uk.gov.hmrc.play.views.html.helpers._
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
-@import uk.gov.hmrc.agentsubscriptionfrontend.models.LinkAccount
+@import uk.gov.hmrc.agentsubscriptionfrontend.models.LinkClients
 
-@(linkAccountRadioForm: Form[LinkAccount])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+@(linkClientsRadioForm: Form[LinkClients])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 @radioLegendTitle = {
-    <h1 class="heading-medium @if(linkAccountRadioForm.hasErrors){push--top}">
-        @Messages("linkAccount.legend")
+    <h1 class="heading-medium @if(linkClientsRadioForm.hasErrors){push--top}">
+        @Messages("linkClients.legend")
     </h1>
 }
 
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = error_prefix(linkAccountRadioForm) + Messages("linkAccount.title"), bodyClasses = None) {
-    <h1 class="heading-xlarge">@Messages("linkAccount.title")</h1>
+@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = error_prefix(linkClientsRadioForm) + Messages("linkClients.title"), bodyClasses = None) {
+    <h1 class="heading-xlarge">@Messages("linkClients.title")</h1>
 
-    <p>@Messages("linkAccount.p1")</p>
+    <p>@Messages("linkClients.p1")</p>
 
-    <p>@Messages("linkAccount.p2")</p>
+    <p>@Messages("linkClients.p2")</p>
 
     <ul class="list list-bullet">
-        <li>@Messages("linkAccount.bullet-list.1")</li>
-        <li>@Messages("linkAccount.bullet-list.2")</li>
+        <li>@Messages("linkClients.bullet-list.1")</li>
+        <li>@Messages("linkClients.bullet-list.2")</li>
     </ul>
 
-    <p>@Messages("linkAccount.p3")</p>
+    <p>@Messages("linkClients.p3")</p>
 
-    <p>@Messages("linkAccount.p4")</p>
+    <p>@Messages("linkClients.p4")</p>
 
-    @if(linkAccountRadioForm.hasErrors) {
-        @errorSummary(Messages("error.summary.heading"), linkAccountRadioForm, Seq.empty, Some("link-account"))
+    @if(linkClientsRadioForm.hasErrors) {
+        @errorSummary(Messages("error.summary.heading"), linkClientsRadioForm, Seq.empty, Some("link-clients"))
     }
 
     @form(
-        action = routes.SubscriptionController.submitLinkAccount(),
+        action = routes.SubscriptionController.submitLinkClients(),
         'class -> "form js-form") {
 
         <div class="form-group">
         @inputRadioGroup(
-            linkAccountRadioForm("autoMapping"),
+            linkClientsRadioForm("autoMapping"),
             Seq(
-                "yes" -> Messages("linkAccount.option.yes"),
-                "no" -> Messages("linkAccount.option.no")
+                "yes" -> Messages("linkClients.option.yes"),
+                "no" -> Messages("linkClients.option.no")
             ),
             '_legend -> radioLegendTitle,
             '_groupDivClass -> "soft--ends"

@@ -124,17 +124,17 @@ nonAgent.l2=use your new account details to sign in and create your agent servic
 
 
 #Link account
-linkAccount.title=Link your current Self Assessment and VAT clients to your agent services account
-linkAccount.p1=You can allow your agent services account to access your current client relationships linked to the Government Gateway account that you first signed in with.
-linkAccount.p2=If your clients sign up to report their income and expenses, or their VAT returns, through software, you will then be able to:
-linkAccount.bullet-list.1=use software to access information about these clients
-linkAccount.bullet-list.2=act on your client''s behalf for these services without having to ask for their authorisation again
-linkAccount.p3=You can choose to link your clients now, or skip this until later.
-linkAccount.p4=If your business uses more than one Government Gateway account, you can link these after you have created your agent services account.
-linkAccount.legend=Do you want to link your clients now?
-linkAccount.option.yes=Yes
-linkAccount.option.no=No
-linkAccount.error.no-radio-selected= Select yes if you want to link your clients now
+linkClients.title=Link your current Self Assessment and VAT clients to your agent services account
+linkClients.p1=You can allow your agent services account to access your current client relationships linked to the Government Gateway account that you first signed in with.
+linkClients.p2=If your clients sign up to report their income and expenses, or their VAT returns, through software, you will then be able to:
+linkClients.bullet-list.1=use software to access information about these clients
+linkClients.bullet-list.2=act on your client''s behalf for these services without having to ask for their authorisation again
+linkClients.p3=You can choose to link your clients now, or skip this until later.
+linkClients.p4=If your business uses more than one Government Gateway account, you can link these after you have created your agent services account.
+linkClients.legend=Do you want to link your clients now?
+linkClients.option.yes=Yes
+linkClients.option.no=No
+linkClients.error.no-radio-selected= Select yes if you want to link your clients now
 
 #Subscription complete
 subscriptionComplete.title=Agent services account created
@@ -145,11 +145,6 @@ subscriptionComplete.p1=Make a note of your account reference number <strong cla
 subscriptionComplete.p2=<a href="{0}">Check the guidance</a> to find out how to:
 subscriptionComplete.bullet-list.1=sign in to your agent services account
 subscriptionComplete.bullet-list.2=use new HMRC services on behalf of your clients
-subscriptionComplete.link-account.h2=Now you have linked your clients
-subscriptionComplete.link-account.p1=If your clients are signed up to report their income and expenses, or their VAT returns, through software, you can now:
-subscriptionComplete.link-account.p2=You will still need to use your software or Government Gateway accounts to manage your client lists.
-subscriptionComplete.link-account.bullet-list.1=use software to access information about these clients
-subscriptionComplete.link-account.bullet-list.2=act on your client''s behalf for these services without having to ask for their authorisation again
 
 subscriptionComplete.button.continueToASAccount=Go to your agent services account
 subscriptionComplete.button.continueJourney=Continue

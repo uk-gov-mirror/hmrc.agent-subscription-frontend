@@ -277,14 +277,14 @@ class StartControllerWithAutoMappingOn extends StartControllerISpec {
       }
     }
 
-    "agent was eligible for mapping, should redirect to /link-account" in new ValidKnownFactsCached(wasEligibleForMapping = Some(true)) with PartiallySubscribedAgentStub {
+    "agent was eligible for mapping, should redirect to /link-clients" in new ValidKnownFactsCached(wasEligibleForMapping = Some(true)) with PartiallySubscribedAgentStub {
       AgentSubscriptionStub.partialSubscriptionWillSucceed(CompletePartialSubscriptionBody(utr = knownFactsResult.utr,
         knownFacts = SubscriptionRequestKnownFacts(knownFactsResult.postcode)))
 
       val result = await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(FakeRequest()))
 
       status(result) shouldBe 303
-      redirectLocation(result).head should include(routes.SubscriptionController.showLinkAccount().url)
+      redirectLocation(result).head should include(routes.SubscriptionController.showLinkClients().url)
     }
 
     "place the mapping eligibility back in session store, if given a valid ChainedSessionDetails ID" in new ValidKnownFactsCached with UnsubscribedAgentStub {
