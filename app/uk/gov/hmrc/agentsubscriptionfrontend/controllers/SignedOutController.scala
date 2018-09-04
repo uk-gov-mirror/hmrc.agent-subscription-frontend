@@ -53,14 +53,17 @@ class SignedOutController @Inject()(
 
   private def prepareChainedSession(mappingEligibility: MappingEligibility)(
     implicit hc: HeaderCarrier): Future[Option[StashedChainnedSessionId]] =
-    sessionStoreService.fetchKnownFactsResult.flatMap {
-      case Some(knownFacts) => {
-        chainedSessionRepository
-          .create(ChainedSessionDetails(knownFacts, mappingEligibility.isEligible))
-          .map(id => Some(id))
-      }
-      case None => Future.successful(None)
-    }
+    for {
+      knownFactsOpt     <- sessionStoreService.fetchKnownFactsResult
+      initialDetailsOpt <- sessionStoreService.fetchInitialDetails
+      id <- (knownFactsOpt, initialDetailsOpt) match {
+             case (Some(knownFacts), Some(initialDetails)) =>
+               chainedSessionRepository
+                 .create(ChainedSessionDetails(knownFacts, mappingEligibility.isEligible, initialDetails))
+                 .map(id => Some(id))
+             case _ => Future.successful(None)
+           }
+    } yield id
 
   def signOutWithContinueUrl = Action.async { implicit request =>
     sessionStoreService.fetchContinueUrl.map { maybeContinueUrl =>

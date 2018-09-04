@@ -29,7 +29,7 @@ error.utr.blank= Enter your business''s Unique Taxpayer Reference (UTR)
 error.utr.invalid.format = Unique Taxpayer Reference (UTR) must only include numbers and spaces
 error.utr.invalid.length = Unique Taxpayer Reference (UTR) must be 10 numbers
 error.business-name.empty = Enter your business name
-error.business-name.invalid = Business name must only include letters a to z, numbers, commas, full stops, apostrophes, hyphens, ampersands, forward and backward slashes, and spaces
+error.business-name.invalid = Business name must only include letters a to z, numbers, commas, full stops, apostrophes, hyphens, forward slashes, and spaces
 error.business-name.maxlength = Business name must be 40 characters or less
 error.business-email.empty=Enter your business email address
 error.summary.heading=There is a problem
@@ -196,6 +196,8 @@ checkAnswers.confirm.button=Confirm details and create account
 checkAnswers.change.button=Change
 
 businessName.title=What is your business name?
+businessName.updated.title=Update your business name
+businessName.updated.p1=Make sure your business name only includes letters a to z, numbers, commas, full stops, apostrophes, hyphens, forward slashes, and spaces.
 businessName.description=Your business name will not be updated in other government services.
 businessName.continue.button=Continue
 

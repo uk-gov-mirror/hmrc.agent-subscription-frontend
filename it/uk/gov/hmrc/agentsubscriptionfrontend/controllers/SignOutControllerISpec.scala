@@ -6,7 +6,7 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{redirectLocation, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{ChainedSessionDetails, KnownFactsResult}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{BusinessAddress, ChainedSessionDetails, InitialDetails, KnownFactsResult}
 import uk.gov.hmrc.agentsubscriptionfrontend.repository.{ChainedSessionDetailsRepository, StashedChainedSessionDetails}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.MappingStubs._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
@@ -30,6 +30,22 @@ trait SignOutControllerISpec extends BaseISpec {
 
   private val fakeRequest = FakeRequest()
   val knownFactsResult = KnownFactsResult(Utr("9876543210"), "AA11AA", "Test organisation name", isSubscribedToAgentServices = true, None, None)
+  val validBusinessAddress = BusinessAddress(
+    "AddressLine1 A",
+    Some("AddressLine2 A"),
+    Some("AddressLine3 A"),
+    Some("AddressLine4 A"),
+    Some("AA11AA"),
+    "GB")
+  val validInitialDetails =
+    InitialDetails(
+      Utr("9876543210"),
+      "AA11AA",
+      "My Agency",
+      Some("agency@example.com"),
+      validBusinessAddress
+    )
+
   def findByUtr(utr: String): Option[StashedChainedSessionDetails] = {
     await(repo.find("chainedSessionDetails.knownFacts.utr" -> utr).map(_.headOption))
   }
@@ -45,6 +61,8 @@ trait SignOutControllerISpec extends BaseISpec {
     "the SOS redirect URL should include an ID of the saved ChainedSessionDetails" in {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
       sessionStoreService.currentSession.knownFactsResult = Some(knownFactsResult)
+      sessionStoreService.currentSession.initialDetails = Some(validInitialDetails)
+
       givenMappingCreatePreSubscriptionIsNotEligible(Utr("9876543210"))
 
       val result = await(controller.redirectToSos(request))
@@ -81,6 +99,8 @@ trait SignOutControllerISpec extends BaseISpec {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
       sessionStoreService.currentSession.knownFactsResult = Some(knownFactsResult)
       sessionStoreService.currentSession.continueUrl = Some(ourContinueUrl)
+      sessionStoreService.currentSession.initialDetails = Some(validInitialDetails)
+
       givenMappingCreatePreSubscriptionIsNotEligible(Utr("9876543210"))
 
       val result = await(controller.redirectToSos(request))
@@ -174,13 +194,15 @@ class SignOutControllerWithAutoMappingOn extends SignOutControllerISpec {
       "was eligible for mapping" in {
         implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         sessionStoreService.currentSession.knownFactsResult = Some(knownFactsResult)
+        sessionStoreService.currentSession.initialDetails = Some(validInitialDetails)
         givenMappingCreatePreSubscription(Utr("9876543210"))
 
         await(controller.redirectToSos(request))
         findByUtr("9876543210").map(_.chainedSessionDetails) shouldBe Some(
           ChainedSessionDetails(
             knownFactsResult,
-            wasEligibleForMapping = Some(true)
+            wasEligibleForMapping = Some(true),
+            validInitialDetails
           )
         )
         verifyMappingCreatePreSubscriptionCalled(Utr("9876543210"), times = 1)
@@ -189,13 +211,16 @@ class SignOutControllerWithAutoMappingOn extends SignOutControllerISpec {
       "was not eligible for mapping" in {
         implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
         sessionStoreService.currentSession.knownFactsResult = Some(knownFactsResult)
+        sessionStoreService.currentSession.initialDetails = Some(validInitialDetails)
+
         givenMappingCreatePreSubscriptionIsNotEligible(Utr("9876543210"))
 
         await(controller.redirectToSos(request))
         findByUtr("9876543210").map(_.chainedSessionDetails) shouldBe Some(
           ChainedSessionDetails(
             knownFactsResult,
-            wasEligibleForMapping = Some(false)
+            wasEligibleForMapping = Some(false),
+            validInitialDetails
           )
         )
         verifyMappingCreatePreSubscriptionCalled(Utr("9876543210"), times = 1)
@@ -205,6 +230,8 @@ class SignOutControllerWithAutoMappingOn extends SignOutControllerISpec {
     "throw an exception if the call to create pre-subscription mapping fails" in {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
       sessionStoreService.currentSession.knownFactsResult = Some(knownFactsResult)
+      sessionStoreService.currentSession.initialDetails = Some(validInitialDetails)
+
       givenMappingCreatePreSubscription(Utr("9876543210"), httpReturnCode = 500)
 
       an[Upstream5xxResponse] should be thrownBy await(controller.redirectToSos(request))
@@ -219,12 +246,14 @@ class SignOutControllerWithAutoMappingOff extends SignOutControllerISpec {
     "save the ChainedSessionDetails in the DB with a missing mapping eligibility result" in {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
       sessionStoreService.currentSession.knownFactsResult = Some(knownFactsResult)
+      sessionStoreService.currentSession.initialDetails = Some(validInitialDetails)
 
       await(controller.redirectToSos(request))
       findByUtr("9876543210").map(_.chainedSessionDetails) shouldBe Some(
         ChainedSessionDetails(
           knownFactsResult,
-          wasEligibleForMapping = None
+          wasEligibleForMapping = None,
+          validInitialDetails
         )
       )
     }
@@ -232,6 +261,7 @@ class SignOutControllerWithAutoMappingOff extends SignOutControllerISpec {
     "not call agent-mapping backend" in {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
       sessionStoreService.currentSession.knownFactsResult = Some(knownFactsResult)
+      sessionStoreService.currentSession.initialDetails = Some(validInitialDetails)
 
       await(controller.redirectToSos(request))
       verifyMappingCreatePreSubscriptionCalled(Utr("9876543210"), times = 0)

@@ -21,7 +21,7 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.audit.AgentSubscriptionFrontendEvent
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{BusinessAddress, CompletePartialSubscriptionBody, KnownFactsResult, SubscriptionRequestKnownFacts}
+import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub._
@@ -31,6 +31,8 @@ import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser._
 import uk.gov.hmrc.domain.{Nino, TaxIdentifier}
 import uk.gov.hmrc.http.{BadRequestException, Upstream4xxResponse, Upstream5xxResponse}
 import uk.gov.hmrc.play.HeaderCarrierConverter
+
+import scala.concurrent.ExecutionContext.Implicits.global
 
 trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMissingSpec {
   val validUtr = Utr("2000000000")
@@ -42,6 +44,15 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
   val registrationName = "My Agency"
   val businessAddress =
     BusinessAddress("AddressLine1 A", Some("AddressLine2 A"), Some("AddressLine3 A"), Some("AddressLine4 A"), Some("AA11AA"), "GB")
+
+  protected  val initialDetails =
+    InitialDetails(
+      utr,
+      "AA11AA",
+      "My Agency",
+      Some("agency@example.com"),
+      businessAddress
+    )
 
   def agentAssuranceRun: Boolean
 
@@ -488,6 +499,46 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
         result.header.headers(LOCATION) shouldBe routes.SubscriptionController.showCheckAnswers().url
         metricShouldExistAndBeUpdated("Count-Subscription-CleanCreds-Start")
       }
+
+      "redirect to showBusinessEmailForm if the user has clean creds and isSubscribedToAgentServices=false and ETMP record contains empty email" in {
+        implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+          .withSession("businessType" -> "sole_trader")
+          .withFormUrlEncodedBody("confirmBusiness" -> "yes")
+        sessionStoreService.currentSession.knownFactsResult = Some(
+          KnownFactsResult(
+            utr = Utr("0123456789"),
+            postcode = "AA11AA",
+            taxpayerName = "My Agency",
+            isSubscribedToAgentServices = false,
+            Some(businessAddress),
+            None))
+
+        val result = await(controller.submitConfirmBusinessForm(request))
+
+        sessionStoreService.currentSession.initialDetails should not be empty
+
+        result.header.headers(LOCATION) shouldBe routes.BusinessIdentificationController.showBusinessEmailForm().url
+      }
+
+      "redirect to showBusinessNameForm if the user has clean creds and isSubscribedToAgentServices=false and ETMP record contains invalid name" in {
+        implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+          .withSession("businessType" -> "sole_trader")
+          .withFormUrlEncodedBody("confirmBusiness" -> "yes")
+        sessionStoreService.currentSession.knownFactsResult = Some(
+          KnownFactsResult(
+          utr = Utr("0123456789"),
+          postcode = "AA11AA",
+          taxpayerName = "My Agency &",
+          isSubscribedToAgentServices = false,
+          Some(businessAddress),
+          None))
+
+        val result = await(controller.submitConfirmBusinessForm(request))
+
+        sessionStoreService.currentSession.initialDetails should not be empty
+
+        result.header.headers(LOCATION) shouldBe routes.BusinessIdentificationController.showBusinessNameForm().url
+      }
     }
 
     "User chooses No" should {
@@ -543,6 +594,181 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
       }
     }
   }
+
+  "showBusinessNameForm" should {
+    behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showBusinessNameForm(request))
+
+    "display business name form if the name is des complaint" in {
+      implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+      sessionStoreService.currentSession.initialDetails = Some(initialDetails)
+
+      val result = await(controller.showBusinessNameForm(request))
+      result should containMessages("businessName.title", "businessName.description", "businessName.continue.button")
+      val doc = Jsoup.parse(bodyOf(result))
+      doc.getElementById("name").`val` shouldBe initialDetails.name
+
+      val backLink = doc.getElementsByClass("link-back")
+      backLink.attr("href") shouldBe routes.SubscriptionController.showCheckAnswers().url
+
+      val form = doc.select("form").first()
+      form.attr("method") shouldBe "POST"
+      form.attr("action") shouldBe routes.BusinessIdentificationController.submitBusinessNameForm().url
+    }
+
+    "display business name form if the name is not des complaint" in {
+      implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+      sessionStoreService.currentSession.initialDetails = Some(initialDetails.copy(name = "My Agency &"))
+
+      val result = await(controller.showBusinessNameForm(request))
+      result should containMessages("businessName.updated.title", "businessName.updated.p1",  "businessName.description", "businessName.continue.button")
+      val doc = Jsoup.parse(bodyOf(result))
+      doc.getElementById("name").`val` shouldBe "My Agency &"
+
+      val form = doc.select("form").first()
+      form.attr("method") shouldBe "POST"
+      form.attr("action") shouldBe routes.BusinessIdentificationController.submitBusinessNameForm().url
+    }
+
+    "redirect to the /business-type page if there is no InitialDetails in session because the user has returned to a bookmark" in {
+      implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+
+      val result = await(controller.showBusinessNameForm(request))
+
+      resultShouldBeSessionDataMissing(result)
+    }
+  }
+
+  "submitBusinessNameForm" should {
+    behave like anAgentAffinityGroupOnlyEndpoint(request => controller.submitBusinessNameForm(request))
+
+    "update business name after submission" in {
+      implicit val request =
+        authenticatedAs(subscribingCleanAgentWithoutEnrolments).withFormUrlEncodedBody("name" -> "new Agent name")
+      sessionStoreService.currentSession.initialDetails = Some(initialDetails)
+
+      val result = await(controller.submitBusinessNameForm(request))
+      status(result) shouldBe 303
+      redirectLocation(result).head shouldBe routes.SubscriptionController.showCheckAnswers().url
+
+      await(sessionStoreService.fetchInitialDetails).get.name shouldBe "new Agent name"
+    }
+
+    "show validation error when the form is submitted with empty name" in {
+      implicit val request =
+        authenticatedAs(subscribingCleanAgentWithoutEnrolments).withFormUrlEncodedBody("name" -> "")
+      sessionStoreService.currentSession.initialDetails = Some(initialDetails)
+
+      val result = await(controller.submitBusinessNameForm(request))
+
+      result should containMessages("businessName.title", "error.business-name.empty")
+    }
+
+    "show validation error when the form is submitted with non des complaint name after check-answers page" in {
+      implicit val request =
+        authenticatedAs(subscribingCleanAgentWithoutEnrolments).withFormUrlEncodedBody("name" -> "Some name *")
+      sessionStoreService.currentSession.initialDetails = Some(initialDetails)
+
+      val result = await(controller.submitBusinessNameForm(request))
+
+      result should containMessages("businessName.title", "error.business-name.invalid")
+    }
+
+    "show validation error when the form is submitted with non des complaint name" in {
+      implicit val request =
+        authenticatedAs(subscribingCleanAgentWithoutEnrolments).withFormUrlEncodedBody("name" -> "Some name *")
+      sessionStoreService.currentSession.initialDetails = Some(initialDetails.copy(name= "Some name &"))
+
+      val result = await(controller.submitBusinessNameForm(request))
+
+      result should containMessages("businessName.updated.title", "error.business-name.invalid")
+    }
+
+    "redirect to the /business-type page if there is no InitialDetails in session because the user has returned to a bookmark" in {
+      implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+
+      val result = await(controller.submitBusinessNameForm(request))
+
+      resultShouldBeSessionDataMissing(result)
+    }
+  }
+
+  "showBusinessEmailForm" should {
+    behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showBusinessEmailForm(request))
+
+    "display business email form" in {
+      implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+      sessionStoreService.currentSession.initialDetails = Some(initialDetails)
+
+      val result = await(controller.showBusinessEmailForm(request))
+      result should containMessages("businessEmail.title", "businessEmail.description", "businessEmail.continue.button")
+      val doc = Jsoup.parse(bodyOf(result))
+      doc.getElementById("email").`val` shouldBe initialDetails.email.get
+
+      val backLink = doc.getElementsByClass("link-back")
+      backLink.attr("href") shouldBe routes.SubscriptionController.showCheckAnswers().url
+
+      val form = doc.select("form").first()
+      form.attr("method") shouldBe "POST"
+      form.attr("action") shouldBe routes.BusinessIdentificationController.submitBusinessEmailForm().url
+    }
+
+    "display business email form when email address in initial details is empty" in {
+      implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+      sessionStoreService.currentSession.initialDetails = Some(initialDetails.copy(email = None))
+
+      val result = await(controller.showBusinessEmailForm(request))
+      result should containMessages("businessEmail.title", "businessEmail.description", "businessEmail.continue.button")
+      val doc = Jsoup.parse(bodyOf(result))
+      doc.getElementById("email").`val` shouldBe ""
+
+      val form = doc.select("form").first()
+      form.attr("method") shouldBe "POST"
+      form.attr("action") shouldBe routes.BusinessIdentificationController.submitBusinessEmailForm().url
+    }
+
+    "redirect to the /business-type page if there is no InitialDetails in session because the user has returned to a bookmark" in {
+      implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+
+      val result = await(controller.showBusinessNameForm(request))
+
+      resultShouldBeSessionDataMissing(result)
+    }
+  }
+
+  "submitBusinessEmailForm" should {
+    behave like anAgentAffinityGroupOnlyEndpoint(request => controller.submitBusinessEmailForm(request))
+
+    "update business email after submission" in {
+      implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments).withFormUrlEncodedBody(
+        "email" -> "newagent@example.com")
+      sessionStoreService.currentSession.initialDetails = Some(initialDetails)
+
+      val result = await(controller.submitBusinessEmailForm(request))
+      status(result) shouldBe 303
+      redirectLocation(result).head shouldBe routes.SubscriptionController.showCheckAnswers().url
+
+      await(sessionStoreService.fetchInitialDetails).get.email shouldBe Some("newagent@example.com")
+    }
+
+    "show validation error when the form is submitted with empty email" in {
+      implicit val request =
+        authenticatedAs(subscribingCleanAgentWithoutEnrolments).withFormUrlEncodedBody("email" -> "")
+      sessionStoreService.currentSession.initialDetails = Some(initialDetails)
+
+      val result = await(controller.submitBusinessEmailForm(request))
+
+      result should containMessages("businessEmail.title", "error.business-email.empty")
+    }
+
+    "redirect to the /business-type page if there is no InitialDetails in session because the user has returned to a bookmark" in {
+      implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+
+      val result = await(controller.submitBusinessEmailForm(request))
+
+      resultShouldBeSessionDataMissing(result)
+    }
+  }
+
 
   "showAlreadySubscribed" should {
 

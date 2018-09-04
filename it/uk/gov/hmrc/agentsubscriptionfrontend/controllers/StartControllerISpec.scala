@@ -54,7 +54,22 @@ trait StartControllerISpec extends BaseISpec {
           Some("AddressLine4 A"),
           Some("AA11AA"),
           "GB")), Some("someone@example.com"))
-      val persistedId = await(repo.create(ChainedSessionDetails(knownFactsResult, wasEligibleForMapping)))
+      private val validBusinessAddress = BusinessAddress(
+        "AddressLine1 A",
+        Some("AddressLine2 A"),
+        Some("AddressLine3 A"),
+        Some("AddressLine4 A"),
+        Some("AA11AA"),
+        "GB")
+      private  val validInitialDetails =
+        InitialDetails(
+          Utr("9876543210"),
+          "AA11AA",
+          "My Agency",
+          Some("agency@example.com"),
+          validBusinessAddress
+        )
+      val persistedId = await(repo.create(ChainedSessionDetails(knownFactsResult, wasEligibleForMapping, validInitialDetails)))
     }
 
     trait UnsubscribedAgentStub {

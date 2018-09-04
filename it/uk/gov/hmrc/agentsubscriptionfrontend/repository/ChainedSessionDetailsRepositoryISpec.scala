@@ -7,7 +7,7 @@ import org.scalatestplus.play.OneAppPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{ChainedSessionDetails, KnownFactsResult}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{BusinessAddress, ChainedSessionDetails, InitialDetails, KnownFactsResult}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.MongoApp
 import uk.gov.hmrc.play.test.UnitSpec
 
@@ -26,10 +26,24 @@ class ChainedSessionDetailsRepositoryISpec extends UnitSpec with OneAppPerSuite 
   private lazy val repo = app.injector.instanceOf[ChainedSessionDetailsRepository]
 
   private val utr = Utr("0123456789")
+  protected  val initialDetails =
+    InitialDetails(
+      utr,
+      "AA11AA",
+      "My Agency",
+      Some("agency@example.com"),
+      BusinessAddress(
+        "AddressLine1 A",
+        Some("AddressLine2 A"),
+        Some("AddressLine3 A"),
+        Some("AddressLine4 A"),
+        Some("AA11AA"),
+        "GB")
+    )
   private val chainedSessionDetails =
     ChainedSessionDetails(
       KnownFactsResult(utr = utr, postcode = "AA11AA", taxpayerName = "My Agency", isSubscribedToAgentServices = false, None, None),
-      Some(true)
+      Some(true), initialDetails
     )
 
   override def beforeEach() {

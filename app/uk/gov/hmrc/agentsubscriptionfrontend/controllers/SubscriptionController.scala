@@ -70,7 +70,7 @@ class SubscriptionController @Inject()(
   commonRouting: CommonRouting,
   val continueUrlActions: ContinueUrlActions,
   val metrics: Metrics,
-  override val appConfig: AppConfig)(implicit val aConfig: AppConfig)
+  override implicit val appConfig: AppConfig)
     extends FrontendController with I18nSupport with AuthActions with SessionDataMissing with Monitoring {
 
   private val JourneyName: String = appConfig.journeyName
@@ -87,18 +87,6 @@ class SubscriptionController @Inject()(
           "error.link-clients-value.invalid",
           submittedLinkClients => Seq(Yes, No).contains(submittedLinkClients.autoMapping)))
 
-  private val businessNameForm = Form[BusinessName](
-    mapping(
-      "name" -> businessName
-    )(BusinessName.apply)(BusinessName.unapply)
-  )
-
-  private val businessEmailForm = Form[BusinessEmail](
-    mapping(
-      "email" -> emailAddress
-    )(BusinessEmail.apply)(BusinessEmail.unapply)
-  )
-
   val showCheckAnswers: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent {
       case hasNonEmptyEnrolments(_) =>
@@ -107,15 +95,13 @@ class SubscriptionController @Inject()(
         mark("Count-Subscription-CleanCreds-Success")
         withInitialDetails { details =>
           Future.successful {
-            if (details.email.nonEmpty)
-              Ok(
-                html.check_answers(
-                  registrationName = details.name,
-                  address = details.businessAddress,
-                  emailAddress = details.email
-                ))
-            else
-              Redirect(routes.SubscriptionController.showBusinessEmailForm())
+            Ok(
+              html.check_answers(
+                registrationName = details.name,
+                address = details.businessAddress,
+                emailAddress = details.email
+              ))
+
           }
         }
     }
@@ -137,57 +123,6 @@ class SubscriptionController @Inject()(
           )
           subscriptionService.subscribe(details, desAddress).flatMap(redirectSubscriptionResponse)
         }
-    }
-  }
-
-  val showBusinessNameForm: Action[AnyContent] = Action.async { implicit request =>
-    withSubscribingAgent { _ =>
-      withInitialDetails { details =>
-        Future.successful(Ok(html.business_name(businessNameForm.bind(Map("name" -> details.name)))))
-      }
-    }
-  }
-
-  val submitBusinessNameForm: Action[AnyContent] = Action.async { implicit request =>
-    withSubscribingAgent { _ =>
-      withInitialDetails { details =>
-        businessNameForm
-          .bindFromRequest()
-          .fold(
-            formWithErrors => Future.successful(Ok(html.business_name(formWithErrors))),
-            validForm =>
-              sessionStoreService
-                .cacheInitialDetails(details.copy(name = validForm.name))
-                .map(_ => Redirect(routes.SubscriptionController.showCheckAnswers()))
-          )
-      }
-    }
-  }
-
-  val showBusinessEmailForm: Action[AnyContent] = Action.async { implicit request =>
-    withSubscribingAgent { _ =>
-      withInitialDetails { details =>
-        val form =
-          if (details.email.nonEmpty) businessEmailForm.bind(Map("email" -> details.email.get)) else businessEmailForm
-
-        Future.successful(Ok(html.business_email(form, details.email)))
-      }
-    }
-  }
-
-  val submitBusinessEmailForm: Action[AnyContent] = Action.async { implicit request =>
-    withSubscribingAgent { _ =>
-      withInitialDetails { details =>
-        businessEmailForm
-          .bindFromRequest()
-          .fold(
-            formWithErrors => Future.successful(Ok(html.business_email(formWithErrors, details.email))),
-            validForm =>
-              sessionStoreService
-                .cacheInitialDetails(details.copy(email = Some(validForm.email)))
-                .map(_ => Redirect(routes.SubscriptionController.showCheckAnswers()))
-          )
-      }
     }
   }
 

@@ -33,7 +33,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.service._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.Monitoring
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
-import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{invasive_check_start}
+import uk.gov.hmrc.agentsubscriptionfrontend.views.html.invasive_check_start
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.domain.{SaAgentReference, TaxIdentifier}
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier}
@@ -42,6 +42,9 @@ import play.api.data.Forms._
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent.hasNonEmptyEnrolments
 import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidVariantsTaxPayerOptionForm._
+import uk.gov.hmrc.agentsubscriptionfrontend.validators.InitialDetailsValidator
+import uk.gov.hmrc.agentsubscriptionfrontend.validators.ValidationResult.FailureReason.{InvalidBusinessAddress, InvalidBusinessName, InvalidEmail}
+import uk.gov.hmrc.agentsubscriptionfrontend.validators.ValidationResult.{Failure, Pass}
 
 import scala.concurrent.Future
 
@@ -75,6 +78,18 @@ object BusinessIdentificationController {
         .verifying(
           "error.confirm-business-value.invalid",
           submittedAnswer => Seq(Yes, No).contains(submittedAnswer.confirm)))
+
+  val businessEmailForm = Form[BusinessEmail](
+    mapping(
+      "email" -> FieldMappings.emailAddress
+    )(BusinessEmail.apply)(BusinessEmail.unapply)
+  )
+
+  val businessNameForm = Form[BusinessName](
+    mapping(
+      "name" -> FieldMappings.businessName
+    )(BusinessName.apply)(BusinessName.unapply)
+  )
 }
 
 @Singleton
@@ -87,12 +102,14 @@ class BusinessIdentificationController @Inject()(
   val subscriptionService: SubscriptionService,
   override val sessionStoreService: SessionStoreService,
   val continueUrlActions: ContinueUrlActions,
+  val initialDetailsValidator: InitialDetailsValidator,
   auditService: AuditService,
-  override val appConfig: AppConfig,
-  val metrics: Metrics)(implicit val aConfig: AppConfig)
+  override implicit val appConfig: AppConfig,
+  val metrics: Metrics)
     extends FrontendController with I18nSupport with AuthActions with SessionDataMissing with Monitoring {
 
   import continueUrlActions._
+  import BusinessIdentificationController._
 
   val showCreateNewAccount: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
@@ -110,7 +127,7 @@ class BusinessIdentificationController @Inject()(
 
   def submitBusinessTypeForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { implicit agent =>
-      BusinessIdentificationController.businessTypeForm
+      businessTypeForm
         .bindFromRequest()
         .fold(
           formWithErrors => {
@@ -150,9 +167,8 @@ class BusinessIdentificationController @Inject()(
   def submitBusinessDetailsForm(businessType: Option[String]): Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { implicit agent =>
       businessType match {
-        case Some(businessTypeIdentifier)
-            if BusinessIdentificationController.validBusinessTypes.contains(businessTypeIdentifier) => {
-          BusinessIdentificationController.knownFactsForm
+        case Some(businessTypeIdentifier) if validBusinessTypes.contains(businessTypeIdentifier) => {
+          knownFactsForm
             .bindFromRequest()
             .fold(
               formWithErrors => Future successful Ok(html.business_details(formWithErrors, businessTypeIdentifier)),
@@ -192,7 +208,8 @@ class BusinessIdentificationController @Inject()(
                        .completePartialSubscription(knownFacts.utr, knownFacts.postcode)
                        .map { arn =>
                          mark("Count-Subscription-PartialSubscriptionCompleted")
-                         Redirect(routes.SubscriptionController.showSubscriptionComplete()).flashing("arn" -> arn.value)
+                         Redirect(routes.SubscriptionController.showSubscriptionComplete())
+                           .flashing("arn" -> arn.value)
                        }
                    }
         } yield result
@@ -223,7 +240,7 @@ class BusinessIdentificationController @Inject()(
       withKnownFactsResult { knownFactsResult =>
         Future successful Ok(
           html.confirm_business(
-            confirmBusinessRadioForm = BusinessIdentificationController.confirmBusinessForm,
+            confirmBusinessRadioForm = confirmBusinessForm,
             registrationName = knownFactsResult.taxpayerName,
             utr = FieldMappings.prettify(knownFactsResult.utr),
             businessAddress = knownFactsResult.address.getOrElse(throw new Exception("address object missing"))
@@ -235,7 +252,7 @@ class BusinessIdentificationController @Inject()(
   val submitConfirmBusinessForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
       withKnownFactsResult { knownFactsResult =>
-        BusinessIdentificationController.confirmBusinessForm
+        confirmBusinessForm
           .bindFromRequest()
           .fold(
             formWithErrors => {
@@ -252,7 +269,21 @@ class BusinessIdentificationController @Inject()(
             },
             validatedBusiness => {
               val response = validatedBusiness.confirm match {
-                case Yes => lookupNextPage(knownFactsResult)
+                case Yes =>
+                  if (knownFactsResult.isSubscribedToAgentServices) {
+                    mark("Count-Subscription-AlreadySubscribed-RegisteredInETMP")
+                    Future.successful(routes.BusinessIdentificationController.showAlreadySubscribed())
+                  } else {
+                    val initialDetails = InitialDetails(
+                      knownFactsResult.utr,
+                      knownFactsResult.postcode,
+                      knownFactsResult.taxpayerName,
+                      knownFactsResult.emailAddress,
+                      knownFactsResult.address.getOrElse(throw new Exception("address object missing"))
+                    )
+
+                    lookupNextPage(initialDetails)
+                  }
                 case No =>
                   Future.successful(routes.BusinessIdentificationController.submitBusinessDetailsForm(
                     request.session.get("businessType")))
@@ -265,25 +296,78 @@ class BusinessIdentificationController @Inject()(
     }
   }
 
-  private def lookupNextPage(knownFactsResult: KnownFactsResult)(implicit hc: HeaderCarrier) =
-    if (knownFactsResult.isSubscribedToAgentServices) {
-      mark("Count-Subscription-AlreadySubscribed-RegisteredInETMP")
-      Future.successful(routes.BusinessIdentificationController.showAlreadySubscribed())
-    } else {
-      sessionStoreService
-        .cacheInitialDetails(
-          InitialDetails(
-            knownFactsResult.utr,
-            knownFactsResult.postcode,
-            knownFactsResult.taxpayerName,
-            knownFactsResult.emailAddress,
-            knownFactsResult.address.getOrElse(throw new Exception("address object missing"))
-          ))
-        .map { _ =>
-          mark("Count-Subscription-CleanCreds-Start")
-          routes.SubscriptionController.showCheckAnswers()
-        }
+  private def lookupNextPage(initialDetails: InitialDetails)(implicit hc: HeaderCarrier) = {
+    val redirectCall = initialDetailsValidator.validate(initialDetails) match {
+      case Failure(responses) if responses.contains(InvalidBusinessName) =>
+        routes.BusinessIdentificationController.showBusinessNameForm()
+      case Failure(responses) if responses.contains(InvalidEmail) =>
+        routes.BusinessIdentificationController.showBusinessEmailForm()
+      case _ =>
+        mark("Count-Subscription-CleanCreds-Start")
+        routes.SubscriptionController.showCheckAnswers()
     }
+
+    cacheInitialDetailsAndRedirect(initialDetails)(redirectCall)
+  }
+
+  val showBusinessEmailForm: Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { _ =>
+      withInitialDetails { details =>
+        val form =
+          if (details.email.nonEmpty)
+            businessEmailForm.fill(BusinessEmail(details.email.get))
+          else businessEmailForm
+
+        Future.successful(Ok(html.business_email(form, hasInvalidEmail(details))))
+      }
+    }
+  }
+
+  val submitBusinessEmailForm: Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { _ =>
+      withInitialDetails { details =>
+        businessEmailForm
+          .bindFromRequest()
+          .fold(
+            formWithErrors => Future.successful(Ok(html.business_email(formWithErrors, hasInvalidEmail(details)))),
+            validForm => {
+              val updatedDetails = details.copy(email = Some(validForm.email))
+              sessionStoreService
+                .cacheInitialDetails(updatedDetails)
+                .flatMap(_ => lookupNextPage(updatedDetails).map(Redirect(_)))
+            }
+          )
+      }
+    }
+  }
+
+  val showBusinessNameForm: Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { _ =>
+      withInitialDetails { details =>
+        Future.successful(
+          Ok(html.business_name(businessNameForm.fill(BusinessName(details.name)), hasInvalidBusinessName(details))))
+      }
+    }
+  }
+
+  val submitBusinessNameForm: Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { _ =>
+      withInitialDetails { details =>
+        businessNameForm
+          .bindFromRequest()
+          .fold(
+            formWithErrors =>
+              Future.successful(Ok(html.business_name(formWithErrors, hasInvalidBusinessName(details)))),
+            validForm => {
+              val updatedDetails = details.copy(name = validForm.name)
+              sessionStoreService
+                .cacheInitialDetails(updatedDetails)
+                .flatMap(_ => lookupNextPage(updatedDetails).map(Redirect(_)))
+            }
+          )
+      }
+    }
+  }
 
   val showAlreadySubscribed: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
@@ -438,4 +522,18 @@ class BusinessIdentificationController @Inject()(
           }
       }
     }
+
+  private def cacheInitialDetailsAndRedirect(initialDetails: InitialDetails)(call: => Call)(
+    implicit hc: HeaderCarrier): Future[Call] =
+    sessionStoreService.cacheInitialDetails(initialDetails).map(_ => call)
+
+  def hasInvalidBusinessName(details: InitialDetails): Boolean = initialDetailsValidator.validate(details) match {
+    case Failure(responses) if responses.contains(InvalidBusinessName) => true
+    case _                                                             => false
+  }
+
+  def hasInvalidEmail(details: InitialDetails): Boolean = initialDetailsValidator.validate(details) match {
+    case Failure(responses) if responses.contains(InvalidEmail) => true
+    case _                                                      => false
+  }
 }

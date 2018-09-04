@@ -23,10 +23,10 @@ POST        /client-details                       uk.gov.hmrc.agentsubscriptionf
 GET         /check-answers                        uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showCheckAnswers
 POST        /check-answers                        uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.submitCheckAnswers
 
-GET         /business-name                        uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showBusinessNameForm
-POST        /business-name                        uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.submitBusinessNameForm
-GET         /business-email                       uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showBusinessEmailForm
-POST        /business-email                       uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.submitBusinessEmailForm
+GET         /business-name                        uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showBusinessNameForm
+POST        /business-name                        uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.submitBusinessNameForm
+GET         /business-email                       uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showBusinessEmailForm
+POST        /business-email                       uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.submitBusinessEmailForm
 GET         /business-address                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showBusinessAddressForm
 
 
