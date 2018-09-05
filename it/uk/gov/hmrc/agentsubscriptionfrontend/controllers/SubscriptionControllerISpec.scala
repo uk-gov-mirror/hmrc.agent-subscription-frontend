@@ -607,7 +607,7 @@ class SubscriptionControllerWithAutoMappingOn extends SubscriptionControllerISpe
   "submitCheckAnswers" should {
     "send subscription request and redirect to subscription complete" when {
       "all fields are supplied and was not eligible for mapping" in {
-        AgentSubscriptionStub.subscriptionWillSucceed(utr, subscriptionRequestWithNoEdit(initialDetails))
+        AgentSubscriptionStub.subscriptionWillSucceed(utr, subscriptionRequestWithNoEdit(initialDetails), arn = "TARN00023")
 
         implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
         sessionStoreService.currentSession.initialDetails = Some(initialDetails)
@@ -616,6 +616,7 @@ class SubscriptionControllerWithAutoMappingOn extends SubscriptionControllerISpe
         val result = await(controller.submitCheckAnswers(request))
         status(result) shouldBe 303
         redirectLocation(result).head shouldBe routes.SubscriptionController.showSubscriptionComplete().url
+        result.session.get("arn") shouldBe Some("TARN00023")
 
         verifySubscriptionRequestSent(subscriptionRequestWithNoEdit(initialDetails))
         metricShouldExistAndBeUpdated("Count-Subscription-Complete")
@@ -780,7 +781,7 @@ class SubscriptionControllerWithAutoMappingOff extends SubscriptionControllerISp
 
   "submitCheckAnswers" should {
     "send subscription request and redirect to subscription complete when all fields are supplied and was not eligible for mapping" in {
-      AgentSubscriptionStub.subscriptionWillSucceed(utr, subscriptionRequestWithNoEdit(initialDetails))
+      AgentSubscriptionStub.subscriptionWillSucceed(utr, subscriptionRequestWithNoEdit(initialDetails), arn = "TARN00023")
 
       implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
       sessionStoreService.currentSession.initialDetails = Some(initialDetails)
@@ -789,6 +790,7 @@ class SubscriptionControllerWithAutoMappingOff extends SubscriptionControllerISp
       val result = await(controller.submitCheckAnswers(request))
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.SubscriptionController.showSubscriptionComplete().url)
+      result.session.get("arn") shouldBe Some("TARN00023")
 
       verifySubscriptionRequestSent(subscriptionRequestWithNoEdit(initialDetails))
       metricShouldExistAndBeUpdated("Count-Subscription-Complete")

@@ -173,8 +173,10 @@ class BusinessIdentificationController @Inject()(
             .fold(
               formWithErrors => Future successful Ok(html.business_details(formWithErrors, businessTypeIdentifier)),
               knownFacts =>
-                checkBusinessDetailsGivenValidForm(knownFacts).map(
-                  _.withSession(request.session + ("businessType" -> businessTypeIdentifier)))
+                checkBusinessDetailsGivenValidForm(knownFacts).map { resultWithSession =>
+                  val sessionData = (request.session.data ++ resultWithSession.session.data.toSeq) + ("businessType" -> businessTypeIdentifier)
+                  resultWithSession.withSession(sessionData.toSeq: _*)
+              }
             )
         }
         case _ => Future successful Redirect(routes.BusinessIdentificationController.showBusinessTypeForm())
@@ -209,7 +211,7 @@ class BusinessIdentificationController @Inject()(
                        .map { arn =>
                          mark("Count-Subscription-PartialSubscriptionCompleted")
                          Redirect(routes.SubscriptionController.showSubscriptionComplete())
-                           .flashing("arn" -> arn.value)
+                           .withSession(request.session + ("arn" -> arn.value))
                        }
                    }
         } yield result

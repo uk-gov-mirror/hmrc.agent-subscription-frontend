@@ -206,12 +206,14 @@ trait StartControllerISpec extends BaseISpec {
 
       "agent was not eligible for mapping, should redirect to /subscription-complete" in new ValidKnownFactsCached(wasEligibleForMapping = Some(false)) with PartiallySubscribedAgentStub {
         AgentSubscriptionStub.partialSubscriptionWillSucceed(CompletePartialSubscriptionBody(utr = knownFactsResult.utr,
-          knownFacts = SubscriptionRequestKnownFacts(knownFactsResult.postcode)))
+          knownFacts = SubscriptionRequestKnownFacts(knownFactsResult.postcode)), arn = "TARN00023")
 
-        val result = await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(FakeRequest()))
+        implicit val request = FakeRequest()
+        val result = await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(request))
 
         status(result) shouldBe 303
         redirectLocation(result).head should include(routes.SubscriptionController.showSubscriptionComplete().url)
+        result.session.get("arn") shouldBe Some("TARN00023")
       }
     }
 

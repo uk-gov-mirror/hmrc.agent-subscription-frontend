@@ -294,15 +294,17 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
       redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showAlreadySubscribed().url)
     }
 
-    "subscriptionComplete for partiallySubscribed User" in {
+    "showSubscriptionComplete for partially subscribed agent" in {
       withMatchingUtrAndPostcode(validUtr, validPostcode, isSubscribedToAgentServices = false, isSubscribedToETMP = true)
-      AgentSubscriptionStub.partialSubscriptionWillSucceed(CompletePartialSubscriptionBody(validUtr,
-        knownFacts = SubscriptionRequestKnownFacts(validPostcode)))
+      AgentSubscriptionStub.partialSubscriptionWillSucceed(
+        CompletePartialSubscriptionBody(validUtr, knownFacts = SubscriptionRequestKnownFacts(validPostcode)),
+        arn = "TARN00023")
 
       implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.submitBusinessDetailsForm(Some(BusinessIdentificationController.validBusinessTypes.head))(request))
       redirectLocation(result) shouldBe Some(routes.SubscriptionController.showSubscriptionComplete().url)
+      result.session.get("arn") shouldBe Some("TARN00023")
     }
 
     "showCreateNewAccount, creds with enrolment/s are not allowed when partiallySubscribed User" in {

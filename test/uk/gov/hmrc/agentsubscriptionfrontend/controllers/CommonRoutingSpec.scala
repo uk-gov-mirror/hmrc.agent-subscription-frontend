@@ -65,6 +65,7 @@ class CommonRoutingSpec extends UnitSpec with ResettingMockitoSugar with WithFak
         status(result) shouldBe 303
 
         redirectLocation(result).get shouldBe routes.SubscriptionController.showSubscriptionComplete().url
+        result.session.get("arn") shouldBe Some(arn.value)
       }
 
       "autoMapping is on and chainedSessionDetails did not cache wasEligibleForMapping" in {
@@ -76,6 +77,7 @@ class CommonRoutingSpec extends UnitSpec with ResettingMockitoSugar with WithFak
         status(result) shouldBe 303
 
         redirectLocation(result).get shouldBe routes.SubscriptionController.showSubscriptionComplete().url
+        result.session.get("arn") shouldBe Some(arn.value)
       }
 
       "autoMapping is off" in {
@@ -85,6 +87,7 @@ class CommonRoutingSpec extends UnitSpec with ResettingMockitoSugar with WithFak
         status(result) shouldBe 303
 
         redirectLocation(result).get shouldBe routes.SubscriptionController.showSubscriptionComplete().url
+        result.session.get("arn") shouldBe Some(arn.value)
       }
     }
 
