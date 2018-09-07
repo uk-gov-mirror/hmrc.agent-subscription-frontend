@@ -18,24 +18,22 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
-
 import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms.{mapping, optional, text}
 import play.api.i18n.{I18nSupport, MessagesApi}
-import play.api.libs.json._
 import play.api.mvc.{AnyContent, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent.hasNonEmptyEnrolments
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.{AddressLookupFrontendConnector, MappingConnector}
-import uk.gov.hmrc.agentsubscriptionfrontend.controllers.FieldMappings._
+import uk.gov.hmrc.agentsubscriptionfrontend.validators.CommonValidators._
 import uk.gov.hmrc.agentsubscriptionfrontend.form.DesAddressForm
 import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionReturnedHttpError, SubscriptionService}
-import uk.gov.hmrc.agentsubscriptionfrontend.support.Monitoring
+import uk.gov.hmrc.agentsubscriptionfrontend.support.{Monitoring, TaxIdentifierFormatters}
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException}
@@ -43,21 +41,6 @@ import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 import scala.concurrent.Future
 import scala.util.control.NonFatal
-
-case class SubscriptionDetails(utr: Utr, knownFactsPostcode: String, name: String, email: String, address: DesAddress)
-
-object SubscriptionDetails {
-  implicit val formatDesAddress: Format[DesAddress] = Json.format[DesAddress]
-  implicit val formatSubscriptionDetails: Format[SubscriptionDetails] = Json.format[SubscriptionDetails]
-
-  implicit def mapper(initDetails: InitialDetails, address: DesAddress): SubscriptionDetails =
-    SubscriptionDetails(
-      initDetails.utr,
-      initDetails.knownFactsPostcode,
-      initDetails.name,
-      initDetails.email.getOrElse(throw new Exception("email should not be empty")),
-      address)
-}
 
 @Singleton
 class SubscriptionController @Inject()(
@@ -73,19 +56,12 @@ class SubscriptionController @Inject()(
   override implicit val appConfig: AppConfig)
     extends FrontendController with I18nSupport with AuthActions with SessionDataMissing with Monitoring {
 
+  import SubscriptionControllerForms._
+
   private val JourneyName: String = appConfig.journeyName
   private val blacklistedPostCodes: Set[String] = appConfig.blacklistedPostcodes
 
   val desAddressForm = new DesAddressForm(Logger, blacklistedPostCodes)
-
-  private val linkClientsForm: Form[LinkClients] =
-    Form[LinkClients](
-      mapping("autoMapping" -> optional(text).verifying(
-        FieldMappings.radioInputSelected("linkClients.error.no-radio-selected")))(ans =>
-        LinkClients(RadioInputAnswer.apply(ans.getOrElse(""))))(lc => Some(RadioInputAnswer.unapply(lc.autoMapping)))
-        .verifying(
-          "error.link-clients-value.invalid",
-          submittedLinkClients => Seq(Yes, No).contains(submittedLinkClients.autoMapping)))
 
   val showCheckAnswers: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent {
@@ -251,7 +227,7 @@ class SubscriptionController @Inject()(
           val continueUrl = continueUrlOpt.map(_.url).getOrElse(appConfig.agentServicesAccountUrl)
           val isUrlToASAccount = continueUrlOpt.isEmpty
           val wasEligibleForMapping = wasEligibleForMappingOpt.contains(true)
-          val prettifiedArn = prettify(arn)
+          val prettifiedArn = TaxIdentifierFormatters.prettify(arn)
           Ok(html.subscription_complete(continueUrl, isUrlToASAccount, wasEligibleForMapping, prettifiedArn))
             .removingFromSession("arn")
         }

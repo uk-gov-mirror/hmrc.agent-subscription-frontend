@@ -39,10 +39,10 @@ class StartController @Inject()(
   chainedSessionDetailsRepository: ChainedSessionDetailsRepository,
   val continueUrlActions: ContinueUrlActions,
   val metrics: Metrics,
-  override val appConfig: AppConfig,
+  override implicit val appConfig: AppConfig,
   sessionStoreService: SessionStoreService,
   subscriptionService: SubscriptionService,
-  commonRouting: CommonRouting)(implicit val aConfig: AppConfig)
+  commonRouting: CommonRouting)
     extends FrontendController with I18nSupport with AuthActions {
 
   import continueUrlActions._

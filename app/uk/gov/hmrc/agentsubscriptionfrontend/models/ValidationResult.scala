@@ -16,12 +16,21 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.models
 
-case class RadioInvasiveStartSaAgentCode(hasSaAgentCode: Option[Boolean], saAgentCode: Option[String])
-case class RadioInvasiveTaxPayerOption(variant: Option[String], utr: Option[String], nino: Option[String])
+sealed trait ValidationResult extends Product with Serializable
 
-object ValidVariantsTaxPayerOptionForm extends Enumeration {
-  type ValidVariantsTaxPayerOptionForm = String
-  val UtrV = Value("utr")
-  val NinoV = Value("nino")
-  val CannotProvideV = Value("cannotProvide")
+object ValidationResult {
+  case object Pass extends ValidationResult
+  case class Failure(reasons: Set[FailureReason]) extends ValidationResult
+
+  object Failure {
+    def apply(reason: FailureReason): Failure = Failure(Set(reason))
+  }
+
+  sealed trait FailureReason extends Product with Serializable
+
+  object FailureReason {
+    case object InvalidEmail extends FailureReason
+    case object InvalidBusinessName extends FailureReason
+    case object InvalidBusinessAddress extends FailureReason
+  }
 }

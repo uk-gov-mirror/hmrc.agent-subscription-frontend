@@ -19,8 +19,6 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 import javax.inject.{Inject, Singleton}
 import com.kenshoo.play.metrics.Metrics
 import play.api.Logger
-import play.api.data.Form
-import play.api.data.Forms.mapping
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{AnyContent, Request, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
@@ -31,67 +29,21 @@ import uk.gov.hmrc.agentsubscriptionfrontend.connectors.{AgentAssuranceConnector
 import uk.gov.hmrc.agentsubscriptionfrontend.models.AssuranceResults._
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.service._
-import uk.gov.hmrc.agentsubscriptionfrontend.support.Monitoring
+import uk.gov.hmrc.agentsubscriptionfrontend.support.{Monitoring, TaxIdentifierFormatters}
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html.invasive_check_start
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.domain.{SaAgentReference, TaxIdentifier}
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier}
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
-import play.api.data.Forms._
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent.hasNonEmptyEnrolments
 import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidVariantsTaxPayerOptionForm._
 import uk.gov.hmrc.agentsubscriptionfrontend.validators.InitialDetailsValidator
-import uk.gov.hmrc.agentsubscriptionfrontend.validators.ValidationResult.FailureReason.{InvalidBusinessAddress, InvalidBusinessName, InvalidEmail}
-import uk.gov.hmrc.agentsubscriptionfrontend.validators.ValidationResult.{Failure, Pass}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidationResult.FailureReason._
+import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidationResult.Failure
 
 import scala.concurrent.Future
-
-object BusinessIdentificationController {
-  val validBusinessTypes = Seq("sole_trader", "limited_company", "partnership", "llp")
-
-  val knownFactsForm: Form[KnownFacts] =
-    Form[KnownFacts](
-      mapping("utr" -> FieldMappings.utr, "postcode" -> FieldMappings.postcode)(
-        (utrStr, postcode) =>
-          FieldMappings
-            .normalizeUtr(utrStr)
-            .map(utr => KnownFacts(utr, postcode))
-            .getOrElse(throw new Exception("Invalid utr found after validation")))(knownFacts =>
-        Some((knownFacts.utr.value, knownFacts.postcode))))
-
-  val businessTypeForm: Form[BusinessType] =
-    Form[BusinessType](
-      mapping("businessType" -> optional(text).verifying(FieldMappings.radioInputSelected(
-        "businessType.error.no-radio-selected")))(BusinessType.apply)(BusinessType.unapply)
-        .verifying(
-          "error.business-type-value.invalid",
-          submittedBusinessType => validBusinessTypes.contains(submittedBusinessType.businessType.getOrElse(""))))
-
-  val confirmBusinessForm: Form[ConfirmBusiness] =
-    Form[ConfirmBusiness](
-      mapping("confirmBusiness" -> optional(text).verifying(
-        FieldMappings.radioInputSelected("confirmBusiness.error.no-radio-selected")))(answer =>
-        ConfirmBusiness(RadioInputAnswer.apply(answer.getOrElse(""))))(answer =>
-        Some(RadioInputAnswer.unapply(answer.confirm)))
-        .verifying(
-          "error.confirm-business-value.invalid",
-          submittedAnswer => Seq(Yes, No).contains(submittedAnswer.confirm)))
-
-  val businessEmailForm = Form[BusinessEmail](
-    mapping(
-      "email" -> FieldMappings.emailAddress
-    )(BusinessEmail.apply)(BusinessEmail.unapply)
-  )
-
-  val businessNameForm = Form[BusinessName](
-    mapping(
-      "name" -> FieldMappings.businessName
-    )(BusinessName.apply)(BusinessName.unapply)
-  )
-}
-
 @Singleton
 class BusinessIdentificationController @Inject()(
   assuranceService: AssuranceService,
@@ -109,7 +61,7 @@ class BusinessIdentificationController @Inject()(
     extends FrontendController with I18nSupport with AuthActions with SessionDataMissing with Monitoring {
 
   import continueUrlActions._
-  import BusinessIdentificationController._
+  import BusinessIdentificationForms._
 
   val showCreateNewAccount: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
@@ -120,7 +72,7 @@ class BusinessIdentificationController @Inject()(
   def showBusinessTypeForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { implicit agent =>
       withMaybeContinueUrlCached {
-        Future successful Ok(html.business_type(BusinessIdentificationController.businessTypeForm))
+        Future successful Ok(html.business_type(businessTypeForm))
       }
     }
   }
@@ -149,11 +101,9 @@ class BusinessIdentificationController @Inject()(
       //withMaybeContinueUrlCached because, Currently still needed as a user might be arriving from: trusts registration flow or gov.uk guidence page, make sure this is not the case anymore before removing
       withMaybeContinueUrlCached {
         businessType match {
-          case Some(businessTypeIdentifier)
-              if BusinessIdentificationController.validBusinessTypes.contains(businessTypeIdentifier) => {
+          case Some(businessTypeIdentifier) if validBusinessTypes.contains(businessTypeIdentifier) => {
             mark("Count-Subscription-BusinessDetails-Start")
-            Future successful Ok(
-              html.business_details(BusinessIdentificationController.knownFactsForm, businessTypeIdentifier))
+            Future successful Ok(html.business_details(knownFactsForm(businessTypeIdentifier), businessTypeIdentifier))
           }
           case _ => {
             Logger.warn("businessTypeIdentifier was missing, redirect and obtain from showCheckBusinessType page")
@@ -168,7 +118,7 @@ class BusinessIdentificationController @Inject()(
     withSubscribingAgent { implicit agent =>
       businessType match {
         case Some(businessTypeIdentifier) if validBusinessTypes.contains(businessTypeIdentifier) => {
-          knownFactsForm
+          knownFactsForm(businessTypeIdentifier)
             .bindFromRequest()
             .fold(
               formWithErrors => Future successful Ok(html.business_details(formWithErrors, businessTypeIdentifier)),
@@ -244,7 +194,7 @@ class BusinessIdentificationController @Inject()(
           html.confirm_business(
             confirmBusinessRadioForm = confirmBusinessForm,
             registrationName = knownFactsResult.taxpayerName,
-            utr = FieldMappings.prettify(knownFactsResult.utr),
+            utr = TaxIdentifierFormatters.prettify(knownFactsResult.utr),
             businessAddress = knownFactsResult.address.getOrElse(throw new Exception("address object missing"))
           ))
       }
@@ -264,7 +214,7 @@ class BusinessIdentificationController @Inject()(
                 Future.successful(Ok(html.confirm_business(
                   confirmBusinessRadioForm = formWithErrors,
                   registrationName = knownFactsResult.taxpayerName,
-                  utr = FieldMappings.prettify(knownFactsResult.utr),
+                  utr = TaxIdentifierFormatters.prettify(knownFactsResult.utr),
                   businessAddress = knownFactsResult.address.getOrElse(throw new Exception("address object missing"))
                 )))
               }
@@ -379,13 +329,13 @@ class BusinessIdentificationController @Inject()(
 
   def invasiveCheckStart: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      Future.successful(Ok(invasive_check_start(RadioWithInput.invasiveCheckStartSaAgentCode)))
+      Future.successful(Ok(invasive_check_start(invasiveCheckStartSaAgentCode)))
     }
   }
 
   def invasiveSaAgentCodePost: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      RadioWithInput.invasiveCheckStartSaAgentCode
+      invasiveCheckStartSaAgentCode
         .bindFromRequest()
         .fold(
           formWithErrors => {
@@ -415,13 +365,13 @@ class BusinessIdentificationController @Inject()(
 
   def showClientDetailsForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      Future.successful(Ok(html.client_details(RadioWithInput.invasiveCheckTaxPayerOption)))
+      Future.successful(Ok(html.client_details(clientDetailsForm)))
     }
   }
 
   def submitClientDetailsForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { implicit agent =>
-      RadioWithInput.invasiveCheckTaxPayerOption
+      clientDetailsForm
         .bindFromRequest()
         .fold(
           formWithErrors => {
@@ -437,8 +387,8 @@ class BusinessIdentificationController @Inject()(
                 "Form validation should return error when submitting unavailable variant"))
 
             ValidVariantsTaxPayerOptionForm.withName(retrievedVariant) match {
-              case UtrV  => checkAndRedirect(FieldMappings.normalizeUtr(correctForm.utr.get).get, "utr")
-              case NinoV => checkAndRedirect(FieldMappings.normalizeNino(correctForm.nino.get).get, "nino")
+              case UtrV  => checkAndRedirect(TaxIdentifierFormatters.normalizeUtr(correctForm.utr.get).get, "utr")
+              case NinoV => checkAndRedirect(TaxIdentifierFormatters.normalizeNino(correctForm.nino.get).get, "nino")
               case CannotProvideV => {
                 mark("Count-Subscription-InvasiveCheck-Could-Not-Provide-Tax-Payer-Identifier")
                 Future successful Redirect(routes.StartController.showCannotCreateAccount())

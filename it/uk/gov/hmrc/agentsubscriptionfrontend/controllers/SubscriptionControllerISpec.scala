@@ -26,7 +26,7 @@ import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AddressLookupFrontendStubs._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.{AgentSubscriptionStub, MappingStubs}
-import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
+import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TaxIdentifierFormatters}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser._
 import uk.gov.hmrc.http.BadRequestException
 import uk.gov.hmrc.play.binders.ContinueUrl
@@ -170,7 +170,7 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
     behave like aPageWithFeedbackLinks(resultOf, new RequestWithSessionDetails {}.request)
 
     "display the ARN in a prettified format" in new RequestWithSessionDetails {
-      val expectedPrettifiedArn = FieldMappings.prettify(Arn(arnInSession))
+      val expectedPrettifiedArn = TaxIdentifierFormatters.prettify(Arn(arnInSession))
       expectedPrettifiedArn shouldBe "AARN-000-0001"
       resultOf(request) should containSubstrings(expectedPrettifiedArn)
     }

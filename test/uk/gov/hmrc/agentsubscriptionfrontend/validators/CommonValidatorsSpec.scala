@@ -14,19 +14,21 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentsubscriptionfrontend.controllers
+package uk.gov.hmrc.agentsubscriptionfrontend.validators
 
 import org.scalatest.EitherValues
 import play.api.data.validation.{Invalid, Valid, ValidationError}
 import play.api.data.{FormError, Mapping}
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.config.blacklistedpostcodes.PostcodesLoader
 import uk.gov.hmrc.play.test.UnitSpec
+import uk.gov.hmrc.agentsubscriptionfrontend.validators.CommonValidators._
 
-class FieldMappingsSpec extends UnitSpec with EitherValues {
+import scala.util.Random
+
+class CommonValidatorsSpec extends UnitSpec with EitherValues {
 
   "utr bind" should {
-    val utrMapping = FieldMappings.utr.withPrefix("testKey")
+    val utrMapping = utr.withPrefix("testKey")
 
     def bind(fieldValue: String) = utrMapping.bind(Map("testKey" -> fieldValue))
 
@@ -42,45 +44,125 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
       bind(" ").left.value should contain only FormError("testKey", "error.utr.blank")
     }
 
-    "give \"error.utr.invalid.length\" error" when {
+    "give \"error.utr.invalid\" error" when {
       "it has more than 10 digits" in {
         bind("20000000000") should matchPattern {
-          case Left(List(FormError("testKey", List("error.utr.invalid.length"), _))) =>
+          case Left(List(FormError("testKey", List("error.utr.invalid"), _))) =>
         }
       }
 
       "it has fewer than 10 digits" in {
         bind("200000") should matchPattern {
-          case Left(List(FormError("testKey", List("error.utr.invalid.length"), _))) =>
+          case Left(List(FormError("testKey", List("error.utr.invalid"), _))) =>
         }
 
         bind("20000000 0") should matchPattern {
-          case Left(List(FormError("testKey", List("error.utr.invalid.length"), _))) =>
+          case Left(List(FormError("testKey", List("error.utr.invalid"), _))) =>
         }
       }
 
       "it has non-digit characters" in {
         bind("200000000B") should matchPattern {
-          case Left(List(FormError("testKey", List("error.utr.invalid.format"), _))) =>
+          case Left(List(FormError("testKey", List("error.utr.invalid"), _))) =>
         }
       }
 
       "it has non-alphanumeric characters" in {
         bind("200000000!") should matchPattern {
-          case Left(List(FormError("testKey", List("error.utr.invalid.format"), _))) =>
+          case Left(List(FormError("testKey", List("error.utr.invalid"), _))) =>
         }
       }
 
       "checksum fails" in {
         bind("2000000001") should matchPattern {
-          case Left(List(FormError("testKey", List("error.utr.invalid.format"), _))) =>
+          case Left(List(FormError("testKey", List("error.utr.invalid"), _))) =>
+        }
+      }
+    }
+  }
+
+  "businessUtr bind" should {
+    behave like aUtrValidatingMapping("sole_trader")(fieldValue =>
+      businessUtr("sole_trader").withPrefix("testKey").bind(Map("testKey" -> fieldValue)))
+    behave like aUtrValidatingMapping("limited_company")(fieldValue =>
+      businessUtr("limited_company").withPrefix("testKey").bind(Map("testKey" -> fieldValue)))
+    behave like aUtrValidatingMapping("partnership")(fieldValue =>
+      businessUtr("partnership").withPrefix("testKey").bind(Map("testKey" -> fieldValue)))
+    behave like aUtrValidatingMapping("llp")(fieldValue =>
+      businessUtr("llp").withPrefix("testKey").bind(Map("testKey" -> fieldValue)))
+  }
+
+  "clientDetailsUtr bind" should {
+    behave like aUtrValidatingMapping("clientDetails")(fieldValue =>
+      clientDetailsUtr.withPrefix("testKey").bind(Map("testKey" -> fieldValue)))
+  }
+
+  def aUtrValidatingMapping(errorMessageFor: String)(bind: String => Either[Seq[FormError], String]) = {
+    val (blank, invalid) = errorMessageFor match {
+      case "sole_trader" =>
+        ("error.sautr.blank", "error.sautr.invalid")
+      case "limited_company" =>
+        ("error.companyutr.blank", "error.companyutr.invalid")
+      case "partnership" | "llp" =>
+        ("error.partnershiputr.blank", "error.partnershiputr.invalid")
+      case "clientDetails" =>
+        ("error.client.sautr.blank", "error.client.sautr.invalid")
+    }
+
+    s"accept valid UTRs for $errorMessageFor" in {
+      bind("20000  00000") shouldBe Right("20000  00000")
+    }
+
+    s"give blank error for $errorMessageFor" when {
+      "it is empty" in {
+        bind("").left.value should contain only FormError("testKey", blank)
+      }
+
+      "it only contains a space" in {
+        bind(" ").left.value should contain only FormError("testKey", blank)
+      }
+    }
+
+    s"give invalid length error $errorMessageFor" when {
+      "it has more than 10 digits" in {
+        bind("20000000000") should matchPattern {
+          case Left(List(FormError("testKey", List(invalid), _))) =>
+        }
+      }
+
+      "it has fewer than 10 digits" in {
+        bind("200000") should matchPattern {
+          case Left(List(FormError("testKey", List(invalid), _))) =>
+        }
+
+        bind("20000000 0") should matchPattern {
+          case Left(List(FormError("testKey", List(invalid), _))) =>
+        }
+      }
+    }
+    s"give invalid format error $errorMessageFor" when {
+      "it has non-digit characters" in {
+        bind("200000000B") should matchPattern {
+          case Left(List(FormError("testKey", List(invalid), _))) =>
+        }
+      }
+
+      "it has non-alphanumeric characters" in {
+        bind("200000000!") should matchPattern {
+          case Left(List(FormError("testKey", List(invalid), _))) =>
+        }
+      }
+
+      "checksum fails" in {
+        bind("2000000001") should matchPattern {
+          case Left(List(FormError("testKey", List(invalid), _))) =>
         }
       }
     }
   }
 
   "postcode bind" should {
-    behave like aPostcodeValidatingMapping(FieldMappings.postcode)
+    behave like aPostcodeValidatingMapping(postcode)
   }
 
   def aPostcodeValidatingMapping(unprefixedPostcodeMapping: Mapping[String]): Unit = {
@@ -95,6 +177,11 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
     def shouldRejectFieldValueAsInvalid(fieldValue: String): Unit =
       bind(fieldValue) should matchPattern {
         case Left(List(FormError("testKey", List("error.postcode.invalid"), _))) =>
+      }
+
+    def shouldRejectFieldValueAsInvalidChars(fieldValue: String): Unit =
+      bind(fieldValue) should matchPattern {
+        case Left(List(FormError("testKey", List("error.postcode.invalidchars"), _))) =>
       }
 
     "accept valid postcodes" in {
@@ -120,14 +207,21 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
       bind(" ").left.value should contain only FormError("testKey", "error.postcode.empty")
     }
 
-    "reject postcodes containing invalid characters" in {
+    "give \"error.postcode.maxlength\" error when length exeeds 8 chars" in {
+      bind("AAA101AAA").left.value should contain only FormError("testKey", "error.postcode.maxlength")
+    }
+
+    "reject postcode if its invalid" in {
       shouldRejectFieldValueAsInvalid("_A1 1AA")
-      shouldRejectFieldValueAsInvalid("A.1 1AA")
-      shouldRejectFieldValueAsInvalid("AA/ 1AA")
-      shouldRejectFieldValueAsInvalid("AA1#1AA")
-      shouldRejectFieldValueAsInvalid("AA1 ~AA")
-      shouldRejectFieldValueAsInvalid("AA1 1$A")
-      shouldRejectFieldValueAsInvalid("AA1 1A%")
+    }
+
+    "reject postcodes containing invalid characters" in {
+      shouldRejectFieldValueAsInvalidChars("A.1 1AA")
+      shouldRejectFieldValueAsInvalidChars("AA/ 1AA")
+      shouldRejectFieldValueAsInvalidChars("AA1#1AA")
+      shouldRejectFieldValueAsInvalidChars("AA1 ~AA")
+      shouldRejectFieldValueAsInvalidChars("AA1 1$A")
+      shouldRejectFieldValueAsInvalidChars("AA1 1A%")
     }
 
     "accept postcodes with 2 characters in the outbound part" in {
@@ -152,16 +246,12 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
       shouldRejectFieldValueAsInvalid("AA1 AAA")
     }
 
-    "reject valid start of postcode but invalid after" in {
-      shouldRejectFieldValueAsInvalid("AA1 AAA PPRRD")
-    }
-
     "accept postcodes without spaces" in {
       shouldAcceptFieldValue("AA11AA")
     }
 
     "reject postcodes with extra spaces" in {
-      shouldRejectFieldValueAsInvalid(" A A 1 1 A A ")
+      shouldRejectFieldValueAsInvalid("A A 1 1A")
     }
   }
 
@@ -170,7 +260,7 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
     val blacklistedPostcodes: Set[String] =
       Set(blacklistedPostcode, "CC1 1CC", "DD1 1DD").map(PostcodesLoader.formatPostcode)
 
-    val unprefixedPostcodeMapping = FieldMappings.postcodeWithBlacklist(blacklistedPostcodes)
+    val unprefixedPostcodeMapping = postcodeWithBlacklist(blacklistedPostcodes)
     val postcodeMapping = unprefixedPostcodeMapping.withPrefix("testKey")
 
     behave like aPostcodeValidatingMapping(unprefixedPostcodeMapping)
@@ -198,12 +288,17 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
   }
 
   "emailAddress bind" should {
-    val emailAddress = FieldMappings.emailAddress.withPrefix("testKey")
+    val emailAddress = CommonValidators.emailAddress.withPrefix("testKey")
 
     def bind(fieldValue: String) = emailAddress.bind(Map("testKey" -> fieldValue))
 
     def shouldRejectFieldValueAsInvalid(fieldValue: String): Unit =
       bind(fieldValue) should matchPattern { case Left(List(FormError("testKey", List("error.email"), _))) => }
+
+    def shouldRejectFieldValueAsInvalidChars(fieldValue: String): Unit =
+      bind(fieldValue) should matchPattern {
+        case Left(List(FormError("testKey", List("error.email.invalidchars"), _))) =>
+      }
 
     def shouldAcceptFieldValue(fieldValue: String): Unit =
       bind(fieldValue) shouldBe Right(fieldValue)
@@ -217,6 +312,12 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
         bind("").left.value should contain only FormError("testKey", "error.business-email.empty")
       }
 
+      "input has length more than 132 characters" in {
+        bind(s"${Random.alphanumeric.take(132).mkString}@example.com").left.value should contain only FormError(
+          "testKey",
+          "error.email.maxlength")
+      }
+
       "input is only whitespace" in {
         bind("    ").left.value should contain only FormError("testKey", "error.business-email.empty")
       }
@@ -224,16 +325,28 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
       "not a valid email" in {
         shouldRejectFieldValueAsInvalid("bademail")
       }
+
+      "it contains invalid chars" in {
+        shouldRejectFieldValueAsInvalidChars("bad+email@example.com")
+        shouldRejectFieldValueAsInvalidChars("bad*email@example.com")
+        shouldRejectFieldValueAsInvalidChars("bad?email@example.com")
+        shouldRejectFieldValueAsInvalidChars("bad&^%email@example.com")
+      }
     }
 
     "accept a valid email address" in {
       shouldAcceptFieldValue("valid@test.com")
+      shouldAcceptFieldValue("valid.email@test.com")
+      shouldAcceptFieldValue("valid_email@test.com")
+      shouldAcceptFieldValue("valid-email@test.com")
+      shouldAcceptFieldValue("valid-email.address@test.com")
+      shouldAcceptFieldValue("valid-email._address@test.com")
     }
   }
 
   "desTextConstraint" should {
 
-    val desTextConstraint = FieldMappings.desText("error.des.text.empty", "error.des.text.invalid")
+    val desTextConstraint = desText("error.des.text.empty", "error.des.text.invalid")
 
     def shouldRejectFieldValueAsInvalid(fieldValue: String): Unit =
       desTextConstraint(fieldValue) shouldBe Invalid(ValidationError("error.des.text.invalid"))
@@ -280,7 +393,7 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
   }
 
   "addressLine1 bind" should {
-    val unprefixedAddressLine1Mapping = FieldMappings.addressLine1
+    val unprefixedAddressLine1Mapping = addressLine1
 
     behave like anAddressLineValidatingMapping(unprefixedAddressLine1Mapping)
 
@@ -304,11 +417,11 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
   }
 
   "addressLine 2, 3 and 4 bind" should {
-    val nonOptionalAddressLine234Mapping: Mapping[String] = FieldMappings.addressLine234.transform(_.get, Some.apply)
+    val nonOptionalAddressLine234Mapping: Mapping[String] = addressLine234.transform(_.get, Some.apply)
 
     behave like anAddressLineValidatingMapping(nonOptionalAddressLine234Mapping)
 
-    val addressLine23Mapping = FieldMappings.addressLine234.withPrefix("testKey")
+    val addressLine23Mapping = addressLine234.withPrefix("testKey")
 
     def bind(fieldValue: String) = addressLine23Mapping.bind(Map("testKey" -> fieldValue))
 
@@ -387,7 +500,7 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
 
   "businessName bind" should {
 
-    val businessNameMapping = FieldMappings.businessName.withPrefix("testKey")
+    val businessNameMapping = businessName.withPrefix("testKey")
 
     def bind(fieldValue: String) = businessNameMapping.bind(Map("testKey" -> fieldValue))
 
@@ -450,7 +563,7 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
   }
 
   "SA Agent Reference" should {
-    val saAgentCodeMapping = FieldMappings.saAgentCode.withPrefix("testKey")
+    val saAgentCodeMapping = saAgentCode.withPrefix("testKey")
 
     def bind(fieldValue: String) = saAgentCodeMapping.bind(Map("testKey" -> fieldValue))
 
@@ -494,8 +607,8 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
     }
   }
 
-  "Nino" should {
-    val ninoMapping = FieldMappings.nino.withPrefix("testKey")
+  "Nino validation" should {
+    val ninoMapping = clientDetailsNino.withPrefix("testKey")
 
     def bind(fieldValue: String) = ninoMapping.bind(Map("testKey" -> fieldValue))
 
@@ -508,7 +621,15 @@ class FieldMappingsSpec extends UnitSpec with EitherValues {
     }
 
     "reject with error when invalid Nino" in {
-      bind("AAAAAAAA0").left.value should contain only FormError("testKey", "error.nino.invalid")
+      bind("AAAAAAAA0").left.value should contain only FormError("testKey", "error.clientdetails.nino.invalid")
+    }
+
+    "reject with error when nino field is empty" in {
+      bind("").left.value should contain only FormError("testKey", "error.clientdetails.nino.empty")
+    }
+
+    "reject with error when nino field contain spaces only" in {
+      bind("    ").left.value should contain only FormError("testKey", "error.clientdetails.nino.empty")
     }
   }
 }

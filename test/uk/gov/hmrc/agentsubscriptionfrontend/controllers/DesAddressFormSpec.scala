@@ -162,7 +162,7 @@ class DesAddressFormSpec extends UnitSpec with ResettingMockitoSugar with Either
     }
 
     "validate that postcode is valid" in {
-      val addressLookupFrontendAddress = testAddressLookupFrontendAddress(postcode = Some("not a valid postcode"))
+      val addressLookupFrontendAddress = testAddressLookupFrontendAddress(postcode = Some("11AAAA"))
 
       val validatedForm = desAddressForm.bindAddressLookupFrontendAddress(utr, addressLookupFrontendAddress)
 

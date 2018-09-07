@@ -37,7 +37,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMissingSpec {
   val validUtr = Utr("2000000000")
   val validPostcode = "AA1 1AA"
-  private val invalidPostcode = "not a postcode"
+  private val invalidPostcode = "11AAAA"
 
   val utr = Utr("0123456789")
   val postcode = "AA11AA"
@@ -111,7 +111,7 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
   "submitBusinessTypeForm (POST /business-type)" when {
     behave like anAgentAffinityGroupOnlyEndpoint(controller.submitBusinessTypeForm(_))
 
-    BusinessIdentificationController.validBusinessTypes.foreach { validBusinessTypeIdentifier =>
+    BusinessIdentificationForms.validBusinessTypes.foreach { validBusinessTypeIdentifier =>
       s"redirect to /business-details when valid businessTypeIdentifier: $validBusinessTypeIdentifier" in {
         val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
           .withFormUrlEncodedBody("businessType" -> validBusinessTypeIdentifier)
@@ -139,7 +139,7 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
 
   "showBusinessDetailsForm" should {
     val playRequestValidBusinessTypeIdentifier =
-      controller.showBusinessDetailsForm(Some(BusinessIdentificationController.validBusinessTypes.head))
+      controller.showBusinessDetailsForm(Some(BusinessIdentificationForms.validBusinessTypes.head))
 
     behave like anAgentAffinityGroupOnlyEndpoint(playRequestValidBusinessTypeIdentifier(_))
 
@@ -179,7 +179,7 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
       metricShouldExistAndBeUpdated("Count-Subscription-AlreadySubscribed-HasEnrolment-AgentServicesAccount")
     }
 
-    BusinessIdentificationController.validBusinessTypes.foreach { validBusinessTypeIdentifier =>
+    BusinessIdentificationForms.validBusinessTypes.foreach { validBusinessTypeIdentifier =>
 
       s"show check Agency Status page for valid businessTypeIdentifier: $validBusinessTypeIdentifier" in {
         val result = await(controller.showBusinessDetailsForm(Some(validBusinessTypeIdentifier))(authenticatedAs(subscribingCleanAgentWithoutEnrolments)))
@@ -206,18 +206,18 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
   "submitBusinessDetailsForm" should {
 
     behave like anAgentAffinityGroupOnlyEndpoint(request =>
-      controller.submitBusinessDetailsForm(Some(BusinessIdentificationController.validBusinessTypes.head))(request))
+      controller.submitBusinessDetailsForm(Some(BusinessIdentificationForms.validBusinessTypes.head))(request))
 
     "return a 200 response to redisplay the form with an error message for invalidly-formatted UTR" in {
       val invalidUtr = "0123456"
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> invalidUtr, "postcode" -> validPostcode)
-      val result = await(controller.submitBusinessDetailsForm(Some(BusinessIdentificationController.validBusinessTypes.head))(request))
+      val result = await(controller.submitBusinessDetailsForm(Some(BusinessIdentificationForms.validBusinessTypes.head))(request))
 
       status(result) shouldBe OK
       val responseBody = bodyOf(result)
       responseBody should include(htmlEscapedMessage("businessDetails.title"))
-      responseBody should include(htmlEscapedMessage("error.utr.invalid.length"))
+      responseBody should include(htmlEscapedMessage("error.sautr.invalid"))
       responseBody should include(invalidUtr)
       responseBody should include(validPostcode)
       noMetricExpectedAtThisPoint()
@@ -227,12 +227,12 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
       val invalidUtr = "2000000001" // Modulus11Check validation fails in this case
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> invalidUtr, "postcode" -> validPostcode)
-      val result = await(controller.submitBusinessDetailsForm(Some(BusinessIdentificationController.validBusinessTypes.head))(request))
+      val result = await(controller.submitBusinessDetailsForm(Some(BusinessIdentificationForms.validBusinessTypes.head))(request))
 
       status(result) shouldBe OK
       val responseBody = bodyOf(result)
       responseBody should include(htmlEscapedMessage("businessDetails.title"))
-      responseBody should include(htmlEscapedMessage("error.utr.invalid.format"))
+      responseBody should include(htmlEscapedMessage("error.sautr.invalid"))
       responseBody should include(invalidUtr)
       responseBody should include(validPostcode)
       noMetricExpectedAtThisPoint()
@@ -241,7 +241,7 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
     "return a 200 response to redisplay the form with an error message for invalidly-formatted postcode" in {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> invalidPostcode)
-      val result = await(controller.submitBusinessDetailsForm(Some(BusinessIdentificationController.validBusinessTypes.head))(request))
+      val result = await(controller.submitBusinessDetailsForm(Some(BusinessIdentificationForms.validBusinessTypes.head))(request))
 
       status(result) shouldBe OK
       val responseBody = bodyOf(result)
@@ -255,12 +255,12 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
     "return a 200 response to redisplay the form with an error message for empty form parameters" in {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> "", "postcode" -> "")
-      val result = await(controller.submitBusinessDetailsForm(Some(BusinessIdentificationController.validBusinessTypes.head))(request))
+      val result = await(controller.submitBusinessDetailsForm(Some(BusinessIdentificationForms.validBusinessTypes.head))(request))
 
       status(result) shouldBe OK
       val responseBody = bodyOf(result)
       responseBody should include(htmlEscapedMessage("businessDetails.title"))
-      responseBody should include(htmlEscapedMessage("error.utr.blank"))
+      responseBody should include(htmlEscapedMessage("error.sautr.blank"))
       responseBody should include("Enter a postcode")
       noMetricExpectedAtThisPoint()
     }
@@ -269,7 +269,7 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
       withNonMatchingUtrAndPostcode(validUtr, validPostcode)
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
-      val result = await(controller.submitBusinessDetailsForm(Some(BusinessIdentificationController.validBusinessTypes.head))(request))
+      val result = await(controller.submitBusinessDetailsForm(Some(BusinessIdentificationForms.validBusinessTypes.head))(request))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showNoAgencyFound().url)
@@ -281,7 +281,7 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val e = intercept[IllegalStateException] {
-        await(controller.submitBusinessDetailsForm(Some(BusinessIdentificationController.validBusinessTypes.head))(request))
+        await(controller.submitBusinessDetailsForm(Some(BusinessIdentificationForms.validBusinessTypes.head))(request))
       }
       e.getMessage should include(validUtr.value)
     }
@@ -290,7 +290,7 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
       withMatchingUtrAndPostcode(validUtr, validPostcode, isSubscribedToAgentServices = true, isSubscribedToETMP = true)
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
-      val result = await(controller.submitBusinessDetailsForm(Some(BusinessIdentificationController.validBusinessTypes.head))(request))
+      val result = await(controller.submitBusinessDetailsForm(Some(BusinessIdentificationForms.validBusinessTypes.head))(request))
       redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showAlreadySubscribed().url)
     }
 
@@ -302,7 +302,7 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
 
       implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
-      val result = await(controller.submitBusinessDetailsForm(Some(BusinessIdentificationController.validBusinessTypes.head))(request))
+      val result = await(controller.submitBusinessDetailsForm(Some(BusinessIdentificationForms.validBusinessTypes.head))(request))
       redirectLocation(result) shouldBe Some(routes.SubscriptionController.showSubscriptionComplete().url)
       result.session.get("arn") shouldBe Some("TARN00023")
     }
@@ -314,7 +314,7 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
-      val result = await(controller.submitBusinessDetailsForm(Some(BusinessIdentificationController.validBusinessTypes.head))(request))
+      val result = await(controller.submitBusinessDetailsForm(Some(BusinessIdentificationForms.validBusinessTypes.head))(request))
       redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showCreateNewAccount().url)
 
       implicit val hc = HeaderCarrierConverter.fromHeadersAndSession(request.headers, Some(request.session))
@@ -330,7 +330,7 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
 
       implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
-      an[Upstream4xxResponse] shouldBe thrownBy(await(controller.submitBusinessDetailsForm(Some(BusinessIdentificationController.validBusinessTypes.head))(request)))
+      an[Upstream4xxResponse] shouldBe thrownBy(await(controller.submitBusinessDetailsForm(Some(BusinessIdentificationForms.validBusinessTypes.head))(request)))
     }
 
     "Upstream4xxResponse partialSubscriptionFix failed with 409 as someone has already been allocated the enrolment" in {
@@ -340,7 +340,7 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
 
       implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
-      an[Upstream4xxResponse] shouldBe thrownBy(await(controller.submitBusinessDetailsForm(Some(BusinessIdentificationController.validBusinessTypes.head))(request)))
+      an[Upstream4xxResponse] shouldBe thrownBy(await(controller.submitBusinessDetailsForm(Some(BusinessIdentificationForms.validBusinessTypes.head))(request)))
     }
 
     "Upstream5xxResponse partialSubscriptionFix failed for partiallySubscribed User" in {
@@ -350,7 +350,7 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
 
       implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
-      an[Upstream5xxResponse] shouldBe thrownBy(await(controller.submitBusinessDetailsForm(Some(BusinessIdentificationController.validBusinessTypes.head))(request)))
+      an[Upstream5xxResponse] shouldBe thrownBy(await(controller.submitBusinessDetailsForm(Some(BusinessIdentificationForms.validBusinessTypes.head))(request)))
     }
   }
 
@@ -1042,7 +1042,7 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
             .withSession("saAgentReferenceToCheck" -> "SA6012")))
 
       status(result) shouldBe 200
-      bodyOf(result) should include(htmlEscapedMessage("error.utr.blank"))
+      bodyOf(result) should include(htmlEscapedMessage("error.client.sautr.blank"))
     }
 
     "utr invalid send back 200 with error page" in {
@@ -1053,7 +1053,7 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
             .withSession("saAgentReferenceToCheck" -> "SA6012")))
 
       status(result) shouldBe 200
-      bodyOf(result) should include(htmlEscapedMessage("error.utr.invalid.format"))
+      bodyOf(result) should include(htmlEscapedMessage("error.client.sautr.invalid"))
     }
 
     "utr wrong length" in {
@@ -1064,7 +1064,7 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
             .withSession("saAgentReferenceToCheck" -> "SA6012")))
 
       status(result) shouldBe 200
-      bodyOf(result) should include(htmlEscapedMessage("error.utr.invalid.length"))
+      bodyOf(result) should include(htmlEscapedMessage("error.client.sautr.invalid"))
     }
 
     "Invalid form 'variant' cannot determine which option user selected  " in {

@@ -16,46 +16,50 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
+import play.api.data.Form
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.models.KnownFacts
 import uk.gov.hmrc.play.test.UnitSpec
 
 class KnownFactsFormSpec extends UnitSpec {
 
-  val form = BusinessIdentificationController.knownFactsForm
-
   "knownFactsForm" should {
 
-    "accept valid utr and postcode fields and produce valid KnownFacts" in {
-      val result = form.bind(Map("utr" -> "2000000000", "postcode" -> "BN147BU")).value
-      result shouldBe Some(KnownFacts(Utr("2000000000"), "BN147BU"))
-    }
+    behave like checkKnownFactsForm("sole_trader")(BusinessIdentificationForms.knownFactsForm("sole_trader"))
+    behave like checkKnownFactsForm("partnership")(BusinessIdentificationForms.knownFactsForm("partnership"))
+    behave like checkKnownFactsForm("limited_company")(BusinessIdentificationForms.knownFactsForm("limited_company"))
+    behave like checkKnownFactsForm("llp")(BusinessIdentificationForms.knownFactsForm("llp"))
 
-    "fill with valid KnownFacts" in {
-      val result = form.fill(KnownFacts(Utr("2000000000"), "BN147BU")).data
-      result shouldBe Map("utr" -> "2000000000", "postcode" -> "BN147BU")
-    }
+    def checkKnownFactsForm(businessType: String)(form: => Form[KnownFacts]) = {
+      s"accept valid utr and postcode fields and produce valid KnownFacts for $businessType" in {
+        val result = form.bind(Map("utr" -> "2000000000", "postcode" -> "BN147BU")).value
+        result shouldBe Some(KnownFacts(Utr("2000000000"), "BN147BU"))
+      }
 
-    "not produce KnownFacts if utr is missing" in {
-      val result = form.bind(Map("postcode" -> "BN147BU")).value
-      result shouldBe None
-    }
+      s"fill with valid KnownFacts for $businessType" in {
+        val result = form.fill(KnownFacts(Utr("2000000000"), "BN147BU")).data
+        result shouldBe Map("utr" -> "2000000000", "postcode" -> "BN147BU")
+      }
 
-    "not produce KnownFacts if utr is invalid" in {
-      val result = form.bind(Map("utr" -> "foo", "postcode" -> "BN147BU")).value
-      result shouldBe None
-    }
+      s"not produce KnownFacts if utr is missing for $businessType" in {
+        val result = form.bind(Map("postcode" -> "BN147BU")).value
+        result shouldBe None
+      }
 
-    "not produce KnownFacts if postcode is missing" in {
-      val result = form.bind(Map("utr" -> "2000000000")).value
-      result shouldBe None
-    }
+      s"not produce KnownFacts if utr is invalid for $businessType" in {
+        val result = form.bind(Map("utr" -> "foo", "postcode" -> "BN147BU")).value
+        result shouldBe None
+      }
 
-    "not produce KnownFacts if postcode is invalid" in {
-      val result = form.bind(Map("utr" -> "2000000000", "postcode" -> "foo")).value
-      result shouldBe None
-    }
+      s"not produce KnownFacts if postcode is missing for $businessType" in {
+        val result = form.bind(Map("utr" -> "2000000000")).value
+        result shouldBe None
+      }
 
+      s"not produce KnownFacts if postcode is invalid for $businessType" in {
+        val result = form.bind(Map("utr" -> "2000000000", "postcode" -> "foo")).value
+        result shouldBe None
+      }
+    }
   }
-
 }

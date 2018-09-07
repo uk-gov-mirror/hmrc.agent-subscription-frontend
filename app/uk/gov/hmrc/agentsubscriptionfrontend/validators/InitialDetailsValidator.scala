@@ -15,34 +15,14 @@
  */
 
 package uk.gov.hmrc.agentsubscriptionfrontend.validators
+
 import javax.inject.{Inject, Singleton}
-import play.api.data.validation.{Constraints, _}
-import uk.gov.hmrc.agentsubscriptionfrontend.controllers.FieldMappings
-import uk.gov.hmrc.agentsubscriptionfrontend.models.InitialDetails
-import uk.gov.hmrc.agentsubscriptionfrontend.validators.ValidationResult.FailureReason._
-
-sealed trait ValidationResult extends Product with Serializable
-
-object ValidationResult {
-  case object Pass extends ValidationResult
-  case class Failure(reasons: Set[FailureReason]) extends ValidationResult
-
-  object Failure {
-    def apply(reason: FailureReason): Failure = Failure(Set(reason))
-  }
-
-  sealed trait FailureReason extends Product with Serializable
-
-  object FailureReason {
-    case object InvalidEmail extends FailureReason
-    case object InvalidBusinessName extends FailureReason
-    case object InvalidBusinessAddress extends FailureReason
-  }
-}
-
+import play.api.data.validation.{Constraints, Valid}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{InitialDetails, ValidationResult}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidationResult.FailureReason._
 @Singleton
 class InitialDetailsValidator @Inject()() {
-  import uk.gov.hmrc.agentsubscriptionfrontend.validators.ValidationResult._
+  import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidationResult._
 
   def validate(initialDetails: InitialDetails): ValidationResult = {
     val allValidations = Set(validateEmail(initialDetails.email), validateBusinessName(initialDetails.name))
@@ -61,7 +41,7 @@ class InitialDetailsValidator @Inject()() {
     }
 
   private def validateBusinessName(businessName: String): ValidationResult =
-    if (FieldMappings.businessName.constraints.map(_(businessName)).forall(_ == Valid))
+    if (CommonValidators.businessName.constraints.map(_(businessName)).forall(_ == Valid))
       Pass
     else Failure(InvalidBusinessName)
 

@@ -18,8 +18,8 @@ package uk.gov.hmrc.agentsubscriptionfrontend.validators
 
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{BusinessAddress, InitialDetails}
-import uk.gov.hmrc.agentsubscriptionfrontend.validators.ValidationResult.FailureReason._
-import uk.gov.hmrc.agentsubscriptionfrontend.validators.ValidationResult._
+import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidationResult.FailureReason._
+import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidationResult._
 import uk.gov.hmrc.play.test.UnitSpec
 
 class InitialDetailsValidatorSpec extends UnitSpec {

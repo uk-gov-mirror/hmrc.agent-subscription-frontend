@@ -16,203 +16,84 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend
 
-import play.api.data.Forms._
-import play.api.data.{FormError, Mapping}
-import play.api.data.format.Formatter
-import play.api.data.validation.{Constraint, Constraints, _}
-import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
-import uk.gov.hmrc.agentsubscriptionfrontend.config.blacklistedpostcodes.PostcodesLoader
-import uk.gov.hmrc.domain.Nino
+import play.api.data.Form
+import play.api.data.Forms.{mapping, _}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
+import uk.gov.hmrc.agentsubscriptionfrontend.models._
+import uk.gov.hmrc.agentsubscriptionfrontend.support.TaxIdentifierFormatters._
+import uk.gov.hmrc.agentsubscriptionfrontend.validators.CommonValidators._
+import uk.gov.voa.play.form.ConditionalMappings.{mandatoryIfEqual, mandatoryIfTrue}
 
 package object controllers {
-  object FieldMappings {
-    private val desPostcodeRegex = "^[A-Z]{1,2}[0-9][0-9A-Z]?\\s?[0-9][A-Z]{2}$|BFPO\\s?[0-9]{1,5}$".r
-    private val desTextRegex = "^[A-Za-z0-9 \\-,.&'\\/]*$"
+  object BusinessIdentificationForms {
+    val validBusinessTypes = Seq("sole_trader", "limited_company", "partnership", "llp")
 
-    // Same as play.api.data.validation.Constraints.nonEmpty but with a custom message instead of error.required
-    private def nonEmptyWithMessage(messageKey: String): Constraint[String] = Constraint[String] { (o: String) =>
-      if (o == null) Invalid(ValidationError(messageKey))
-      else if (o.trim.isEmpty) Invalid(ValidationError(messageKey))
-      else Valid
-    }
+    def knownFactsForm(businessType: String): Form[KnownFacts] =
+      Form[KnownFacts](
+        mapping("utr" -> businessUtr(businessType), "postcode" -> postcode)(
+          (utrStr, postcode) =>
+            normalizeUtr(utrStr)
+              .map(utr => KnownFacts(utr, postcode))
+              .getOrElse(throw new Exception("Invalid utr found after validation")))(knownFacts =>
+          Some((knownFacts.utr.value, knownFacts.postcode))))
 
-    // Same as play.api.data.validation.Constraints.maxLength but with a chance to use a custom message instead of error.maxLength
-    private def maxLength(length: Int, messageKey: String = "error.maxLength"): Constraint[String] =
-      Constraint[String]("constraint.maxLength", length) { o =>
-        require(length >= 0, "string maxLength must not be negative")
-        if (o == null) Invalid(ValidationError(messageKey, length))
-        else if (o.size <= length) Valid
-        else Invalid(ValidationError(messageKey, length))
-      }
-
-    // Same as play.api.data.format.Formats.stringFormat but with a custom message instead of error.required
-    private def stringFormatWithMessage(messageKey: String): Formatter[String] = new Formatter[String] {
-      def bind(key: String, data: Map[String, String]) = data.get(key).toRight(Seq(FormError(key, messageKey, Nil)))
-
-      def unbind(key: String, value: String) = Map(key -> value)
-    }
-
-    private def nonEmptyEmailAddress = Constraint { fieldValue: String =>
-      nonEmptyWithMessage("error.business-email.empty")(fieldValue) match {
-        case i: Invalid =>
-          i
-        case Valid =>
-          Constraints.emailAddress(fieldValue)
-      }
-    }
-
-    private val nonEmptyPostcode: Constraint[String] = Constraint[String] { fieldValue: String =>
-      nonEmptyWithMessage("error.postcode.empty")(fieldValue) match {
-        case i: Invalid =>
-          i
-        case Valid =>
-          val error = "error.postcode.invalid"
-          desPostcodeRegex
-            .unapplySeq(fieldValue)
-            .map(_ => Valid)
-            .getOrElse(Invalid(ValidationError(error)))
-      }
-    }
-
-    private def noAmpersand(errorMsgKey: String) = Constraints.pattern("[^&]*".r, error = errorMsgKey)
-
-    private def noApostrophe(errorMsgKey: String) = Constraints.pattern("[^']*".r, error = errorMsgKey)
-
-    private[controllers] def desText(msgKeyRequired: String, msgKeyInvalid: String): Constraint[String] =
-      Constraint[String] { fieldValue: String =>
-        nonEmptyWithMessage(msgKeyRequired)(fieldValue) match {
-          case i: Invalid => i
-          case Valid =>
-            fieldValue match {
-              case value if !value.matches(desTextRegex) => Invalid(ValidationError(msgKeyInvalid))
-              case _                                     => Valid
-            }
-        }
-      }
-
-    private def validateBlacklist(postcode: String, blacklistedPostcodes: Set[String]): Boolean =
-      !blacklistedPostcodes.contains(PostcodesLoader.formatPostcode(postcode))
-
-    private val saAgentCodeConstraint: Constraint[String] = Constraint[String] { fieldValue: String =>
-      val formattedCode = fieldValue.replace(" ", "")
-
-      if (formattedCode.isEmpty)
-        Invalid(ValidationError("error.saAgentCode.blank"))
-      else if (!formattedCode.matches("""^[a-zA-Z0-9]*$"""))
-        Invalid(ValidationError("error.saAgentCode.invalid"))
-      else if (formattedCode.length != 6)
-        Invalid(ValidationError("error.saAgentCode.length"))
-      else
-        Valid
-    }
-
-    def saAgentCode = text verifying saAgentCodeConstraint
-
-    private def checkOneAtATime[T](firstConstraint: Constraint[T], secondConstraint: Constraint[T]) = Constraint[T] {
-      fieldValue: T =>
-        firstConstraint(fieldValue) match {
-          case i @ Invalid(_) => i
-          case Valid          => secondConstraint(fieldValue)
-        }
-    }
-
-    def normalizeUtr(utrStr: String): Option[Utr] = {
-      val formattedUtr = utrStr.replace(" ", "")
-      if (Utr.isValid(formattedUtr)) Some(Utr(formattedUtr)) else None
-    }
-
-    private def isUtrValid(utrStr: String): Boolean = normalizeUtr(utrStr).nonEmpty
-
-    def prettify(arn: Arn): String = {
-      val unapplyPattern = """([A-Z]ARN)(\d{3})(\d{4})""".r
-
-      unapplyPattern
-        .unapplySeq(arn.value)
-        .map(_.mkString("-"))
-        .getOrElse(throw new Exception(s"The arn contains an invalid value ${arn.value}"))
-    }
-
-    def prettify(utr: Utr): String =
-      if (utr.value.trim.length == 10) {
-        val (first, last) = utr.value.trim.splitAt(5)
-        s"$first $last"
-      } else {
-        throw new Exception(s"The utr contains an invalid value ${utr.value}")
-      }
-
-    private val utrConstraint: Constraint[String] = Constraint[String] { fieldValue: String =>
-      val formattedField = fieldValue.replace(" ", "")
-
-      Constraints.nonEmpty(formattedField) match {
-        case _: Invalid => Invalid(ValidationError("error.utr.blank"))
-        case _ if formattedField.map(_.isDigit).reduce(_ && _) && formattedField.size != 10 =>
-          Invalid(ValidationError("error.utr.invalid.length"))
-        case _ if !isUtrValid(fieldValue) => Invalid(ValidationError("error.utr.invalid.format"))
-        case _                            => Valid
-      }
-    }
-
-    def utr: Mapping[String] = text verifying utrConstraint
-
-    def normalizeNino(ninoStr: String): Option[Nino] = {
-      val formattedNino = ninoStr.replaceAll("\\s", "")
-      if (Nino.isValid(formattedNino)) Some(Nino(formattedNino)) else None
-    }
-
-    private val ninoConstraint: Constraint[String] = Constraint[String] { fieldValue: String =>
-      val formattedField = fieldValue.replaceAll("\\s", "")
-
-      Nino.isValid(formattedField) match {
-        case true  => Valid
-        case false => Invalid(ValidationError("error.nino.invalid"))
-      }
-    }
-
-    def nino: Mapping[String] = text verifying ninoConstraint
-
-    def postcode: Mapping[String] =
-      of[String](stringFormatWithMessage("error.postcode.empty")) verifying nonEmptyPostcode
-
-    def postcodeWithBlacklist(blacklistedPostcodes: Set[String]): Mapping[String] =
-      postcode
-        .verifying("error.postcode.blacklisted", x => validateBlacklist(x, blacklistedPostcodes))
-
-    def emailAddress: Mapping[String] =
-      text
-        .verifying(nonEmptyEmailAddress)
-
-    def businessName: Mapping[String] =
-      text
-        .verifying(maxLength(40, "error.business-name.maxlength"))
-        .verifying(
-          checkOneAtATime(
-            noAmpersand("error.business-name.invalid"),
-            checkOneAtATime(
-              noApostrophe("error.business-name.invalid"),
-              desText(msgKeyRequired = "error.business-name.empty", msgKeyInvalid = "error.business-name.invalid"))
-          ))
-
-    def addressLine1: Mapping[String] =
-      text
-        .verifying(maxLength(35, "error.address.lines.maxLength"))
-        .verifying(desText(msgKeyRequired = "error.address.lines.empty", msgKeyInvalid = "error.address.lines.invalid"))
-
-    def addressLine234: Mapping[Option[String]] =
-      optional(
-        text
-          .verifying(maxLength(35, "error.address.lines.maxLength"))
+    val businessTypeForm: Form[BusinessType] =
+      Form[BusinessType](
+        mapping("businessType" -> optional(text).verifying(radioInputSelected("businessType.error.no-radio-selected")))(
+          BusinessType.apply)(BusinessType.unapply)
           .verifying(
-            desText(msgKeyRequired = "error.address.lines.empty", msgKeyInvalid = "error.address.lines.invalid")))
+            "error.business-type-value.invalid",
+            submittedBusinessType => validBusinessTypes.contains(submittedBusinessType.businessType.getOrElse(""))))
 
-    def radioInputSelected[T](message: String = "error.no-radio-selected"): Constraint[Option[T]] =
-      Constraint[Option[T]] { fieldValue: Option[T] =>
-        if (fieldValue.isDefined)
-          Valid
-        else
-          Invalid(ValidationError(message))
-      }
+    val confirmBusinessForm: Form[ConfirmBusiness] =
+      Form[ConfirmBusiness](
+        mapping(
+          "confirmBusiness" -> optional(text).verifying(radioInputSelected("confirmBusiness.error.no-radio-selected")))(
+          answer => ConfirmBusiness(RadioInputAnswer.apply(answer.getOrElse(""))))(answer =>
+          Some(RadioInputAnswer.unapply(answer.confirm)))
+          .verifying(
+            "error.confirm-business-value.invalid",
+            submittedAnswer => Seq(Yes, No).contains(submittedAnswer.confirm)))
 
-    def nonEmptyTextWithMsg(errorMessageKey: String): Mapping[String] =
-      text verifying nonEmptyWithMessage(errorMessageKey)
+    val businessEmailForm = Form[BusinessEmail](
+      mapping(
+        "email" -> emailAddress
+      )(BusinessEmail.apply)(BusinessEmail.unapply)
+    )
+
+    val businessNameForm = Form[BusinessName](
+      mapping(
+        "name" -> businessName
+      )(BusinessName.apply)(BusinessName.unapply)
+    )
+
+    //uses variant "cannotProvide" to determine action if user cannot provide allowed options: utr or nino
+    val clientDetailsForm: Form[RadioInvasiveTaxPayerOption] = Form[RadioInvasiveTaxPayerOption](
+      mapping(
+        "variant" -> optional(text).verifying(radioInputSelected("clientDetails.error.no-radio.selected")),
+        "utr"     -> mandatoryIfEqual("variant", "utr", clientDetailsUtr),
+        "nino"    -> mandatoryIfEqual("variant", "nino", clientDetailsNino)
+      )(RadioInvasiveTaxPayerOption.apply)(RadioInvasiveTaxPayerOption.unapply).verifying(
+        "error.radio-variant.invalid",
+        submittedTaxPayerOption =>
+          ValidVariantsTaxPayerOptionForm.values.exists(_.toString == submittedTaxPayerOption.variant.getOrElse(""))
+      ))
+
+    val invasiveCheckStartSaAgentCode: Form[RadioInvasiveStartSaAgentCode] = Form[RadioInvasiveStartSaAgentCode](
+      mapping(
+        "hasSaAgentCode" -> optional(boolean).verifying(radioInputSelected("invasive.error.no-radio.selected")),
+        "saAgentCode"    -> mandatoryIfTrue("hasSaAgentCode", saAgentCode)
+      )(RadioInvasiveStartSaAgentCode.apply)(RadioInvasiveStartSaAgentCode.unapply))
+  }
+
+  object SubscriptionControllerForms {
+    val linkClientsForm: Form[LinkClients] =
+      Form[LinkClients](
+        mapping("autoMapping" -> optional(text).verifying(radioInputSelected("linkClients.error.no-radio-selected")))(
+          ans => LinkClients(RadioInputAnswer.apply(ans.getOrElse(""))))(lc =>
+          Some(RadioInputAnswer.unapply(lc.autoMapping)))
+          .verifying(
+            "error.link-clients-value.invalid",
+            submittedLinkClients => Seq(Yes, No).contains(submittedLinkClients.autoMapping)))
   }
 }

@@ -20,17 +20,17 @@ import play.api.LoggerLike
 import play.api.data.Form
 import play.api.data.Forms._
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
-import uk.gov.hmrc.agentsubscriptionfrontend.controllers.FieldMappings
+import uk.gov.hmrc.agentsubscriptionfrontend.validators.CommonValidators._
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{AddressLookupFrontendAddress, DesAddress}
 
 class DesAddressForm(logger: LoggerLike, blacklistedPostcodes: Set[String]) {
   val form = Form[DesAddress](
     mapping(
-      "addressLine1" -> FieldMappings.addressLine1,
-      "addressLine2" -> FieldMappings.addressLine234,
-      "addressLine3" -> FieldMappings.addressLine234,
-      "addressLine4" -> FieldMappings.addressLine234,
-      "postcode"     -> FieldMappings.postcodeWithBlacklist(blacklistedPostcodes),
+      "addressLine1" -> addressLine1,
+      "addressLine2" -> addressLine234,
+      "addressLine3" -> addressLine234,
+      "addressLine4" -> addressLine234,
+      "postcode"     -> postcodeWithBlacklist(blacklistedPostcodes),
       "countryCode"  -> text
     )(DesAddress.apply)(DesAddress.unapply))
 
