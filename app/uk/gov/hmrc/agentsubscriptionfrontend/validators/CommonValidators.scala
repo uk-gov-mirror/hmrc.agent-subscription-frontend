@@ -26,7 +26,7 @@ import uk.gov.hmrc.domain.Nino
 
 object CommonValidators {
   private val DesPostcodeRegex = "^[A-Z]{1,2}[0-9][0-9A-Z]?\\s?[0-9][A-Z]{2}$|BFPO\\s?[0-9]{1,5}$"
-  private val PostcodeSpecialCharsRegex = """^[A-Za-z0-9 ]*$"""
+  private val PostcodeSpecialCharsRegex = """^[A-Za-z0-9 _]*[A-Za-z0-9][A-Za-z0-9 _]*$"""
   private val EmailSpecialCharsRegex = """^[a-zA-Z 0-9\.\@\_\-]*$"""
   private val DesTextRegex = "^[A-Za-z0-9 \\-,.&'\\/]*$"
 

@@ -211,6 +211,10 @@ class CommonValidatorsSpec extends UnitSpec with EitherValues {
       bind("AAA101AAA").left.value should contain only FormError("testKey", "error.postcode.maxlength")
     }
 
+    "reject postcode if its invalid" in {
+      shouldRejectFieldValueAsInvalid("_A1 1AA")
+    }
+
     "reject postcodes containing invalid characters" in {
       shouldRejectFieldValueAsInvalidChars("A.1 1AA")
       shouldRejectFieldValueAsInvalidChars("AA/ 1AA")
