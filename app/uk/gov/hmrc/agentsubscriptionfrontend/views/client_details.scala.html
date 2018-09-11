@@ -35,7 +35,7 @@
                     <p>@Messages("invasive.p1")</p>
                     <p>@Messages("invasive.p2")</p>
                     @if(radioResponseForm.error("variant").isDefined){
-                        <span class="error-message">@Messages("error.no-radio-selected")</span>
+                        <span class="error-message">@Messages("clientDetails.error.no-radio.selected")</span>
                     }
                 </legend>
                 <div class="multiple-choice" data-target="ninoRadioInput">
@@ -46,7 +46,7 @@
                     <label class="form-label" for="nino">@Messages("invasive.radioResponse.hidden.input.label.nino")
                     <span class="form-hint">@Messages("invasive.radioResponse.helper.text.nino")</span>
                     </label>
-                    @if(radioResponseForm.error("nino").isDefined){<span class="error-message">@Messages("error.nino.invalid")</span>}
+                    @radioResponseForm.error("nino").map{formError => <span class="error-message"> @Messages(formError.message)</span>}
                     <input class="form-control @if(radioResponseForm.error("nino").isDefined){form-control-error}" name="nino" type="text" id="nino">
                 </div>
                 <div class="multiple-choice" data-target="utrRadioInput">
@@ -57,7 +57,7 @@
                     <label class="form-label" for="utr">@Messages("invasive.radioResponse.hidden.input.label.utr")
                     <span class="form-hint">@Messages("invasive.radioResponse.helper.text.utr")</span>
                     </label>
-                    @if(radioResponseForm.error("utr").isDefined){<span class="error-message">@Messages(radioResponseForm.errors.head.message)</span>}
+                    @radioResponseForm.error("utr").map{formError => <span class="error-message"> @Messages(formError.message)</span>}
                     <input class="form-control @if(radioResponseForm.error("utr").isDefined){form-control-error}" name="utr" type="text" id="utr">
                 </div>
                 <div class="multiple-choice">

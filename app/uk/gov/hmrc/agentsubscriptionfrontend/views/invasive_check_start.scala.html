@@ -35,7 +35,7 @@
                     <h1 class="heading-large  @if(radioResponseForm.hasErrors){push--top}">@Messages("invasive.title.saCode")</h1>
                     <p>@Messages("invasive.check.p1")</p>
                     @if(radioResponseForm.error("hasSaAgentCode").isDefined){
-                        <span class="error-message">@Messages("error.no-radio-selected")</span>
+                        <span class="error-message">@Messages("invasive.error.no-radio.selected")</span>
                     }
                 </legend>
 
@@ -45,7 +45,7 @@
                 </div>
                 <div class="panel panel-border-narrow js-hidden @if(radioResponseForm.error("saAgentCode").isDefined){form-group-error}" id="hasSaAgentCode">
                     <label class="form-label" for="saAgentCode">@Messages("invasive.radioResponse.hidden.input.label.sa")</label>
-                    @radioResponseForm.error("saAgentCode").map { formError => <span class="error-message">@Messages(formError.message)</span> }
+                    @radioResponseForm.errors("saAgentCode").foreach{ formError => <span class="error-message">@Messages(formError.message)</span> }
                     <input class="form-control @if(radioResponseForm.error("saAgentCode").isDefined){form-control-error}" name="saAgentCode" type="text" id="saAgentCode">
                 </div>
 

@@ -17,6 +17,8 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import org.jsoup.Jsoup
+import play.api.i18n.Messages
+import play.api.i18n.Messages.Implicits.applicationMessages
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
@@ -792,7 +794,7 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
   "invasive check" should {
     "return 200 and redisplay the invasiveSaAgentCodePost page with an error message for missing radio choice" in {
       val result = await(controller.invasiveSaAgentCodePost(authenticatedAs(subscribingCleanAgentWithoutEnrolments)))
-      result should containMessages("invasive.error.no-radio.selected")
+      Messages("invasive.error.no-radio.selected").r.findAllMatchIn(bodyOf(result)).size shouldBe 2
     }
 
     "start invasiveCheck if selected Yes with SaAgentCode reference inputted" in {
@@ -950,13 +952,32 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
       metricShouldExistAndBeUpdated("Count-Subscription-InvasiveCheck-Failed")
     }
 
-    "nino invalid send back 200 with error page" in {
+    "clientDetails no variant selected" in {
+      val result = await(
+        controller.submitClientDetailsForm(authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+          .withFormUrlEncodedBody(("variant", ""))))
 
+      status(result) shouldBe 200
+      bodyOf(result) should include(htmlEscapedMessage("clientDetails.error.no-radio.selected"))
+    }
+
+    "nino invalid send back 200 with error page" in {
       val result = await(
         controller.submitClientDetailsForm(authenticatedAs(subscribingCleanAgentWithoutEnrolments)
           .withFormUrlEncodedBody(("variant", "nino"), ("nino", "AA123"))))
 
       status(result) shouldBe 200
+      bodyOf(result) should include(htmlEscapedMessage("error.clientdetails.nino.invalid"))
+    }
+
+    "nino empty send back 200 with error page" in {
+
+      val result = await(
+        controller.submitClientDetailsForm(authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+          .withFormUrlEncodedBody(("variant", "nino"), ("nino", ""))))
+
+      status(result) shouldBe 200
+      bodyOf(result) should include(htmlEscapedMessage("error.clientdetails.nino.empty"))
     }
 
     "redirect to confirm business when successfully submitting UTR" in {
