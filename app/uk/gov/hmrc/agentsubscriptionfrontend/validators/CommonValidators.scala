@@ -88,15 +88,17 @@ object CommonValidators {
 
   def addressLine1: Mapping[String] =
     text
-      .verifying(maxLength(AddresslineMaxLength, "error.address.lines.maxLength"))
-      .verifying(desText(msgKeyRequired = "error.address.lines.empty", msgKeyInvalid = "error.address.lines.invalid"))
+      .verifying(maxLength(AddresslineMaxLength, "error.addressline.1.maxlength"))
+      .verifying(desText(msgKeyRequired = "error.addressline.1.empty", msgKeyInvalid = "error.addressline.1.invalid"))
 
-  def addressLine234: Mapping[Option[String]] =
+  def addressLine234(lineNumber: Int): Mapping[Option[String]] =
     optional(
       text
-        .verifying(maxLength(AddresslineMaxLength, "error.address.lines.maxLength"))
+        .verifying(maxLength(AddresslineMaxLength, s"error.addressline.$lineNumber.maxlength"))
         .verifying(
-          desText(msgKeyRequired = "error.address.lines.empty", msgKeyInvalid = "error.address.lines.invalid")))
+          desText(
+            msgKeyRequired = s"error.addressline.$lineNumber.empty",
+            msgKeyInvalid = s"error.addressline.$lineNumber.invalid")))
 
   def radioInputSelected[T](message: String = "error.no-radio-selected"): Constraint[Option[T]] =
     Constraint[Option[T]] { fieldValue: Option[T] =>

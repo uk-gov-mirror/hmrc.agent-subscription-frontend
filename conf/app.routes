@@ -20,6 +20,9 @@ POST        /enter-agent-code                     uk.gov.hmrc.agentsubscriptionf
 GET         /client-details                       uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showClientDetailsForm
 POST        /client-details                       uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.submitClientDetailsForm
 
+GET         /update-business-address              uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showUpdateBusinessAddressForm
+POST        /update-business-address              uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.submitUpdateBusinessAddressForm
+
 GET         /check-answers                        uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showCheckAnswers
 POST        /check-answers                        uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.submitCheckAnswers
 

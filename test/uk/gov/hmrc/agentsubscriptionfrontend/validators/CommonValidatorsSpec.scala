@@ -391,7 +391,7 @@ class CommonValidatorsSpec extends UnitSpec with EitherValues {
   "addressLine1 bind" should {
     val unprefixedAddressLine1Mapping = addressLine1
 
-    behave like anAddressLineValidatingMapping(unprefixedAddressLine1Mapping)
+    behave like anAddressLineValidatingMapping(unprefixedAddressLine1Mapping, 1)
 
     val addressLine1Mapping = unprefixedAddressLine1Mapping.withPrefix("testKey")
 
@@ -403,21 +403,24 @@ class CommonValidatorsSpec extends UnitSpec with EitherValues {
       }
 
       "input is empty" in {
-        bind("").left.value should contain(FormError("testKey", "error.address.lines.empty"))
+        bind("").left.value should contain(FormError("testKey", "error.addressline.1.empty"))
       }
 
       "input is only whitespace" in {
-        bind("    ").left.value should contain(FormError("testKey", "error.address.lines.empty"))
+        bind("    ").left.value should contain(FormError("testKey", "error.addressline.1.empty"))
       }
     }
   }
 
   "addressLine 2, 3 and 4 bind" should {
-    val nonOptionalAddressLine234Mapping: Mapping[String] = addressLine234.transform(_.get, Some.apply)
+    def nonOptionalAddressLine234Mapping(lineNumber: Int): Mapping[String] =
+      addressLine234(lineNumber).transform(_.get, Some.apply)
 
-    behave like anAddressLineValidatingMapping(nonOptionalAddressLine234Mapping)
+    behave like anAddressLineValidatingMapping(nonOptionalAddressLine234Mapping(2), 2)
+    behave like anAddressLineValidatingMapping(nonOptionalAddressLine234Mapping(3), 3)
+    behave like anAddressLineValidatingMapping(nonOptionalAddressLine234Mapping(4), 4)
 
-    val addressLine23Mapping = addressLine234.withPrefix("testKey")
+    val addressLine23Mapping = addressLine234(2).withPrefix("testKey")
 
     def bind(fieldValue: String) = addressLine23Mapping.bind(Map("testKey" -> fieldValue))
 
@@ -427,7 +430,7 @@ class CommonValidatorsSpec extends UnitSpec with EitherValues {
 
     "reject the line" when {
       "input is only whitespace" in {
-        bind("    ").left.value should contain only FormError("testKey", "error.address.lines.empty")
+        bind("    ").left.value should contain only FormError("testKey", "error.addressline.2.empty")
       }
     }
 
@@ -438,25 +441,27 @@ class CommonValidatorsSpec extends UnitSpec with EitherValues {
     }
   }
 
-  private def anAddressLineValidatingMapping(unprefixedAddressLineMapping: Mapping[String]): Unit = {
+  private def anAddressLineValidatingMapping(unprefixedAddressLineMapping: Mapping[String], lineNumber: Int): Unit = {
 
     val addressLine1Mapping = unprefixedAddressLineMapping.withPrefix("testKey")
+    val emptyError = s"error.addressline.$lineNumber.empty"
 
     def bind(fieldValue: String) = addressLine1Mapping.bind(Map("testKey" -> fieldValue))
 
     def shouldRejectFieldValueAsInvalid(fieldValue: String): Unit =
       bind(fieldValue) should matchPattern {
-        case Left(List(FormError("testKey", List("error.address.lines.invalid"), _))) =>
+        case Left(List(FormError("testKey", List(emptyError), _))) =>
       }
 
     def shouldRejectFieldValueAsTooLong(fieldValue: String): Unit =
-      bind(fieldValue) shouldBe Left(List(FormError("testKey", List("error.address.lines.maxLength"), List(35))))
+      bind(fieldValue) shouldBe Left(
+        List(FormError("testKey", List(s"error.addressline.$lineNumber.maxlength"), List(35))))
 
     def shouldAcceptFieldValue(fieldValue: String): Unit =
       if (fieldValue.isEmpty) bind(fieldValue) shouldBe Right(None)
       else bind(fieldValue) shouldBe Right(fieldValue)
 
-    "reject the line" when {
+    s"reject the address line $lineNumber" when {
       "there is an character that is not allowed by the DES regex" in {
         shouldRejectFieldValueAsInvalid("My Agency street<script> City~City")
       }
@@ -466,7 +471,7 @@ class CommonValidatorsSpec extends UnitSpec with EitherValues {
       }
     }
 
-    "accept the line" when {
+    s"accept the address line $lineNumber" when {
       "there is text and numbers" in {
         shouldAcceptFieldValue("99 My Agency address")
       }
@@ -485,12 +490,12 @@ class CommonValidatorsSpec extends UnitSpec with EitherValues {
       }
     }
 
-    "accumulate errors if there are multiple validation problems" in {
+    s"accumulate errors if there are multiple validation problems for addressline $lineNumber" in {
       val tooLongAndNonMatchingLine = "123456789012345678901234567890123456<"
       bind(tooLongAndNonMatchingLine) shouldBe Left(
         List(
-          FormError("testKey", "error.address.lines.maxLength", Seq(35)),
-          FormError("testKey", "error.address.lines.invalid", Seq())))
+          FormError("testKey", s"error.addressline.$lineNumber.maxlength", Seq(35)),
+          FormError("testKey", s"error.addressline.$lineNumber.invalid", Seq())))
     }
   }
 

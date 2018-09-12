@@ -427,7 +427,7 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         val result =
           await(controller.returnFromAddressLookup("addr1")(authenticatedAs(subscribingCleanAgentWithoutEnrolments)))
 
-        result should containSubstrings(htmlEscapedMessage("error.maxLength", 35))
+        result should containSubstrings(htmlEscapedMessage("error.addressline.1.maxlength", 35))
         result should containMessages("invalidAddress.title")
       }
     }
@@ -475,7 +475,7 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
 
         val result = await(controller.submitModifiedAddress()(request))
 
-        result should containSubstrings(htmlEscapedMessage("error.maxLength", 35), tooLongAddressLine)
+        result should containSubstrings(htmlEscapedMessage("error.addressline.1.maxlength", 35), tooLongAddressLine)
       }
     }
   }

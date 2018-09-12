@@ -41,14 +41,18 @@ class DesAddressFormSpec extends UnitSpec with ResettingMockitoSugar with Either
   private val validLine4 = "42345678901234567890123456789012345"
 
   private val tooLongLine = "123456789012345678901234567890123456"
-  private def errorsForTooLongLine(key: String) = Seq(FormError(key, "error.address.lines.maxLength", Seq(35)))
+  private def errorsForTooLongLine(key: String, lineNumber: Int) =
+    Seq(FormError(key, s"error.addressline.$lineNumber.maxlength", Seq(35)))
 
   private val nonMatchingLine = "<"
-  private def errorsForNonMatchingLine(key: String) = Seq(FormError(key, "error.address.lines.invalid", Seq()))
+  private def errorsForNonMatchingLine(key: String, lineNumber: Int) =
+    Seq(FormError(key, s"error.addressline.$lineNumber.invalid", Seq()))
 
   private val tooLongAndNonMatchingLine = "123456789012345678901234567890123456<"
-  private def errorsForTooLongAndNonMatchingLine(key: String) =
-    Seq(FormError(key, "error.address.lines.maxLength", Seq(35)), FormError(key, "error.address.lines.invalid", Seq()))
+  private def errorsForTooLongAndNonMatchingLine(key: String, lineNumber: Int) =
+    Seq(
+      FormError(key, s"error.addressline.$lineNumber.maxlength", Seq(35)),
+      FormError(key, s"error.addressline.$lineNumber.invalid", Seq()))
 
   private val validPostcode = "AA1 1AA"
   private val errorsForInvalidPostcode = Seq(FormError("postcode", "error.postcode.invalid", Seq()))
@@ -137,7 +141,7 @@ class DesAddressFormSpec extends UnitSpec with ResettingMockitoSugar with Either
 
       val validatedForm = desAddressForm.bindAddressLookupFrontendAddress(utr, addressLookupFrontendAddress)
 
-      validatedForm.errors shouldBe errorsForTooLongAndNonMatchingLine("addressLine1")
+      validatedForm.errors shouldBe errorsForTooLongAndNonMatchingLine("addressLine1", 1)
     }
 
     "fail when no lines are provided" in {
@@ -145,7 +149,7 @@ class DesAddressFormSpec extends UnitSpec with ResettingMockitoSugar with Either
 
       val validatedForm = desAddressForm.bindAddressLookupFrontendAddress(utr, addressLookupFrontendAddress)
 
-      validatedForm.errors shouldBe Seq(FormError("addressLine1", "error.address.lines.empty", Seq()))
+      validatedForm.errors shouldBe Seq(FormError("addressLine1", "error.addressline.1.empty", Seq()))
     }
 
     "pass when only a few address lines are provided" in {
@@ -192,10 +196,10 @@ class DesAddressFormSpec extends UnitSpec with ResettingMockitoSugar with Either
 
       val validatedForm = desAddressForm.bindAddressLookupFrontendAddress(utr, addressLookupFrontendAddress)
 
-      validatedForm.errors shouldBe (errorsForTooLongAndNonMatchingLine("addressLine1")
-        ++ errorsForNonMatchingLine("addressLine2")
-        ++ errorsForTooLongLine("addressLine3")
-        ++ errorsForNonMatchingLine("addressLine4")
+      validatedForm.errors shouldBe (errorsForTooLongAndNonMatchingLine("addressLine1", 1)
+        ++ errorsForNonMatchingLine("addressLine2", 2)
+        ++ errorsForTooLongLine("addressLine3", 3)
+        ++ errorsForNonMatchingLine("addressLine4", 4)
         ++ errorsForBlacklistedPostcode)
     }
 

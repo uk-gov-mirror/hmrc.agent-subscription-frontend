@@ -122,7 +122,64 @@ class InitialDetailsValidatorSpec extends UnitSpec {
           validator.validate(validInitialDetails.copy(name = """Some valid name/""")) shouldBe Pass
         }
       }
+
+      def failAddressValidation(error: String, businessAddress: BusinessAddress): Unit =
+        s"$error" in {
+          validator.validate(validInitialDetails.copy(businessAddress = businessAddress)) shouldBe Failure(
+            InvalidBusinessAddress)
+        }
+
+      def passAddressValidation(description: String, businessAddress: BusinessAddress): Unit =
+        s"$description" in {
+          validator.validate(validInitialDetails.copy(businessAddress = businessAddress)) shouldBe Pass
+        }
+
+      behave like {
+        "validate businessAddress" should {
+          passAddressValidation("valid AddressLine1", validBusinessAddress)
+          failAddressValidation("missing addressLine1", validBusinessAddress.copy(addressLine1 = ""))
+          failAddressValidation(
+            "addressLine1 exceed 35 chars",
+            validBusinessAddress.copy(addressLine1 = "123456789012345678901234567890123456"))
+          failAddressValidation(
+            "addressLine1 contains invalid chars",
+            validBusinessAddress.copy(addressLine1 = "%&%£@"))
+
+          passAddressValidation("valid AddressLine2", validBusinessAddress)
+          passAddressValidation("missing addressLine2", validBusinessAddress.copy(addressLine2 = None))
+          failAddressValidation("addressLine2 is empty", validBusinessAddress.copy(addressLine2 = Some("")))
+          failAddressValidation(
+            "addressLine2 exceed 35 chars",
+            validBusinessAddress.copy(addressLine2 = Some("123456789012345678901234567890123456")))
+          failAddressValidation(
+            "addressLine2 contains invalid chars",
+            validBusinessAddress.copy(addressLine2 = Some("%&%£@")))
+
+          passAddressValidation("valid addressLine3", validBusinessAddress)
+          passAddressValidation("missing addressLine3", validBusinessAddress.copy(addressLine3 = None))
+          failAddressValidation("addressLine3 is empty", validBusinessAddress.copy(addressLine3 = Some("")))
+          failAddressValidation(
+            "addressLine3 should not exceed 35 chars limit",
+            validBusinessAddress.copy(addressLine3 = Some("123456789012345678901234567890123456")))
+          failAddressValidation(
+            "addressLine3 contains invalid chars",
+            validBusinessAddress.copy(addressLine3 = Some("%&%£@")))
+
+          passAddressValidation("valid addressLine4", validBusinessAddress)
+          passAddressValidation("missing addressLine4", validBusinessAddress.copy(addressLine4 = None))
+          failAddressValidation("addressLine4 is empty string", validBusinessAddress.copy(addressLine4 = Some("")))
+          failAddressValidation(
+            "addressLine4 should not exceed 35 chars limit",
+            validBusinessAddress.copy(addressLine4 = Some("123456789012345678901234567890123456")))
+          failAddressValidation(
+            "addressLine4 contains invalid chars",
+            validBusinessAddress.copy(addressLine4 = Some("%&%£@")))
+
+          passAddressValidation("valid postcode", validBusinessAddress)
+          failAddressValidation("it's missing postcode", validBusinessAddress.copy(postalCode = None))
+          failAddressValidation("postcode is empty string", validBusinessAddress.copy(postalCode = Some("")))
+        }
+      }
     }
   }
-
 }

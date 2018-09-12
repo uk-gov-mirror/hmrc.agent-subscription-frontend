@@ -543,6 +543,46 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
 
         result.header.headers(LOCATION) shouldBe routes.BusinessIdentificationController.showBusinessNameForm().url
       }
+
+      "redirect to showBusinessNameForm if the user has clean creds and isSubscribedToAgentServices=false and ETMP record contains invalid name and invalid address" in {
+        implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+          .withSession("businessType" -> "sole_trader")
+          .withFormUrlEncodedBody("confirmBusiness" -> "yes")
+        sessionStoreService.currentSession.knownFactsResult = Some(
+          KnownFactsResult(
+            utr = Utr("0123456789"),
+            postcode = "AA11AA",
+            taxpayerName = "My Agency &",
+            isSubscribedToAgentServices = false,
+            Some(businessAddress.copy(addressLine1 = "invalid address *")),
+            None))
+
+        val result = await(controller.submitConfirmBusinessForm(request))
+
+        sessionStoreService.currentSession.initialDetails should not be empty
+
+        result.header.headers(LOCATION) shouldBe routes.BusinessIdentificationController.showBusinessNameForm().url
+      }
+
+      "redirect to showUpdateBusinessAddressForm if the user has clean creds and isSubscribedToAgentServices=false and ETMP record contains invalid address" in {
+        implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+          .withSession("businessType" -> "sole_trader")
+          .withFormUrlEncodedBody("confirmBusiness" -> "yes")
+        sessionStoreService.currentSession.knownFactsResult = Some(
+          KnownFactsResult(
+            utr = Utr("0123456789"),
+            postcode = "AA11AA",
+            taxpayerName = "My Agency",
+            isSubscribedToAgentServices = false,
+            Some(businessAddress.copy(addressLine1 = "invalid address *")),
+            None))
+
+        val result = await(controller.submitConfirmBusinessForm(request))
+
+        sessionStoreService.currentSession.initialDetails should not be empty
+
+        result.header.headers(LOCATION) shouldBe routes.BusinessIdentificationController.showUpdateBusinessAddressForm().url
+      }
     }
 
     "User chooses No" should {
@@ -768,6 +808,130 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
       implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
 
       val result = await(controller.submitBusinessEmailForm(request))
+
+      resultShouldBeSessionDataMissing(result)
+    }
+  }
+
+  "showUpdateBusinessAddressForm" should {
+    behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showBusinessNameForm(request))
+
+    "display update business address form if the address is not des complaint" in {
+      implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+      sessionStoreService.currentSession.initialDetails = Some(initialDetails.copy(businessAddress = businessAddress.copy(addressLine1 =  "Address line 1 &")))
+
+      val result = await(controller.showUpdateBusinessAddressForm(request))
+      result should containMessages("updateBusinessAddress.title",
+        "updateBusinessAddress.p1", "updateBusinessAddress.p2", "updateBusinessAddress.address_line_1.title",
+        "updateBusinessAddress.address_line_2.title", "updateBusinessAddress.address_line_3.title",
+        "updateBusinessAddress.address_line_4.title", "updateBusinessAddress.postcode.title", "updateBusinessAddress.continue")
+
+      val doc = Jsoup.parse(bodyOf(result))
+      doc.getElementById("addressLine1").`val` shouldBe "Address line 1 &"
+      doc.getElementById("addressLine2").`val` shouldBe businessAddress.addressLine2.get
+      doc.getElementById("addressLine3").`val` shouldBe businessAddress.addressLine3.get
+      doc.getElementById("addressLine4").`val` shouldBe businessAddress.addressLine4.get
+      doc.getElementById("postcode").`val` shouldBe businessAddress.postalCode.get
+
+      val form = doc.select("form").first()
+      form.attr("method") shouldBe "POST"
+      form.attr("action") shouldBe routes.BusinessIdentificationController.submitUpdateBusinessAddressForm().url
+    }
+
+    "redirect to the /business-type page if there is no InitialDetails in session because the user has returned to a bookmark" in {
+      implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+
+      val result = await(controller.showUpdateBusinessAddressForm(request))
+
+      resultShouldBeSessionDataMissing(result)
+    }
+  }
+
+  "submitUpdateBusinessAddressForm" should {
+    behave like anAgentAffinityGroupOnlyEndpoint(request => controller.submitBusinessNameForm(request))
+
+    "update business address after submission" in {
+      implicit val request =
+        authenticatedAs(subscribingCleanAgentWithoutEnrolments).withFormUrlEncodedBody("addressLine1" -> "new addressline 1",
+          "addressLine2" -> "new addressline 2",
+          "addressLine3" -> "new addressline 3",
+          "addressLine4" -> "new addressline 4",
+          "postcode" -> "BB11BB")
+      sessionStoreService.currentSession.initialDetails = Some(initialDetails)
+
+      val result = await(controller.submitUpdateBusinessAddressForm(request))
+      status(result) shouldBe 303
+      redirectLocation(result).head shouldBe routes.SubscriptionController.showCheckAnswers().url
+
+      val updatedBusinessAddress = await(sessionStoreService.fetchInitialDetails).get.businessAddress
+
+      updatedBusinessAddress.addressLine1 shouldBe "new addressline 1"
+      updatedBusinessAddress.addressLine2 shouldBe Some("new addressline 2")
+      updatedBusinessAddress.addressLine3 shouldBe Some("new addressline 3")
+      updatedBusinessAddress.addressLine4 shouldBe Some("new addressline 4")
+      updatedBusinessAddress.postalCode shouldBe Some("BB11BB")
+    }
+
+    "show validation error when the form is submitted with empty address line 1" in {
+      implicit val request =
+        authenticatedAs(subscribingCleanAgentWithoutEnrolments).withFormUrlEncodedBody("addressLine1" -> " ",
+          "addressLine2" -> "new addressline 2",
+          "addressLine3" -> "new addressline 3",
+          "addressLine4" -> "new addressline 4",
+          "postcode" -> "BB11BB")
+      sessionStoreService.currentSession.initialDetails = Some(initialDetails)
+
+      val result = await(controller.submitUpdateBusinessAddressForm(request))
+
+      result should containMessages("updateBusinessAddress.address_line_1.title", "error.addressline.1.empty")
+    }
+
+    "show validation error when the form is submitted with invalid address line 3" in {
+      implicit val request =
+        authenticatedAs(subscribingCleanAgentWithoutEnrolments).withFormUrlEncodedBody("addressLine1" -> "address line 1",
+          "addressLine2" -> "new addressline 2",
+          "addressLine3" -> "new addressline **!",
+          "addressLine4" -> "new addressline 4",
+          "postcode" -> "BB11BB")
+      sessionStoreService.currentSession.initialDetails = Some(initialDetails)
+
+      val result = await(controller.submitUpdateBusinessAddressForm(request))
+
+      result should containMessages("updateBusinessAddress.address_line_3.title", "error.addressline.3.invalid")
+    }
+
+    "show validation error when the form is submitted with invalid address line 1" in {
+      implicit val request =
+        authenticatedAs(subscribingCleanAgentWithoutEnrolments).withFormUrlEncodedBody("addressLine1" -> "address line 1**",
+          "addressLine2" -> "new addressline 2",
+          "addressLine3" -> "new addressline 3",
+          "addressLine4" -> "new addressline 4",
+          "postcode" -> "BB11BB")
+      sessionStoreService.currentSession.initialDetails = Some(initialDetails)
+
+      val result = await(controller.submitUpdateBusinessAddressForm(request))
+
+      result should containMessages("updateBusinessAddress.address_line_1.title", "error.addressline.1.invalid")
+    }
+
+    "show validation error when the form is submitted with postcode which exceed max length" in {
+      implicit val request =
+        authenticatedAs(subscribingCleanAgentWithoutEnrolments).withFormUrlEncodedBody("addressLine1" -> "address line 1",
+          "addressLine2" -> "new addressline 2",
+          "addressLine3" -> "new addressline 3",
+          "addressLine4" -> "new addressline 4",
+          "postcode" -> "BB11BBBBBBBBBBBBBBB")
+      sessionStoreService.currentSession.initialDetails = Some(initialDetails)
+
+      val result = await(controller.submitUpdateBusinessAddressForm(request))
+
+      result should containMessages("updateBusinessAddress.postcode.title", "error.postcode.maxlength")
+    }
+
+    "redirect to the /business-type page if there is no InitialDetails in session because the user has returned to a bookmark" in {
+      implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+
+      val result = await(controller.submitUpdateBusinessAddressForm(request))
 
       resultShouldBeSessionDataMissing(result)
     }

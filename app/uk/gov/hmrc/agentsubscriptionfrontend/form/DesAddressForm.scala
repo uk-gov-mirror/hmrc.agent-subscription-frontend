@@ -27,9 +27,9 @@ class DesAddressForm(logger: LoggerLike, blacklistedPostcodes: Set[String]) {
   val form = Form[DesAddress](
     mapping(
       "addressLine1" -> addressLine1,
-      "addressLine2" -> addressLine234,
-      "addressLine3" -> addressLine234,
-      "addressLine4" -> addressLine234,
+      "addressLine2" -> addressLine234(lineNumber = 2),
+      "addressLine3" -> addressLine234(lineNumber = 3),
+      "addressLine4" -> addressLine234(lineNumber = 4),
       "postcode"     -> postcodeWithBlacklist(blacklistedPostcodes),
       "countryCode"  -> text
     )(DesAddress.apply)(DesAddress.unapply))

@@ -67,6 +67,15 @@ package object controllers {
       )(BusinessName.apply)(BusinessName.unapply)
     )
 
+    val updateBusinessAddressForm = Form[UpdateBusinessAddressForm](
+      mapping(
+        "addressLine1" -> addressLine1,
+        "addressLine2" -> addressLine234(lineNumber = 2),
+        "addressLine3" -> addressLine234(lineNumber = 3),
+        "addressLine4" -> addressLine234(lineNumber = 4),
+        "postcode"     -> postcode
+      )(UpdateBusinessAddressForm.apply)(UpdateBusinessAddressForm.unapply))
+
     //uses variant "cannotProvide" to determine action if user cannot provide allowed options: utr or nino
     val clientDetailsForm: Form[RadioInvasiveTaxPayerOption] = Form[RadioInvasiveTaxPayerOption](
       mapping(

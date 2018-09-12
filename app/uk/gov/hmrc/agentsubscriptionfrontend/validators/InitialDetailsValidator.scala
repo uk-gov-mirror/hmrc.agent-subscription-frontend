@@ -17,15 +17,20 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.validators
 
 import javax.inject.{Inject, Singleton}
-import play.api.data.validation.{Constraints, Valid}
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{InitialDetails, ValidationResult}
+import play.api.data.validation.{Constraints, Valid, Invalid, ValidationResult => PlayValdationResult}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{BusinessAddress, InitialDetails, ValidationResult}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidationResult.FailureReason._
+
 @Singleton
 class InitialDetailsValidator @Inject()() {
   import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidationResult._
+  import CommonValidators._
 
   def validate(initialDetails: InitialDetails): ValidationResult = {
-    val allValidations = Set(validateEmail(initialDetails.email), validateBusinessName(initialDetails.name))
+    val allValidations = Set(
+      validateEmail(initialDetails.email),
+      validateBusinessName(initialDetails.name),
+      validateBusinessAddress(initialDetails.businessAddress))
 
     val reasons: Set[FailureReason] = allValidations.collect {
       case Failure(reasons) => reasons
@@ -45,4 +50,26 @@ class InitialDetailsValidator @Inject()() {
       Pass
     else Failure(InvalidBusinessName)
 
+  private def validateBusinessAddress(businessAddress: BusinessAddress): ValidationResult = {
+    def maybeAddressLineValidator(addressLine: Option[String]): Seq[PlayValdationResult] =
+      addressLine.map(line => addressLine1.constraints.map(_(line))).getOrElse(Seq(Valid))
+
+    val addressLine1Validator = maybeAddressLineValidator(Some(businessAddress.addressLine1))
+    val addressLine2Validator = maybeAddressLineValidator(businessAddress.addressLine2)
+    val addressLine3Validator = maybeAddressLineValidator(businessAddress.addressLine3)
+    val addressLine4Validator = maybeAddressLineValidator(businessAddress.addressLine4)
+
+    val basicPostcodeValidator: Seq[PlayValdationResult] = businessAddress.postalCode
+      .map(postcode => CommonValidators.postcode.constraints.map(_(postcode)))
+      .getOrElse(Seq(Invalid("invalid postcode")))
+
+    val validators: Seq[PlayValdationResult] = Seq(
+      addressLine1Validator,
+      addressLine2Validator,
+      addressLine3Validator,
+      addressLine4Validator,
+      basicPostcodeValidator).flatten
+
+    if (validators.forall(_ == Valid)) Pass else Failure(InvalidBusinessAddress)
+  }
 }

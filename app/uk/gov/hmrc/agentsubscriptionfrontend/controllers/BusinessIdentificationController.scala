@@ -37,6 +37,7 @@ import uk.gov.hmrc.domain.{SaAgentReference, TaxIdentifier}
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier}
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent.hasNonEmptyEnrolments
+import uk.gov.hmrc.agentsubscriptionfrontend.models
 import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidVariantsTaxPayerOptionForm._
 import uk.gov.hmrc.agentsubscriptionfrontend.validators.InitialDetailsValidator
@@ -248,10 +249,12 @@ class BusinessIdentificationController @Inject()(
     }
   }
 
-  private def lookupNextPage(initialDetails: InitialDetails)(implicit hc: HeaderCarrier) = {
+  private def lookupNextPage(initialDetails: InitialDetails)(implicit hc: HeaderCarrier): Future[Call] = {
     val redirectCall = initialDetailsValidator.validate(initialDetails) match {
       case Failure(responses) if responses.contains(InvalidBusinessName) =>
         routes.BusinessIdentificationController.showBusinessNameForm()
+      case Failure(responses) if responses.contains(InvalidBusinessAddress) =>
+        routes.BusinessIdentificationController.showUpdateBusinessAddressForm()
       case Failure(responses) if responses.contains(InvalidEmail) =>
         routes.BusinessIdentificationController.showBusinessEmailForm()
       case _ =>
@@ -312,6 +315,42 @@ class BusinessIdentificationController @Inject()(
               Future.successful(Ok(html.business_name(formWithErrors, hasInvalidBusinessName(details)))),
             validForm => {
               val updatedDetails = details.copy(name = validForm.name)
+              sessionStoreService
+                .cacheInitialDetails(updatedDetails)
+                .flatMap(_ => lookupNextPage(updatedDetails).map(Redirect(_)))
+            }
+          )
+      }
+    }
+  }
+
+  val showUpdateBusinessAddressForm: Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { _ =>
+      withInitialDetails { details =>
+        Future.successful(
+          Ok(html.update_business_address(
+            updateBusinessAddressForm.fill(models.UpdateBusinessAddressForm(details.businessAddress)))))
+      }
+    }
+  }
+
+  val submitUpdateBusinessAddressForm: Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { _ =>
+      withInitialDetails { details =>
+        updateBusinessAddressForm
+          .bindFromRequest()
+          .fold(
+            formWithErrors => Future.successful(Ok(html.update_business_address(formWithErrors))),
+            validForm => {
+              val updatedBusinessAddress = details.businessAddress.copy(
+                addressLine1 = validForm.addressLine1,
+                addressLine2 = validForm.addressLine2,
+                addressLine3 = validForm.addressLine3,
+                addressLine4 = validForm.addressLine4,
+                postalCode = Some(validForm.postCode)
+              )
+              val updatedDetails = details.copy(businessAddress = updatedBusinessAddress)
+
               sessionStoreService
                 .cacheInitialDetails(updatedDetails)
                 .flatMap(_ => lookupNextPage(updatedDetails).map(Redirect(_)))
