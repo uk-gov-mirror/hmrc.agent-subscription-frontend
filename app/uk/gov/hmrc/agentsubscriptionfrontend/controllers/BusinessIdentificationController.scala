@@ -42,9 +42,10 @@ import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidVariantsTaxPayerOptionForm._
 import uk.gov.hmrc.agentsubscriptionfrontend.validators.InitialDetailsValidator
 import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidationResult.FailureReason._
-import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidationResult.Failure
+import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidationResult.{Failure, Pass}
 
 import scala.concurrent.Future
+
 @Singleton
 class BusinessIdentificationController @Inject()(
   assuranceService: AssuranceService,
@@ -253,7 +254,7 @@ class BusinessIdentificationController @Inject()(
     val redirectCall = initialDetailsValidator.validate(initialDetails) match {
       case Failure(responses) if responses.contains(InvalidBusinessName) =>
         routes.BusinessIdentificationController.showBusinessNameForm()
-      case Failure(responses) if responses.contains(InvalidBusinessAddress) =>
+      case Failure(responses) if responses.exists(r => r == InvalidBusinessAddress || r == DisallowedPostcode) =>
         routes.BusinessIdentificationController.showUpdateBusinessAddressForm()
       case Failure(responses) if responses.contains(InvalidEmail) =>
         routes.BusinessIdentificationController.showBusinessEmailForm()
@@ -351,11 +352,26 @@ class BusinessIdentificationController @Inject()(
               )
               val updatedDetails = details.copy(businessAddress = updatedBusinessAddress)
 
+              val redirectCall = initialDetailsValidator.validatePostcode(Some(validForm.postCode)) match {
+                case Pass =>
+                  lookupNextPage(updatedDetails).map(Redirect(_))
+                case Failure(_) =>
+                  Future.successful(Redirect(routes.BusinessIdentificationController.showPostcodeNotAllowed()))
+              }
+
               sessionStoreService
                 .cacheInitialDetails(updatedDetails)
-                .flatMap(_ => lookupNextPage(updatedDetails).map(Redirect(_)))
+                .flatMap(_ => redirectCall)
             }
           )
+      }
+    }
+  }
+
+  val showPostcodeNotAllowed: Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { _ =>
+      withInitialDetails { _ =>
+        Future.successful(Ok(html.postcode_not_allowed()))
       }
     }
   }

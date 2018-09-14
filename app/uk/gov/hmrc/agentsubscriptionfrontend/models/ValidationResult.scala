@@ -32,5 +32,6 @@ object ValidationResult {
     case object InvalidEmail extends FailureReason
     case object InvalidBusinessName extends FailureReason
     case object InvalidBusinessAddress extends FailureReason
+    case object DisallowedPostcode extends FailureReason
   }
 }

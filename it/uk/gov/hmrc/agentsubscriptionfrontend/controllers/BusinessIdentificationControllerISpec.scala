@@ -40,6 +40,7 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
   val validUtr = Utr("2000000000")
   val validPostcode = "AA1 1AA"
   private val invalidPostcode = "11AAAA"
+  private val blacklistedPostcode = "AB10 1ZT"
 
   val utr = Utr("0123456789")
   val postcode = "AA11AA"
@@ -544,7 +545,8 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
         result.header.headers(LOCATION) shouldBe routes.BusinessIdentificationController.showBusinessNameForm().url
       }
 
-      "redirect to showBusinessNameForm if the user has clean creds and isSubscribedToAgentServices=false and ETMP record contains invalid name and invalid address" in {
+      "redirect to showBusinessNameForm if the user has clean creds and isSubscribedToAgentServices=false and " +
+        "ETMP record contains invalid name and invalid address" in {
         implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
           .withSession("businessType" -> "sole_trader")
           .withFormUrlEncodedBody("confirmBusiness" -> "yes")
@@ -564,7 +566,8 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
         result.header.headers(LOCATION) shouldBe routes.BusinessIdentificationController.showBusinessNameForm().url
       }
 
-      "redirect to showUpdateBusinessAddressForm if the user has clean creds and isSubscribedToAgentServices=false and ETMP record contains invalid address" in {
+      "redirect to showUpdateBusinessAddressForm if the user has clean creds and isSubscribedToAgentServices=false " +
+        "and ETMP record contains invalid address" in {
         implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
           .withSession("businessType" -> "sole_trader")
           .withFormUrlEncodedBody("confirmBusiness" -> "yes")
@@ -582,6 +585,77 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
         sessionStoreService.currentSession.initialDetails should not be empty
 
         result.header.headers(LOCATION) shouldBe routes.BusinessIdentificationController.showUpdateBusinessAddressForm().url
+      }
+
+      "redirect to showUpdateBusinessAddressForm if the user has clean creds and isSubscribedToAgentServices=false and" when {
+        "ETMP record contains blacklisted postcode" in {
+          implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+            .withSession("businessType" -> "sole_trader")
+            .withFormUrlEncodedBody("confirmBusiness" -> "yes")
+          sessionStoreService.currentSession.knownFactsResult = Some(
+            KnownFactsResult(
+              utr = Utr("0123456789"),
+              postcode = "AA11AA",
+              taxpayerName = "My Agency",
+              isSubscribedToAgentServices = false,
+              Some(businessAddress.copy(postalCode = Some(blacklistedPostcode))),
+              None
+            ))
+
+          val result = await(controller.submitConfirmBusinessForm(request))
+
+          sessionStoreService.currentSession.initialDetails should not be empty
+
+          result.header.headers(LOCATION) shouldBe routes.BusinessIdentificationController
+            .showUpdateBusinessAddressForm()
+            .url
+        }
+
+        "ETMP record contains BFPO postcode starting with BF" in {
+          implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+            .withSession("businessType" -> "sole_trader")
+            .withFormUrlEncodedBody("confirmBusiness" -> "yes")
+          sessionStoreService.currentSession.knownFactsResult = Some(
+            KnownFactsResult(
+              utr = Utr("0123456789"),
+              postcode = "AA11AA",
+              taxpayerName = "My Agency",
+              isSubscribedToAgentServices = false,
+              Some(businessAddress.copy(postalCode = Some("BF1 1XX"))),
+              None
+            ))
+
+          val result = await(controller.submitConfirmBusinessForm(request))
+
+          sessionStoreService.currentSession.initialDetails should not be empty
+
+          result.header.headers(LOCATION) shouldBe routes.BusinessIdentificationController
+            .showUpdateBusinessAddressForm()
+            .url
+        }
+
+        "ETMP record contains BFPO postcode starting with BFPO" in {
+          implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+            .withSession("businessType" -> "sole_trader")
+            .withFormUrlEncodedBody("confirmBusiness" -> "yes")
+          sessionStoreService.currentSession.knownFactsResult = Some(
+            KnownFactsResult(
+              utr = Utr("0123456789"),
+              postcode = "AA11AA",
+              taxpayerName = "My Agency",
+              isSubscribedToAgentServices = false,
+              Some(businessAddress.copy(postalCode = Some("BFPO15"))),
+              None
+            ))
+
+          val result = await(controller.submitConfirmBusinessForm(request))
+
+          sessionStoreService.currentSession.initialDetails should not be empty
+
+          result.header.headers(LOCATION) shouldBe routes.BusinessIdentificationController
+            .showUpdateBusinessAddressForm()
+            .url
+        }
       }
     }
 
@@ -926,6 +1000,50 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
       val result = await(controller.submitUpdateBusinessAddressForm(request))
 
       result should containMessages("updateBusinessAddress.postcode.title", "error.postcode.maxlength")
+    }
+
+    "redirect to postcode-not-allowed page" when {
+      "postcode entered is blacklisted" in {
+        implicit val request =
+          authenticatedAs(subscribingCleanAgentWithoutEnrolments).withFormUrlEncodedBody("addressLine1" -> "address line 1",
+            "addressLine2" -> "new addressline 2",
+            "addressLine3" -> "new addressline 3",
+            "addressLine4" -> "new addressline 4",
+            "postcode" -> blacklistedPostcode)
+        sessionStoreService.currentSession.initialDetails = Some(initialDetails)
+
+        val result = await(controller.submitUpdateBusinessAddressForm(request))
+        status(result) shouldBe 303
+        redirectLocation(result).head shouldBe routes.BusinessIdentificationController.showPostcodeNotAllowed().url
+      }
+
+      "postcode entered is BFPO" in {
+        implicit val request =
+          authenticatedAs(subscribingCleanAgentWithoutEnrolments).withFormUrlEncodedBody("addressLine1" -> "address line 1",
+            "addressLine2" -> "new addressline 2",
+            "addressLine3" -> "new addressline 3",
+            "addressLine4" -> "new addressline 4",
+            "postcode" -> "BF11XX")
+        sessionStoreService.currentSession.initialDetails = Some(initialDetails)
+
+        val result = await(controller.submitUpdateBusinessAddressForm(request))
+        status(result) shouldBe 303
+        redirectLocation(result).head shouldBe routes.BusinessIdentificationController.showPostcodeNotAllowed().url
+      }
+
+      "postcode starts with BFPO" in {
+        implicit val request =
+          authenticatedAs(subscribingCleanAgentWithoutEnrolments).withFormUrlEncodedBody("addressLine1" -> "address line 1",
+            "addressLine2" -> "new addressline 2",
+            "addressLine3" -> "new addressline 3",
+            "addressLine4" -> "new addressline 4",
+            "postcode" -> "BFPO15")
+        sessionStoreService.currentSession.initialDetails = Some(initialDetails)
+
+        val result = await(controller.submitUpdateBusinessAddressForm(request))
+        status(result) shouldBe 303
+        redirectLocation(result).head shouldBe routes.BusinessIdentificationController.showPostcodeNotAllowed().url
+      }
     }
 
     "redirect to the /business-type page if there is no InitialDetails in session because the user has returned to a bookmark" in {

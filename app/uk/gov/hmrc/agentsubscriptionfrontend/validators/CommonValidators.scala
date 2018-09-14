@@ -180,7 +180,7 @@ object CommonValidators {
       }
     }
 
-  private def validateBlacklist(postcode: String, blacklistedPostcodes: Set[String]): Boolean =
+  def validateBlacklist(postcode: String, blacklistedPostcodes: Set[String]): Boolean =
     !blacklistedPostcodes.contains(PostcodesLoader.formatPostcode(postcode))
 
   private val saAgentCodeConstraint: Constraint[String] = Constraint[String] { fieldValue: String =>

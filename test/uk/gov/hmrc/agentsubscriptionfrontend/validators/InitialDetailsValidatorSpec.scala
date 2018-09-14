@@ -16,13 +16,19 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.validators
 
+import org.scalatest.mockito.MockitoSugar
+import org.mockito.Mockito.when
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{BusinessAddress, InitialDetails}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidationResult.FailureReason._
 import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidationResult._
 import uk.gov.hmrc.play.test.UnitSpec
 
-class InitialDetailsValidatorSpec extends UnitSpec {
+class InitialDetailsValidatorSpec extends UnitSpec with MockitoSugar {
+
+  private val mockAppConfig = mock[AppConfig]
+  private val blacklistedPostcodes = Set("CC11CC", "DD11DD", "EE11EE")
 
   private val utr = Utr("2000000000")
   private val knownFactsPostcode = "AA1 2AA"
@@ -43,7 +49,8 @@ class InitialDetailsValidatorSpec extends UnitSpec {
       validBusinessAddress
     )
 
-  private val validator = new InitialDetailsValidator()
+  when(mockAppConfig.blacklistedPostcodes).thenReturn(blacklistedPostcodes)
+  private val validator = new InitialDetailsValidator(mockAppConfig)
 
   "InitialDetailsValidator" should {
     "validate" should {
@@ -178,6 +185,25 @@ class InitialDetailsValidatorSpec extends UnitSpec {
           passAddressValidation("valid postcode", validBusinessAddress)
           failAddressValidation("it's missing postcode", validBusinessAddress.copy(postalCode = None))
           failAddressValidation("postcode is empty string", validBusinessAddress.copy(postalCode = Some("")))
+        }
+      }
+    }
+
+    "validatePostcode" should {
+      "return Pass" when {
+        "postcode is not blacklisted or bfpo" in {
+          validator.validatePostcode(Some("AA1AA")) shouldBe Pass
+        }
+      }
+
+      "return Failure" when {
+        "postcode is blacklisted" in {
+          validator.validatePostcode(Some("CC11CC")) shouldBe Failure(DisallowedPostcode)
+        }
+
+        "postcode is bfpo" in {
+          validator.validatePostcode(Some("BFPO15")) shouldBe Failure(DisallowedPostcode)
+          validator.validatePostcode(Some("BF12XX")) shouldBe Failure(DisallowedPostcode)
         }
       }
     }

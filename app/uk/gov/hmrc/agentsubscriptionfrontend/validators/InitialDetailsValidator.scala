@@ -17,20 +17,25 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.validators
 
 import javax.inject.{Inject, Singleton}
-import play.api.data.validation.{Constraints, Valid, Invalid, ValidationResult => PlayValdationResult}
+import play.api.data.validation.{Constraints, Invalid, Valid, ValidationResult => PlayValdationResult}
+import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{BusinessAddress, InitialDetails, ValidationResult}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidationResult.FailureReason._
 
 @Singleton
-class InitialDetailsValidator @Inject()() {
+class InitialDetailsValidator @Inject()(appConfig: AppConfig) {
   import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidationResult._
   import CommonValidators._
+
+  private val blacklistedPostcodes = appConfig.blacklistedPostcodes
 
   def validate(initialDetails: InitialDetails): ValidationResult = {
     val allValidations = Set(
       validateEmail(initialDetails.email),
       validateBusinessName(initialDetails.name),
-      validateBusinessAddress(initialDetails.businessAddress))
+      validatePostcode(initialDetails.businessAddress.postalCode),
+      validateBusinessAddress(initialDetails.businessAddress)
+    )
 
     val reasons: Set[FailureReason] = allValidations.collect {
       case Failure(reasons) => reasons
@@ -38,6 +43,21 @@ class InitialDetailsValidator @Inject()() {
 
     if (reasons.nonEmpty) Failure(reasons) else Pass
   }
+
+  def validatePostcode(postcodeOpt: Option[String]): ValidationResult =
+    postcodeOpt
+      .map { postcode =>
+        val formattedPostcode = postcode.trim.toUpperCase()
+
+        // Checks for BFPO postcodes. Those postcodes starts with either BF or BFPO
+        val isBfpo =
+          !(formattedPostcode.startsWith("BF") || formattedPostcode.startsWith("BFPO"))
+        val isValid = validateBlacklist(formattedPostcode, blacklistedPostcodes)
+
+        if (isValid && isBfpo) Pass
+        else Failure(DisallowedPostcode)
+      }
+      .getOrElse(Pass)
 
   private def validateEmail(email: Option[String]): ValidationResult =
     email.map(Constraints.emailAddress(_)) match {
