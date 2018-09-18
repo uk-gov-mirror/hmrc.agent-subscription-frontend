@@ -43,7 +43,7 @@ class ChainedSessionDetailsRepositoryISpec extends UnitSpec with OneAppPerSuite 
   private val chainedSessionDetails =
     ChainedSessionDetails(
       KnownFactsResult(utr = utr, postcode = "AA11AA", taxpayerName = "My Agency", isSubscribedToAgentServices = false, None, None),
-      Some(true), initialDetails
+      Some(true), Some(initialDetails)
     )
 
   override def beforeEach() {

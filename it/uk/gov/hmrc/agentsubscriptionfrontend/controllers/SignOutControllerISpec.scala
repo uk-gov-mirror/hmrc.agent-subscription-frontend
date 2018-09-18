@@ -71,6 +71,19 @@ trait SignOutControllerISpec extends BaseISpec {
         s"continue=%2Fagent-subscription%2Freturn-after-gg-creds-created%3Fid%3D$id")
     }
 
+    "the SOS redirect URL should include an ID of the saved ChainedSessionDetails when initial dsetails is empty" in {
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+      sessionStoreService.currentSession.knownFactsResult = Some(knownFactsResult)
+      sessionStoreService.currentSession.initialDetails = None
+
+      givenMappingCreatePreSubscriptionIsNotEligible(Utr("9876543210"))
+
+      val result = await(controller.redirectToSos(request))
+      val id = findByUtr("9876543210").map(_.id).get
+      redirectLocation(result).head should include(
+        s"continue=%2Fagent-subscription%2Freturn-after-gg-creds-created%3Fid%3D$id")
+    }
+
     "not include an ID in the SOS redirect URL when KnownFactsResults are not yet known" in {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
       givenMappingCreatePreSubscriptionIsNotEligible(Utr("9876543210"))
@@ -202,7 +215,7 @@ class SignOutControllerWithAutoMappingOn extends SignOutControllerISpec {
           ChainedSessionDetails(
             knownFactsResult,
             wasEligibleForMapping = Some(true),
-            validInitialDetails
+            Some(validInitialDetails)
           )
         )
         verifyMappingCreatePreSubscriptionCalled(Utr("9876543210"), times = 1)
@@ -220,7 +233,7 @@ class SignOutControllerWithAutoMappingOn extends SignOutControllerISpec {
           ChainedSessionDetails(
             knownFactsResult,
             wasEligibleForMapping = Some(false),
-            validInitialDetails
+            Some(validInitialDetails)
           )
         )
         verifyMappingCreatePreSubscriptionCalled(Utr("9876543210"), times = 1)
@@ -253,7 +266,7 @@ class SignOutControllerWithAutoMappingOff extends SignOutControllerISpec {
         ChainedSessionDetails(
           knownFactsResult,
           wasEligibleForMapping = None,
-          validInitialDetails
+          Some(validInitialDetails)
         )
       )
     }

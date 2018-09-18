@@ -100,7 +100,8 @@ class StartController @Inject()(
                                                 }
                                             } else {
                                               sessionStoreService
-                                                .cacheInitialDetails(chainedSessionDetails.initialDetails)
+                                                .cacheInitialDetails(chainedSessionDetails.initialDetails.getOrElse(
+                                                  throw new Exception("initial details is empty")))
                                                 .map(_ => Redirect(routes.SubscriptionController.showCheckAnswers()))
                                             }
           } yield continuedSubscriptionResponse

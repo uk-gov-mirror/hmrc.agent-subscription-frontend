@@ -324,6 +324,7 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
       import scala.concurrent.ExecutionContext.Implicits.global
 
       await(sessionStoreService.fetchKnownFactsResult) shouldBe Some(KnownFactsResult(Utr("2000000000"), "AA1 1AA", "My Agency", isSubscribedToAgentServices = false, None, None))
+      await(sessionStoreService.fetchInitialDetails) shouldBe None
     }
 
     "Upstream4xxResponse partialSubscriptionFix failed with 403" in {
