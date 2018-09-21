@@ -162,6 +162,21 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
     behave like aPageWithFeedbackLinks(playRequestValidBusinessTypeIdentifier(_),
       authenticatedAs(subscribingCleanAgentWithoutEnrolments))
 
+    "caches continue URL parameter" when {
+      "valid businessType parameter was supplied" should {
+        behave like aPageTakingContinueUrlAndCachingInSessionStore(playRequestValidBusinessTypeIdentifier(_),
+          sessionStoreService, userIsAuthenticated(subscribingCleanAgentWithoutEnrolments))
+      }
+      "no businessType parameter supplied" should {
+        behave like aPageTakingContinueUrlAndCachingInSessionStore(controller.showBusinessDetailsForm(None)(_),
+          sessionStoreService, userIsAuthenticated(subscribingCleanAgentWithoutEnrolments), expectedStatusCode = 303)
+      }
+      "invalid businessType parameter supplied" should {
+        behave like aPageTakingContinueUrlAndCachingInSessionStore(controller.showBusinessDetailsForm(Some("invalidBusinessTypeIdentifier"))(_),
+          sessionStoreService, userIsAuthenticated(subscribingCleanAgentWithoutEnrolments), expectedStatusCode = 303)
+      }
+    }
+
     "display the check agency status page if the current user is logged in and has affinity group = Agent" in {
       val result = await(playRequestValidBusinessTypeIdentifier(authenticatedAs(subscribingCleanAgentWithoutEnrolments)))
 

@@ -108,14 +108,16 @@ class BusinessIdentificationController @Inject()(
 
   def showBusinessDetailsForm(businessType: Option[String]): Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { implicit agent =>
-      businessType match {
-        case Some(businessTypeIdentifier) if validBusinessTypes.contains(businessTypeIdentifier) => {
-          mark("Count-Subscription-BusinessDetails-Start")
-          Future successful Ok(html.business_details(knownFactsForm(businessTypeIdentifier), businessTypeIdentifier))
-        }
-        case _ => {
-          Logger.warn("businessTypeIdentifier was missing, redirect and obtain from showCheckBusinessType page")
-          Future successful Redirect(routes.BusinessIdentificationController.showBusinessTypeForm())
+      withMaybeContinueUrlCached {
+        businessType match {
+          case Some(businessTypeIdentifier) if validBusinessTypes.contains(businessTypeIdentifier) => {
+            mark("Count-Subscription-BusinessDetails-Start")
+            Future successful Ok(html.business_details(knownFactsForm(businessTypeIdentifier), businessTypeIdentifier))
+          }
+          case _ => {
+            Logger.warn("businessTypeIdentifier was missing, redirect and obtain from showCheckBusinessType page")
+            Future successful Redirect(routes.BusinessIdentificationController.showBusinessTypeForm())
+          }
         }
       }
     }
