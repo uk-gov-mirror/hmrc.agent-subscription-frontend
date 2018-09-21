@@ -204,19 +204,18 @@ object CommonValidators {
       }
   }
 
-  private def isUtrValid(utrStr: String): Boolean = TaxIdentifierFormatters.normalizeUtr(utrStr).nonEmpty
-
   private def utrConstraint(errorMessages: UtrErrors = DefaultUtrErrors): Constraint[String] = Constraint[String] {
     fieldValue: String =>
       val formattedField = fieldValue.replace(" ", "")
       val (blank, invalid) = errorMessages
 
+      def isNumber(str: String): Boolean = str.map(_.isDigit).reduceOption(_ && _).getOrElse(false)
+
       Constraints.nonEmpty(formattedField) match {
         case _: Invalid => Invalid(ValidationError(blank))
-        case _ if formattedField.map(_.isDigit).reduce(_ && _) && formattedField.size != UtrMaxLength =>
+        case _ if !isNumber(formattedField) || formattedField.size != UtrMaxLength =>
           Invalid(ValidationError(invalid))
-        case _ if !isUtrValid(fieldValue) => Invalid(ValidationError(invalid))
-        case _                            => Valid
+        case _ => Valid
       }
   }
 

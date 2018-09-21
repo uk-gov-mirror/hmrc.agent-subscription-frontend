@@ -226,19 +226,15 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
       noMetricExpectedAtThisPoint()
     }
 
-    "return a 200 response to redisplay the form with an error message for UTR failing to pass Modulus11Check" in {
+    "return a 303 redirect to no-match page for UTR failing to pass Modulus11Check" in {
       val invalidUtr = "2000000001" // Modulus11Check validation fails in this case
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> invalidUtr, "postcode" -> validPostcode)
       val result = await(controller.submitBusinessDetailsForm(Some(BusinessIdentificationForms.validBusinessTypes.head))(request))
 
-      status(result) shouldBe OK
-      val responseBody = bodyOf(result)
-      responseBody should include(htmlEscapedMessage("businessDetails.title"))
-      responseBody should include(htmlEscapedMessage("error.sautr.invalid"))
-      responseBody should include(invalidUtr)
-      responseBody should include(validPostcode)
-      noMetricExpectedAtThisPoint()
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showNoAgencyFound().url)
+      metricShouldExistAndBeUpdated("Count-Subscription-NoAgencyFound")
     }
 
     "return a 200 response to redisplay the form with an error message for invalidly-formatted postcode" in {
@@ -1313,7 +1309,31 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
       metricShouldExistAndBeUpdated("Count-Subscription-InvasiveCheck-Success")
     }
 
-    "redirect to /cannot-create account page when submitting valid utr with no relationship" in {
+    "redirect to /cannot-create account page" when {
+      "submitting invalid Utr which fails Modulus11Check" in {
+        implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+        sessionStoreService.currentSession.knownFactsResult = Some(
+          KnownFactsResult(
+            utr = validUtr,
+            postcode = validPostcode,
+            taxpayerName = "My Agency",
+            isSubscribedToAgentServices = false,
+            None,
+            None))
+
+        val result = await(
+          controller.submitClientDetailsForm(
+            request
+              .withFormUrlEncodedBody(("variant", "utr"), ("utr", "4000000019"))
+              .withSession("saAgentReferenceToCheck" -> "SA6012")))
+
+        status(result) shouldBe 303
+        redirectLocation(result) shouldBe Some(routes.StartController.showCannotCreateAccount().url)
+
+        metricShouldExistAndBeUpdated("Count-Subscription-InvasiveCheck-Could-Not-Provide-Tax-Payer-Identifier")
+    }
+
+    "submitting valid utr with no relationship" in {
       givenAUserDoesNotHaveRelationshipInCesa("utr", "40000     00  009", "SA6012")
 
       implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
@@ -1322,7 +1342,9 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
           utr = validUtr,
           postcode = validPostcode,
           taxpayerName = "My Agency",
-          isSubscribedToAgentServices = false, None, None))
+          isSubscribedToAgentServices = false,
+            None,
+            None))
 
       val result = await(
         controller.submitClientDetailsForm(
@@ -1333,9 +1355,28 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.StartController.showCannotCreateAccount().url)
 
-      verifyAgentAssuranceAuditRequestSentWithClientIdentifier(Utr("4000000009"), false, "SA6012", agentAssurancePayeCheck)
+      verifyAgentAssuranceAuditRequestSentWithClientIdentifier(
+          Utr("4000000009"),
+          false,
+          "SA6012",
+          agentAssurancePayeCheck)
       metricShouldExistAndBeUpdated("Count-Subscription-InvasiveCheck-Failed")
     }
+
+    "successfully selecting ICannotProvideEitherOfTheseDetails" in {
+      givenUtrAGoodCombinationAndUserHasRelationshipInCesa("utr", "4000000009", "SA6012")
+
+      val result = await(
+        controller.submitClientDetailsForm(authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+          .withFormUrlEncodedBody(("variant", "cannotProvide"))
+          .withSession("saAgentReferenceToCheck" -> "SA6012")))
+
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.StartController.showCannotCreateAccount().url)
+
+      metricShouldExistAndBeUpdated("Count-Subscription-InvasiveCheck-Could-Not-Provide-Tax-Payer-Identifier")
+    }
+  }
 
     "utr blank invasiveCheck" in {
 
@@ -1377,20 +1418,6 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
           authenticatedAs(subscribingCleanAgentWithoutEnrolments)
             .withFormUrlEncodedBody(("variant", "someInvalidVariant"), ("utr", "4000000009"))
             .withSession("saAgentReferenceToCheck" -> "SA6012"))))
-    }
-
-    "redirect to /cannot-create account when successfully selecting ICannotProvideEitherOfTheseDetails" in {
-      givenUtrAGoodCombinationAndUserHasRelationshipInCesa("utr", "4000000009", "SA6012")
-
-      val result = await(
-        controller.submitClientDetailsForm(authenticatedAs(subscribingCleanAgentWithoutEnrolments)
-            .withFormUrlEncodedBody(("variant", "cannotProvide"))
-            .withSession("saAgentReferenceToCheck" -> "SA6012")))
-
-      status(result) shouldBe 303
-      redirectLocation(result) shouldBe Some(routes.StartController.showCannotCreateAccount().url)
-
-      metricShouldExistAndBeUpdated("Count-Subscription-InvasiveCheck-Could-Not-Provide-Tax-Payer-Identifier")
     }
 
     "return 200 error when submitting without selected radio option" in {

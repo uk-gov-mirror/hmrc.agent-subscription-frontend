@@ -33,7 +33,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.support.{Monitoring, TaxIdentifierF
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html.invasive_check_start
 import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.domain.{SaAgentReference, TaxIdentifier}
+import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier}
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent.hasNonEmptyEnrolments
@@ -125,9 +125,14 @@ class BusinessIdentificationController @Inject()(
             .fold(
               formWithErrors => Future successful Ok(html.business_details(formWithErrors, businessTypeIdentifier)),
               knownFacts =>
-                checkBusinessDetailsGivenValidForm(knownFacts).map { resultWithSession =>
-                  val sessionData = (request.session.data ++ resultWithSession.session.data.toSeq) + ("businessType" -> businessTypeIdentifier)
-                  resultWithSession.withSession(sessionData.toSeq: _*)
+                if (Utr.isValid(knownFacts.utr.value)) {
+                  checkBusinessDetailsGivenValidForm(knownFacts).map { resultWithSession =>
+                    val sessionData = (request.session.data ++ resultWithSession.session.data.toSeq) + ("businessType" -> businessTypeIdentifier)
+                    resultWithSession.withSession(sessionData.toSeq: _*)
+                  }
+                } else {
+                  mark("Count-Subscription-NoAgencyFound")
+                  Future.successful(Redirect(routes.BusinessIdentificationController.showNoAgencyFound()))
               }
             )
         }
@@ -441,13 +446,21 @@ class BusinessIdentificationController @Inject()(
               .getOrElse(throw new IllegalStateException(
                 "Form validation should return error when submitting unavailable variant"))
 
+            def utr: Utr =
+              correctForm.utr
+                .flatMap(TaxIdentifierFormatters.normalizeUtr)
+                .getOrElse(throw new Exception("utr should not be empty"))
+            def nino: Nino =
+              correctForm.nino
+                .flatMap(TaxIdentifierFormatters.normalizeNino)
+                .getOrElse(throw new Exception("nino should not be empty"))
+
             ValidVariantsTaxPayerOptionForm.withName(retrievedVariant) match {
-              case UtrV  => checkAndRedirect(TaxIdentifierFormatters.normalizeUtr(correctForm.utr.get).get, "utr")
-              case NinoV => checkAndRedirect(TaxIdentifierFormatters.normalizeNino(correctForm.nino.get).get, "nino")
-              case CannotProvideV => {
+              case UtrV if Utr.isValid(utr.value) => checkAndRedirect(utr, "utr")
+              case NinoV                          => checkAndRedirect(nino, "nino")
+              case _ =>
                 mark("Count-Subscription-InvasiveCheck-Could-Not-Provide-Tax-Payer-Identifier")
                 Future successful Redirect(routes.StartController.showCannotCreateAccount())
-              }
             }
           }
         )

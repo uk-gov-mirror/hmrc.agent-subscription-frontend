@@ -72,12 +72,6 @@ class CommonValidatorsSpec extends UnitSpec with EitherValues {
           case Left(List(FormError("testKey", List("error.utr.invalid"), _))) =>
         }
       }
-
-      "checksum fails" in {
-        bind("2000000001") should matchPattern {
-          case Left(List(FormError("testKey", List("error.utr.invalid"), _))) =>
-        }
-      }
     }
   }
 
@@ -149,12 +143,6 @@ class CommonValidatorsSpec extends UnitSpec with EitherValues {
 
       "it has non-alphanumeric characters" in {
         bind("200000000!") should matchPattern {
-          case Left(List(FormError("testKey", List(invalid), _))) =>
-        }
-      }
-
-      "checksum fails" in {
-        bind("2000000001") should matchPattern {
           case Left(List(FormError("testKey", List(invalid), _))) =>
         }
       }
