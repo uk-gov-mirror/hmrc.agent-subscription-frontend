@@ -71,6 +71,14 @@ class BusinessIdentificationController @Inject()(
     }
   }
 
+  val redirectToBusinessType: Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { _ =>
+      withMaybeContinueUrlCached {
+        Future successful Redirect(routes.BusinessIdentificationController.showBusinessTypeForm())
+      }
+    }
+  }
+
   def showBusinessTypeForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { implicit agent =>
       withMaybeContinueUrlCached {
@@ -100,17 +108,14 @@ class BusinessIdentificationController @Inject()(
 
   def showBusinessDetailsForm(businessType: Option[String]): Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { implicit agent =>
-      //withMaybeContinueUrlCached because, Currently still needed as a user might be arriving from: trusts registration flow or gov.uk guidence page, make sure this is not the case anymore before removing
-      withMaybeContinueUrlCached {
-        businessType match {
-          case Some(businessTypeIdentifier) if validBusinessTypes.contains(businessTypeIdentifier) => {
-            mark("Count-Subscription-BusinessDetails-Start")
-            Future successful Ok(html.business_details(knownFactsForm(businessTypeIdentifier), businessTypeIdentifier))
-          }
-          case _ => {
-            Logger.warn("businessTypeIdentifier was missing, redirect and obtain from showCheckBusinessType page")
-            Future successful Redirect(routes.BusinessIdentificationController.showBusinessTypeForm())
-          }
+      businessType match {
+        case Some(businessTypeIdentifier) if validBusinessTypes.contains(businessTypeIdentifier) => {
+          mark("Count-Subscription-BusinessDetails-Start")
+          Future successful Ok(html.business_details(knownFactsForm(businessTypeIdentifier), businessTypeIdentifier))
+        }
+        case _ => {
+          Logger.warn("businessTypeIdentifier was missing, redirect and obtain from showCheckBusinessType page")
+          Future successful Redirect(routes.BusinessIdentificationController.showBusinessTypeForm())
         }
       }
     }

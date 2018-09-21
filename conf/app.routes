@@ -14,6 +14,10 @@ GET         /confirm-business                     uk.gov.hmrc.agentsubscriptionf
 POST        /confirm-business                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.submitConfirmBusinessForm
 GET         /already-subscribed                   uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showAlreadySubscribed
 GET         /create-new-account                   uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showCreateNewAccount
+# GET /check-agency-status is deprecated, please use GET /business-type instead
+GET         /check-agency-status                  uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.redirectToBusinessType
+# GET /check-business-type is deprecated, please use GET /business-type instead
+GET         /check-business-type                  uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.redirectToBusinessType
 
 GET         /enter-agent-code                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.invasiveCheckStart
 POST        /enter-agent-code                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.invasiveSaAgentCodePost

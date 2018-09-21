@@ -140,6 +140,19 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
     }
   }
 
+  "redirectToBusinessType" should {
+    behave like anAgentAffinityGroupOnlyEndpoint(controller.redirectToBusinessType(_))
+
+    behave like aPageTakingContinueUrlAndCachingInSessionStore(controller.redirectToBusinessType(_),
+      sessionStoreService, userIsAuthenticated(subscribingCleanAgentWithoutEnrolments), expectedStatusCode = 303)
+
+    "redirect to /business-type" in {
+      val result = await(controller.redirectToBusinessType(authenticatedAs(subscribingCleanAgentWithoutEnrolments)))
+
+      redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showBusinessTypeForm().url)
+    }
+  }
+
   "showBusinessDetailsForm" should {
     val playRequestValidBusinessTypeIdentifier =
       controller.showBusinessDetailsForm(Some(BusinessIdentificationForms.validBusinessTypes.head))
@@ -148,24 +161,6 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
 
     behave like aPageWithFeedbackLinks(playRequestValidBusinessTypeIdentifier(_),
       authenticatedAs(subscribingCleanAgentWithoutEnrolments))
-
-    "showBusinessDetailsForm cache continue url WITH NO business Identifier Input" should {
-      //withMaybeContinueUrlCached because, Currently still needed as a user might be arriving from: trusts registration flow or gov.uk guidence page, make sure this is not the case anymore before removing
-      behave like aPageTakingContinueUrlAndCachingInSessionStore(controller.showBusinessDetailsForm(None)(_),
-        sessionStoreService, userIsAuthenticated(subscribingCleanAgentWithoutEnrolments), expectedStatusCode = 303)
-    }
-
-    "showBusinessDetailsForm cache continue url WITH INVALID business Identifier Input" should {
-      //withMaybeContinueUrlCached because, Currently still needed as a user might be arriving from: trusts registration flow or gov.uk guidence page, make sure this is not the case anymore before removing
-      behave like aPageTakingContinueUrlAndCachingInSessionStore(controller.showBusinessDetailsForm(Some("invalidBusinessTypeIdentifier"))(_),
-        sessionStoreService, userIsAuthenticated(subscribingCleanAgentWithoutEnrolments), expectedStatusCode = 303)
-    }
-
-    "showBusinessDetailsForm cache continue url WITH valid business type identifier Input" should {
-      //withMaybeContinueUrlCached because, Currently still needed as a user might be arriving from: trusts registration flow or gov.uk guidence page, make sure this is not the case anymore before removing
-      behave like aPageTakingContinueUrlAndCachingInSessionStore(playRequestValidBusinessTypeIdentifier(_),
-        sessionStoreService, userIsAuthenticated(subscribingCleanAgentWithoutEnrolments))
-    }
 
     "display the check agency status page if the current user is logged in and has affinity group = Agent" in {
       val result = await(playRequestValidBusinessTypeIdentifier(authenticatedAs(subscribingCleanAgentWithoutEnrolments)))
