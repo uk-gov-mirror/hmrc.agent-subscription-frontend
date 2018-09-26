@@ -18,17 +18,16 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
+
 import play.api.Logger
-import play.api.data.Form
-import play.api.data.Forms.{mapping, optional, text}
 import play.api.i18n.{I18nSupport, MessagesApi}
+import play.api.mvc.Results.Redirect
 import play.api.mvc.{AnyContent, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent.hasNonEmptyEnrolments
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.{AddressLookupFrontendConnector, MappingConnector}
-import uk.gov.hmrc.agentsubscriptionfrontend.validators.CommonValidators._
 import uk.gov.hmrc.agentsubscriptionfrontend.form.DesAddressForm
 import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
@@ -39,7 +38,7 @@ import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException}
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 
 @Singleton
@@ -97,7 +96,7 @@ class SubscriptionController @Inject()(
             details.businessAddress.postalCode.getOrElse(throw new Exception("Postcode should not be empty")),
             details.businessAddress.countryCode
           )
-          subscriptionService.subscribe(details, desAddress).flatMap(redirectSubscriptionResponse)
+          subscriptionService.subscribe(details, desAddress).flatMap(redirectSubscriptionResponse(_, details.utr))
         }
     }
   }
@@ -113,12 +112,12 @@ class SubscriptionController @Inject()(
     }
   }
 
-  private def redirectSubscriptionResponse(either: Either[SubscriptionReturnedHttpError, (Arn, String)])(
+  private def redirectSubscriptionResponse(either: Either[SubscriptionReturnedHttpError, (Arn, String)], utr: Utr)(
     implicit request: Request[AnyContent]): Future[Result] =
     either match {
-      case Right((arn, _)) =>
+      case Right((arn, nameFromDetails)) =>
         mark("Count-Subscription-Complete")
-        commonRouting.redirectUponSuccessfulSubscription(arn)
+        completeMappingWhenAvailable(utr, completedPartialSub = false)
 
       case Left(SubscriptionReturnedHttpError(CONFLICT)) =>
         mark("Count-Subscription-AlreadySubscribed-APIResponse")
@@ -173,8 +172,8 @@ class SubscriptionController @Inject()(
   val showLinkClients: Action[AnyContent] = Action.async { implicit request =>
     appConfig.autoMapAgentEnrolments match {
       case true =>
-        withAuthenticatedAgent {
-          withArnFromSession { _ =>
+        withSubscribingAgent { _ =>
+          withInitialDetails { _ =>
             Future.successful(Ok(html.link_clients(linkClientsForm)))
           }
         }
@@ -185,8 +184,8 @@ class SubscriptionController @Inject()(
   val submitLinkClients: Action[AnyContent] = Action.async { implicit request =>
     appConfig.autoMapAgentEnrolments match {
       case true =>
-        withAuthenticatedAgent {
-          withArnFromSession { _ =>
+        withSubscribingAgent { _ =>
+          withInitialDetails { inititalDetails =>
             linkClientsForm
               .bindFromRequest()
               .fold(
@@ -198,14 +197,46 @@ class SubscriptionController @Inject()(
                   }
                 },
                 validatedLinkClients => {
+                  val isPartiallySubscribed = request.session.get("isPartiallySubscribed").contains("true")
+
                   validatedLinkClients.autoMapping match {
-                    case Yes => linkClientsResponse(mappingConnector.updatePreSubscriptionWithArn)
-                    case No  => linkClientsResponse(mappingConnector.deletePreSubscription)
+                    case Yes =>
+                              isPartiallySubscribed match {
+                                  case false =>
+                                          Future successful Redirect(routes.SubscriptionController.showCheckAnswers())
+                                            .withSession(request.session + ("performAutoMapping" -> "true"))
+                                  case true =>
+                                          for {
+                                            _ <- subscriptionService
+                                                  .completePartialSubscription(inititalDetails.utr, inititalDetails.knownFactsPostcode)
+                                            _ = mark("Count-Subscription-PartialSubscriptionCompleted")
+                                            returnResult <- completeMappingWhenAvailable(
+                                                            inititalDetails.utr,
+                                                            completedPartialSub = true)
+                                              } yield returnResult.withSession(request.session - "isPartiallySubscribed")
+                              }
+
+                    case No =>
+                              isPartiallySubscribed match {
+                                  case false =>
+                                          Future successful Redirect(routes.SubscriptionController.showCheckAnswers())
+                                            .withSession(request.session - "performAutoMapping")
+                                  case true => {
+                                          subscriptionService
+                                            .completePartialSubscription(inititalDetails.utr, inititalDetails.knownFactsPostcode)
+                                            .map { _ =>
+                                              mark("Count-Subscription-PartialSubscriptionCompleted")
+                                              Redirect(routes.SubscriptionController.showSubscriptionComplete())
+                                              .withSession(request.session - "isPartiallySubscribed")
+                                             }
+                                  }
+                              }
                   }
                 }
               )
           }
         }
+
       case false => Future.successful(InternalServerError)
     }
   }
@@ -217,27 +248,30 @@ class SubscriptionController @Inject()(
         None
     }
 
-    withAuthenticatedAgent {
-      withArnFromSession { arn =>
-        for {
-          continueUrlOpt           <- sessionStoreService.fetchContinueUrl.recover(recoverSessionStoreWithNone)
-          wasEligibleForMappingOpt <- sessionStoreService.fetchMappingEligible.recover(recoverSessionStoreWithNone)
-          _                        <- sessionStoreService.remove()
-        } yield {
-          val continueUrl = continueUrlOpt.map(_.url).getOrElse(appConfig.agentServicesAccountUrl)
-          val isUrlToASAccount = continueUrlOpt.isEmpty
-          val wasEligibleForMapping = wasEligibleForMappingOpt.contains(true)
-          val prettifiedArn = TaxIdentifierFormatters.prettify(arn)
-          Ok(html.subscription_complete(continueUrl, isUrlToASAccount, wasEligibleForMapping, prettifiedArn))
-            .removingFromSession("arn")
-        }
+    withSubscribedAgent { arn =>
+      for {
+        continueUrlOpt           <- sessionStoreService.fetchContinueUrl.recover(recoverSessionStoreWithNone)
+        wasEligibleForMappingOpt <- sessionStoreService.fetchMappingEligible.recover(recoverSessionStoreWithNone)
+        _                        <- sessionStoreService.remove()
+      } yield {
+        val continueUrl = continueUrlOpt.map(_.url).getOrElse(appConfig.agentServicesAccountUrl)
+        val isUrlToASAccount = continueUrlOpt.isEmpty
+        val wasEligibleForMapping = wasEligibleForMappingOpt.contains(true)
+        val prettifiedArn = TaxIdentifierFormatters.prettify(arn)
+        Ok(html.subscription_complete(continueUrl, isUrlToASAccount, wasEligibleForMapping, prettifiedArn))
       }
     }
   }
 
-  private def linkClientsResponse[A](
-    body: Utr => Future[Unit])(implicit hc: HeaderCarrier, request: Request[A]): Future[Result] =
-    withKnownFactsResult { knownFactResult =>
-      body(knownFactResult.utr).map(_ => Redirect(routes.SubscriptionController.showSubscriptionComplete()))
-    }
+  private def completeMappingWhenAvailable(utr: Utr, completedPartialSub: Boolean = false)(
+    implicit request: Request[AnyContent],
+    hc: HeaderCarrier): Future[Result] = {
+
+    val doMappingAnswer: Boolean = request.session.get("performAutoMapping").contains("true") || completedPartialSub
+    for {
+      completeMapping <- if (appConfig.autoMapAgentEnrolments && doMappingAnswer)
+                          mappingConnector.updatePreSubscriptionWithArn(utr)
+                        else Future successful ()
+    } yield Redirect(routes.SubscriptionController.showSubscriptionComplete())
+  }
 }

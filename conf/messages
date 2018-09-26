@@ -145,13 +145,16 @@ nonAgent.l2=use your new account details to sign in and create your agent servic
 
 
 #Link account
-linkClients.title=Link your current Self Assessment and VAT clients to your agent services account
-linkClients.p1=You can allow your agent services account to access your current client relationships linked to the Government Gateway account that you first signed in with.
-linkClients.p2=If your clients sign up to report their income and expenses, or their VAT returns, through software, you will then be able to:
-linkClients.bullet-list.1=use software to access information about these clients
-linkClients.bullet-list.2=act on your client''s behalf for these services without having to ask for their authorisation again
-linkClients.p3=You can choose to link your clients now, or skip this until later.
-linkClients.p4=If your business uses more than one Government Gateway account, you can link these after you have created your agent services account.
+linkClients.title=Link your clients to your agent services account
+linkClients.p1=We will automatically link your current Self Assessment and VAT clients to your agent services account.
+linkClients.p2=If you prefer, you can skip this step for now. You can do it later after creating your account, but you can save time by doing it now.
+linkClients.expand.button=More details about linking your clients
+linkClients.expand.p1=You can allow your agent services account to access your current client relationships.
+linkClients.expand.p2=To do this, we will check for any Self Assessment or VAT client relationships associated with the Government Gateway agent account you used to sign in.
+linkClients.expand.p3=You should use this service if you expect to provide any of the following services for clients:
+linkClients.expand.bullet1=report their income and expenses through software
+linkClients.expand.bullet2=report their VAT returns through software
+linkClients.expand.p4=If you choose to link your clients, anyone using this agent services account may be able to access your client relationships.
 linkClients.legend=Do you want to link your clients now?
 linkClients.option.yes=Yes
 linkClients.option.no=No

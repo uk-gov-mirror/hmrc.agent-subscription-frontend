@@ -15,35 +15,31 @@
  */
 
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
+
 import javax.inject.{Inject, Singleton}
-import play.api.Logger
 import play.api.mvc._
 import play.api.mvc.Results._
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
+import uk.gov.hmrc.agentsubscriptionfrontend.connectors.MappingConnector
 import uk.gov.hmrc.agentsubscriptionfrontend.models.MappingEligibility
-import uk.gov.hmrc.agentsubscriptionfrontend.models.MappingEligibility.{IsEligible, IsNotEligible, UnknownEligibility}
-import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
+import uk.gov.hmrc.agentsubscriptionfrontend.models.MappingEligibility.IsEligible
+import uk.gov.hmrc.agentsubscriptionfrontend.service.SubscriptionService
 import uk.gov.hmrc.http.HeaderCarrier
-
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class CommonRouting @Inject()(sessionStoreService: SessionStoreService, appConfig: AppConfig) {
+class CommonRouting @Inject()(
+  mappingConnector: MappingConnector,
+  subscriptionService: SubscriptionService,
+  appConfig: AppConfig) {
 
-  private[controllers] def redirectUponSuccessfulSubscription(
-    arn: Arn)(implicit request: Request[AnyContent], hc: HeaderCarrier, ec: ExecutionContext): Future[Result] =
-    for (redirectLocation <- if (appConfig.autoMapAgentEnrolments) {
-                              sessionStoreService.fetchMappingEligible.map {
-                                MappingEligibility.apply(_) match {
-                                  case IsEligible    => routes.SubscriptionController.showLinkClients()
-                                  case IsNotEligible => routes.SubscriptionController.showSubscriptionComplete()
-                                  case UnknownEligibility => {
-                                    Logger.warn("chainedSessionDetails did not cache wasEligibleForMapping")
-                                    routes.SubscriptionController.showSubscriptionComplete()
-                                  }
-                                }
-                              }
-                            } else Future successful routes.SubscriptionController.showSubscriptionComplete())
-      yield Redirect(redirectLocation).withSession(request.session + ("arn" -> arn.value))
+  private[controllers] def handleAutoMapping(eligibleForMapping: Option[Boolean])(
+    implicit request: Request[AnyContent],
+    hc: HeaderCarrier,
+    ec: ExecutionContext): Future[Result] =
+    MappingEligibility.apply(eligibleForMapping) match {
+      case IsEligible if appConfig.autoMapAgentEnrolments =>
+        Future successful Redirect(routes.SubscriptionController.showLinkClients())
+      case _ => Future successful Redirect(routes.SubscriptionController.showCheckAnswers())
+    }
 }

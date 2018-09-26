@@ -30,10 +30,6 @@ trait SessionDataMissing {
 
   val sessionStoreService: SessionStoreService
 
-  def withArnFromSession(
-    body: Arn => Future[Result])(implicit request: Request[AnyContent], ec: ExecutionContext): Future[Result] =
-    request.session.get("arn").fold(Future.successful(sessionMissingRedirect("ARN")))(arn => body(Arn(arn)))
-
   def withInitialDetails(
     body: InitialDetails => Future[Result])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Result] =
     withModelFromSessionStore[InitialDetails]("InitialDetails", sessionStoreService.fetchInitialDetails)(body)

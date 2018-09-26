@@ -172,10 +172,9 @@ class BusinessIdentificationController @Inject()(
           result <- withCleanCreds {
                      subscriptionService
                        .completePartialSubscription(knownFacts.utr, knownFacts.postcode)
-                       .map { arn =>
+                       .map { _ =>
                          mark("Count-Subscription-PartialSubscriptionCompleted")
                          Redirect(routes.SubscriptionController.showSubscriptionComplete())
-                           .withSession(request.session + ("arn" -> arn.value))
                        }
                    }
         } yield result
@@ -274,7 +273,6 @@ class BusinessIdentificationController @Inject()(
         mark("Count-Subscription-CleanCreds-Start")
         routes.SubscriptionController.showCheckAnswers()
     }
-
     cacheInitialDetailsAndRedirect(initialDetails)(redirectCall)
   }
 

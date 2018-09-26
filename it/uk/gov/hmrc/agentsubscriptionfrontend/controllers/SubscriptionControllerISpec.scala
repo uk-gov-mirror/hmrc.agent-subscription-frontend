@@ -25,11 +25,12 @@ import play.api.test.Helpers._
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AddressLookupFrontendStubs._
-import uk.gov.hmrc.agentsubscriptionfrontend.stubs.{AgentSubscriptionStub, MappingStubs}
+import uk.gov.hmrc.agentsubscriptionfrontend.stubs.{AgentSubscriptionStub, AuthStub, MappingStubs}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TaxIdentifierFormatters}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser._
 import uk.gov.hmrc.http.BadRequestException
 import uk.gov.hmrc.play.binders.ContinueUrl
+import uk.gov.hmrc.auth.core.SessionRecordNotFound
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -158,19 +159,18 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
 
   "showSubscriptionComplete" should {
     trait RequestWithSessionDetails {
-      val arnInSession = "AARN0000001"
-      implicit val request = authenticatedAs(subscribingAgentEnrolledForHMRCASAGENT)
-        .withSession("arn" -> arnInSession)
-      sessionStoreService.currentSession.wasEligibleForMapping = Some(true)
+      val arn = "AARN0000001"
+      AuthStub.authenticatedAgent(arn)
+      implicit val request = FakeRequest()
     }
     def resultOf(request: Request[AnyContent]) = await(controller.showSubscriptionComplete(request))
 
-    behave like anAgentAffinityGroupOnlyEndpoint(resultOf)
+    behave like agentRequiresAuthorisation(resultOf)
 
     behave like aPageWithFeedbackLinks(resultOf, new RequestWithSessionDetails {}.request)
 
     "display the ARN in a prettified format" in new RequestWithSessionDetails {
-      val expectedPrettifiedArn = TaxIdentifierFormatters.prettify(Arn(arnInSession))
+      val expectedPrettifiedArn = TaxIdentifierFormatters.prettify(Arn(arn))
       expectedPrettifiedArn shouldBe "AARN-000-0001"
       resultOf(request) should containSubstrings(expectedPrettifiedArn)
     }
@@ -187,34 +187,6 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
 
       bodyOf(resultOf(request)) should include(hasMessage("subscriptionComplete.p1", "AARN-000-0001"))
       bodyOf(resultOf(request)) should include(hasMessage("subscriptionComplete.p2", "https://www.gov.uk/guidance/get-an-hmrc-agent-services-account"))
-
-
-
-    }
-
-    "redirect to session missing page" when {
-      "the arn is missing from the session" in {
-        implicit val request = authenticatedAs(subscribingAgentEnrolledForHMRCASAGENT)
-        sessionStoreService.currentSession.wasEligibleForMapping = Some(true)
-        resultShouldBeSessionDataMissing(resultOf(request))
-      }
-    }
-
-    "tolerate a possible short delay in the new enrolment becoming visible in auth" when {
-      "there was a delay and the new enrolment is not yet visible in auth" in {
-        implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
-          .withSession("arn" -> "AARN0000001")
-        sessionStoreService.currentSession.wasEligibleForMapping = Some(true)
-
-        resultOf(request) should containMessages("subscriptionComplete.title")
-      }
-      "there was no delay and the new enrolment is visible in auth" in {
-        implicit val request = authenticatedAs(subscribingAgentEnrolledForHMRCASAGENT)
-          .withSession("arn" -> "AARN0000001")
-        sessionStoreService.currentSession.wasEligibleForMapping = Some(true)
-
-        resultOf(request) should containMessages("subscriptionComplete.title")
-      }
     }
 
     "contain a button to continue journey" when {
@@ -234,14 +206,6 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
           s">${htmlEscapedMessage("subscriptionComplete.button.continueToASAccount")}</a>",
           redirectUrl)
       }
-    }
-
-    "remove existing session" in new RequestWithSessionDetails {
-      val result = resultOf(request)
-
-      status(result) shouldBe 200
-      sessionStoreService.allSessionsRemoved shouldBe true
-      result.session.get("arn") shouldBe None
     }
   }
 
@@ -616,7 +580,6 @@ class SubscriptionControllerWithAutoMappingOn extends SubscriptionControllerISpe
         val result = await(controller.submitCheckAnswers(request))
         status(result) shouldBe 303
         redirectLocation(result).head shouldBe routes.SubscriptionController.showSubscriptionComplete().url
-        result.session.get("arn") shouldBe Some("TARN00023")
 
         verifySubscriptionRequestSent(subscriptionRequestWithNoEdit(initialDetails))
         metricShouldExistAndBeUpdated("Count-Subscription-Complete")
@@ -627,11 +590,10 @@ class SubscriptionControllerWithAutoMappingOn extends SubscriptionControllerISpe
 
         implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
         sessionStoreService.currentSession.initialDetails = Some(initialDetails)
-        sessionStoreService.currentSession.wasEligibleForMapping = Some(true)
 
         val result = await(controller.submitCheckAnswers(request))
         status(result) shouldBe 303
-        redirectLocation(result).head shouldBe routes.SubscriptionController.showLinkClients().url
+        redirectLocation(result).head shouldBe routes.SubscriptionController.showSubscriptionComplete().url
 
         verifySubscriptionRequestSent(subscriptionRequestWithNoEdit(initialDetails))
         metricShouldExistAndBeUpdated("Count-Subscription-Complete")
@@ -640,8 +602,8 @@ class SubscriptionControllerWithAutoMappingOn extends SubscriptionControllerISpe
 
     "showLinkClients (GET /link-clients)" should {
       trait RequestAndResult {
-        val request = authenticatedAs(subscribingAgentEnrolledForHMRCASAGENT)
-          .withSession("arn" -> "AARN0000001")
+        implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+        sessionStoreService.currentSession.initialDetails = Some(initialDetails)
         val result = await(controller.showLinkClients(request))
         val doc = Jsoup.parse(bodyOf(result))
       }
@@ -653,10 +615,13 @@ class SubscriptionControllerWithAutoMappingOn extends SubscriptionControllerISpe
           "linkClients.title",
           "linkClients.p1",
           "linkClients.p2",
-          "linkClients.bullet-list.1",
-          "linkClients.bullet-list.2",
-          "linkClients.p3",
-          "linkClients.p4",
+          "linkClients.expand.button",
+          "linkClients.expand.p1",
+          "linkClients.expand.p2",
+          "linkClients.expand.p3",
+          "linkClients.expand.bullet1",
+          "linkClients.expand.bullet2",
+          "linkClients.expand.p4",
           "linkClients.legend",
           "linkClients.option.yes",
           "linkClients.option.no"
@@ -681,78 +646,61 @@ class SubscriptionControllerWithAutoMappingOn extends SubscriptionControllerISpe
         continueBtn.attr("type") shouldBe "submit"
         continueBtn.text() shouldBe htmlEscapedMessage("button.continue")
       }
-
-      "tolerate a possible short delay in the new enrolment becoming visible in auth" when {
-        "there was a delay and the new enrolment is not yet visible in auth" in {
-          val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments).withSession("arn" -> "AARN0000001")
-          val result = await(controller.showLinkClients(request))
-          result should containMessages("linkClients.title")
-        }
-        "there was no delay and the new enrolment is visible in auth" in {
-          val request = authenticatedAs(subscribingAgentEnrolledForHMRCASAGENT).withSession("arn" -> "AARN0000001")
-          val result = await(controller.showLinkClients(request))
-          result should containMessages("linkClients.title")
-        }
-      }
-
-      "redirect to /business-type if subscribed arn is missing from session" in {
-        val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
-        resultShouldBeSessionDataMissing(await(controller.showLinkClients(request)))
-      }
     }
 
     "submitLinkClients (POST /link-clients)" when {
       class RequestWithSessionDetails(autoMappingFormValue: String) {
-        implicit val request = authenticatedAs(subscribingAgentEnrolledForHMRCASAGENT)
+        implicit val request = authenticatedAs(subscribing2ndCleanAgentWithoutEnrolments)
           .withFormUrlEncodedBody("autoMapping" -> autoMappingFormValue)
-          .withSession("arn" -> "AARN0000001")
-        sessionStoreService.currentSession.knownFactsResult = Some(myAgencyKnownFactsResult)
+        sessionStoreService.currentSession.initialDetails = Some(initialDetails)
+      }
+
+      class PartiallySubRequestWithSessionDetails(autoMappingFormValue: String) {
+        implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+          .withFormUrlEncodedBody("autoMapping" -> autoMappingFormValue).withSession("isPartiallySubscribed" -> "true")
+        sessionStoreService.currentSession.initialDetails = Some(initialDetails)
       }
 
       def resultOf(request: Request[AnyContent]) = await(controller.submitLinkClients(request))
 
       behave like anAgentAffinityGroupOnlyEndpoint(resultOf)
 
-      "choice is Yes" should {
-        "redirect to /subscription-complete" in new RequestWithSessionDetails(autoMappingFormValue = "yes") {
-          MappingStubs.givenMappingUpdateToPostSubscription(utr)
-          resultOf(request).header.headers(LOCATION) shouldBe routes.SubscriptionController.showSubscriptionComplete().url
-        }
-
-        "keep the ARN in the session" in new RequestWithSessionDetails(autoMappingFormValue = "yes") {
-          MappingStubs.givenMappingUpdateToPostSubscription(utr)
-          resultOf(request).session.get("arn") shouldBe Some("AARN0000001")
-        }
-
-        "update the pre-subscription mappings with the ARN" in new RequestWithSessionDetails(autoMappingFormValue = "yes") {
-          MappingStubs.givenMappingUpdateToPostSubscription(utr)
+        "redirect to /check-answers choice is Yes" in new RequestWithSessionDetails(autoMappingFormValue = "yes") {
           val result = resultOf(request)
-          MappingStubs.verifyMappingUpdateToPostSubscriptionCalled(utr)
+          result.header.headers(LOCATION) shouldBe routes.SubscriptionController.showCheckAnswers().url
+          result.session.get("performAutoMapping") shouldBe Some("true")
         }
+
+      "redirect to /complete choice is Yes PartiallySubscribed" in new PartiallySubRequestWithSessionDetails(autoMappingFormValue = "yes") {
+        AuthStub.authenticatedAgent(arn = "ARN00001")
+        AgentSubscriptionStub.partialSubscriptionWillSucceed(CompletePartialSubscriptionBody(
+          utr = utr,
+          knownFacts = SubscriptionRequestKnownFacts("AA1 2AA")))
+        MappingStubs.givenMappingUpdateToPostSubscription(utr)
+
+        val result = resultOf(request)
+        result.header.headers(LOCATION) shouldBe routes.SubscriptionController.showSubscriptionComplete().url
       }
 
-      "choice is No" should {
-        "redirect to /subscription-complete" in new RequestWithSessionDetails(autoMappingFormValue = "no") {
-          MappingStubs.givenMappingDeletePreSubscription(utr)
-          resultOf(request).header.headers(LOCATION) shouldBe routes.SubscriptionController.showSubscriptionComplete().url
-        }
-
-        "keep the ARN in the session" in new RequestWithSessionDetails(autoMappingFormValue = "no") {
-          MappingStubs.givenMappingDeletePreSubscription(utr)
-          resultOf(request).session.get("arn") shouldBe Some("AARN0000001")
-        }
-
-        "delete the pre-subscription mappings" in new RequestWithSessionDetails(autoMappingFormValue = "no") {
-          MappingStubs.givenMappingDeletePreSubscription(utr)
+        "redirect to /check-answers choice is No" in new RequestWithSessionDetails(autoMappingFormValue = "no") {
           val result = resultOf(request)
-          MappingStubs.verifyMappingDeletePreSubscriptionCalled(utr)
+          result.header.headers(LOCATION) shouldBe routes.SubscriptionController.showCheckAnswers().url
+          result.session.get("performAutoMapping") shouldBe None
         }
+
+      "redirect to /complete choice is No PartiallySubscribed" in new PartiallySubRequestWithSessionDetails(autoMappingFormValue = "no") {
+        AgentSubscriptionStub.partialSubscriptionWillSucceed(CompletePartialSubscriptionBody(
+          utr = utr,
+          knownFacts = SubscriptionRequestKnownFacts("AA1 2AA")))
+        val result = resultOf(request)
+        result.header.headers(LOCATION) shouldBe routes.SubscriptionController.showSubscriptionComplete().url
+        result.session.get("performAutoMapping") shouldBe None
       }
 
       "choice is missing" should {
         "return 200 and redisplay the /link-clients page with an error message for missing choice" in {
-          val request = authenticatedAs(subscribingAgentEnrolledForHMRCASAGENT)
-            .withSession("arn" -> "AARN0000001")
+          implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+          sessionStoreService.currentSession.initialDetails = Some(initialDetails)
 
           resultOf(request) should containMessages("linkClients.title", "linkClients.error.no-radio-selected")
         }
@@ -761,15 +709,6 @@ class SubscriptionControllerWithAutoMappingOn extends SubscriptionControllerISpe
       "form value is invalid" should {
         "result in a BadRequest" in new RequestWithSessionDetails(autoMappingFormValue = "somethingInvalid") {
           a[BadRequestException] shouldBe thrownBy(resultOf(request))
-        }
-      }
-
-      "ARN is missing from session" should {
-        "redirect to /business-type" in {
-          val request = authenticatedAs(subscribingAgentEnrolledForHMRCASAGENT)
-            .withFormUrlEncodedBody("autoMapping" -> "yes")
-
-          resultShouldBeSessionDataMissing(resultOf(request))
         }
       }
     }
@@ -790,7 +729,6 @@ class SubscriptionControllerWithAutoMappingOff extends SubscriptionControllerISp
       val result = await(controller.submitCheckAnswers(request))
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.SubscriptionController.showSubscriptionComplete().url)
-      result.session.get("arn") shouldBe Some("TARN00023")
 
       verifySubscriptionRequestSent(subscriptionRequestWithNoEdit(initialDetails))
       metricShouldExistAndBeUpdated("Count-Subscription-Complete")

@@ -16,87 +16,65 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
-import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
+import uk.gov.hmrc.agentsubscriptionfrontend.connectors.MappingConnector
+import uk.gov.hmrc.agentsubscriptionfrontend.service.SubscriptionService
 import uk.gov.hmrc.agentsubscriptionfrontend.support.ResettingMockitoSugar
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
+import scala.concurrent.ExecutionContext
 
-import scala.concurrent.{ExecutionContext, Future}
-
-class CommonRoutingSpec extends UnitSpec with ResettingMockitoSugar with WithFakeApplication {
-
-  private val mockSessionStoreService = resettingMock[SessionStoreService]
+class CommonRoutingSpec extends UnitSpec with WithFakeApplication with ResettingMockitoSugar {
+  private val mockMappingConnector = resettingMock[MappingConnector]
+  private val mockSubscriptionService = resettingMock[SubscriptionService]
   private val mockAppConfig = resettingMock[AppConfig]
 
-  private val commonRouting = new CommonRouting(mockSessionStoreService, mockAppConfig)
+  private val commonRouting =
+    new CommonRouting(mockMappingConnector, mockSubscriptionService, mockAppConfig)
 
-  private val arn = Arn("TARN00001")
+  private val utr = Utr("9876543210")
   private implicit val hc = HeaderCarrier()
   private implicit val ec: ExecutionContext = ExecutionContext.Implicits.global
-  implicit val request = FakeRequest()
 
-  "redirectUponSuccessfulSubscription" should {
-    "redirect to showLinkClients" when {
-      "autoMapping is on and they are eligible for mapping" in {
-        when(mockSessionStoreService.fetchMappingEligible(any[HeaderCarrier], any[ExecutionContext]))
-          .thenReturn(Future.successful(Some(true)))
+  "handleAutoMapping" should {
+    "handleAutoMapping decide whether a user can see showLinkClients page needed for mapping" when {
+      implicit def request = FakeRequest()
+
+      "autoMapping is ON and they ARE ELIGIBLE for mapping SHOW linkClients page " in {
         when(mockAppConfig.autoMapAgentEnrolments).thenReturn(true)
 
-        val result = commonRouting.redirectUponSuccessfulSubscription(arn)
-        status(result) shouldBe 303
-
+        val result = await(commonRouting.handleAutoMapping(eligibleForMapping = Some(true)))
         redirectLocation(result).get shouldBe routes.SubscriptionController.showLinkClients().url
       }
-    }
 
-    "redirect to showSubscriptionComplete" when {
-      "autoMapping is on and they are not eligible for mapping" in {
-        when(mockSessionStoreService.fetchMappingEligible(any[HeaderCarrier], any[ExecutionContext]))
-          .thenReturn(Future.successful(Some(false)))
+      "autoMapping is ON and they are NOT ELIGIBLE for mapping hence why was NOT OFFERED the decision to add decision to session" in {
         when(mockAppConfig.autoMapAgentEnrolments).thenReturn(true)
 
-        val result = commonRouting.redirectUponSuccessfulSubscription(arn)
-        status(result) shouldBe 303
-
-        redirectLocation(result).get shouldBe routes.SubscriptionController.showSubscriptionComplete().url
-        result.session.get("arn") shouldBe Some(arn.value)
+        val result = await(commonRouting.handleAutoMapping(eligibleForMapping = Some(false)))
+        redirectLocation(result).get shouldBe routes.SubscriptionController.showCheckAnswers().url
       }
 
-      "autoMapping is on and chainedSessionDetails did not cache wasEligibleForMapping" in {
-        when(mockSessionStoreService.fetchMappingEligible(any[HeaderCarrier], any[ExecutionContext]))
-          .thenReturn(Future.successful(None))
+      "autoMapping is ON and chainedSessionDetails did NOT CACHE wasEligibleForMapping" in {
         when(mockAppConfig.autoMapAgentEnrolments).thenReturn(true)
 
-        val result = commonRouting.redirectUponSuccessfulSubscription(arn)
+        val result = commonRouting.handleAutoMapping(eligibleForMapping = None)
         status(result) shouldBe 303
 
-        redirectLocation(result).get shouldBe routes.SubscriptionController.showSubscriptionComplete().url
-        result.session.get("arn") shouldBe Some(arn.value)
+        redirectLocation(result).get shouldBe routes.SubscriptionController.showCheckAnswers().url
       }
 
-      "autoMapping is off" in {
+      "autoMapping is OFF" in {
         when(mockAppConfig.autoMapAgentEnrolments).thenReturn(false)
 
-        val result = commonRouting.redirectUponSuccessfulSubscription(arn)
+        val result = commonRouting.handleAutoMapping(None)
         status(result) shouldBe 303
 
-        redirectLocation(result).get shouldBe routes.SubscriptionController.showSubscriptionComplete().url
-        result.session.get("arn") shouldBe Some(arn.value)
+        redirectLocation(result).get shouldBe routes.SubscriptionController.showCheckAnswers().url
       }
-    }
-
-    "session store service returns an exception" in {
-      when(mockSessionStoreService.fetchMappingEligible(any[HeaderCarrier], any[ExecutionContext]))
-        .thenReturn(Future.failed(new Exception("mapping cache unavailable")))
-      when(mockAppConfig.autoMapAgentEnrolments).thenReturn(true)
-
-      an[Exception] shouldBe thrownBy(await(commonRouting.redirectUponSuccessfulSubscription(arn)))
     }
   }
 }

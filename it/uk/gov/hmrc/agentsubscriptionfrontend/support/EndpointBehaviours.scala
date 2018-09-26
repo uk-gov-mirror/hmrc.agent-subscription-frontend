@@ -10,9 +10,8 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub
-import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub.userIsAuthenticated
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.{individual, subscribingCleanAgentWithoutEnrolments}
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.auth.core.{InsufficientEnrolments, SessionRecordNotFound}
 import uk.gov.hmrc.play.HeaderCarrierConverter
 import uk.gov.hmrc.play.binders.ContinueUrl
 import uk.gov.hmrc.play.test.UnitSpec
@@ -48,6 +47,24 @@ trait EndpointBehaviours {
       metricShouldExistAndBeUpdated("Count-Subscription-NonAgent")
     }
   }
+
+
+  protected def agentRequiresAuthorisation(doRequest: PlayRequest): Unit = {
+
+    "ErrorHandler will redirect to the company-auth-frontend sign-in when SessionRecordNotFound Exception occurs" in {
+      AuthStub.userIsNotAuthenticated()
+
+      an[SessionRecordNotFound] shouldBe thrownBy(await(doRequest(FakeRequest())))
+    }
+
+    "ErrorHandler will throw Insufficient Enrolments when no HMRC-AS-AGENT" in {
+      val sessionKeys = AuthStub.userHasInsufficientEnrolments
+
+      an[InsufficientEnrolments] shouldBe thrownBy(await(doRequest(FakeRequest())))
+    }
+  }
+
+
 
   protected def aPageWithFeedbackLinks(action: PlayRequest, request: => Request[AnyContent] = FakeRequest()): Unit = {
 

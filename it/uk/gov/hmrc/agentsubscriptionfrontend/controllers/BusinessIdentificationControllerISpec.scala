@@ -313,7 +313,6 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
       val result = await(controller.submitBusinessDetailsForm(Some(BusinessIdentificationForms.validBusinessTypes.head))(request))
       redirectLocation(result) shouldBe Some(routes.SubscriptionController.showSubscriptionComplete().url)
-      result.session.get("arn") shouldBe Some("TARN00023")
     }
 
     "showCreateNewAccount, creds with enrolment/s are not allowed when partiallySubscribed User" in {

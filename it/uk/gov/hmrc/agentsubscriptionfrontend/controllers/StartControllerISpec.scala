@@ -61,6 +61,7 @@ trait StartControllerISpec extends BaseISpec {
         Some("AddressLine4 A"),
         Some("AA11AA"),
         "GB")
+
       private  val validInitialDetails = if (includeInitialDetails)
         Some(InitialDetails(
           Utr("9876543210"),
@@ -214,7 +215,6 @@ trait StartControllerISpec extends BaseISpec {
 
         status(result) shouldBe 303
         redirectLocation(result).head should include(routes.SubscriptionController.showSubscriptionComplete().url)
-        result.session.get("arn") shouldBe Some("TARN00023")
       }
     }
 
@@ -299,10 +299,23 @@ class StartControllerWithAutoMappingOn extends StartControllerISpec {
       AgentSubscriptionStub.partialSubscriptionWillSucceed(CompletePartialSubscriptionBody(utr = knownFactsResult.utr,
         knownFacts = SubscriptionRequestKnownFacts(knownFactsResult.postcode)))
 
-      val result = await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(FakeRequest()))
+      implicit val request = FakeRequest()
+      val result = await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(request))
 
       status(result) shouldBe 303
       redirectLocation(result).head should include(routes.SubscriptionController.showLinkClients().url)
+      result.session.get("isPartiallySubscribed").contains("true") shouldBe true
+    }
+
+    "agent NOT Eligible for mapping, should redirect to /link-clients" in new ValidKnownFactsCached(wasEligibleForMapping = Some(false), includeInitialDetails = false) with PartiallySubscribedAgentStub {
+      AgentSubscriptionStub.partialSubscriptionWillSucceed(CompletePartialSubscriptionBody(utr = knownFactsResult.utr,
+        knownFacts = SubscriptionRequestKnownFacts(knownFactsResult.postcode)))
+
+      implicit val request = FakeRequest()
+      val result = await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(request))
+
+      status(result) shouldBe 303
+      redirectLocation(result).head should include(routes.SubscriptionController.showSubscriptionComplete().url)
     }
 
     "place the mapping eligibility back in session store, if given a valid ChainedSessionDetails ID" in new ValidKnownFactsCached with UnsubscribedAgentStub {

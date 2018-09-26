@@ -21,12 +21,6 @@
 
 @(linkClientsRadioForm: Form[LinkClients])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
-@radioLegendTitle = {
-    <h1 class="heading-medium @if(linkClientsRadioForm.hasErrors){push--top}">
-        @Messages("linkClients.legend")
-    </h1>
-}
-
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = error_prefix(linkClientsRadioForm) + Messages("linkClients.title"), bodyClasses = None) {
     <h1 class="heading-xlarge">@Messages("linkClients.title")</h1>
 
@@ -34,14 +28,23 @@
 
     <p>@Messages("linkClients.p2")</p>
 
-    <ul class="list list-bullet">
-        <li>@Messages("linkClients.bullet-list.1")</li>
-        <li>@Messages("linkClients.bullet-list.2")</li>
-    </ul>
 
-    <p>@Messages("linkClients.p3")</p>
-
-    <p>@Messages("linkClients.p4")</p>
+    <div class="form-group">
+        <details role="group">
+            <summary role="button" aria-controls="summaryContent" aria-expanded="false">
+                <span class="summary">@Messages("linkClients.expand.button")</span></summary>
+            <div class="panel panel-border-narrow" id="summaryContent" aria-hidden="true">
+                <p>@Messages("linkClients.expand.p1")</p>
+                <p>@Messages("linkClients.expand.p2")</p>
+                <p>@Messages("linkClients.expand.p3")</p>
+                <ul class="list-bullet list">
+                    <li>@Messages("linkClients.expand.bullet1")</li>
+                    <li>@Messages("linkClients.expand.bullet2")</li>
+                </ul>
+                <p>@Messages("linkClients.expand.p4")</p>
+            </div>
+        </details>
+    </div>
 
     @if(linkClientsRadioForm.hasErrors) {
         @errorSummary(Messages("error.summary.heading"), linkClientsRadioForm, Seq.empty, Some("link-clients"))
@@ -58,7 +61,7 @@
                 "yes" -> Messages("linkClients.option.yes"),
                 "no" -> Messages("linkClients.option.no")
             ),
-            '_legend -> radioLegendTitle,
+            '_legend -> Messages("linkClients.legend"),
             '_groupDivClass -> "soft--ends"
         )
         </div>
