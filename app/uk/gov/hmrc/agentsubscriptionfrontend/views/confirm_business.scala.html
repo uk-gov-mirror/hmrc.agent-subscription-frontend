@@ -34,34 +34,35 @@
     <h1 class="heading-xlarge">@Messages("confirmBusiness.title")</h1>
 
 
-    <dl style="margin-bottom:30px">
-        <dt class="heading-medium">@registrationName</dt>
-        <dd>
-            <p>
-                @businessAddress.addressLine1<br />
-                @businessAddress.addressLine2 @if(businessAddress.addressLine2.nonEmpty ){<br />}
-                @businessAddress.addressLine3 @if(businessAddress.addressLine3.nonEmpty ){<br />}
-                @businessAddress.addressLine4 @if(businessAddress.addressLine4.nonEmpty ){<br />}
-                @businessAddress.postalCode
-            </p>
-        </dd>
-    </dl>
+    <span class="heading-medium">@registrationName</span>
+
+    <p>
+        @businessAddress.addressLine1<br />
+        @businessAddress.addressLine2 @if(businessAddress.addressLine2.nonEmpty ){<br />}
+        @businessAddress.addressLine3 @if(businessAddress.addressLine3.nonEmpty ){<br />}
+        @businessAddress.addressLine4 @if(businessAddress.addressLine4.nonEmpty ){<br />}
+        @businessAddress.postalCode
+    </p>
+
 
     <p class="panel panel-border-wide">@Html(Messages("confirmBusiness.content.utr", utr))</p>
-  <br />
+
 
     @form(
         action = routes.BusinessIdentificationController.submitConfirmBusinessForm(),
         'class -> "form js-form") {
 
-        <div class="form-group">
+        <div class="form-group margin-top-30">
         @inputRadioGroup(
             confirmBusinessRadioForm("confirmBusiness"),
             Seq(
                 "yes" -> Messages("confirmBusiness.option.yes"),
                 "no" -> Messages("confirmBusiness.option.no")
             ),
-            '_groupDivClass -> "soft--ends"
+            '_legend -> Messages("confirmBusiness.title"),
+            '_groupDivClass -> "soft--ends",
+            '_legendClass -> "visuallyhidden",
+            '_fieldsetAttributes -> Html("""id='confirmBusiness'""")
         )
         </div>
 

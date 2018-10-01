@@ -37,7 +37,7 @@
             @registrationName
             </dd>
             <dd class="app-check-your-answers__change">
-                <a href="@routes.BusinessIdentificationController.showBusinessNameForm()">@Messages("checkAnswers.change.button")</a>
+                <a href="@routes.BusinessIdentificationController.showBusinessNameForm()">@Messages("checkAnswers.change.button")<span class="visuallyhidden"> @Messages("checkAnswers.businessName.label")</span></a>
             </dd>
         </div>
         <div class="app-check-your-answers__contents">
@@ -54,7 +54,7 @@
                 </p>
             </dd>
             <dd class="app-check-your-answers__change" >
-                <a href="@routes.SubscriptionController.showBusinessAddressForm()">@Messages("checkAnswers.change.button")</a>
+                <a href="@routes.SubscriptionController.showBusinessAddressForm()">@Messages("checkAnswers.change.button")<span class="visuallyhidden"> @Messages("checkAnswers.businessAddress.label")</span></a>
             </dd>
         </div>
         <div class="app-check-your-answers__contents">
@@ -65,7 +65,7 @@
             @emailAddress
             </dd>
             <dd class="app-check-your-answers__change">
-                <a href="@routes.BusinessIdentificationController.showBusinessEmailForm()">@Messages("checkAnswers.change.button")</a>
+                <a href="@routes.BusinessIdentificationController.showBusinessEmailForm()">@Messages("checkAnswers.change.button")<span class="visuallyhidden"> @Messages("checkAnswers.businessEmailAddress.label")</span></a>
             </dd>
         </div>
     </dl>

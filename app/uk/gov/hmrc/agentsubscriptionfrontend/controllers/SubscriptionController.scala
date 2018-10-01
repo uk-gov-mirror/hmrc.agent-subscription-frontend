@@ -201,36 +201,36 @@ class SubscriptionController @Inject()(
 
                   validatedLinkClients.autoMapping match {
                     case Yes =>
-                              isPartiallySubscribed match {
-                                  case false =>
-                                          Future successful Redirect(routes.SubscriptionController.showCheckAnswers())
-                                            .withSession(request.session + ("performAutoMapping" -> "true"))
-                                  case true =>
-                                          for {
-                                            _ <- subscriptionService
-                                                  .completePartialSubscription(inititalDetails.utr, inititalDetails.knownFactsPostcode)
-                                            _ = mark("Count-Subscription-PartialSubscriptionCompleted")
-                                            returnResult <- completeMappingWhenAvailable(
-                                                            inititalDetails.utr,
-                                                            completedPartialSub = true)
-                                              } yield returnResult.withSession(request.session - "isPartiallySubscribed")
-                              }
+                      isPartiallySubscribed match {
+                        case false =>
+                          Future successful Redirect(routes.SubscriptionController.showCheckAnswers())
+                            .withSession(request.session + ("performAutoMapping" -> "true"))
+                        case true =>
+                          for {
+                            _ <- subscriptionService
+                                  .completePartialSubscription(inititalDetails.utr, inititalDetails.knownFactsPostcode)
+                            _ = mark("Count-Subscription-PartialSubscriptionCompleted")
+                            returnResult <- completeMappingWhenAvailable(
+                                             inititalDetails.utr,
+                                             completedPartialSub = true)
+                          } yield returnResult.withSession(request.session - "isPartiallySubscribed")
+                      }
 
                     case No =>
-                              isPartiallySubscribed match {
-                                  case false =>
-                                          Future successful Redirect(routes.SubscriptionController.showCheckAnswers())
-                                            .withSession(request.session - "performAutoMapping")
-                                  case true => {
-                                          subscriptionService
-                                            .completePartialSubscription(inititalDetails.utr, inititalDetails.knownFactsPostcode)
-                                            .map { _ =>
-                                              mark("Count-Subscription-PartialSubscriptionCompleted")
-                                              Redirect(routes.SubscriptionController.showSubscriptionComplete())
-                                              .withSession(request.session - "isPartiallySubscribed")
-                                             }
-                                  }
-                              }
+                      isPartiallySubscribed match {
+                        case false =>
+                          Future successful Redirect(routes.SubscriptionController.showCheckAnswers())
+                            .withSession(request.session - "performAutoMapping")
+                        case true => {
+                          subscriptionService
+                            .completePartialSubscription(inititalDetails.utr, inititalDetails.knownFactsPostcode)
+                            .map { _ =>
+                              mark("Count-Subscription-PartialSubscriptionCompleted")
+                              Redirect(routes.SubscriptionController.showSubscriptionComplete())
+                                .withSession(request.session - "isPartiallySubscribed")
+                            }
+                        }
+                      }
                   }
                 }
               )

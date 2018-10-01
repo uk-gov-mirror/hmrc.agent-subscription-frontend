@@ -47,16 +47,17 @@
                 "llp" -> Messages("businessType.option.partnership-llp")
             ),
             '_legend -> headerTitle,
-            '_groupDivClass -> "soft--ends"
+            '_groupDivClass -> "soft--ends",
+            '_fieldsetAttributes -> Html("""id='businessType'""")
         )
         </div>
 
         <div class="form-group">
-            <details role="group">
-                <summary role="button" aria-controls="details-content-0" aria-expanded="false">
+            <details>
+                <summary>
                     <span class="summary">@Messages("businessType.progressive.title")</span>
                 </summary>
-                <div class="panel panel-border-narrow" id="details-content-0" aria-hidden="true">
+                <div class="panel panel-border-narrow">
                     <p>@Messages("businessType.progressive.content.p1")</p>
                     <a href="@SignedOutController.signOutWithContinueUrl" id="sign-out">@Messages("businessType.progressive.content.link")</a>
                 </div>

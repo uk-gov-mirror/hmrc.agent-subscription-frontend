@@ -109,11 +109,11 @@ businessDetails.label.utr.partnership=Partnership Unique Taxpayer Reference (UTR
 businessDetails.label.utr.llp=Partnership Unique Taxpayer Reference (UTR)
 
 businessDetails.details.heading.sole_trader=Where to find your Self Assessment UTR
-businessDetails.details.content.sole_trader=You''ll <a href="https://www.gov.uk/find-lost-utr-number" target="_blank" rel="noopener noreferrer">find your UTR (opens in a new window or tab)</a> on the letter HMRC sent you when you registered for Self Assessment. It's a 10-digit number, sometimes with a letter ''K'' on the end.
+businessDetails.details.content.sole_trader=You''ll <a href="https://www.gov.uk/find-lost-utr-number" target="_blank" rel="noopener noreferrer">find your UTR (opens in a new window or tab)</a> on the letter HMRC sent you when you registered for Self Assessment. It''s a 10-digit number, sometimes with a letter ''K'' on the end.
 businessDetails.details.heading.limited_company=Where to find your Corporation Tax or company UTR
 businessDetails.details.content.limited_company=You can usually find your Corporation Tax or company UTR in the header of letters from HM Revenue & Customs (HMRC), next to headings such as ''Tax Reference'', ''UTR'' or ''Official Use''.
 businessDetails.details.heading.partnership=Where to find your partnership UTR
-businessDetails.details.content.partnership=You can find your partnership UTR in the header of letters from HM Revenue & Customs (HMRC), next to headings such as 'Tax Reference', 'UTR' or ''Official Use''.
+businessDetails.details.content.partnership=You can find your partnership UTR in the header of letters from HM Revenue & Customs (HMRC), next to headings such as ''Tax Reference'', ''UTR'' or ''Official Use''.
 businessDetails.details.heading.llp=Where to find your partnership UTR
 businessDetails.details.content.llp=You can find your partnership UTR in the header of letters from HM Revenue & Customs (HMRC), next to headings such as ''Tax Reference'', ''UTR'' or ''Official Use''.
 
@@ -243,5 +243,3 @@ postcodeNotAllowed.title=There is a problem
 postcodeNotAllowed.p1=You cannot use this postcode to create an agent services account.
 postcodeNotAllowed.p2=Use a different postcode and try again.
 postcodeNotAllowed.button=Try Again
-
-

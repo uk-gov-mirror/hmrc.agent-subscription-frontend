@@ -23,6 +23,19 @@
 
 @title = @{ if(desErrorExists) Messages("businessName.updated.title") else Messages("businessName.title") }
 
+
+@label = @{
+    if(desErrorExists) {
+        """<h1 class="heading-xlarge">""" + Messages("businessName.updated.title") + """</h1>""" +
+        """<p>""" + Messages("businessName.updated.p1") + """</p>""" +
+        """<p class="panel panel-border-wide">""" + Messages("businessName.description") + """</p>"""
+    } else {
+        """<h1 class="heading-xlarge">""" + Messages("businessName.title") + """</h1>""" +
+        """<p class="panel panel-border-wide">""" + Messages("businessName.description") + """</p>"""
+    }
+}
+
+
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title =  error_prefix(businessNameForm) + title, bodyClasses = None) {
     @if(!desErrorExists) {
         <a href="@routes.SubscriptionController.showCheckAnswers()" class="link-back">@Messages("button.back")</a>
@@ -31,15 +44,7 @@
     @if(businessNameForm.hasErrors) {
         @errorSummary(Messages("error.summary.heading"), businessNameForm, Seq.empty, Some("business-name"))
     }
-  @if(desErrorExists) {
-      <h1 class="heading-xlarge">@Messages("businessName.updated.title")</h1>
-      <p>@Messages("businessName.updated.p1")</p>
 
-  } else {
-      <h1 class="heading-xlarge">@Messages("businessName.title")</h1>
-  }
-
-    <p class="panel panel-border-wide">@Messages("businessName.description")</p>
 
     @form(
         action = routes.BusinessIdentificationController.submitBusinessNameForm(),
@@ -49,8 +54,7 @@
         @input(
             businessNameForm("name"),
             '_inputClass -> "form-control input--cleared",
-            '_labelTextClass -> "visuallyhidden",
-            '_label -> Messages("businessName.title")
+            '_label -> Html(label)
         )
         </div>
 

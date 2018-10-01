@@ -21,6 +21,12 @@
 
 @(businessEmailForm: Form[BusinessEmail], invalidDesEmail: Boolean)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
+@formLabel = @{
+    """<h1 class="heading-xlarge">""" + Messages("businessEmail.title") + """</h1>"""+
+    """<p class="panel panel-border-wide">""" + Messages("businessEmail.description") + """</p>"""
+}
+
+
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title =  error_prefix(businessEmailForm) +  Messages("businessEmail.title"), bodyClasses = None) {
    @if(!invalidDesEmail) {
        <a href="@routes.SubscriptionController.showCheckAnswers()" class="link-back">@Messages("button.back")</a>
@@ -29,9 +35,6 @@
     @if(businessEmailForm.hasErrors) {
         @errorSummary(Messages("error.summary.heading"), businessEmailForm, Seq.empty, Some("business-email"))
     }
-    <h1 class="heading-xlarge">@Messages("businessEmail.title")</h1>
-
-    <p class="panel panel-border-wide">@Messages("businessEmail.description")</p>
 
     @form(
         action = routes.BusinessIdentificationController.submitBusinessEmailForm(),
@@ -42,8 +45,7 @@
             businessEmailForm("email"),
             '_inputClass -> "form-control input--cleared",
             '_labelClass -> "heading-small soft--ends",
-            '_labelTextClass -> "visuallyhidden",
-            '_label -> Messages("businessEmail.title")
+            '_label -> Html(formLabel)
         )
         </div>
 

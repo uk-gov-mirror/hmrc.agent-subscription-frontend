@@ -30,10 +30,10 @@
 
 
     <div class="form-group">
-        <details role="group">
-            <summary role="button" aria-controls="summaryContent" aria-expanded="false">
+        <details>
+            <summary role="button">
                 <span class="summary">@Messages("linkClients.expand.button")</span></summary>
-            <div class="panel panel-border-narrow" id="summaryContent" aria-hidden="true">
+            <div class="panel panel-border-narrow">
                 <p>@Messages("linkClients.expand.p1")</p>
                 <p>@Messages("linkClients.expand.p2")</p>
                 <p>@Messages("linkClients.expand.p3")</p>
@@ -62,7 +62,8 @@
                 "no" -> Messages("linkClients.option.no")
             ),
             '_legend -> Messages("linkClients.legend"),
-            '_groupDivClass -> "soft--ends"
+            '_groupDivClass -> "soft--ends",
+            '_fieldsetAttributes -> Html("""id='autoMapping'""")
         )
         </div>
 
