@@ -14,6 +14,10 @@ startpage.l2.2=how to set up your agent services account
 startpage.l2.3=how to add clients to your agent services account
 startpage.l2.4=when to use your agent services account
 
+global.error.403.title=Forbidden - 403
+global.error.403.heading=Sorry, you haven''t been authorised to proceed.
+global.error.403.message=
+
 ##Errors that override Play default messages
 error.maxLength = You must not enter more than {0} figures
 error.email= Enter a valid email address, like yourname@example.com

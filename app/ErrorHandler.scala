@@ -16,8 +16,7 @@
 
 import javax.inject.{Inject, Singleton}
 import com.google.inject.name.Named
-import play.api.http.HeaderNames.CACHE_CONTROL
-import play.api.http.HttpErrorHandler
+import play.api.http.Status.FORBIDDEN
 import play.api.i18n.{Messages, MessagesApi}
 import play.api.mvc.Results._
 import play.api.mvc.{Request, RequestHeader, Result}
@@ -43,7 +42,14 @@ class ErrorHandler @Inject()(
 
   override def onClientError(request: RequestHeader, statusCode: Int, message: String): Future[Result] = {
     auditClientError(request, statusCode, message)
-    super.onClientError(request, statusCode, message)
+
+    if (statusCode == FORBIDDEN)
+      Future.successful(
+        Forbidden(
+          standardErrorTemplate("global.error.403.title", "global.error.403.heading", "global.error.403.message")(
+            request)))
+    else
+      super.onClientError(request, statusCode, message)
   }
 
   override def resolveError(request: RequestHeader, exception: Throwable) = {
@@ -59,6 +65,8 @@ class ErrorHandler @Inject()(
   override def standardErrorTemplate(pageTitle: String, heading: String, message: String)(
     implicit request: Request[_]) =
     error_template(Messages(pageTitle), Messages(heading), Messages(message))
+
+  private implicit def rhToRequest(rh: RequestHeader): Request[_] = Request(rh, "")
 }
 
 object EventTypes {
