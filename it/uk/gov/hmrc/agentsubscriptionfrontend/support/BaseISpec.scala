@@ -133,6 +133,18 @@ abstract class BaseISpec
     }
   }
 
+  protected def repeatMessage(expectedMessageKey: String, times: Int): Matcher[Result] = new Matcher[Result] {
+    override def apply(result: Result): MatchResult = {
+      checkIsHtml200(result)
+
+      MatchResult(
+        Messages(expectedMessageKey).r.findAllMatchIn(bodyOf(result)).size == times,
+        s"The message keys $expectedMessageKey does not appear $times times in the content",
+        s"The message keys $expectedMessageKey appears $times times in the content"
+      )
+    }
+  }
+
   protected def withMetricsTimerUpdate(expectedMetricName: String)(testCode: => Unit): Unit = {
     givenCleanMetricRegistry()
     testCode
