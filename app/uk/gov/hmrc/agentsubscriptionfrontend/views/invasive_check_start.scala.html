@@ -46,7 +46,7 @@
                 <div class="panel panel-border-narrow js-hidden @if(radioResponseForm.error("saAgentCode").isDefined){form-group-error}" id="hasSaAgentCode">
                     <label class="form-label" for="saAgentCode">@Messages("invasive.radioResponse.hidden.input.label.sa")</label>
                     @radioResponseForm.errors("saAgentCode").map { formError => <span class="error-message">@Messages(formError.message)</span> }
-                    <input class="form-control @if(radioResponseForm.error("saAgentCode").isDefined){form-control-error}" name="saAgentCode" type="text" id="saAgentCode">
+                    <input data-uppercase="true" class="form-control @if(radioResponseForm.error("saAgentCode").isDefined){form-control-error}" name="saAgentCode" type="text" id="saAgentCode">
                 </div>
 
                 <div class="multiple-choice">

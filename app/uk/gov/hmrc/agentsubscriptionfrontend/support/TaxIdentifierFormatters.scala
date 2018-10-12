@@ -48,7 +48,10 @@ object TaxIdentifierFormatters {
     }
 
   def normalizeNino(ninoStr: String): Option[Nino] = {
-    val formattedNino = ninoStr.replaceAll("\\s", "")
+    val formattedNino = ninoStr
+      .replaceAll("\\s", "")
+      .toUpperCase
+
     if (Nino.isValid(formattedNino)) Some(Nino(formattedNino)) else None
   }
 }

@@ -1194,15 +1194,21 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
       Messages("invasive.error.no-radio.selected").r.findAllMatchIn(bodyOf(result)).size shouldBe 2
     }
 
-    "start invasiveCheck if selected Yes with SaAgentCode reference inputted" in {
+    "start invasiveCheck if selected Yes with SaAgentCode" when {
 
-      val result = await(
-        controller.invasiveSaAgentCodePost(authenticatedAs(subscribingCleanAgentWithoutEnrolments)
-          .withFormUrlEncodedBody(("hasSaAgentCode", "true"), ("saAgentCode", "SA6012"))))
+      "input contains only capital letters" in { testSaAgentCodeCheck("SA6012") }
+      "input contains letters in mixed case" in { testSaAgentCodeCheck("sA6012") }
+      "input contains letters in lower case" in { testSaAgentCodeCheck("sa6012") }
 
-      status(result) shouldBe 303
-      redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showClientDetailsForm().url)
-      noMetricExpectedAtThisPoint()
+      def testSaAgentCodeCheck(sageAgentCode: String) = {
+        val result = await(
+          controller.invasiveSaAgentCodePost(authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+            .withFormUrlEncodedBody(("hasSaAgentCode", "true"), ("saAgentCode", sageAgentCode))))
+
+        status(result) shouldBe 303
+        redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showClientDetailsForm().url)
+        noMetricExpectedAtThisPoint()
+      }
     }
 
     "redirect to /cannot-create account if selected No" in {
@@ -1258,54 +1264,37 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
       }
     }
 
-    "redirect to confirm business when successfully submitting nino" in {
-      givenNinoAGoodCombinationAndUserHasRelationshipInCesa("nino", "AA123456A", "SA6012")
+    "redirect to confirm business when successfully submitting nino" when {
 
-      implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
-      sessionStoreService.currentSession.knownFactsResult = Some(
-        KnownFactsResult(
-          utr = validUtr,
-          postcode = validPostcode,
-          taxpayerName = "My Agency",
-          isSubscribedToAgentServices = false,
-          Some(businessAddress), Some("someone@example.com")))
+      "input nino contains only capital letters" in { testInvasiveCheckWithNino("AA123456A") }
+      "input nino contains mixed case letters" in { testInvasiveCheckWithNino("Aa123456a") }
+      "input nino contains only lowercase letters" in { testInvasiveCheckWithNino("aa123456a") }
+      "input nino contains random spaces" in { testInvasiveCheckWithNino("AA1   2 3 4 5 6        A ") }
 
-      val result = await(
-        controller.submitClientDetailsForm(
-          request
-            .withFormUrlEncodedBody(("variant", "nino"), ("nino", "AA123456A"))
-            .withSession("saAgentReferenceToCheck" -> "SA6012")))
+      def testInvasiveCheckWithNino(nino: String) = {
+        givenNinoAGoodCombinationAndUserHasRelationshipInCesa("nino", "AA123456A", "SA6012")
 
-      status(result) shouldBe 303
-      redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showConfirmBusinessForm().url)
+        implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+        sessionStoreService.currentSession.knownFactsResult = Some(
+          KnownFactsResult(
+            utr = validUtr,
+            postcode = validPostcode,
+            taxpayerName = "My Agency",
+            isSubscribedToAgentServices = false,
+            Some(businessAddress), Some("someone@example.com")))
 
-      verifyAgentAssuranceAuditRequestSentWithClientIdentifier(Nino("AA123456A"), true, "SA6012", agentAssurancePayeCheck)
-      metricShouldExistAndBeUpdated("Count-Subscription-InvasiveCheck-Success")
-    }
+        val result = await(
+          controller.submitClientDetailsForm(
+            request
+              .withFormUrlEncodedBody(("variant", "nino"), ("nino", nino))
+              .withSession("saAgentReferenceToCheck" -> "SA6012")))
 
-    "redirect to confirm business when successfully submitting nino WITH RANDOM SPACES IN" in {
-      givenNinoAGoodCombinationAndUserHasRelationshipInCesa("nino", "AA123456A", "SA6012")
+        status(result) shouldBe 303
+        redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showConfirmBusinessForm().url)
 
-      implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
-      sessionStoreService.currentSession.knownFactsResult = Some(
-        KnownFactsResult(
-          utr = validUtr,
-          postcode = validPostcode,
-          taxpayerName = "My Agency",
-          isSubscribedToAgentServices = false,
-          Some(businessAddress), Some("someone@example.com")))
-
-      val result = await(
-        controller.submitClientDetailsForm(
-          request
-            .withFormUrlEncodedBody(("variant", "nino"), ("nino", "AA1   2 3 4 5 6        A "))
-            .withSession("saAgentReferenceToCheck" -> "SA6012")))
-
-      status(result) shouldBe 303
-      redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showConfirmBusinessForm().url)
-
-      verifyAgentAssuranceAuditRequestSentWithClientIdentifier(Nino("AA123456A"), true, "SA6012", agentAssurancePayeCheck)
-      metricShouldExistAndBeUpdated("Count-Subscription-InvasiveCheck-Success")
+        verifyAgentAssuranceAuditRequestSentWithClientIdentifier(Nino("AA123456A"), true, "SA6012", agentAssurancePayeCheck)
+        metricShouldExistAndBeUpdated("Count-Subscription-InvasiveCheck-Success")
+      }
     }
 
     "redirect to invasive check start when no SACode in session to obtain it again" in {

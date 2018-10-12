@@ -478,7 +478,7 @@ class BusinessIdentificationController @Inject()(
     request.session.get("saAgentReferenceToCheck") match {
       case Some(saAgentReference) =>
         assuranceService
-          .checkActiveCesaRelationship(value, taxIdentifierName, SaAgentReference(saAgentReference))
+          .checkActiveCesaRelationship(value, taxIdentifierName, SaAgentReference(saAgentReference.toUpperCase))
           .map {
             case true =>
               mark("Count-Subscription-InvasiveCheck-Success")

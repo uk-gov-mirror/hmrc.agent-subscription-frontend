@@ -47,7 +47,7 @@
                     <span class="form-hint">@Messages("invasive.radioResponse.helper.text.nino")</span>
                     </label>
                     @radioResponseForm.error("nino").map{formError => <span class="error-message"> @Messages(formError.message)</span>}
-                    <input class="form-control @if(radioResponseForm.error("nino").isDefined){form-control-error}" name="nino" type="text" id="nino">
+                    <input data-uppercase="true" class="form-control @if(radioResponseForm.error("nino").isDefined){form-control-error}" name="nino" type="text" id="nino">
                 </div>
                 <div class="multiple-choice" data-target="utrRadioInput">
                     <input id="variant_utr" type="radio" name="variant" value="utr" @if(radioResponseForm.error("utr").isDefined){checked} >

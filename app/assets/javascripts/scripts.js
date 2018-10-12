@@ -14,7 +14,7 @@ $(function() {
     //Trim inputs and Capitalize postode
     $('[type="submit"]').click(function(){
         $input.each( function(){
-            if($(this).val() && $(this).attr('name') === 'postcode'){
+            if($(this).val() && $(this).attr('data-uppercase') === 'true' ){
                 $(this).val($(this).val().toUpperCase().replace(/\s\s+/g, ' ').trim())
             }else{
                 $(this).val($(this).val().trim())

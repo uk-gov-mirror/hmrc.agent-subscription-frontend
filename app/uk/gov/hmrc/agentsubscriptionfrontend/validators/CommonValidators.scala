@@ -220,7 +220,7 @@ object CommonValidators {
   }
 
   private val ninoConstraint: Constraint[String] = Constraint[String] { fieldValue: String =>
-    val formattedField = fieldValue.replaceAll("\\s", "")
+    val formattedField = fieldValue.replaceAll("\\s", "").toUpperCase
 
     Constraints.nonEmpty(formattedField) match {
       case _: Invalid                         => Invalid(ValidationError("error.clientdetails.nino.empty"))
