@@ -173,7 +173,7 @@ class SubscriptionController @Inject()(
     appConfig.autoMapAgentEnrolments match {
       case true =>
         withSubscribingAgent { _ =>
-          withInitialDetails { _ =>
+          withKnownFactsResult { _ =>
             Future.successful(Ok(html.link_clients(linkClientsForm)))
           }
         }
@@ -185,7 +185,7 @@ class SubscriptionController @Inject()(
     appConfig.autoMapAgentEnrolments match {
       case true =>
         withSubscribingAgent { _ =>
-          withInitialDetails { inititalDetails =>
+          withKnownFactsResult { knownFactsResult =>
             linkClientsForm
               .bindFromRequest()
               .fold(
@@ -208,10 +208,10 @@ class SubscriptionController @Inject()(
                         case true =>
                           for {
                             _ <- subscriptionService
-                                  .completePartialSubscription(inititalDetails.utr, inititalDetails.knownFactsPostcode)
+                                  .completePartialSubscription(knownFactsResult.utr, knownFactsResult.postcode)
                             _ = mark("Count-Subscription-PartialSubscriptionCompleted")
                             returnResult <- completeMappingWhenAvailable(
-                                             inititalDetails.utr,
+                                             knownFactsResult.utr,
                                              completedPartialSub = true)
                           } yield returnResult.withSession(request.session - "isPartiallySubscribed")
                       }
@@ -223,7 +223,7 @@ class SubscriptionController @Inject()(
                             .withSession(request.session - "performAutoMapping")
                         case true => {
                           subscriptionService
-                            .completePartialSubscription(inititalDetails.utr, inititalDetails.knownFactsPostcode)
+                            .completePartialSubscription(knownFactsResult.utr, knownFactsResult.postcode)
                             .map { _ =>
                               mark("Count-Subscription-PartialSubscriptionCompleted")
                               Redirect(routes.SubscriptionController.showSubscriptionComplete())

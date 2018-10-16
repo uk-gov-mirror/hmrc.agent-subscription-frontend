@@ -16,12 +16,12 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
+import cats.data.OptionT
+import cats.instances.future._
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.Inject
-
 import play.api.Logger
 import play.api.i18n.{I18nSupport, MessagesApi}
-import play.api.mvc.Results.Redirect
 import play.api.mvc.{Action, AnyContent, Request, Result}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
@@ -73,12 +73,12 @@ class StartController @Inject()(
   def returnAfterGGCredsCreated(id: Option[String] = None): Action[AnyContent] = Action.async { implicit request =>
     withMaybeContinueUrlCached {
 
-      val chainedSessionDetailsOpt: Future[Option[ChainedSessionDetails]] = if (id.isDefined) {
-        for {
-          chainedSessionDetails <- chainedSessionDetailsRepository.findChainedSessionDetails(id.get)
-          _                     <- chainedSessionDetailsRepository.delete(id.get)
-        } yield chainedSessionDetails
-      } else Future successful None
+      val chainedSessionDetailsOpt: Future[Option[ChainedSessionDetails]] =
+        (for {
+          id                    <- OptionT.fromOption[Future](id)
+          chainedSessionDetails <- OptionT(chainedSessionDetailsRepository.findChainedSessionDetails(id))
+          _                     <- OptionT.liftF(chainedSessionDetailsRepository.delete(id))
+        } yield chainedSessionDetails).value
 
       chainedSessionDetailsOpt.flatMap {
         case Some(chainedSessionDetails) =>
@@ -109,13 +109,13 @@ class StartController @Inject()(
                                                     chainedSessionDetails.wasEligibleForMapping))
                                             }
           } yield continuedSubscriptionResponse
-        case None => Future successful Redirect(routes.BusinessIdentificationController.showBusinessTypeForm())
+        case None => Future.successful(Redirect(routes.BusinessIdentificationController.showBusinessTypeForm()))
       }
     }
   }
 
-  def showCannotCreateAccount: Action[AnyContent] = Action.async { implicit request =>
-    Future.successful(Ok(html.cannot_create_account()))
+  def showCannotCreateAccount: Action[AnyContent] = Action { implicit request =>
+    Ok(html.cannot_create_account())
   }
 
   private def handlePartialSubscription(kfcUtr: Utr, kfcPostcode: String, eligibleForMapping: Option[Boolean])(

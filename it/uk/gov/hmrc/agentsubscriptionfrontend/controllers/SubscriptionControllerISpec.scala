@@ -603,7 +603,7 @@ class SubscriptionControllerWithAutoMappingOn extends SubscriptionControllerISpe
     "showLinkClients (GET /link-clients)" should {
       trait RequestAndResult {
         implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
-        sessionStoreService.currentSession.initialDetails = Some(initialDetails)
+        sessionStoreService.currentSession.knownFactsResult = Some(myAgencyKnownFactsResult)
         val result = await(controller.showLinkClients(request))
         val doc = Jsoup.parse(bodyOf(result))
       }
@@ -652,13 +652,13 @@ class SubscriptionControllerWithAutoMappingOn extends SubscriptionControllerISpe
       class RequestWithSessionDetails(autoMappingFormValue: String) {
         implicit val request = authenticatedAs(subscribing2ndCleanAgentWithoutEnrolments)
           .withFormUrlEncodedBody("autoMapping" -> autoMappingFormValue)
-        sessionStoreService.currentSession.initialDetails = Some(initialDetails)
+        sessionStoreService.currentSession.knownFactsResult = Some(myAgencyKnownFactsResult)
       }
 
       class PartiallySubRequestWithSessionDetails(autoMappingFormValue: String) {
         implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
           .withFormUrlEncodedBody("autoMapping" -> autoMappingFormValue).withSession("isPartiallySubscribed" -> "true")
-        sessionStoreService.currentSession.initialDetails = Some(initialDetails)
+        sessionStoreService.currentSession.knownFactsResult = Some(myAgencyKnownFactsResult)
       }
 
       def resultOf(request: Request[AnyContent]) = await(controller.submitLinkClients(request))
@@ -700,7 +700,7 @@ class SubscriptionControllerWithAutoMappingOn extends SubscriptionControllerISpe
       "choice is missing" should {
         "return 200 and redisplay the /link-clients page with an error message for missing choice" in {
           implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
-          sessionStoreService.currentSession.initialDetails = Some(initialDetails)
+          sessionStoreService.currentSession.knownFactsResult = Some(myAgencyKnownFactsResult)
 
           resultOf(request) should containMessages("linkClients.title", "linkClients.error.no-radio-selected")
         }

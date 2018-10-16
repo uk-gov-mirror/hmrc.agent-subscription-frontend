@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
+import cats.data.OptionT
+import cats.instances.future._
 import javax.inject.{Inject, Singleton}
 import play.api.mvc.Action
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
@@ -53,17 +55,14 @@ class SignedOutController @Inject()(
 
   private def prepareChainedSession(mappingEligibility: MappingEligibility)(
     implicit hc: HeaderCarrier): Future[Option[StashedChainnedSessionId]] =
-    for {
-      knownFactsOpt     <- sessionStoreService.fetchKnownFactsResult
-      initialDetailsOpt <- sessionStoreService.fetchInitialDetails
-      id <- (knownFactsOpt, initialDetailsOpt) match {
-             case (Some(knownFacts), _) =>
-               chainedSessionRepository
-                 .create(ChainedSessionDetails(knownFacts, mappingEligibility.isEligible, initialDetailsOpt))
-                 .map(id => Some(id))
-             case _ => Future.successful(None)
-           }
-    } yield id
+    (for {
+      knownFacts        <- OptionT(sessionStoreService.fetchKnownFactsResult)
+      initialDetailsOpt <- OptionT.liftF(sessionStoreService.fetchInitialDetails)
+      id <- OptionT(
+             chainedSessionRepository
+               .create(ChainedSessionDetails(knownFacts, mappingEligibility.isEligible, initialDetailsOpt))
+               .map(id => Option(id)))
+    } yield id).value
 
   def signOutWithContinueUrl = Action.async { implicit request =>
     sessionStoreService.fetchContinueUrl.map { maybeContinueUrl =>
