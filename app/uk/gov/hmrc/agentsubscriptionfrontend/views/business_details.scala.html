@@ -18,8 +18,9 @@
 @import uk.gov.hmrc.play.views.html.helpers.{form, input, errorSummary}
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
 @import uk.gov.hmrc.agentsubscriptionfrontend.models.KnownFacts
+@import uk.gov.hmrc.agentsubscriptionfrontend.models.IdentifyBusinessType
 
-@(knownFactsForm: Form[KnownFacts], businessTypeIdentifier: String)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+@(knownFactsForm: Form[KnownFacts], businessTypeIdentifier: IdentifyBusinessType)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = error_prefix(knownFactsForm) + Messages("businessDetails.title"), bodyClasses = None) {
     <a href="@routes.BusinessIdentificationController.showBusinessTypeForm()" class="link-back">@Messages("button.back")</a>
@@ -30,17 +31,17 @@
 
     <h1 class="heading-large">@Messages("businessDetails.title")</h1>
 
-    @if(businessTypeIdentifier == "llp" || businessTypeIdentifier == "partnership") {
+    @if(businessTypeIdentifier == IdentifyBusinessType.Llp || businessTypeIdentifier == IdentifyBusinessType.Partnership) {
         <p>@Messages("businessDetails.p1")</p>
     }
     @form(
-        action = routes.BusinessIdentificationController.submitBusinessDetailsForm(Some(businessTypeIdentifier)),
+        action = routes.BusinessIdentificationController.submitBusinessDetailsForm(businessTypeIdentifier),
         'class -> "form js-form") {
 
         <div class="form-group">
         @input(
             knownFactsForm("utr"),
-            '_label -> Messages(s"businessDetails.label.utr.$businessTypeIdentifier"),
+            '_label -> Messages(s"businessDetails.label.utr.${businessTypeIdentifier.key}"),
             '_inputHint -> Messages(s"businessDetails.label.utr.hint"),
             '_inputClass -> "form-control",
             '_labelClass -> "soft--ends"
@@ -50,10 +51,10 @@
         <div class="form-group">
             <details>
                 <summary>
-                    <span class="summary">@Messages(s"businessDetails.details.heading.$businessTypeIdentifier")</span>
+                    <span class="summary">@Messages(s"businessDetails.details.heading.${businessTypeIdentifier.key}")</span>
                 </summary>
                 <div class="panel panel-border-narrow">
-                    <p>@Html(Messages(s"businessDetails.details.content.$businessTypeIdentifier"))</p>
+                    <p>@Html(Messages(s"businessDetails.details.content.${businessTypeIdentifier.key}"))</p>
                 </div>
             </details>
         </div>

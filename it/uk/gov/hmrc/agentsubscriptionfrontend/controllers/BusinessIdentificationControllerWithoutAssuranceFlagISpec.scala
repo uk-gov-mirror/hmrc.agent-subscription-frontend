@@ -17,7 +17,7 @@ class BusinessIdentificationControllerWithoutAssuranceFlagISpec extends Business
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
-      val result = await(controller.submitBusinessDetailsForm(Some(BusinessIdentificationForms.validBusinessTypes.head))(request))
+      val result = await(controller.submitBusinessDetailsForm(validBusinessTypes.head)(request))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showConfirmBusinessForm().url)
@@ -32,7 +32,7 @@ class BusinessIdentificationControllerWithoutAssuranceFlagISpec extends Business
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
-      val result = await(controller.submitBusinessDetailsForm(Some(BusinessIdentificationForms.validBusinessTypes.head))(request))
+      val result = await(controller.submitBusinessDetailsForm(validBusinessTypes.head)(request))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showConfirmBusinessForm().url)
@@ -45,7 +45,7 @@ class BusinessIdentificationControllerWithoutAssuranceFlagISpec extends Business
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
-      val result = await(controller.submitBusinessDetailsForm(Some(BusinessIdentificationForms.validBusinessTypes.head))(request))
+      val result = await(controller.submitBusinessDetailsForm(validBusinessTypes.head)(request))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showAlreadySubscribed().url)

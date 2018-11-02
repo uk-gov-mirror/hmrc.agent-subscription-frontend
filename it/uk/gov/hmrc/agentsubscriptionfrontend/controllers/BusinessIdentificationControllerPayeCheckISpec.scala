@@ -1,7 +1,7 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import play.api.test.Helpers._
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{BusinessAddress, KnownFactsResult}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.KnownFactsResult
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub.withMatchingUtrAndPostcode
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.subscribingAgentEnrolledForNonMTD
@@ -20,7 +20,7 @@ class BusinessIdentificationControllerPayeCheckISpec extends BusinessIdentificat
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
-      val result = await(controller.submitBusinessDetailsForm(Some(BusinessIdentificationForms.validBusinessTypes.head))(request))
+      val result = await(controller.submitBusinessDetailsForm(validBusinessTypes.head)(request))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showConfirmBusinessForm().url)
@@ -41,7 +41,7 @@ class BusinessIdentificationControllerPayeCheckISpec extends BusinessIdentificat
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
-      val result = await(controller.submitBusinessDetailsForm(Some(BusinessIdentificationForms.validBusinessTypes.head))(request))
+      val result = await(controller.submitBusinessDetailsForm(validBusinessTypes.head)(request))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.invasiveCheckStart().url)

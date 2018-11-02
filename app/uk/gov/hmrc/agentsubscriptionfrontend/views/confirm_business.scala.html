@@ -19,28 +19,33 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessAddress
 @import uk.gov.hmrc.play.views.html.helpers._
 @import uk.gov.hmrc.agentsubscriptionfrontend.models.ConfirmBusiness
+@import uk.gov.hmrc.agentsubscriptionfrontend.models.IdentifyBusinessType
 
 @(confirmBusinessRadioForm: Form[ConfirmBusiness], registrationName: String, utr: String, businessAddress: BusinessAddress)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = error_prefix(confirmBusinessRadioForm) +  Messages("confirmBusiness.title"), bodyClasses = None) {
+@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = error_prefix(confirmBusinessRadioForm) + Messages("confirmBusiness.title"), bodyClasses = None) {
 
-    <a href="@routes.BusinessIdentificationController.submitBusinessDetailsForm(request.session.get("businessType"))" class="link-back">@Messages("button.back")</a>
+    <a href="@backButtonUrl" class="link-back">@Messages("button.back")</a>
 
     @if(confirmBusinessRadioForm.hasErrors) {
         @errorSummary(Messages("error.summary.heading"), confirmBusinessRadioForm, Seq.empty, Some("confirm-business"))
     }
 
-
     <h1 class="heading-xlarge">@Messages("confirmBusiness.title")</h1>
-
 
     <span class="heading-medium">@registrationName</span>
 
     <p>
-        @businessAddress.addressLine1<br />
-        @businessAddress.addressLine2 @if(businessAddress.addressLine2.nonEmpty ){<br />}
-        @businessAddress.addressLine3 @if(businessAddress.addressLine3.nonEmpty ){<br />}
-        @businessAddress.addressLine4 @if(businessAddress.addressLine4.nonEmpty ){<br />}
+        @businessAddress.addressLine1 <br />
+        @businessAddress.addressLine2 @if(businessAddress.addressLine2.nonEmpty) {
+        <br />
+    }
+        @businessAddress.addressLine3 @if(businessAddress.addressLine3.nonEmpty) {
+        <br />
+    }
+        @businessAddress.addressLine4 @if(businessAddress.addressLine4.nonEmpty) {
+        <br />
+    }
         @businessAddress.postalCode
     </p>
 
@@ -70,4 +75,11 @@
             <button class="button" type="submit" id="continue">@Messages("button.continue")</button>
         </div>
     }
+}
+
+
+@backButtonUrl = @{
+    request.session.get("businessType").map(businessType =>
+        routes.BusinessIdentificationController.submitBusinessDetailsForm(IdentifyBusinessType.apply(businessType))
+    ).getOrElse(routes.BusinessIdentificationController.showBusinessTypeForm())
 }

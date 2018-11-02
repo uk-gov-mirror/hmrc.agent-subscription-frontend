@@ -95,57 +95,48 @@ class BusinessIdentificationController @Inject()(
           formWithErrors => {
             if (formWithErrors.errors.exists(_.message == "error.business-type-value.invalid")) {
               Logger.warn("Select business-type form submitted with invalid identifier")
-              throw new BadRequestException("submitted form value did not contain valid businessType identifier")
+              throw new BadRequestException("Submitted form value did not contain valid businessType identifier")
             }
             Future successful Ok(html.business_type(formWithErrors))
           },
-          validatedBusinessType =>
+          validatedBusinessType => {
             Future successful Redirect(
               routes.BusinessIdentificationController.showBusinessDetailsForm(validatedBusinessType.businessType))
+          }
         )
     }
   }
 
-  def showBusinessDetailsForm(businessType: Option[String]): Action[AnyContent] = Action.async { implicit request =>
-    withSubscribingAgent { implicit agent =>
-      withMaybeContinueUrlCached {
-        businessType match {
-          case Some(businessTypeIdentifier) if validBusinessTypes.contains(businessTypeIdentifier) => {
-            mark("Count-Subscription-BusinessDetails-Start")
-            Future successful Ok(html.business_details(knownFactsForm(businessTypeIdentifier), businessTypeIdentifier))
-          }
-          case _ => {
-            Logger.warn("businessTypeIdentifier was missing, redirect and obtain from showCheckBusinessType page")
-            Future successful Redirect(routes.BusinessIdentificationController.showBusinessTypeForm())
-          }
+  def showBusinessDetailsForm(businessType: IdentifyBusinessType): Action[AnyContent] = Action.async {
+    implicit request =>
+      withSubscribingAgent { implicit agent =>
+        withMaybeContinueUrlCached {
+
+          mark("Count-Subscription-BusinessDetails-Start")
+          Future successful Ok(html.business_details(knownFactsForm(businessType.key), businessType))
         }
       }
-    }
   }
 
-  def submitBusinessDetailsForm(businessType: Option[String]): Action[AnyContent] = Action.async { implicit request =>
-    withSubscribingAgent { implicit agent =>
-      businessType match {
-        case Some(businessTypeIdentifier) if validBusinessTypes.contains(businessTypeIdentifier) => {
-          knownFactsForm(businessTypeIdentifier)
-            .bindFromRequest()
-            .fold(
-              formWithErrors => Future successful Ok(html.business_details(formWithErrors, businessTypeIdentifier)),
-              knownFacts =>
-                if (Utr.isValid(knownFacts.utr.value)) {
-                  checkBusinessDetailsGivenValidForm(knownFacts).map { resultWithSession =>
-                    val sessionData = (request.session.data ++ resultWithSession.session.data.toSeq) + ("businessType" -> businessTypeIdentifier)
-                    resultWithSession.withSession(sessionData.toSeq: _*)
-                  }
-                } else {
-                  mark("Count-Subscription-NoAgencyFound")
-                  Future.successful(Redirect(routes.BusinessIdentificationController.showNoAgencyFound()))
-              }
-            )
-        }
-        case _ => Future successful Redirect(routes.BusinessIdentificationController.showBusinessTypeForm())
+  def submitBusinessDetailsForm(businessType: IdentifyBusinessType): Action[AnyContent] = Action.async {
+    implicit request =>
+      withSubscribingAgent { implicit agent =>
+        knownFactsForm(businessType.key)
+          .bindFromRequest()
+          .fold(
+            formWithErrors => Future successful Ok(html.business_details(formWithErrors, businessType)),
+            knownFacts =>
+              if (Utr.isValid(knownFacts.utr.value)) {
+                checkBusinessDetailsGivenValidForm(knownFacts).map { resultWithSession =>
+                  val sessionData = (request.session.data ++ resultWithSession.session.data.toSeq) + ("businessType" -> businessType.key)
+                  resultWithSession.withSession(sessionData.toSeq: _*)
+                }
+              } else {
+                mark("Count-Subscription-NoAgencyFound")
+                Future.successful(Redirect(routes.BusinessIdentificationController.showNoAgencyFound()))
+            }
+          )
       }
-    }
   }
 
   private def checkBusinessDetailsGivenValidForm(
@@ -202,6 +193,9 @@ class BusinessIdentificationController @Inject()(
 
   val showConfirmBusinessForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
+      if (request.session.get("businessType").isEmpty)
+        Redirect(routes.BusinessIdentificationController.showBusinessTypeForm())
+
       withKnownFactsResult { knownFactsResult =>
         Future successful Ok(
           html.confirm_business(
@@ -249,9 +243,14 @@ class BusinessIdentificationController @Inject()(
 
                     lookupNextPage(initialDetails)
                   }
-                case No =>
-                  Future.successful(routes.BusinessIdentificationController.submitBusinessDetailsForm(
-                    request.session.get("businessType")))
+                case No => {
+                  request.session
+                    .get("businessType")
+                    .map(typeFound =>
+                      Future.successful(routes.BusinessIdentificationController.showBusinessDetailsForm(
+                        IdentifyBusinessType.apply(typeFound))))
+                    .getOrElse(Future.successful(routes.BusinessIdentificationController.showBusinessTypeForm()))
+                }
               }
 
               response.map(Redirect(_))
