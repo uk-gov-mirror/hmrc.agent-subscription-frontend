@@ -40,7 +40,7 @@ def testDeps(scope: String) = Seq(
   "org.jsoup" % "jsoup" % "1.11.3" % scope
 )
 
-lazy val root = (project in file("."))
+lazy val root = Project("agent-subscription-frontend", file("."))
   .settings(
     name := "agent-subscription-frontend",
     organization := "uk.gov.hmrc",
