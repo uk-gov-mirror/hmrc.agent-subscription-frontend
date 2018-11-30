@@ -15,7 +15,8 @@
  */
 
 package uk.gov.hmrc.agentsubscriptionfrontend.models
-import org.joda.time.LocalDate
+
+import java.time.LocalDate
 
 import play.api.libs.json.Json
 

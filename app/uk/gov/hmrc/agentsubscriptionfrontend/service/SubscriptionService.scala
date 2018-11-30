@@ -41,10 +41,10 @@ class SubscriptionService @Inject()(agentSubscriptionConnector: AgentSubscriptio
 
   import SubscriptionDetails._
 
-  def subscribe(details: InitialDetails, address: DesAddress)(
+  def subscribe(details: InitialDetails, address: DesAddress, mayBeAmlsDetails: Option[AMLSDetails])(
     implicit hc: HeaderCarrier,
     ec: ExecutionContext): Future[Either[SubscriptionReturnedHttpError, (Arn, String)]] = {
-    val subscriptionDetails = mapper(details, address)
+    val subscriptionDetails = mapper(details, address, mayBeAmlsDetails)
     subscribeAgencyToMtd(subscriptionDetails) map {
       case Right(arn) => Right((arn, subscriptionDetails.name))
       case Left(x)    => Left(SubscriptionReturnedHttpError(x))
@@ -66,11 +66,12 @@ class SubscriptionService @Inject()(agentSubscriptionConnector: AgentSubscriptio
     val request = SubscriptionRequest(
       subscriptionDetails.utr,
       SubscriptionRequestKnownFacts(subscriptionDetails.knownFactsPostcode),
-      Agency(name = subscriptionDetails.name, email = subscriptionDetails.email, address = address)
+      Agency(name = subscriptionDetails.name, email = subscriptionDetails.email, address = address),
+      subscriptionDetails.amlsDetails
     )
 
-    agentSubscriptionConnector.subscribeAgencyToMtd(request) map { x =>
-      Right(x)
+    agentSubscriptionConnector.subscribeAgencyToMtd(request).map[Either[Int, Arn]] { arn =>
+      Right(arn)
     } recover {
       case e: Upstream4xxResponse if Seq(Status.FORBIDDEN, Status.CONFLICT) contains e.upstreamResponseCode =>
         Left(e.upstreamResponseCode)

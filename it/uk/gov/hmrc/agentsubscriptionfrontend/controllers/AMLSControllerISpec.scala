@@ -16,7 +16,8 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
-import org.joda.time.{DateTimeZone, LocalDate}
+import java.time.LocalDate
+
 import org.jsoup.Jsoup
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
@@ -157,9 +158,9 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
   "submitMoneyLaunderingComplianceForm (POST /money-laundering-compliance)" should {
     behave like anAgentAffinityGroupOnlyEndpoint(controller.submitMoneyLaunderingComplianceForm(_))
 
-    val expiryDate = LocalDate.now(DateTimeZone.UTC).plusDays(2)
+    val expiryDate = LocalDate.now().plusDays(2)
     val expiryDay = expiryDate.getDayOfMonth.toString
-    val expiryMonth = expiryDate.getMonthOfYear.toString
+    val expiryMonth = expiryDate.getMonthValue.toString
     val expiryYear = expiryDate.getYear.toString
 
     "store AMLS form in session cache after successful submission" in new Setup {

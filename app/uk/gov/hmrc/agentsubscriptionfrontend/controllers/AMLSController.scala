@@ -43,7 +43,7 @@ class AMLSController @Inject()(
   override val continueUrlActions: ContinueUrlActions,
   override val metrics: Metrics,
   override val sessionStoreService: SessionStoreService)
-    extends FrontendController with I18nSupport with AuthActions with SessionDataMissing with Monitoring {
+    extends FrontendController with I18nSupport with AuthActions with SessionDataSupport with Monitoring {
 
   import AMLSForms._
 

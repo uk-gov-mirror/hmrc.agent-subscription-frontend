@@ -243,6 +243,7 @@ checkAnswers.businessAddress.label=Business address
 checkAnswers.businessEmailAddress.label=Business email address
 checkAnswers.confirm.button=Confirm details and create account
 checkAnswers.change.button=Change
+checkAnswers.amlsDetails.label=Money laundering compliance details and expiry date
 
 businessName.title=What is your business name?
 businessName.updated.title=Update your business name

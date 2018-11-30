@@ -33,7 +33,11 @@ object SubscriptionRequestKnownFacts {
   implicit val format: Format[SubscriptionRequestKnownFacts] = Json.format[SubscriptionRequestKnownFacts]
 }
 
-case class SubscriptionRequest(utr: Utr, knownFacts: SubscriptionRequestKnownFacts, agency: Agency)
+case class SubscriptionRequest(
+  utr: Utr,
+  knownFacts: SubscriptionRequestKnownFacts,
+  agency: Agency,
+  amlsDetails: Option[AMLSDetails] = None)
 
 object SubscriptionRequest {
   implicit val format: Format[SubscriptionRequest] = Json.format[SubscriptionRequest]

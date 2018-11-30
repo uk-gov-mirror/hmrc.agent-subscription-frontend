@@ -16,7 +16,8 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.validators
 
-import org.joda.time.{DateTimeZone, LocalDate}
+import java.time.LocalDate
+
 import play.api.data.Forms.{of, optional, text, tuple}
 import play.api.data.format.Formatter
 import play.api.data.validation._
@@ -101,8 +102,8 @@ object CommonValidators {
     ).verifying(
         checkOneAtATime(Seq(invalidExpiryDateConstraint, pastExpiryDateConstraint, withinYearExpiryDateConstraint)))
       .transform(
-        { case (y, m, d) => new LocalDate(y.trim.toInt, m.trim.toInt, d.trim.toInt) },
-        (date: LocalDate) => (date.getYear.toString, date.getMonthOfYear.toString, date.getDayOfMonth.toString)
+        { case (y, m, d) => LocalDate.of(y.trim.toInt, m.trim.toInt, d.trim.toInt) },
+        (date: LocalDate) => (date.getYear.toString, date.getMonthValue.toString, date.getDayOfMonth.toString)
       )
 
   def addressLine1: Mapping[String] =
@@ -142,7 +143,7 @@ object CommonValidators {
     Constraint[String]("constraint.maxLength", length) { o =>
       require(length >= 0, "string maxLength must not be negative")
       if (o == null) Invalid(ValidationError(messageKey, length))
-      else if (o.size <= length) Valid
+      else if (o.length <= length) Valid
       else Invalid(ValidationError(messageKey, length))
     }
 
@@ -159,7 +160,7 @@ object CommonValidators {
         i
       case Valid =>
         fieldValue match {
-          case value if value.size > EmailMaxLength =>
+          case value if value.length > EmailMaxLength =>
             Invalid(ValidationError("error.email.maxlength"))
           case value if !value.matches(EmailSpecialCharsRegex) =>
             Invalid(ValidationError("error.email.invalidchars"))
@@ -174,7 +175,7 @@ object CommonValidators {
         i
       case Valid =>
         fieldValue match {
-          case value if value.size > PostcodeMaxLength => Invalid(ValidationError("error.postcode.maxlength"))
+          case value if value.length > PostcodeMaxLength => Invalid(ValidationError("error.postcode.maxlength"))
           case value if !value.matches(PostcodeSpecialCharsRegex) =>
             Invalid(ValidationError("error.postcode.invalidchars"))
           case value if !value.matches(DesPostcodeRegex) => Invalid(ValidationError("error.postcode.invalid"))
@@ -247,7 +248,7 @@ object CommonValidators {
 
       Constraints.nonEmpty(formattedField) match {
         case _: Invalid => Invalid(ValidationError(blank))
-        case _ if !isNumber(formattedField) || formattedField.size != UtrMaxLength =>
+        case _ if !isNumber(formattedField) || formattedField.length != UtrMaxLength =>
           Invalid(ValidationError(invalid))
         case _ => Valid
       }
@@ -278,7 +279,7 @@ object CommonValidators {
 
       Try {
         require(year.length == 4, "Year must be 4 digits")
-        new LocalDate(year.toInt, month.toInt, day.toInt)
+        LocalDate.of(year.toInt, month.toInt, day.toInt)
       } match {
         case Failure(_) => Invalid(ValidationError("error.moneyLaunderingCompliance.date.invalid"))
         case Success(_) => Valid
@@ -289,7 +290,7 @@ object CommonValidators {
     data: (String, String, String) =>
       val (year, month, day) = data
 
-      if (new LocalDate(year.toInt, month.toInt, day.toInt).isAfter(LocalDate.now(DateTimeZone.UTC)))
+      if (LocalDate.of(year.toInt, month.toInt, day.toInt).isAfter(LocalDate.now()))
         Valid
       else
         Invalid(ValidationError("error.moneyLaunderingCompliance.date.past"))
@@ -299,9 +300,9 @@ object CommonValidators {
     Constraint[(String, String, String)] { data: (String, String, String) =>
       val (year, month, day) = data
 
-      val futureDate = LocalDate.now(DateTimeZone.UTC).plusDays(365)
+      val futureDate = LocalDate.now().plusDays(365)
 
-      if (new LocalDate(year.toInt, month.toInt, day.toInt).isBefore(futureDate))
+      if (LocalDate.of(year.toInt, month.toInt, day.toInt).isBefore(futureDate))
         Valid
       else
         Invalid(ValidationError("error.moneyLaunderingCompliance.date.before"))

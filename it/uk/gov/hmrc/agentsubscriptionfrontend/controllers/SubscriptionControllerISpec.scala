@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
+import java.time.LocalDate
+
 import com.github.tomakehurst.wiremock.client.WireMock._
 import org.jsoup.Jsoup
 import play.api.inject.guice.GuiceApplicationBuilder
@@ -23,14 +25,13 @@ import play.api.mvc.{AnyContent, Request}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
-import uk.gov.hmrc.agentsubscriptionfrontend.models._
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AMLSDetails, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AddressLookupFrontendStubs._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.{AgentSubscriptionStub, AuthStub, MappingStubs}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TaxIdentifierFormatters}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser._
 import uk.gov.hmrc.http.BadRequestException
 import uk.gov.hmrc.play.binders.ContinueUrl
-import uk.gov.hmrc.auth.core.SessionRecordNotFound
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -492,7 +493,7 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       )
     )
 
-  protected def subscriptionRequestWithNoEdit(initialDetails: InitialDetails) =
+  protected def subscriptionRequestWithNoEdit(initialDetails: InitialDetails, amlsDetails: Option[AMLSDetails] = None) =
     SubscriptionRequest(
       utr = initialDetails.utr,
       knownFacts = SubscriptionRequestKnownFacts(knownFactsPostcode),
@@ -507,7 +508,8 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
           countryCode = initialDetails.businessAddress.countryCode
         ),
         email = initialDetails.email.get
-      )
+      ),
+      amlsDetails = amlsDetails
     )
 
   private def subscriptionDetailsRequest2(
@@ -596,6 +598,22 @@ class SubscriptionControllerWithAutoMappingOn extends SubscriptionControllerISpe
         redirectLocation(result).head shouldBe routes.SubscriptionController.showSubscriptionComplete().url
 
         verifySubscriptionRequestSent(subscriptionRequestWithNoEdit(initialDetails))
+        metricShouldExistAndBeUpdated("Count-Subscription-Complete")
+      }
+
+      "amlsDetails are passed in" in {
+        val amlsDetails = Some(AMLSDetails("supervisory", "123", LocalDate.now()))
+        AgentSubscriptionStub.subscriptionWillSucceed(utr, subscriptionRequestWithNoEdit(initialDetails, amlsDetails))
+
+        implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+        sessionStoreService.currentSession.initialDetails = Some(initialDetails)
+        sessionStoreService.currentSession.amlsDetails = amlsDetails
+
+        val result = await(controller.submitCheckAnswers(request))
+        status(result) shouldBe 303
+        redirectLocation(result).head shouldBe routes.SubscriptionController.showSubscriptionComplete().url
+
+        verifySubscriptionRequestSent(subscriptionRequestWithNoEdit(initialDetails, amlsDetails))
         metricShouldExistAndBeUpdated("Count-Subscription-Complete")
       }
     }

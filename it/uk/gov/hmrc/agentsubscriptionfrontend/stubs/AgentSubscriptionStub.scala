@@ -163,6 +163,13 @@ object AgentSubscriptionStub {
                                       |    },
                                       |    "email": "${agency.email}"
                                       |  }
+                                      |  ${request.amlsDetails.map{ad =>
+                                      s""","amlsDetails" : {
+                                      |     "supervisoryBody" : "${ad.supervisoryBody}",
+                                      |     "membershipNumber" : "${ad.membershipNumber}",
+                                      |     "membershipExpiresOn" : "${ad.membershipExpiresOn}"
+                                      |   }"""
+                                          }.getOrElse("")}
                                       |}""".stripMargin))
   }
 

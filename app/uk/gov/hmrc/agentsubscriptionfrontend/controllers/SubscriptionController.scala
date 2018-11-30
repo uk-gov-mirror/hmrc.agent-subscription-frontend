@@ -53,7 +53,7 @@ class SubscriptionController @Inject()(
   val continueUrlActions: ContinueUrlActions,
   val metrics: Metrics,
   override implicit val appConfig: AppConfig)
-    extends FrontendController with I18nSupport with AuthActions with SessionDataMissing with Monitoring {
+    extends FrontendController with I18nSupport with AuthActions with SessionDataSupport with Monitoring {
 
   import SubscriptionControllerForms._
 
@@ -67,17 +67,24 @@ class SubscriptionController @Inject()(
       case hasNonEmptyEnrolments(_) =>
         Future.successful(Redirect(routes.BusinessIdentificationController.showCreateNewAccount()))
       case _ =>
-        mark("Count-Subscription-CleanCreds-Success")
-        withInitialDetails { details =>
-          Future.successful {
+        val details = for {
+          mayBeInitialDetails <- sessionStoreService.fetchInitialDetails
+          mayBeAmlsDetails    <- sessionStoreService.fetchAMLSDetails
+        } yield (mayBeInitialDetails, mayBeAmlsDetails)
+
+        details.map {
+          case (Some(initialDetails), mayBeAmlsDetails) =>
+            mark("Count-Subscription-CleanCreds-Success")
             Ok(
               html.check_answers(
-                registrationName = details.name,
-                address = details.businessAddress,
-                emailAddress = details.email
+                registrationName = initialDetails.name,
+                address = initialDetails.businessAddress,
+                emailAddress = initialDetails.email,
+                mayBeAmlsDetails = mayBeAmlsDetails
               ))
 
-          }
+          case (None, _) => sessionMissingRedirect("InitialDetails")
+
         }
     }
   }
@@ -87,16 +94,27 @@ class SubscriptionController @Inject()(
       case hasNonEmptyEnrolments(_) =>
         Future.successful(Redirect(routes.BusinessIdentificationController.showCreateNewAccount()))
       case _ =>
-        withInitialDetails { details =>
-          val desAddress = DesAddress(
-            details.businessAddress.addressLine1,
-            details.businessAddress.addressLine2,
-            details.businessAddress.addressLine3,
-            details.businessAddress.addressLine4,
-            details.businessAddress.postalCode.getOrElse(throw new Exception("Postcode should not be empty")),
-            details.businessAddress.countryCode
-          )
-          subscriptionService.subscribe(details, desAddress).flatMap(redirectSubscriptionResponse(_, details.utr))
+        val details = for {
+          initialDetails <- sessionStoreService.fetchInitialDetails
+          amlsDetails    <- sessionStoreService.fetchAMLSDetails
+        } yield (initialDetails, amlsDetails)
+
+        details.flatMap {
+          case (Some(initialDetails), mayBeAmlsDetails) =>
+            val desAddress = DesAddress(
+              initialDetails.businessAddress.addressLine1,
+              initialDetails.businessAddress.addressLine2,
+              initialDetails.businessAddress.addressLine3,
+              initialDetails.businessAddress.addressLine4,
+              initialDetails.businessAddress.postalCode.getOrElse(throw new Exception("Postcode should not be empty")),
+              initialDetails.businessAddress.countryCode
+            )
+
+            subscriptionService
+              .subscribe(initialDetails, desAddress, mayBeAmlsDetails)
+              .flatMap(redirectSubscriptionResponse(_, initialDetails.utr))
+
+          case (None, _) => Future.successful(sessionMissingRedirect("InitialDetails"))
         }
     }
   }

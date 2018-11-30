@@ -17,9 +17,10 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
 @import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessAddress
+@import uk.gov.hmrc.agentsubscriptionfrontend.models.AMLSDetails
 @import uk.gov.hmrc.play.views.html.helpers.{form, input, errorSummary}
 
-@(registrationName: String, address: BusinessAddress, emailAddress: Option[String])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+@(registrationName: String, address: BusinessAddress, emailAddress: Option[String], mayBeAmlsDetails: Option[AMLSDetails])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = Messages("checkAnswers.title"), bodyClasses = None) {
 
@@ -68,6 +69,21 @@
                 <a href="@routes.BusinessIdentificationController.showBusinessEmailForm()">@Messages("checkAnswers.change.button")<span class="visuallyhidden"> @Messages("checkAnswers.businessEmailAddress.label")</span></a>
             </dd>
         </div>
+        @mayBeAmlsDetails.map { amlsDetails =>
+            <div class="app-check-your-answers__contents">
+                <dt class="app-check-your-answers__question">
+                    @Messages("checkAnswers.amlsDetails.label")
+                </dt>
+                <dd class="app-check-your-answers__answer" id="amls">
+                    @amlsDetails.supervisoryBody<br />
+                    @amlsDetails.membershipNumber<br />
+                    @amlsDetails.membershipExpiresOn
+                </dd>
+                <dd class="app-check-your-answers__change">
+                    <a href="@routes.AMLSController.showMoneyLaunderingComplianceForm()">@Messages("checkAnswers.change.button")<span class="visuallyhidden"> @Messages("checkAnswers.amlsDetails.label")</span></a>
+                </dd>
+            </div>
+        }
     </dl>
 
     <br />

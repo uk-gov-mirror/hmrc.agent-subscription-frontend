@@ -25,7 +25,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
 
-trait SessionDataMissing {
+trait SessionDataSupport {
   this: Results =>
 
   val sessionStoreService: SessionStoreService
@@ -44,7 +44,7 @@ trait SessionDataMissing {
       retrievedModelOpt.map(bodyRequiringModel).getOrElse(Future.successful(sessionMissingRedirect(modelName)))
     }
 
-  private def sessionMissingRedirect(missingSessionItem: String): Result = {
+  def sessionMissingRedirect(missingSessionItem: String): Result = {
     Logger(getClass).warn(s"Missing $missingSessionItem in session or keystore, redirecting back to /business-type")
     Redirect(routes.BusinessIdentificationController.showBusinessTypeForm())
   }

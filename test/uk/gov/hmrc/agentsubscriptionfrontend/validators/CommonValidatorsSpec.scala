@@ -16,7 +16,8 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.validators
 
-import org.joda.time.{DateTimeZone, LocalDate}
+import java.time.LocalDate
+
 import org.scalatest.EitherValues
 import play.api.data.validation.{Invalid, Valid, ValidationError}
 import play.api.data.{FormError, Mapping}
@@ -659,12 +660,12 @@ class CommonValidatorsSpec extends UnitSpec with EitherValues {
     def bind(year: String, month: String, day: String) =
       expiryDate.bind(Map("year" -> year, "month" -> month, "day" -> day))
 
-    def validDate = LocalDate.now(DateTimeZone.UTC).plusDays(1)
-    def today = LocalDate.now(DateTimeZone.UTC)
-    def futureDate = LocalDate.now(DateTimeZone.UTC).plusYears(2)
+    def validDate = LocalDate.now().plusDays(1)
+    def today = LocalDate.now()
+    def futureDate = LocalDate.now().plusYears(2)
 
     "accept valid expiry date number" in {
-      bind(validDate.getYear.toString, validDate.getMonthOfYear.toString, validDate.getDayOfMonth.toString) shouldBe Right(
+      bind(validDate.getYear.toString, validDate.getMonthValue.toString, validDate.getDayOfMonth.toString) shouldBe Right(
         validDate)
     }
 
@@ -700,13 +701,13 @@ class CommonValidatorsSpec extends UnitSpec with EitherValues {
       }
 
       "Membership expiry date is today" in {
-        bind(today.getYear.toString, today.getMonthOfYear.toString, today.getDayOfMonth.toString).left.value should contain only FormError(
+        bind(today.getYear.toString, today.getMonthValue.toString, today.getDayOfMonth.toString).left.value should contain only FormError(
           "",
           "error.moneyLaunderingCompliance.date.past")
       }
 
       "Membership expiry date is not less than 365 days from today" in {
-        bind(futureDate.getYear.toString, futureDate.getMonthOfYear.toString, futureDate.getDayOfMonth.toString).left.value should contain only FormError(
+        bind(futureDate.getYear.toString, futureDate.getMonthValue.toString, futureDate.getDayOfMonth.toString).left.value should contain only FormError(
           "",
           "error.moneyLaunderingCompliance.date.before")
       }

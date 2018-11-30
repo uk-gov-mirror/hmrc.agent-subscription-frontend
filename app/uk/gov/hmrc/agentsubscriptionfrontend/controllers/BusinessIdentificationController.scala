@@ -60,7 +60,7 @@ class BusinessIdentificationController @Inject()(
   auditService: AuditService,
   override implicit val appConfig: AppConfig,
   val metrics: Metrics)
-    extends FrontendController with I18nSupport with AuthActions with SessionDataMissing with Monitoring {
+    extends FrontendController with I18nSupport with AuthActions with SessionDataSupport with Monitoring {
 
   import continueUrlActions._
   import BusinessIdentificationForms._

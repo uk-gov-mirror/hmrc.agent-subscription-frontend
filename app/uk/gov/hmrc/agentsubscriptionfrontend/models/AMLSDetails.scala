@@ -16,10 +16,11 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.models
 
-import org.joda.time.LocalDate
+import java.time.LocalDate
+
 import play.api.libs.json.Json
 
-case class AMLSDetails(amlsBodyName: String, membershipNumber: String, expiryDate: LocalDate)
+case class AMLSDetails(supervisoryBody: String, membershipNumber: String, membershipExpiresOn: LocalDate)
 
 object AMLSDetails {
   implicit val format = Json.format[AMLSDetails]
