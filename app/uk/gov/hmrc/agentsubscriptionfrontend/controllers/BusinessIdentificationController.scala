@@ -269,8 +269,7 @@ class BusinessIdentificationController @Inject()(
       case Failure(responses) if responses.contains(InvalidEmail) =>
         routes.BusinessIdentificationController.showBusinessEmailForm()
       case _ =>
-        mark("Count-Subscription-CleanCreds-Start")
-        routes.SubscriptionController.showCheckAnswers()
+        routes.AMLSController.showMoneyLaunderingComplianceForm()
     }
     cacheInitialDetailsAndRedirect(initialDetails)(redirectCall)
   }

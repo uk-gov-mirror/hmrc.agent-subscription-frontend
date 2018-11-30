@@ -105,4 +105,16 @@ package object controllers {
             "error.link-clients-value.invalid",
             submittedLinkClients => Seq(Yes, No).contains(submittedLinkClients.autoMapping)))
   }
+
+  object AMLSForms {
+
+    def amlsForm(bodies: Set[String]): Form[AMLSForm] =
+      Form[AMLSForm](
+        mapping(
+          "amlsCode"         -> amlsCode(bodies),
+          "membershipNumber" -> membershipNumber,
+          "expiry"           -> expiryDate
+        )(AMLSForm.apply)(AMLSForm.unapply))
+
+  }
 }

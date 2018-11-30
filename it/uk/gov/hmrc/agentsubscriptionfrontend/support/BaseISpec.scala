@@ -3,6 +3,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.support
 import com.codahale.metrics.MetricRegistry
 import com.google.inject.AbstractModule
 import com.kenshoo.play.metrics.Metrics
+import org.jsoup.Jsoup
 import org.scalatest.matchers.{MatchResult, Matcher}
 import org.scalatestplus.play.OneAppPerSuite
 import play.api.Application
@@ -128,6 +129,59 @@ abstract class BaseISpec
           msgsMissing.isEmpty,
           s"Content is missing in the response for message keys: ${msgsMissing.mkString(", ")}",
           s"Content is present in the response for message keys: ${msgsPresent.mkString(", ")}"
+        )
+      }
+    }
+  }
+
+  protected def containInputElement(expectedElementId: String, expectedInputType: String): Matcher[Result] = {
+    new Matcher[Result] {
+      override def apply(result: Result): MatchResult = {
+        val doc = Jsoup.parse(bodyOf(result))
+
+        val foundElement = doc.getElementById(expectedElementId)
+
+        val isAsExpected = Option(foundElement) match {
+          case None => false
+          case Some(elAmls) => {
+            val isExpectedTag = elAmls.tagName() == "input"
+            val isExpectedType = elAmls.attr("type") == expectedInputType
+            isExpectedTag && isExpectedType
+          }
+        }
+
+        MatchResult(
+          isAsExpected,
+          s"""Response does not contain an input element of type "$expectedInputType" with id "$expectedElementId"""",
+          s"""Response contains an input element of type "$expectedInputType" with id "$expectedElementId""""
+        )
+      }
+    }
+  }
+
+  protected def containSubmitButton(expectedMessageKey: String, expectedElementId: String, expectedTagName: String = "button", expectedType: String = "submit"): Matcher[Result] = {
+    new Matcher[Result] {
+      override def apply(result: Result): MatchResult = {
+        val doc = Jsoup.parse(bodyOf(result))
+
+        checkMessageIsDefined(expectedMessageKey)
+
+        val foundElement = doc.getElementById(expectedElementId)
+
+        val isAsExpected = Option(foundElement) match {
+          case None => false
+          case Some(elAmls) => {
+            val isExpectedTag = elAmls.tagName() == expectedTagName
+            val isExpectedType = elAmls.attr("type") == expectedType
+            val hasExpectedMsg = elAmls.text() == htmlEscapedMessage(expectedMessageKey)
+            isExpectedTag && isExpectedType && hasExpectedMsg
+          }
+        }
+
+        MatchResult(
+          isAsExpected,
+          s"""Response does not contain a submit button with id "$expectedElementId" and type "$expectedType" with content for message key "$expectedMessageKey" """,
+          s"""Response contains a submit button with id "$expectedElementId" and type "$expectedType" with content for message key "$expectedMessageKey" """
         )
       }
     }

@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.validators
 
+import org.joda.time.{DateTimeZone, LocalDate}
 import org.scalatest.EitherValues
 import play.api.data.validation.{Invalid, Valid, ValidationError}
 import play.api.data.{FormError, Mapping}
@@ -619,6 +620,96 @@ class CommonValidatorsSpec extends UnitSpec with EitherValues {
 
     "reject with error when nino field contain spaces only" in {
       bind("    ").left.value should contain only FormError("testKey", "error.clientdetails.nino.empty")
+    }
+  }
+
+  "amlsCode bind" should {
+    val amlsCodeMapping = amlsCode(Set("AA", "BB")).withPrefix("testKey")
+    def bind(fieldValue: String) = amlsCodeMapping.bind(Map("testKey" -> fieldValue))
+
+    "accept valid AMLS code" in {
+      bind("AA") shouldBe Right("AA")
+    }
+
+    "return validation error if the field is blank" in {
+      bind("").left.value should contain only FormError("testKey", "error.moneyLaunderingCompliance.amlscode.empty")
+    }
+
+    "return validation error if the field is invalid " in {
+      bind("CC").left.value should contain only FormError("testKey", "error.moneyLaunderingCompliance.amlscode.invalid")
+    }
+  }
+
+  "membershipNumber bind" should {
+    val membershipNumberMapping = membershipNumber.withPrefix("testKey")
+    def bind(fieldValue: String) = membershipNumberMapping.bind(Map("testKey" -> fieldValue))
+
+    "accept valid membership number" in {
+      bind("123456") shouldBe Right("123456")
+    }
+
+    "return validation error if the field is blank" in {
+      bind("").left.value should contain only FormError(
+        "testKey",
+        "error.moneyLaunderingCompliance.membershipNumber.empty")
+    }
+  }
+
+  "expiryDate bind" should {
+    def bind(year: String, month: String, day: String) =
+      expiryDate.bind(Map("year" -> year, "month" -> month, "day" -> day))
+
+    def validDate = LocalDate.now(DateTimeZone.UTC).plusDays(1)
+    def today = LocalDate.now(DateTimeZone.UTC)
+    def futureDate = LocalDate.now(DateTimeZone.UTC).plusYears(2)
+
+    "accept valid expiry date number" in {
+      bind(validDate.getYear.toString, validDate.getMonthOfYear.toString, validDate.getDayOfMonth.toString) shouldBe Right(
+        validDate)
+    }
+
+    "return validation error" when {
+      "day not selected" in {
+        bind(year = "2000", month = "10", day = "").left.value should contain only FormError(
+          "day",
+          "error.moneyLaunderingCompliance.day.empty")
+      }
+
+      "month not selected" in {
+        bind(year = "2000", month = "", day = "10").left.value should contain only FormError(
+          "month",
+          "error.moneyLaunderingCompliance.month.empty")
+      }
+
+      "year not selected" in {
+        bind(year = "", month = "08", day = "10").left.value should contain only FormError(
+          "year",
+          "error.moneyLaunderingCompliance.year.empty")
+      }
+
+      "invalid date" in {
+        bind(year = "2000", month = "15", day = "45").left.value should contain only FormError(
+          "",
+          "error.moneyLaunderingCompliance.date.invalid")
+      }
+
+      "Membership expiry date in the past" in {
+        bind(year = "2000", month = "01", day = "30").left.value should contain only FormError(
+          "",
+          "error.moneyLaunderingCompliance.date.past")
+      }
+
+      "Membership expiry date is today" in {
+        bind(today.getYear.toString, today.getMonthOfYear.toString, today.getDayOfMonth.toString).left.value should contain only FormError(
+          "",
+          "error.moneyLaunderingCompliance.date.past")
+      }
+
+      "Membership expiry date is not less than 365 days from today" in {
+        bind(futureDate.getYear.toString, futureDate.getMonthOfYear.toString, futureDate.getDayOfMonth.toString).left.value should contain only FormError(
+          "",
+          "error.moneyLaunderingCompliance.date.before")
+      }
     }
   }
 }

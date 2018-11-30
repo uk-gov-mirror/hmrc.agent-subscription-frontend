@@ -547,7 +547,7 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
         metricShouldExistAndBeUpdated("Count-Subscription-AlreadySubscribed-RegisteredInETMP")
       }
 
-      "redirect to showCheckAnswers if the user has clean creds and isSubscribedToAgentServices=false" in {
+      "redirect to showMoneyLaunderingComplianceForm if the user has clean creds and isSubscribedToAgentServices=false" in {
         implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
           .withSession("businessType" -> "sole_trader")
           .withFormUrlEncodedBody("confirmBusiness" -> "yes")
@@ -564,8 +564,7 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
 
         sessionStoreService.currentSession.initialDetails should not be empty
 
-        result.header.headers(LOCATION) shouldBe routes.SubscriptionController.showCheckAnswers().url
-        metricShouldExistAndBeUpdated("Count-Subscription-CleanCreds-Start")
+        result.header.headers(LOCATION) shouldBe routes.AMLSController.showMoneyLaunderingComplianceForm().url
       }
 
       "redirect to showBusinessEmailForm if the user has clean creds and isSubscribedToAgentServices=false and ETMP record contains empty email" in {
@@ -864,7 +863,7 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
 
       val result = await(controller.submitBusinessNameForm(request))
       status(result) shouldBe 303
-      redirectLocation(result).head shouldBe routes.SubscriptionController.showCheckAnswers().url
+      redirectLocation(result).head shouldBe routes.AMLSController.showMoneyLaunderingComplianceForm().url
 
       await(sessionStoreService.fetchInitialDetails).get.name shouldBe "new Agent name"
     }
@@ -961,7 +960,7 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
 
       val result = await(controller.submitBusinessEmailForm(request))
       status(result) shouldBe 303
-      redirectLocation(result).head shouldBe routes.SubscriptionController.showCheckAnswers().url
+      redirectLocation(result).head shouldBe routes.AMLSController.showMoneyLaunderingComplianceForm().url
 
       await(sessionStoreService.fetchInitialDetails).get.email shouldBe Some("newagent@example.com")
     }
@@ -1043,7 +1042,7 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
 
       val result = await(controller.submitUpdateBusinessAddressForm(request))
       status(result) shouldBe 303
-      redirectLocation(result).head shouldBe routes.SubscriptionController.showCheckAnswers().url
+      redirectLocation(result).head shouldBe routes.AMLSController.showMoneyLaunderingComplianceForm().url
 
       val updatedBusinessAddress = await(sessionStoreService.fetchInitialDetails).get.businessAddress
 

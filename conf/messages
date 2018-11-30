@@ -63,6 +63,15 @@ error.clientdetails.nino.invalid=National Insurance number must be 2 letters, 6 
 error.saAgentCode.invalid=Self Assessment agent code must only include letters and numbers
 error.saAgentCode.blank=Enter a Self Assessment agent code
 error.saAgentCode.length=Self Assessment agent code must be 6 characters, like SA1234
+error.moneyLaunderingCompliance.amlscode.empty=Select the name of your money laundering supervisory body from the list
+error.moneyLaunderingCompliance.membershipNumber.empty=Enter your membership number
+error.moneyLaunderingCompliance.membershipNumber.invalid=Enter your membership number
+error.moneyLaunderingCompliance.day.empty=Enter a day
+error.moneyLaunderingCompliance.month.empty=Enter a month
+error.moneyLaunderingCompliance.year.empty=Enter a year
+error.moneyLaunderingCompliance.date.invalid=Enter a real date
+error.moneyLaunderingCompliance.date.past=The date your membership expires must be in the future
+error.moneyLaunderingCompliance.date.before=The date your membership expires must be within 1 year of today
 
 ##Modifying address
 address.form.with-errors.error.summary = Please check the following:
@@ -212,6 +221,18 @@ invasive.expandable.p1.open=You got your Self Assessment agent code when you reg
 error.no-radio-selected=You must choose an option
 invasive.error.no-radio.selected=Select yes if you have a Self Assessment agent code
 clientDetails.error.no-radio.selected=Select which details you want to enter
+
+# Money laundering compliance page
+moneyLaunderingCompliance.title=Money laundering compliance details
+moneyLaunderingCompliance.p1=You must be registered with a money laundering supervisory body before you can create an agent services account.
+moneyLaunderingCompliance.amls.title=Name of money laundering supervisory body
+moneyLaunderingCompliance.membershipNumber.title=Membership number
+moneyLaunderingCompliance.expiry.title=When does your membership expire?
+moneyLaunderingCompliance.expiry.hint=For example, 31 03 2019
+moneyLaunderingCompliance.expiry.day.title=Day
+moneyLaunderingCompliance.expiry.month.title=Month
+moneyLaunderingCompliance.expiry.year.title=Year
+moneyLaunderingCompliance.continue=Continue
 
 checkAnswers.title=Check your details before creating your account
 checkAnswers.description.p1=These are the business details we will use for your agent services account.

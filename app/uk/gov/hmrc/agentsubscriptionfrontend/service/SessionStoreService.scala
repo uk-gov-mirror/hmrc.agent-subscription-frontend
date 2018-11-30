@@ -17,9 +17,8 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.service
 
 import javax.inject.{Inject, Singleton}
-
 import uk.gov.hmrc.agentsubscriptionfrontend.models.ContinueUrlJsonFormat._
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{InitialDetails, KnownFactsResult}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AMLSDetails, InitialDetails, KnownFactsResult}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.cache.client.SessionCache
 import uk.gov.hmrc.play.binders.ContinueUrl
@@ -54,6 +53,12 @@ class SessionStoreService @Inject()(sessionCache: SessionCache) {
   def cacheMappingEligible(
     wasEligibleForMapping: Boolean)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
     sessionCache.cache("mappingEligible", wasEligibleForMapping).map(_ => ())
+
+  def fetchAMLSDetails(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[AMLSDetails]] =
+    sessionCache.fetchAndGetEntry[AMLSDetails]("amlsDetails")
+
+  def cacheAMLSDetails(amlsDetails: AMLSDetails)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
+    sessionCache.cache("amlsDetails", amlsDetails).map(_ => ())
 
   def remove()(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
     sessionCache.remove().map(_ => ())
