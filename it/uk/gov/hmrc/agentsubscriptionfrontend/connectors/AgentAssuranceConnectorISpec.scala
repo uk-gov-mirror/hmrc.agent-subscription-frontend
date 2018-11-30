@@ -2,14 +2,14 @@ package uk.gov.hmrc.agentsubscriptionfrontend.connectors
 
 import java.net.URL
 
-import org.scalatestplus.play.OneAppPerSuite
+import com.kenshoo.play.metrics.Metrics
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub._
-import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, MetricTestSupport, WireMockSupport}
+import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, MetricTestSupport}
 import uk.gov.hmrc.domain.{Nino, SaAgentReference}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpGet, Upstream4xxResponse, Upstream5xxResponse}
-import uk.gov.hmrc.play.test.UnitSpec
-import com.kenshoo.play.metrics.Metrics
+
+import scala.concurrent.Future
 
 class AgentAssuranceConnectorISpec extends BaseISpec with MetricTestSupport {
 
@@ -22,51 +22,16 @@ class AgentAssuranceConnectorISpec extends BaseISpec with MetricTestSupport {
       app.injector.instanceOf[Metrics])
 
   "getRegistration PAYE" should {
-    "return true when the current logged in user has an acceptable number of PAYE clients" in {
-      givenUserIsAnAgentWithAnAcceptableNumberOfPAYEClients
-      await(connector.hasAcceptableNumberOfPayeClients) shouldBe true
-    }
-
-    "return false when the current logged in user does not have an acceptable number of PAYE clients" in {
-      givenUserIsNotAnAgentWithAnAcceptableNumberOfPAYEClients
-      await(connector.hasAcceptableNumberOfPayeClients) shouldBe false
-    }
-
-    "return false when the current user is not authenticated" in {
-      givenUserIsNotAuthenticatedForPAYEClientCheck
-      await(connector.hasAcceptableNumberOfPayeClients) shouldBe false
-    }
-
-    "throw an exception when appropriate" in {
-      givenAnExceptionOccursDuringThePAYEClientCheck
-      intercept[Exception] {
-        await(connector.hasAcceptableNumberOfPayeClients)
-      }
-    }
+    behave like testAcceptableNumberOfClientsEndpoint("IR-PAYE")(connector.hasAcceptableNumberOfPayeClients)
   }
 
   "getRegistration SA" should {
-    "return true when the current logged in user has an acceptable number of SA clients" in {
-      givenUserIsAnAgentWithAnAcceptableNumberOfSAClients
-      await(connector.hasAcceptableNumberOfSAClients) shouldBe true
-    }
+    behave like testAcceptableNumberOfClientsEndpoint("IR-SA")(connector.hasAcceptableNumberOfSAClients)
+  }
 
-    "return false when the current logged in user does not have an acceptable number of SA clients" in {
-      givenUserIsNotAnAgentWithAnAcceptableNumberOfSAClients
-      await(connector.hasAcceptableNumberOfSAClients) shouldBe false
-    }
-
-    "return false when the current user is not authenticated" in {
-      givenUserIsNotAuthenticatedForSAClientCheck
-      await(connector.hasAcceptableNumberOfSAClients) shouldBe false
-    }
-
-    "throw an exception when appropriate" in {
-      givenAnExceptionOccursDuringTheSAClientCheck
-      intercept[Exception] {
-        await(connector.hasAcceptableNumberOfSAClients)
-      }
-    }
+  "getRegistration HMCE-VATDEC-ORG" should {
+    behave like testAcceptableNumberOfClientsEndpoint("HMCE-VATDEC-ORG")(
+      connector.hasAcceptableNumberOfVatDecOrgClients)
   }
 
   "hasActiveCesaRelationship" should {
@@ -167,6 +132,30 @@ class AgentAssuranceConnectorISpec extends BaseISpec with MetricTestSupport {
         givenAgentIsManuallyAssured(utr.value)
 
         await(connector.isManuallyAssuredAgent(utr))
+      }
+    }
+  }
+
+  def testAcceptableNumberOfClientsEndpoint(service: String)(method: => Future[Boolean]) = {
+    s"return true when the current logged in user has an acceptable number of $service clients" in {
+      givenUserIsAnAgentWithAnAcceptableNumberOfClients(service)
+      await(method) shouldBe true
+    }
+
+    s"return false when the current logged in user does not have an acceptable number of $service clients" in {
+      givenUserIsNotAnAgentWithAnAcceptableNumberOfClients(service)
+      await(method) shouldBe false
+    }
+
+    s"return false when the current user is not authenticated for $service" in {
+      givenUserIsNotAuthenticatedForClientCheck(service)
+      await(method) shouldBe false
+    }
+
+    s"throw an exception when appropriate for $service" in {
+      givenAnExceptionOccursDuringTheClientCheck(service)
+      intercept[Exception] {
+        await(method)
       }
     }
   }

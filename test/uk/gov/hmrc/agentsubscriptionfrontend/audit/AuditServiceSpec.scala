@@ -60,6 +60,7 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
         .set("isEnrolledPAYEAgent", true)
         .set("payeAgentRef", "000/12346")
         .set("passPayeAgentAssuranceCheck", false)
+        .set("passVatDecOrgAgentAssuranceCheck", false)
         .set("authProviderId", "foo")
         .set("authProviderType", "GovernmentGateway")
 
@@ -82,6 +83,7 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
         sentEvent.detail("isEnrolledPAYEAgent") shouldBe "true"
         sentEvent.detail("payeAgentRef") shouldBe "000/12346"
         sentEvent.detail("passPayeAgentAssuranceCheck") shouldBe "false"
+        sentEvent.detail("passVatDecOrgAgentAssuranceCheck") shouldBe "false"
         sentEvent.detail("authProviderId") shouldBe "foo"
         sentEvent.detail("authProviderType") shouldBe "GovernmentGateway"
 

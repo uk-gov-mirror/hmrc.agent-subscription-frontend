@@ -33,8 +33,9 @@ class BusinessIdentificationControllerWithAssuranceFlagISpec extends BusinessIde
   "submitBusinessDetailsForm with the agentAssuranceFlag set to true" should {
     "redirect to /confirm-business page and store known facts result in the session store when a matching registration is found for the UTR and postcode" in {
       withMatchingUtrAndPostcode(validUtr, validPostcode)
-      givenUserIsAnAgentWithAnAcceptableNumberOfPAYEClients
-      givenUserIsAnAgentWithAnAcceptableNumberOfSAClients
+      givenUserIsAnAgentWithAnAcceptableNumberOfClients("IR-PAYE")
+      givenUserIsAnAgentWithAnAcceptableNumberOfClients("IR-SA")
+      givenUserIsAnAgentWithAnAcceptableNumberOfClients("HMCE-VATDEC-ORG")
       givenRefusalToDealWithUtrIsNotForbidden(validUtr.value)
       givenAgentIsNotManuallyAssured(validUtr.value)
 
@@ -48,14 +49,16 @@ class BusinessIdentificationControllerWithAssuranceFlagISpec extends BusinessIde
         KnownFactsResult(validUtr, validPostcode, "My Agency", isSubscribedToAgentServices = false, Some(businessAddress), Some("someone@example.com")))
       verifyAgentAssuranceAuditRequestSent(
         passPayeAgentAssuranceCheck = Some(true),
-        passSaAgentAssuranceCheck = Some(true))
+        passSaAgentAssuranceCheck = Some(true),
+        passVatDecOrgAgentAssuranceCheck = Some(true))
       metricShouldExistAndBeUpdated("Count-Subscription-ConfirmBusiness-Success")
     }
 
     "store isSubscribedToAgentServices = false in session when the business registration found by agent-subscription is not already subscribed" in {
       withMatchingUtrAndPostcode(validUtr, validPostcode)
-      givenUserIsAnAgentWithAnAcceptableNumberOfPAYEClients
-      givenUserIsAnAgentWithAnAcceptableNumberOfSAClients
+      givenUserIsAnAgentWithAnAcceptableNumberOfClients("IR-PAYE")
+      givenUserIsAnAgentWithAnAcceptableNumberOfClients("IR-SA")
+      givenUserIsAnAgentWithAnAcceptableNumberOfClients("HMCE-VATDEC-ORG")
       givenRefusalToDealWithUtrIsNotForbidden(validUtr.value)
       givenAgentIsNotManuallyAssured(validUtr.value)
 
@@ -68,14 +71,16 @@ class BusinessIdentificationControllerWithAssuranceFlagISpec extends BusinessIde
       sessionStoreService.currentSession.knownFactsResult.get.isSubscribedToAgentServices shouldBe false
       verifyAgentAssuranceAuditRequestSent(
         passPayeAgentAssuranceCheck = Some(true),
-        passSaAgentAssuranceCheck = Some(true))
+        passSaAgentAssuranceCheck = Some(true),
+      passVatDecOrgAgentAssuranceCheck = Some(true))
       metricShouldExistAndBeUpdated("Count-Subscription-ConfirmBusiness-Success")
     }
 
     "redirect to already subscribed page when the business registration found by agent-subscription is already subscribed" in {
       withMatchingUtrAndPostcode(validUtr, validPostcode, isSubscribedToAgentServices = true, isSubscribedToETMP = true)
-      givenUserIsAnAgentWithAnAcceptableNumberOfPAYEClients
-      givenUserIsAnAgentWithAnAcceptableNumberOfSAClients
+      givenUserIsAnAgentWithAnAcceptableNumberOfClients("IR-PAYE")
+      givenUserIsAnAgentWithAnAcceptableNumberOfClients("IR-SA")
+      givenUserIsAnAgentWithAnAcceptableNumberOfClients("HMCE-VATDEC-ORG")
       givenRefusalToDealWithUtrIsNotForbidden(validUtr.value)
       givenAgentIsNotManuallyAssured(validUtr.value)
 
@@ -90,8 +95,9 @@ class BusinessIdentificationControllerWithAssuranceFlagISpec extends BusinessIde
 
     "fail when a matching registration is found for the UTR and postcode for an agent without an acceptable number of PAYE clients" in {
       withMatchingUtrAndPostcode(validUtr, validPostcode)
-      givenUserIsNotAnAgentWithAnAcceptableNumberOfPAYEClients
-      givenUserIsNotAnAgentWithAnAcceptableNumberOfSAClients
+      givenUserIsNotAnAgentWithAnAcceptableNumberOfClients("IR-PAYE")
+      givenUserIsNotAnAgentWithAnAcceptableNumberOfClients("IR-SA")
+      givenUserIsNotAnAgentWithAnAcceptableNumberOfClients("HMCE-VATDEC-ORG")
       givenRefusalToDealWithUtrIsNotForbidden(validUtr.value)
       givenAgentIsNotManuallyAssured(validUtr.value)
 
@@ -103,13 +109,15 @@ class BusinessIdentificationControllerWithAssuranceFlagISpec extends BusinessIde
       redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.invasiveCheckStart().url)
       verifyAgentAssuranceAuditRequestSent(
         passPayeAgentAssuranceCheck = Some(false),
-        passSaAgentAssuranceCheck = Some(false))
+        passSaAgentAssuranceCheck = Some(false),
+        passVatDecOrgAgentAssuranceCheck = Some(false))
     }
 
     "fail when the business registration found by agent-subscription is not already subscribed for an agent without an acceptable number of PAYE clients" in {
       withMatchingUtrAndPostcode(validUtr, validPostcode)
-      givenUserIsNotAnAgentWithAnAcceptableNumberOfPAYEClients
-      givenUserIsNotAnAgentWithAnAcceptableNumberOfSAClients
+      givenUserIsNotAnAgentWithAnAcceptableNumberOfClients("IR-PAYE")
+      givenUserIsNotAnAgentWithAnAcceptableNumberOfClients("IR-SA")
+      givenUserIsNotAnAgentWithAnAcceptableNumberOfClients("HMCE-VATDEC-ORG")
       givenRefusalToDealWithUtrIsNotForbidden(validUtr.value)
       givenAgentIsNotManuallyAssured(validUtr.value)
 
@@ -121,14 +129,16 @@ class BusinessIdentificationControllerWithAssuranceFlagISpec extends BusinessIde
       redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.invasiveCheckStart().url)
       verifyAgentAssuranceAuditRequestSent(
         passPayeAgentAssuranceCheck = Some(false),
-        passSaAgentAssuranceCheck = Some(false))
+        passSaAgentAssuranceCheck = Some(false),
+        passVatDecOrgAgentAssuranceCheck = Some(false))
     }
 
     "redirect to already subscribed page when the business registration found by agent-subscription is already subscribed " +
       "for an agent without an acceptable number of PAYE clients" in {
       withMatchingUtrAndPostcode(validUtr, validPostcode, isSubscribedToAgentServices = true, isSubscribedToETMP = true)
-      givenUserIsNotAnAgentWithAnAcceptableNumberOfPAYEClients
-      givenUserIsNotAnAgentWithAnAcceptableNumberOfSAClients
+      givenUserIsNotAnAgentWithAnAcceptableNumberOfClients("IR-PAYE")
+      givenUserIsNotAnAgentWithAnAcceptableNumberOfClients("IR-SA")
+      givenUserIsNotAnAgentWithAnAcceptableNumberOfClients("HMCE-VATDEC-ORG")
       givenRefusalToDealWithUtrIsNotForbidden(validUtr.value)
       givenAgentIsNotManuallyAssured(validUtr.value)
 
@@ -143,8 +153,9 @@ class BusinessIdentificationControllerWithAssuranceFlagISpec extends BusinessIde
 
     "proceed to showConfirmBusiness when there is not an acceptable number of PAYE client, but there is enough SA Clients" in {
       withMatchingUtrAndPostcode(validUtr, validPostcode)
-      givenUserIsNotAnAgentWithAnAcceptableNumberOfPAYEClients
-      givenUserIsAnAgentWithAnAcceptableNumberOfSAClients
+      givenUserIsNotAnAgentWithAnAcceptableNumberOfClients("IR-PAYE")
+      givenUserIsAnAgentWithAnAcceptableNumberOfClients("IR-SA")
+      givenUserIsNotAnAgentWithAnAcceptableNumberOfClients("HMCE-VATDEC-ORG")
       givenRefusalToDealWithUtrIsNotForbidden(validUtr.value)
       givenAgentIsNotManuallyAssured(validUtr.value)
 
@@ -156,13 +167,15 @@ class BusinessIdentificationControllerWithAssuranceFlagISpec extends BusinessIde
       redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showConfirmBusinessForm().url)
       verifyAgentAssuranceAuditRequestSent(
         passPayeAgentAssuranceCheck = Some(false),
-        passSaAgentAssuranceCheck = Some(true))
+        passSaAgentAssuranceCheck = Some(true),
+        passVatDecOrgAgentAssuranceCheck = Some(false))
     }
 
     "proceed to showConfirmBusiness when there in not an acceptable number of SA client, but there is enough PAYE Clients" in {
       withMatchingUtrAndPostcode(validUtr, validPostcode)
-      givenUserIsAnAgentWithAnAcceptableNumberOfPAYEClients
-      givenUserIsNotAnAgentWithAnAcceptableNumberOfSAClients
+      givenUserIsAnAgentWithAnAcceptableNumberOfClients("IR-PAYE")
+      givenUserIsNotAnAgentWithAnAcceptableNumberOfClients("IR-SA")
+      givenUserIsNotAnAgentWithAnAcceptableNumberOfClients("HMCE-VATDEC-ORG")
       givenRefusalToDealWithUtrIsNotForbidden(validUtr.value)
       givenAgentIsNotManuallyAssured(validUtr.value)
 
@@ -174,7 +187,48 @@ class BusinessIdentificationControllerWithAssuranceFlagISpec extends BusinessIde
       redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showConfirmBusinessForm().url)
       verifyAgentAssuranceAuditRequestSent(
         passPayeAgentAssuranceCheck = Some(true),
-        passSaAgentAssuranceCheck = Some(false))
+        passSaAgentAssuranceCheck = Some(false),
+      passVatDecOrgAgentAssuranceCheck = Some(false))
+    }
+
+    "proceed to showConfirmBusiness when there in not an acceptable number of SA and PAYE client, but there is not enough HMCE-VATDEC-ORG Clients" in {
+      withMatchingUtrAndPostcode(validUtr, validPostcode)
+      givenUserIsAnAgentWithAnAcceptableNumberOfClients("IR-PAYE")
+      givenUserIsAnAgentWithAnAcceptableNumberOfClients("IR-SA")
+      givenUserIsNotAnAgentWithAnAcceptableNumberOfClients("HMCE-VATDEC-ORG")
+      givenRefusalToDealWithUtrIsNotForbidden(validUtr.value)
+      givenAgentIsNotManuallyAssured(validUtr.value)
+
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+        .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
+      val result = await(controller.submitBusinessDetailsForm(validBusinessTypes.head)(request))
+
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showConfirmBusinessForm().url)
+      verifyAgentAssuranceAuditRequestSent(
+        passPayeAgentAssuranceCheck = Some(true),
+        passSaAgentAssuranceCheck = Some(true),
+        passVatDecOrgAgentAssuranceCheck = Some(false))
+    }
+
+    "proceed to showConfirmBusiness when there is an acceptable number of HMCE-VATDEC-ORG client, but there is not enough SA and PAYE clients" in {
+      withMatchingUtrAndPostcode(validUtr, validPostcode)
+      givenUserIsNotAnAgentWithAnAcceptableNumberOfClients("IR-PAYE")
+      givenUserIsNotAnAgentWithAnAcceptableNumberOfClients("IR-SA")
+      givenUserIsAnAgentWithAnAcceptableNumberOfClients("HMCE-VATDEC-ORG")
+      givenRefusalToDealWithUtrIsNotForbidden(validUtr.value)
+      givenAgentIsNotManuallyAssured(validUtr.value)
+
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+        .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
+      val result = await(controller.submitBusinessDetailsForm(validBusinessTypes.head)(request))
+
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showConfirmBusinessForm().url)
+      verifyAgentAssuranceAuditRequestSent(
+        passPayeAgentAssuranceCheck = Some(false),
+        passSaAgentAssuranceCheck = Some(false),
+        passVatDecOrgAgentAssuranceCheck = Some(true))
     }
 
     "redirect to /cannot-create account when agent's utr is in the R2DW list" in {
@@ -194,16 +248,18 @@ class BusinessIdentificationControllerWithAssuranceFlagISpec extends BusinessIde
       )
       verifyCheckRefusalToDealWith(1, validUtr.value)
       verifyCheckAgentIsManuallyAssured(0, validUtr.value)
-      verifyCheckForAcceptableNumberOfPAYEClientsUrl(0)
-      verifyCheckForAcceptableNumberOfSAClients(0)
+      verifyCheckForAcceptableNumberOfClients("IR-PAYE", 0)
+      verifyCheckForAcceptableNumberOfClients("IR-SA", 0)
+      verifyCheckForAcceptableNumberOfClients("HMCE-VATDEC-ORG", 0)
     }
 
     "continue checks when UTR is not found the R2DW list" in {
       withMatchingUtrAndPostcode(validUtr, validPostcode)
       givenRefusalToDealWithUtrIsNotForbidden(validUtr.value)
       givenAgentIsNotManuallyAssured(validUtr.value)
-      givenUserIsAnAgentWithAnAcceptableNumberOfPAYEClients
-      givenUserIsAnAgentWithAnAcceptableNumberOfSAClients
+      givenUserIsAnAgentWithAnAcceptableNumberOfClients("IR-PAYE")
+      givenUserIsAnAgentWithAnAcceptableNumberOfClients("IR-SA")
+      givenUserIsAnAgentWithAnAcceptableNumberOfClients("HMCE-VATDEC-ORG")
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
@@ -216,8 +272,9 @@ class BusinessIdentificationControllerWithAssuranceFlagISpec extends BusinessIde
       )
       verifyCheckRefusalToDealWith(1, validUtr.value)
       verifyCheckAgentIsManuallyAssured(1, validUtr.value)
-      verifyCheckForAcceptableNumberOfPAYEClientsUrl(1)
-      verifyCheckForAcceptableNumberOfSAClients(1)
+      verifyCheckForAcceptableNumberOfClients("IR-PAYE", 1)
+      verifyCheckForAcceptableNumberOfClients("IR-SA", 1)
+      verifyCheckForAcceptableNumberOfClients("HMCE-VATDEC-ORG", 1)
     }
 
     "exception received due to missing config in R2DW" in {
@@ -257,17 +314,19 @@ class BusinessIdentificationControllerWithAssuranceFlagISpec extends BusinessIde
         getRequestedFor(urlPathEqualTo(
           s"/agent-subscription/registration/${encodePathSegment(validUtr.value)}/postcode/${encodePathSegment(validPostcode)}"))
       )
-      verifyCheckForAcceptableNumberOfPAYEClientsUrl(0)
-      verifyCheckForAcceptableNumberOfSAClients(0)
-      verifyAgentAssuranceAuditRequestSent(passPayeAgentAssuranceCheck = None, passSaAgentAssuranceCheck = None)
+      verifyCheckForAcceptableNumberOfClients("IR-PAYE", 0)
+      verifyCheckForAcceptableNumberOfClients("IR-SA", 0)
+      verifyCheckForAcceptableNumberOfClients("HMCE-VATDEC-ORG", 0)
+      verifyAgentAssuranceAuditRequestSent(passPayeAgentAssuranceCheck = None, passSaAgentAssuranceCheck = None, passVatDecOrgAgentAssuranceCheck = None)
     }
 
     "perform all usual assurance checks when agent's UTR is not in the Manually Assured Agents list" in {
       withMatchingUtrAndPostcode(validUtr, validPostcode)
       givenRefusalToDealWithUtrIsNotForbidden(validUtr.value)
       givenAgentIsNotManuallyAssured(validUtr.value)
-      givenUserIsAnAgentWithAnAcceptableNumberOfPAYEClients
-      givenUserIsAnAgentWithAnAcceptableNumberOfSAClients
+      givenUserIsAnAgentWithAnAcceptableNumberOfClients("IR-PAYE")
+      givenUserIsAnAgentWithAnAcceptableNumberOfClients("IR-SA")
+      givenUserIsAnAgentWithAnAcceptableNumberOfClients("HMCE-VATDEC-ORG")
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
@@ -283,8 +342,9 @@ class BusinessIdentificationControllerWithAssuranceFlagISpec extends BusinessIde
         getRequestedFor(urlPathEqualTo(
           s"/agent-subscription/registration/${encodePathSegment(validUtr.value)}/postcode/${encodePathSegment(validPostcode)}"))
       )
-      verifyCheckForAcceptableNumberOfPAYEClientsUrl(1)
-      verifyCheckForAcceptableNumberOfSAClients(1)
+      verifyCheckForAcceptableNumberOfClients("IR-PAYE", 1)
+      verifyCheckForAcceptableNumberOfClients("IR-SA", 1)
+      verifyCheckForAcceptableNumberOfClients("HMCE-VATDEC-ORG", 1)
     }
   }
 }

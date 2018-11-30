@@ -50,7 +50,8 @@ class AssuranceService @Inject()(
                                    isOnRefusalToDealWithList = isOnRefusalToDealWithList,
                                    isManuallyAssured = isManuallyAssured,
                                    hasAcceptableNumberOfPayeClients = None,
-                                   hasAcceptableNumberOfSAClients = None
+                                   hasAcceptableNumberOfSAClients = None,
+                                   hasAcceptableNumberOfVatDecOrgClients = None
                                  )))
                            } else {
 
@@ -61,13 +62,17 @@ class AssuranceService @Inject()(
                                                                      else Future.successful(None)
                                hasAcceptableNumberOfSAClientsOpt <- assuranceConnector.hasAcceptableNumberOfSAClients
                                                                      .map(Some(_))
+                               hasAcceptableNumberOfVatDecOrgClientsOpt <- assuranceConnector.hasAcceptableNumberOfVatDecOrgClients
+                                                                            .map(Some(_))
+
                              } yield
                                Some(
                                  AssuranceResults(
                                    isOnRefusalToDealWithList = isOnRefusalToDealWithList,
                                    isManuallyAssured = isManuallyAssured,
                                    hasAcceptableNumberOfPayeClients = hasAcceptableNumberOfPayeClientsOpt,
-                                   hasAcceptableNumberOfSAClients = hasAcceptableNumberOfSAClientsOpt
+                                   hasAcceptableNumberOfSAClients = hasAcceptableNumberOfSAClientsOpt,
+                                   hasAcceptableNumberOfVatDecOrgClients = hasAcceptableNumberOfVatDecOrgClientsOpt
                                  ))
                            }
       } yield assuranceResults
@@ -101,7 +106,8 @@ class AssuranceService @Inject()(
                       isOnRefusalToDealWithList = false,
                       isManuallyAssured = false,
                       hasAcceptableNumberOfPayeClients = if (appConfig.agentAssurancePayeCheck) Some(false) else None,
-                      hasAcceptableNumberOfSAClients = Some(false)
+                      hasAcceptableNumberOfSAClients = Some(false),
+                      hasAcceptableNumberOfVatDecOrgClients = Some(false)
                     ),
                     assuranceCheckInput = Some(
                       AssuranceCheckInput(

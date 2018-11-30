@@ -73,6 +73,7 @@ class AuditService @Inject()(val auditConnector: AuditConnector) {
     ("userEnteredUtr", None),
     ("userEnteredNino", None),
     ("passCESAAgentAssuranceCheck", None),
+    ("passVatDecOrgAgentAssuranceCheck", None),
     ("authProviderId", None),
     ("authProviderType", None)
   )
@@ -93,8 +94,7 @@ class AuditService @Inject()(val auditConnector: AuditConnector) {
 
     assuranceResults.hasAcceptableNumberOfSAClients.foreach(auditData.set("passSaAgentAssuranceCheck", _))
     assuranceResults.hasAcceptableNumberOfPayeClients.foreach(auditData.set("passPayeAgentAssuranceCheck", _))
-
-    //TODO auditData.set("refuseToDealWith", ?)
+    assuranceResults.hasAcceptableNumberOfVatDecOrgClients.foreach(auditData.set("passVatDecOrgAgentAssuranceCheck", _))
 
     val payeEnrolmentOpt = agent.hasIRPAYEAGENT
     auditData.set("isEnrolledPAYEAgent", payeEnrolmentOpt.isDefined)
