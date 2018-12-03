@@ -34,6 +34,11 @@ class AgentAssuranceConnectorISpec extends BaseISpec with MetricTestSupport {
       connector.hasAcceptableNumberOfVatDecOrgClients)
   }
 
+  "getRegistration IR-CT" should {
+    behave like testAcceptableNumberOfClientsEndpoint("IR-CT")(
+      connector.hasAcceptableNumberOfIRCTClients)
+  }
+
   "hasActiveCesaRelationship" should {
     "receive 200 if valid combination passed and relationship exists in Cesa Nino" in {
       withMetricsTimerUpdate("ConsumedAPI-AgentAssurance-getActiveCesaRelationship-GET") {

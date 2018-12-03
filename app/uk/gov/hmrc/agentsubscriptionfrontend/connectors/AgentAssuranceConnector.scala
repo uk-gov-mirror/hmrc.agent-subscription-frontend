@@ -106,4 +106,7 @@ class AgentAssuranceConnector @Inject()(@Named("agent-assurance-baseUrl") baseUr
 
   def hasAcceptableNumberOfVatDecOrgClients(implicit hc: HeaderCarrier): Future[Boolean] =
     hasAcceptableNumberOfClients("HMCE-VATDEC-ORG")
+
+  def hasAcceptableNumberOfIRCTClients(implicit hc: HeaderCarrier): Future[Boolean] =
+    hasAcceptableNumberOfClients("IR-CT")
 }

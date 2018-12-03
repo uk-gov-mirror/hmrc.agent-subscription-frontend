@@ -51,7 +51,8 @@ class AssuranceService @Inject()(
                                    isManuallyAssured = isManuallyAssured,
                                    hasAcceptableNumberOfPayeClients = None,
                                    hasAcceptableNumberOfSAClients = None,
-                                   hasAcceptableNumberOfVatDecOrgClients = None
+                                   hasAcceptableNumberOfVatDecOrgClients = None,
+                                   hasAcceptableNumberOfIRCTClients = None
                                  )))
                            } else {
 
@@ -64,7 +65,8 @@ class AssuranceService @Inject()(
                                                                      .map(Some(_))
                                hasAcceptableNumberOfVatDecOrgClientsOpt <- assuranceConnector.hasAcceptableNumberOfVatDecOrgClients
                                                                             .map(Some(_))
-
+                               hasAcceptableNumberOfIRCTClientsOpt <- assuranceConnector.hasAcceptableNumberOfIRCTClients
+                                                                       .map(Some(_))
                              } yield
                                Some(
                                  AssuranceResults(
@@ -72,7 +74,8 @@ class AssuranceService @Inject()(
                                    isManuallyAssured = isManuallyAssured,
                                    hasAcceptableNumberOfPayeClients = hasAcceptableNumberOfPayeClientsOpt,
                                    hasAcceptableNumberOfSAClients = hasAcceptableNumberOfSAClientsOpt,
-                                   hasAcceptableNumberOfVatDecOrgClients = hasAcceptableNumberOfVatDecOrgClientsOpt
+                                   hasAcceptableNumberOfVatDecOrgClients = hasAcceptableNumberOfVatDecOrgClientsOpt,
+                                   hasAcceptableNumberOfIRCTClients = hasAcceptableNumberOfIRCTClientsOpt
                                  ))
                            }
       } yield assuranceResults
@@ -107,7 +110,8 @@ class AssuranceService @Inject()(
                       isManuallyAssured = false,
                       hasAcceptableNumberOfPayeClients = if (appConfig.agentAssurancePayeCheck) Some(false) else None,
                       hasAcceptableNumberOfSAClients = Some(false),
-                      hasAcceptableNumberOfVatDecOrgClients = Some(false)
+                      hasAcceptableNumberOfVatDecOrgClients = Some(false),
+                      hasAcceptableNumberOfIRCTClients = Some(false)
                     ),
                     assuranceCheckInput = Some(
                       AssuranceCheckInput(

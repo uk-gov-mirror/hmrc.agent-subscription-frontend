@@ -21,7 +21,8 @@ case class AssuranceResults(
   isManuallyAssured: Boolean,
   hasAcceptableNumberOfPayeClients: Option[Boolean],
   hasAcceptableNumberOfSAClients: Option[Boolean],
-  hasAcceptableNumberOfVatDecOrgClients: Option[Boolean])
+  hasAcceptableNumberOfVatDecOrgClients: Option[Boolean],
+  hasAcceptableNumberOfIRCTClients: Option[Boolean])
 
 object AssuranceResults {
   object RefuseToDealWith {
@@ -36,18 +37,20 @@ object AssuranceResults {
 
   object CheckedInvisibleAssuranceAndPassed {
     def unapply(maybeAssuranceResults: Some[AssuranceResults]): Option[AssuranceResults] = maybeAssuranceResults match {
-      case Some(AssuranceResults(false, false, Some(true), _, _)) => maybeAssuranceResults
-      case Some(AssuranceResults(false, false, _, Some(true), _)) => maybeAssuranceResults
-      case Some(AssuranceResults(false, false, _, _, Some(true))) => maybeAssuranceResults
-      case _                                                      => None
+      case Some(AssuranceResults(false, false, Some(true), _, _, _)) => maybeAssuranceResults
+      case Some(AssuranceResults(false, false, _, Some(true), _, _)) => maybeAssuranceResults
+      case Some(AssuranceResults(false, false, _, _, Some(true), _)) => maybeAssuranceResults
+      case Some(AssuranceResults(false, false, _, _, _, Some(true))) => maybeAssuranceResults
+      case _                                                         => None
     }
   }
 
   object CheckedInvisibleAssuranceAndFailed {
     def unapply(maybeAssuranceResults: Some[AssuranceResults]): Option[AssuranceResults] = maybeAssuranceResults match {
-      case Some(AssuranceResults(false, false, Some(false), Some(false), Some(false))) => maybeAssuranceResults
-      case Some(AssuranceResults(false, false, None, Some(false), Some(false)))        => maybeAssuranceResults
-      case _                                                                           => None
+      case Some(AssuranceResults(false, false, Some(false), Some(false), Some(false), Some(false))) =>
+        maybeAssuranceResults
+      case Some(AssuranceResults(false, false, None, Some(false), Some(false), Some(false))) => maybeAssuranceResults
+      case _                                                                                 => None
     }
   }
 }

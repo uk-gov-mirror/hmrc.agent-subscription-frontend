@@ -1541,10 +1541,13 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
   def verifyAgentAssuranceAuditRequestSent(
                                             passPayeAgentAssuranceCheck: Option[Boolean],
                                             passSaAgentAssuranceCheck: Option[Boolean],
-                                            passVatDecOrgAgentAssuranceCheck: Option[Boolean]): Unit = {
+                                            passVatDecOrgAgentAssuranceCheck: Option[Boolean],
+                                            passIRCTAgentAssuranceCheck: Option[Boolean]): Unit = {
     val optional = Seq(
       passPayeAgentAssuranceCheck.map("passPayeAgentAssuranceCheck" -> _.toString),
-      passSaAgentAssuranceCheck.map("passSaAgentAssuranceCheck" -> _.toString)).flatten
+      passSaAgentAssuranceCheck.map("passSaAgentAssuranceCheck" -> _.toString),
+      passVatDecOrgAgentAssuranceCheck.map("passVatDecOrgAgentAssuranceCheck" -> _.toString),
+      passIRCTAgentAssuranceCheck.map("passIRCTAgentAssuranceCheck" -> _.toString)).flatten
 
     verifyAuditRequestSent(
       1,

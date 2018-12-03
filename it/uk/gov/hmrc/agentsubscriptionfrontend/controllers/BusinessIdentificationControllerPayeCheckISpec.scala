@@ -16,6 +16,7 @@ class BusinessIdentificationControllerPayeCheckISpec extends BusinessIdentificat
       givenUserIsAnAgentWithAnAcceptableNumberOfClients("IR-PAYE")
       givenUserIsAnAgentWithAnAcceptableNumberOfClients("IR-SA")
       givenUserIsAnAgentWithAnAcceptableNumberOfClients("HMCE-VATDEC-ORG")
+      givenUserIsAnAgentWithAnAcceptableNumberOfClients("IR-CT")
       givenRefusalToDealWithUtrIsNotForbidden(validUtr.value)
       givenAgentIsNotManuallyAssured(validUtr.value)
 
@@ -30,7 +31,8 @@ class BusinessIdentificationControllerPayeCheckISpec extends BusinessIdentificat
       verifyAgentAssuranceAuditRequestSent(
         passPayeAgentAssuranceCheck = None,
         passSaAgentAssuranceCheck = Some(true),
-        passVatDecOrgAgentAssuranceCheck = Some(true))
+        passVatDecOrgAgentAssuranceCheck = Some(true),
+        passIRCTAgentAssuranceCheck = Some(true))
       metricShouldExistAndBeUpdated("Count-Subscription-ConfirmBusiness-Success")
     }
 
@@ -39,6 +41,7 @@ class BusinessIdentificationControllerPayeCheckISpec extends BusinessIdentificat
       givenUserIsNotAnAgentWithAnAcceptableNumberOfClients("IR-PAYE")
       givenUserIsNotAnAgentWithAnAcceptableNumberOfClients("IR-SA")
       givenUserIsNotAnAgentWithAnAcceptableNumberOfClients("HMCE-VATDEC-ORG")
+      givenUserIsNotAnAgentWithAnAcceptableNumberOfClients("IR-CT")
       givenRefusalToDealWithUtrIsNotForbidden(validUtr.value)
       givenAgentIsNotManuallyAssured(validUtr.value)
 
@@ -51,7 +54,8 @@ class BusinessIdentificationControllerPayeCheckISpec extends BusinessIdentificat
       verifyAgentAssuranceAuditRequestSent(
         passPayeAgentAssuranceCheck = None,
         passSaAgentAssuranceCheck = Some(false),
-        passVatDecOrgAgentAssuranceCheck = Some(false))
+        passVatDecOrgAgentAssuranceCheck = Some(false),
+        passIRCTAgentAssuranceCheck = Some(false))
     }
   }
 }
