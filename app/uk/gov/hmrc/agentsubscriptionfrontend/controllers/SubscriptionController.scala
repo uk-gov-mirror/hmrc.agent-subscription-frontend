@@ -18,10 +18,8 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
-
 import play.api.Logger
 import play.api.i18n.{I18nSupport, MessagesApi}
-import play.api.mvc.Results.Redirect
 import play.api.mvc.{AnyContent, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent.hasNonEmptyEnrolments
@@ -33,12 +31,13 @@ import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionReturnedHttpError, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{Monitoring, TaxIdentifierFormatters}
+import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException}
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 import scala.util.control.NonFatal
 
 @Singleton
@@ -56,6 +55,7 @@ class SubscriptionController @Inject()(
     extends FrontendController with I18nSupport with AuthActions with SessionDataSupport with Monitoring {
 
   import SubscriptionControllerForms._
+  import commonRouting.withCleanCreds
 
   private val JourneyName: String = appConfig.journeyName
   private val blacklistedPostCodes: Set[String] = appConfig.blacklistedPostcodes
@@ -65,35 +65,36 @@ class SubscriptionController @Inject()(
   val showCheckAnswers: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent {
       case hasNonEmptyEnrolments(_) =>
-        Future.successful(Redirect(routes.BusinessIdentificationController.showCreateNewAccount()))
+        toFuture(Redirect(routes.BusinessIdentificationController.showCreateNewAccount()))
       case _ =>
         val details = for {
           mayBeInitialDetails <- sessionStoreService.fetchInitialDetails
           mayBeAmlsDetails    <- sessionStoreService.fetchAMLSDetails
         } yield (mayBeInitialDetails, mayBeAmlsDetails)
 
-        details.map {
+        details.flatMap {
           case (Some(initialDetails), mayBeAmlsDetails) =>
-            mark("Count-Subscription-CleanCreds-Success")
-            Ok(
-              html.check_answers(
-                registrationName = initialDetails.name,
-                address = initialDetails.businessAddress,
-                emailAddress = initialDetails.email,
-                mayBeAmlsDetails = mayBeAmlsDetails
-              ))
+            sessionStoreService
+              .cacheGoBackUrl(routes.SubscriptionController.showCheckAnswers().url)
+              .map { _ =>
+                mark("Count-Subscription-CleanCreds-Success")
+                Ok(
+                  html.check_answers(
+                    registrationName = initialDetails.name,
+                    address = initialDetails.businessAddress,
+                    emailAddress = initialDetails.email,
+                    mayBeAmlsDetails = mayBeAmlsDetails
+                  ))
+              }
 
           case (None, _) => sessionMissingRedirect("InitialDetails")
-
         }
     }
   }
 
   val submitCheckAnswers: Action[AnyContent] = Action.async { implicit request =>
-    withSubscribingAgent {
-      case hasNonEmptyEnrolments(_) =>
-        Future.successful(Redirect(routes.BusinessIdentificationController.showCreateNewAccount()))
-      case _ =>
+    withSubscribingAgent { agent =>
+      withCleanCreds(agent) {
         val details = for {
           initialDetails <- sessionStoreService.fetchInitialDetails
           amlsDetails    <- sessionStoreService.fetchAMLSDetails
@@ -114,8 +115,9 @@ class SubscriptionController @Inject()(
               .subscribe(initialDetails, desAddress, mayBeAmlsDetails)
               .flatMap(redirectSubscriptionResponse(_, initialDetails.utr))
 
-          case (None, _) => Future.successful(sessionMissingRedirect("InitialDetails"))
+          case (None, _) => toFuture(sessionMissingRedirect("InitialDetails"))
         }
+      }
     }
   }
 
@@ -139,7 +141,7 @@ class SubscriptionController @Inject()(
 
       case Left(SubscriptionReturnedHttpError(CONFLICT)) =>
         mark("Count-Subscription-AlreadySubscribed-APIResponse")
-        Future.successful(Redirect(routes.BusinessIdentificationController.showAlreadySubscribed()))
+        toFuture(Redirect(routes.BusinessIdentificationController.showAlreadySubscribed()))
 
       case Left(SubscriptionReturnedHttpError(status)) =>
         mark("Count-Subscription-Failed")
@@ -192,10 +194,10 @@ class SubscriptionController @Inject()(
       case true =>
         withSubscribingAgent { _ =>
           withKnownFactsResult { _ =>
-            Future.successful(Ok(html.link_clients(linkClientsForm)))
+            toFuture(Ok(html.link_clients(linkClientsForm)))
           }
         }
-      case false => Future.successful(InternalServerError)
+      case false => toFuture(InternalServerError)
     }
   }
 
@@ -211,7 +213,7 @@ class SubscriptionController @Inject()(
                   if (formWithErrors.errors.exists(_.message == "error.link-clients-value.invalid")) {
                     throw new BadRequestException("Form submitted with strange input value")
                   } else {
-                    Future.successful(Ok(html.link_clients(formWithErrors)))
+                    toFuture(Ok(html.link_clients(formWithErrors)))
                   }
                 },
                 validatedLinkClients => {
@@ -221,8 +223,8 @@ class SubscriptionController @Inject()(
                     case Yes =>
                       isPartiallySubscribed match {
                         case false =>
-                          Future successful Redirect(routes.SubscriptionController.showCheckAnswers())
-                            .withSession(request.session + ("performAutoMapping" -> "true"))
+                          toFuture(Redirect(routes.SubscriptionController.showCheckAnswers())
+                            .withSession(request.session + ("performAutoMapping" -> "true")))
                         case true =>
                           for {
                             _ <- subscriptionService
@@ -237,9 +239,9 @@ class SubscriptionController @Inject()(
                     case No =>
                       isPartiallySubscribed match {
                         case false =>
-                          Future successful Redirect(routes.SubscriptionController.showCheckAnswers())
-                            .withSession(request.session - "performAutoMapping")
-                        case true => {
+                          toFuture(Redirect(routes.SubscriptionController.showCheckAnswers())
+                            .withSession(request.session - "performAutoMapping"))
+                        case true =>
                           subscriptionService
                             .completePartialSubscription(knownFactsResult.utr, knownFactsResult.postcode)
                             .map { _ =>
@@ -247,7 +249,6 @@ class SubscriptionController @Inject()(
                               Redirect(routes.SubscriptionController.showSubscriptionComplete())
                                 .withSession(request.session - "isPartiallySubscribed")
                             }
-                        }
                       }
                   }
                 }
@@ -255,7 +256,7 @@ class SubscriptionController @Inject()(
           }
         }
 
-      case false => Future.successful(InternalServerError)
+      case false => toFuture(InternalServerError)
     }
   }
 
@@ -286,10 +287,15 @@ class SubscriptionController @Inject()(
     hc: HeaderCarrier): Future[Result] = {
 
     val doMappingAnswer: Boolean = request.session.get("performAutoMapping").contains("true") || completedPartialSub
+
     for {
-      completeMapping <- if (appConfig.autoMapAgentEnrolments && doMappingAnswer)
-                          mappingConnector.updatePreSubscriptionWithArn(utr)
-                        else Future successful ()
+      _ <- {
+        if (appConfig.autoMapAgentEnrolments && doMappingAnswer)
+          mappingConnector.updatePreSubscriptionWithArn(utr)
+        else {
+          toFuture(())
+        }
+      }
     } yield Redirect(routes.SubscriptionController.showSubscriptionComplete())
   }
 }

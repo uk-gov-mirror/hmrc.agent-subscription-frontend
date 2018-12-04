@@ -17,8 +17,7 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import play.api.Logger
-import play.api.mvc.{AnyContent, Request, Result, Results}
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import play.api.mvc.{Result, Results}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{InitialDetails, KnownFactsResult}
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.http.HeaderCarrier

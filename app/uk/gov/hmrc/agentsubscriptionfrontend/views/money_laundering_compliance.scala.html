@@ -20,7 +20,7 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.models.AMLSForm
 @import uk.gov.hmrc.agentsubscriptionfrontend.views.html.helpers._
 
-@(amlsForm: Form[AMLSForm], amlsBodies: Map[String, String])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+@(amlsForm: Form[AMLSForm], amlsBodies: Map[String, String], mayBeGoBackUrl: Option[String] = None)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 @noJsDateFieldsError = @{
 if(amlsForm("expiry.day").hasErrors || amlsForm("expiry.month").hasErrors || amlsForm("expiry.year").hasErrors)
@@ -28,7 +28,8 @@ if(amlsForm("expiry.day").hasErrors || amlsForm("expiry.month").hasErrors || aml
 }
 
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title =  error_prefix(amlsForm) + Messages("moneyLaunderingCompliance.title"), bodyClasses = None) {
-    <a href="@routes.BusinessIdentificationController.showConfirmBusinessForm()" class="link-back">@Messages("button.back")</a>
+
+<a href="@mayBeGoBackUrl.getOrElse(routes.BusinessIdentificationController.showConfirmBusinessForm())" class="link-back">@Messages("button.back")</a>
 
     @if(amlsForm.hasErrors) {
         @errorSummary(Messages("error.summary.heading"), amlsForm, Seq.empty, Some("money-laundering-compliance"))

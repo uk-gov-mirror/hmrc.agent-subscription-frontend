@@ -36,7 +36,6 @@ import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier}
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
-import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent.hasNonEmptyEnrolments
 import uk.gov.hmrc.agentsubscriptionfrontend.models
 import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidVariantsTaxPayerOptionForm._
@@ -59,11 +58,13 @@ class BusinessIdentificationController @Inject()(
   val initialDetailsValidator: InitialDetailsValidator,
   auditService: AuditService,
   override implicit val appConfig: AppConfig,
-  val metrics: Metrics)
+  val metrics: Metrics,
+  commonRouting: CommonRouting)
     extends FrontendController with I18nSupport with AuthActions with SessionDataSupport with Monitoring {
 
   import continueUrlActions._
   import BusinessIdentificationForms._
+  import commonRouting.withCleanCreds
 
   val showCreateNewAccount: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
@@ -160,7 +161,7 @@ class BusinessIdentificationController @Inject()(
                   address = None,
                   emailAddress = None))
 
-          result <- withCleanCreds {
+          result <- withCleanCreds(agent) {
                      subscriptionService
                        .completePartialSubscription(knownFacts.utr, knownFacts.postcode)
                        .map { _ =>
@@ -173,10 +174,9 @@ class BusinessIdentificationController @Inject()(
         mark("Count-Subscription-AlreadySubscribed-RegisteredInETMP")
         Future successful Redirect(routes.BusinessIdentificationController.showAlreadySubscribed())
       }
-      case _ => {
+      case _ =>
         mark("Count-Subscription-NoAgencyFound")
         Future successful Redirect(routes.BusinessIdentificationController.showNoAgencyFound())
-      }
     }
 
   val showNoAgencyFound: Action[AnyContent] = Action.async { implicit request =>
@@ -486,13 +486,6 @@ class BusinessIdentificationController @Inject()(
               Redirect(routes.StartController.showCannotCreateAccount())
           }
       case None => Future.successful(Redirect(routes.BusinessIdentificationController.invasiveCheckStart()))
-    }
-
-  private def withCleanCreds(f: => Future[Result])(implicit agent: Agent): Future[Result] =
-    agent match {
-      case hasNonEmptyEnrolments(_) =>
-        Future successful Redirect(routes.BusinessIdentificationController.showCreateNewAccount())
-      case _ => f
     }
 
   private def cacheKnownFactsAndAudit(

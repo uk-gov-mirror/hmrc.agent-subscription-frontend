@@ -153,6 +153,21 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
 
       resultShouldBeSessionDataMissing(result)
     }
+
+    " pre-populate amls form if they are coming from /check_answers and also go to /check_answers page when user clicks on 'Go Back' link" in new Setup {
+
+      //pre-state
+      sessionStoreService.currentSession.amlsDetails = Some(AMLSDetails("Insolvency Practitioners Association (IPA)", "123456789", LocalDate.now()))
+      sessionStoreService.currentSession.goBackUrl = Some(routes.SubscriptionController.showCheckAnswers().url)
+
+      val result = await(controller.showMoneyLaunderingComplianceForm(authenticatedRequest))
+
+      contentAsString(result) should (
+        include ("""<a href="/agent-subscription/check-answers" class="link-back">Back</a>""")
+        and include ("""selected="selected">Insolvency Practitioners Association (IPA)</option>""")
+        and include ("""value="123456789"""")
+        and include (s"""value="${LocalDate.now().getYear.toString}""""))
+    }
   }
 
   "submitMoneyLaunderingComplianceForm (POST /money-laundering-compliance)" should {

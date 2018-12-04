@@ -19,12 +19,16 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 import javax.inject.{Inject, Singleton}
 import play.api.mvc._
 import play.api.mvc.Results._
+import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent
+import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent.hasNonEmptyEnrolments
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.MappingConnector
 import uk.gov.hmrc.agentsubscriptionfrontend.models.MappingEligibility
 import uk.gov.hmrc.agentsubscriptionfrontend.models.MappingEligibility.IsEligible
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SubscriptionService
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
+
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
@@ -39,7 +43,14 @@ class CommonRouting @Inject()(
     ec: ExecutionContext): Future[Result] =
     MappingEligibility.apply(eligibleForMapping) match {
       case IsEligible if appConfig.autoMapAgentEnrolments =>
-        Future successful Redirect(routes.SubscriptionController.showLinkClients())
-      case _ => Future successful Redirect(routes.SubscriptionController.showCheckAnswers())
+        toFuture(Redirect(routes.SubscriptionController.showLinkClients()))
+      case _ => toFuture(Redirect(routes.SubscriptionController.showCheckAnswers()))
+    }
+
+  private[controllers] def withCleanCreds(agent: Agent)(f: => Future[Result]): Future[Result] =
+    agent match {
+      case hasNonEmptyEnrolments(_) =>
+        toFuture(Redirect(routes.BusinessIdentificationController.showCreateNewAccount()))
+      case _ => f
     }
 }

@@ -20,6 +20,7 @@ import java.time.LocalDate
 
 import com.github.tomakehurst.wiremock.client.WireMock._
 import org.jsoup.Jsoup
+import org.scalatest.concurrent.ScalaFutures
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.{AnyContent, Request}
 import play.api.test.FakeRequest
@@ -35,7 +36,7 @@ import uk.gov.hmrc.play.binders.ContinueUrl
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec {
+trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec with ScalaFutures {
   protected def featureFlagAutoMapping: Boolean
 
   override protected def appBuilder: GuiceApplicationBuilder =
@@ -92,7 +93,7 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       noMetricExpectedAtThisPoint()
     }
 
-    "show subscription answers page if user has not already subscribed and has clean creds" in {
+    "show subscription answers page if user has not already subscribed and has clean creds and also cache the goBack url" in {
       implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
       sessionStoreService.currentSession.initialDetails = Some(initialDetails)
 
@@ -114,6 +115,8 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         initialDetails.businessAddress.addressLine1,
         initialDetails.businessAddress.postalCode.get)
       metricShouldExistAndBeUpdated("Count-Subscription-CleanCreds-Success")
+
+      sessionStoreService.fetchGoBackUrl.futureValue shouldBe Some(routes.SubscriptionController.showCheckAnswers().url)
     }
 
     "redirect to the /business-type page if there is no InitialDetails in session because the user has returned to a bookmark" in {

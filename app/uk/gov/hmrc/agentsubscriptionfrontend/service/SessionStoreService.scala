@@ -60,6 +60,12 @@ class SessionStoreService @Inject()(sessionCache: SessionCache) {
   def cacheAMLSDetails(amlsDetails: AMLSDetails)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
     sessionCache.cache("amlsDetails", amlsDetails).map(_ => ())
 
+  def cacheGoBackUrl(url: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
+    sessionCache.cache("goBackUrl", url).map(_ => ())
+
+  def fetchGoBackUrl(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[String]] =
+    sessionCache.fetchAndGetEntry[String]("goBackUrl")
+
   def remove()(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
     sessionCache.remove().map(_ => ())
 
