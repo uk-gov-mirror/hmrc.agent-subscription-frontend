@@ -68,5 +68,6 @@ $(function() {
                 $(this).find('.error-notification').appendTo($relocate)
 
         })
-
+//by default the dropForm will be hidden so we we need this to make the form visible after loaded
+    $('#dropForm').css('visibility', 'visible')
 });
