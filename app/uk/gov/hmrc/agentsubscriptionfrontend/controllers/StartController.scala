@@ -30,12 +30,13 @@ import uk.gov.hmrc.agentsubscriptionfrontend.models.MappingEligibility.IsEligibl
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{ChainedSessionDetails, MappingEligibility}
 import uk.gov.hmrc.agentsubscriptionfrontend.repository.ChainedSessionDetailsRepository
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionService, SubscriptionState}
+import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 class StartController @Inject()(
   override val messagesApi: MessagesApi,
@@ -54,19 +55,19 @@ class StartController @Inject()(
 
   val root: Action[AnyContent] = Action.async { implicit request =>
     withMaybeContinueUrl { urlOpt =>
-      Future.successful(Redirect(routes.StartController.start().toURLWithParams("continue" -> urlOpt.map(_.url))))
+      Redirect(routes.StartController.start().toURLWithParams("continue" -> urlOpt.map(_.url)))
     }
   }
 
   def start: Action[AnyContent] = Action.async { implicit request =>
     withMaybeContinueUrl { urlOpt =>
-      Future.successful(Ok(html.start(urlOpt)))
+      Ok(html.start(urlOpt))
     }
   }
 
   val showNotAgent: Action[AnyContent] = Action.async { implicit request =>
     withAuthenticatedUser {
-      Future.successful(Ok(html.not_agent()))
+      Ok(html.not_agent())
     }
   }
 
@@ -92,7 +93,13 @@ class StartController @Inject()(
                       false
                     }
                   )
-                } else Future.successful(())
+                } else ()
+            _ <- {
+              chainedSessionDetails.amlsDetails match {
+                case Some(amlsDetails) => sessionStoreService.cacheAMLSDetails(amlsDetails)
+                case None              => ()
+              }
+            }
             subscriptionProcess <- subscriptionService.getSubscriptionStatus(knownFacts.utr, knownFacts.postcode)
             isPartiallySubscribed = subscriptionProcess.state == SubscriptionState.SubscribedButNotEnrolled
             continuedSubscriptionResponse <- if (isPartiallySubscribed) {
@@ -109,7 +116,7 @@ class StartController @Inject()(
                                                     chainedSessionDetails.wasEligibleForMapping))
                                             }
           } yield continuedSubscriptionResponse
-        case None => Future.successful(Redirect(routes.BusinessIdentificationController.showBusinessTypeForm()))
+        case None => Redirect(routes.BusinessIdentificationController.showBusinessTypeForm())
       }
     }
   }
@@ -123,15 +130,14 @@ class StartController @Inject()(
     hc: HeaderCarrier): Future[Result] =
     MappingEligibility.apply(eligibleForMapping) match {
       case IsEligible =>
-        Future successful Redirect(routes.SubscriptionController.showLinkClients())
+        Redirect(routes.SubscriptionController.showLinkClients())
           .withSession(request.session + ("isPartiallySubscribed" -> "true"))
-      case _ => {
+      case _ =>
         subscriptionService
           .completePartialSubscription(kfcUtr, kfcPostcode)
           .map { _ =>
             mark("Count-Subscription-PartialSubscriptionCompleted")
             Redirect(routes.SubscriptionController.showSubscriptionComplete())
           }
-      }
     }
 }

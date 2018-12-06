@@ -23,7 +23,7 @@ case class ChainedSessionDetails(
   knownFacts: KnownFactsResult,
   wasEligibleForMapping: Option[Boolean],
   initialDetails: Option[InitialDetails],
-  AMLSDetails: Option[AMLSDetails])
+  amlsDetails: Option[AMLSDetails])
 
 case class KnownFactsResult(
   utr: Utr,
