@@ -1,11 +1,13 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
+import java.time.LocalDate
+
 import org.jsoup.Jsoup
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{contentType, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
-import uk.gov.hmrc.agentsubscriptionfrontend.models._
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AMLSDetails, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.repository.ChainedSessionDetailsRepository
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.{AgentSubscriptionStub, AuthStub}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
@@ -71,16 +73,16 @@ trait StartControllerISpec extends BaseISpec {
           validBusinessAddress
         )) else None
 
-      val persistedId = await(repo.create(ChainedSessionDetails(knownFactsResult, wasEligibleForMapping, validInitialDetails)))
+      val amlsSDetails = AMLSDetails("supervisory", "123456789", LocalDate.now())
+
+      val persistedId = await(repo.create(ChainedSessionDetails(knownFactsResult, wasEligibleForMapping, validInitialDetails, Some(amlsSDetails))))
     }
 
     trait UnsubscribedAgentStub {
       self: ValidKnownFactsCached =>
       AgentSubscriptionStub.withMatchingUtrAndPostcode(
         knownFactsResult.utr,
-        knownFactsResult.postcode,
-        isSubscribedToAgentServices = false,
-        isSubscribedToETMP = false)
+        knownFactsResult.postcode)
     }
 
     trait SubscribedAgentStub {

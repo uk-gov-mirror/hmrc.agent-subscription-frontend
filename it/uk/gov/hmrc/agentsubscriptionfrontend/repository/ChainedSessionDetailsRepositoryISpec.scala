@@ -1,5 +1,6 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.repository
 
+import java.time.LocalDate
 import java.util.UUID
 
 import org.scalatest.concurrent.Eventually
@@ -7,7 +8,7 @@ import org.scalatestplus.play.OneAppPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{BusinessAddress, ChainedSessionDetails, InitialDetails, KnownFactsResult}
+import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.MongoApp
 import uk.gov.hmrc.play.test.UnitSpec
 
@@ -40,10 +41,13 @@ class ChainedSessionDetailsRepositoryISpec extends UnitSpec with OneAppPerSuite 
         Some("AA11AA"),
         "GB")
     )
+
+  val amlsDetails = AMLSDetails("supervisory", "123456789", LocalDate.now())
+
   private val chainedSessionDetails =
     ChainedSessionDetails(
       KnownFactsResult(utr = utr, postcode = "AA11AA", taxpayerName = "My Agency", isSubscribedToAgentServices = false, None, None),
-      Some(true), Some(initialDetails)
+      Some(true), Some(initialDetails), Some(amlsDetails)
     )
 
   override def beforeEach() {

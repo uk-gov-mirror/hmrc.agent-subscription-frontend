@@ -22,7 +22,8 @@ import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 case class ChainedSessionDetails(
   knownFacts: KnownFactsResult,
   wasEligibleForMapping: Option[Boolean],
-  initialDetails: Option[InitialDetails])
+  initialDetails: Option[InitialDetails],
+  AMLSDetails: Option[AMLSDetails])
 
 case class KnownFactsResult(
   utr: Utr,

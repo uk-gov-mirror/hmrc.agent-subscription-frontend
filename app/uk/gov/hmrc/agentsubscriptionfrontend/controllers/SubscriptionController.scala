@@ -22,7 +22,6 @@ import play.api.Logger
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{AnyContent, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
-import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent.hasNonEmptyEnrolments
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.{AddressLookupFrontendConnector, MappingConnector}
@@ -63,10 +62,8 @@ class SubscriptionController @Inject()(
   val desAddressForm = new DesAddressForm(Logger, blacklistedPostCodes)
 
   val showCheckAnswers: Action[AnyContent] = Action.async { implicit request =>
-    withSubscribingAgent {
-      case hasNonEmptyEnrolments(_) =>
-        toFuture(Redirect(routes.BusinessIdentificationController.showCreateNewAccount()))
-      case _ =>
+    withSubscribingAgent { agent =>
+      withCleanCreds(agent) {
         val details = for {
           mayBeInitialDetails <- sessionStoreService.fetchInitialDetails
           mayBeAmlsDetails    <- sessionStoreService.fetchAMLSDetails
@@ -89,6 +86,7 @@ class SubscriptionController @Inject()(
 
           case (None, _) => sessionMissingRedirect("InitialDetails")
         }
+      }
     }
   }
 

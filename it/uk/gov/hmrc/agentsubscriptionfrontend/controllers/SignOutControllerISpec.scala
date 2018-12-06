@@ -1,12 +1,13 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import java.net.URLEncoder
+import java.time.LocalDate
 
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{redirectLocation, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{BusinessAddress, ChainedSessionDetails, InitialDetails, KnownFactsResult}
+import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.repository.{ChainedSessionDetailsRepository, StashedChainedSessionDetails}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.MappingStubs._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
@@ -203,11 +204,14 @@ class SignOutControllerWithAutoMappingOn extends SignOutControllerISpec {
   override def featureFlagAutoMapping: Boolean = true
 
   "redirectToSos" should {
+    val amlsDetails = AMLSDetails("supervisory", "123456789", LocalDate.now())
     "save the ChainedSessionDetails in the DB" when {
       "was eligible for mapping" in {
         implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         sessionStoreService.currentSession.knownFactsResult = Some(knownFactsResult)
         sessionStoreService.currentSession.initialDetails = Some(validInitialDetails)
+        sessionStoreService.currentSession.amlsDetails = Some(amlsDetails)
+
         givenMappingCreatePreSubscription(Utr("9876543210"))
 
         await(controller.redirectToSos(request))
@@ -215,7 +219,8 @@ class SignOutControllerWithAutoMappingOn extends SignOutControllerISpec {
           ChainedSessionDetails(
             knownFactsResult,
             wasEligibleForMapping = Some(true),
-            Some(validInitialDetails)
+            Some(validInitialDetails),
+            Some(amlsDetails)
           )
         )
         verifyMappingCreatePreSubscriptionCalled(Utr("9876543210"), times = 1)
@@ -225,6 +230,7 @@ class SignOutControllerWithAutoMappingOn extends SignOutControllerISpec {
         implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
         sessionStoreService.currentSession.knownFactsResult = Some(knownFactsResult)
         sessionStoreService.currentSession.initialDetails = Some(validInitialDetails)
+        sessionStoreService.currentSession.amlsDetails = Some(amlsDetails)
 
         givenMappingCreatePreSubscriptionIsNotEligible(Utr("9876543210"))
 
@@ -233,7 +239,8 @@ class SignOutControllerWithAutoMappingOn extends SignOutControllerISpec {
           ChainedSessionDetails(
             knownFactsResult,
             wasEligibleForMapping = Some(false),
-            Some(validInitialDetails)
+            Some(validInitialDetails),
+            Some(amlsDetails)
           )
         )
         verifyMappingCreatePreSubscriptionCalled(Utr("9876543210"), times = 1)
@@ -256,17 +263,20 @@ class SignOutControllerWithAutoMappingOff extends SignOutControllerISpec {
   override def featureFlagAutoMapping: Boolean = false
 
   "redirectToSos" should {
+    val amlsDetails = AMLSDetails("supervisory", "123456789", LocalDate.now())
     "save the ChainedSessionDetails in the DB with a missing mapping eligibility result" in {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
       sessionStoreService.currentSession.knownFactsResult = Some(knownFactsResult)
       sessionStoreService.currentSession.initialDetails = Some(validInitialDetails)
+      sessionStoreService.currentSession.amlsDetails = Some(amlsDetails)
 
       await(controller.redirectToSos(request))
       findByUtr("9876543210").map(_.chainedSessionDetails) shouldBe Some(
         ChainedSessionDetails(
           knownFactsResult,
           wasEligibleForMapping = None,
-          Some(validInitialDetails)
+          Some(validInitialDetails),
+          Some(amlsDetails)
         )
       )
     }

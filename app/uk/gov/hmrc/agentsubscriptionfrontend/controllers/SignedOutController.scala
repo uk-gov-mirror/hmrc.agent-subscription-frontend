@@ -58,9 +58,11 @@ class SignedOutController @Inject()(
     (for {
       knownFacts        <- OptionT(sessionStoreService.fetchKnownFactsResult)
       initialDetailsOpt <- OptionT.liftF(sessionStoreService.fetchInitialDetails)
+      amlsDetailsOpt    <- OptionT.liftF(sessionStoreService.fetchAMLSDetails)
       id <- OptionT(
              chainedSessionRepository
-               .create(ChainedSessionDetails(knownFacts, mappingEligibility.isEligible, initialDetailsOpt))
+               .create(
+                 ChainedSessionDetails(knownFacts, mappingEligibility.isEligible, initialDetailsOpt, amlsDetailsOpt))
                .map(id => Option(id)))
     } yield id).value
 
