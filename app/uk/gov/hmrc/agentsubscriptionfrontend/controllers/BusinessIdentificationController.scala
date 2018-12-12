@@ -42,6 +42,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidVariantsTaxPayerOptionF
 import uk.gov.hmrc.agentsubscriptionfrontend.validators.InitialDetailsValidator
 import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidationResult.FailureReason._
 import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidationResult.{Failure, Pass}
+import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 
 import scala.concurrent.Future
 
@@ -68,14 +69,14 @@ class BusinessIdentificationController @Inject()(
 
   val showCreateNewAccount: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      Future successful Ok(html.create_new_account())
+      Ok(html.create_new_account())
     }
   }
 
   val redirectToBusinessType: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
       withMaybeContinueUrlCached {
-        Future successful Redirect(routes.BusinessIdentificationController.showBusinessTypeForm())
+        Redirect(routes.BusinessIdentificationController.showBusinessTypeForm())
       }
     }
   }
@@ -83,7 +84,7 @@ class BusinessIdentificationController @Inject()(
   def showBusinessTypeForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { implicit agent =>
       withMaybeContinueUrlCached {
-        Future successful Ok(html.business_type(businessTypeForm))
+        Ok(html.business_type(businessTypeForm))
       }
     }
   }
@@ -98,10 +99,10 @@ class BusinessIdentificationController @Inject()(
               Logger.warn("Select business-type form submitted with invalid identifier")
               throw new BadRequestException("Submitted form value did not contain valid businessType identifier")
             }
-            Future successful Ok(html.business_type(formWithErrors))
+            Ok(html.business_type(formWithErrors))
           },
           validatedBusinessType => {
-            Future successful Redirect(
+            Redirect(
               routes.BusinessIdentificationController.showBusinessDetailsForm(validatedBusinessType.businessType))
           }
         )
@@ -114,7 +115,7 @@ class BusinessIdentificationController @Inject()(
         withMaybeContinueUrlCached {
 
           mark("Count-Subscription-BusinessDetails-Start")
-          Future successful Ok(html.business_details(knownFactsForm(businessType.key), businessType))
+          Ok(html.business_details(knownFactsForm(businessType.key), businessType))
         }
       }
   }
@@ -125,7 +126,7 @@ class BusinessIdentificationController @Inject()(
         knownFactsForm(businessType.key)
           .bindFromRequest()
           .fold(
-            formWithErrors => Future successful Ok(html.business_details(formWithErrors, businessType)),
+            formWithErrors => Ok(html.business_details(formWithErrors, businessType)),
             knownFacts =>
               if (Utr.isValid(knownFacts.utr.value)) {
                 checkBusinessDetailsGivenValidForm(knownFacts).map { resultWithSession =>
@@ -134,7 +135,7 @@ class BusinessIdentificationController @Inject()(
                 }
               } else {
                 mark("Count-Subscription-NoAgencyFound")
-                Future.successful(Redirect(routes.BusinessIdentificationController.showNoAgencyFound()))
+                Redirect(routes.BusinessIdentificationController.showNoAgencyFound())
             }
           )
       }
@@ -172,22 +173,22 @@ class BusinessIdentificationController @Inject()(
         } yield result
       case SubscriptionProcess(SubscriptionState.SubscribedAndEnrolled, _) => {
         mark("Count-Subscription-AlreadySubscribed-RegisteredInETMP")
-        Future successful Redirect(routes.BusinessIdentificationController.showAlreadySubscribed())
+        Redirect(routes.BusinessIdentificationController.showAlreadySubscribed())
       }
       case _ =>
         mark("Count-Subscription-NoAgencyFound")
-        Future successful Redirect(routes.BusinessIdentificationController.showNoAgencyFound())
+        Redirect(routes.BusinessIdentificationController.showNoAgencyFound())
     }
 
   val showNoAgencyFound: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      Future successful Ok(html.no_agency_found())
+      Ok(html.no_agency_found())
     }
   }
 
   val setupIncomplete: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      Future successful Ok(html.cannot_create_account())
+      Ok(html.cannot_create_account())
     }
   }
 
@@ -197,7 +198,7 @@ class BusinessIdentificationController @Inject()(
         Redirect(routes.BusinessIdentificationController.showBusinessTypeForm())
 
       withKnownFactsResult { knownFactsResult =>
-        Future successful Ok(
+        Ok(
           html.confirm_business(
             confirmBusinessRadioForm = confirmBusinessForm,
             registrationName = knownFactsResult.taxpayerName,
@@ -218,20 +219,20 @@ class BusinessIdentificationController @Inject()(
               if (formWithErrors.errors.exists(_.message == "error.confirm-business-value.invalid")) {
                 throw new BadRequestException("Form submitted with strange input value")
               } else {
-                Future.successful(Ok(html.confirm_business(
+                Ok(html.confirm_business(
                   confirmBusinessRadioForm = formWithErrors,
                   registrationName = knownFactsResult.taxpayerName,
                   utr = TaxIdentifierFormatters.prettify(knownFactsResult.utr),
                   businessAddress = knownFactsResult.address.getOrElse(throw new Exception("address object missing"))
-                )))
+                ))
               }
             },
             validatedBusiness => {
-              val response = validatedBusiness.confirm match {
+              val response: Future[Call] = validatedBusiness.confirm match {
                 case Yes =>
                   if (knownFactsResult.isSubscribedToAgentServices) {
                     mark("Count-Subscription-AlreadySubscribed-RegisteredInETMP")
-                    Future.successful(routes.BusinessIdentificationController.showAlreadySubscribed())
+                    routes.BusinessIdentificationController.showAlreadySubscribed()
                   } else {
                     val initialDetails = InitialDetails(
                       knownFactsResult.utr,
@@ -243,17 +244,17 @@ class BusinessIdentificationController @Inject()(
 
                     lookupNextPage(initialDetails)
                   }
-                case No => {
-                  request.session
-                    .get("businessType")
-                    .map(typeFound =>
-                      Future.successful(routes.BusinessIdentificationController.showBusinessDetailsForm(
-                        IdentifyBusinessType.apply(typeFound))))
-                    .getOrElse(Future.successful(routes.BusinessIdentificationController.showBusinessTypeForm()))
-                }
+                case No =>
+                  toFuture(
+                    request.session
+                      .get("businessType")
+                      .map(typeFound =>
+                        routes.BusinessIdentificationController.showBusinessDetailsForm(
+                          IdentifyBusinessType.apply(typeFound)))
+                      .getOrElse(routes.BusinessIdentificationController.showBusinessTypeForm()))
               }
 
-              response.map(Redirect(_))
+              response.map(Redirect)
             }
           )
       }
@@ -277,13 +278,19 @@ class BusinessIdentificationController @Inject()(
   val showBusinessEmailForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
       withInitialDetails { details =>
-        val form =
-          if (details.email.nonEmpty)
-            businessEmailForm.fill(BusinessEmail(details.email.get))
-          else businessEmailForm
-
-        Future.successful(Ok(html.business_email(form, hasInvalidEmail(details))))
+        Ok(
+          html.business_email(
+            details.email.fold(businessEmailForm)(email => businessEmailForm.fill(BusinessEmail(email))),
+            hasInvalidEmail(details)))
       }
+    }
+  }
+
+  val changeBusinessEmail: Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { _ =>
+      sessionStoreService
+        .cacheIsChangingAnswers(true)
+        .map(_ => Redirect(routes.BusinessIdentificationController.showBusinessEmailForm().url))
     }
   }
 
@@ -293,13 +300,8 @@ class BusinessIdentificationController @Inject()(
         businessEmailForm
           .bindFromRequest()
           .fold(
-            formWithErrors => Future.successful(Ok(html.business_email(formWithErrors, hasInvalidEmail(details)))),
-            validForm => {
-              val updatedDetails = details.copy(email = Some(validForm.email))
-              sessionStoreService
-                .cacheInitialDetails(updatedDetails)
-                .flatMap(_ => lookupNextPage(updatedDetails).map(Redirect(_)))
-            }
+            formWithErrors => Ok(html.business_email(formWithErrors, hasInvalidEmail(details))),
+            validForm => updateInitialDetailsAndRedirect(details.copy(email = Some(validForm.email)))
           )
       }
     }
@@ -308,9 +310,16 @@ class BusinessIdentificationController @Inject()(
   val showBusinessNameForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
       withInitialDetails { details =>
-        Future.successful(
-          Ok(html.business_name(businessNameForm.fill(BusinessName(details.name)), hasInvalidBusinessName(details))))
+        Ok(html.business_name(businessNameForm.fill(BusinessName(details.name)), hasInvalidBusinessName(details)))
       }
+    }
+  }
+
+  val changeBusinessName: Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { _ =>
+      sessionStoreService
+        .cacheIsChangingAnswers(true)
+        .map(_ => Redirect(routes.BusinessIdentificationController.showBusinessNameForm().url))
     }
   }
 
@@ -320,25 +329,35 @@ class BusinessIdentificationController @Inject()(
         businessNameForm
           .bindFromRequest()
           .fold(
-            formWithErrors =>
-              Future.successful(Ok(html.business_name(formWithErrors, hasInvalidBusinessName(details)))),
-            validForm => {
-              val updatedDetails = details.copy(name = validForm.name)
-              sessionStoreService
-                .cacheInitialDetails(updatedDetails)
-                .flatMap(_ => lookupNextPage(updatedDetails).map(Redirect(_)))
-            }
+            formWithErrors => Ok(html.business_name(formWithErrors, hasInvalidBusinessName(details))),
+            validForm => updateInitialDetailsAndRedirect(details.copy(name = validForm.name))
           )
       }
+    }
+  }
+
+  private def updateInitialDetailsAndRedirect(updatedDetails: InitialDetails)(implicit hc: HeaderCarrier) = {
+
+    val result = for {
+      _               <- sessionStoreService.cacheInitialDetails(updatedDetails)
+      changingAnswers <- sessionStoreService.fetchIsChangingAnswers
+    } yield changingAnswers
+
+    result.flatMap[Result] {
+      case Some(true) =>
+        sessionStoreService
+          .cacheIsChangingAnswers(false)
+          .map(_ => Redirect(routes.SubscriptionController.showCheckAnswers()))
+      case _ => lookupNextPage(updatedDetails).map(Redirect)
     }
   }
 
   val showUpdateBusinessAddressForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
       withInitialDetails { details =>
-        Future.successful(
-          Ok(html.update_business_address(
-            updateBusinessAddressForm.fill(models.UpdateBusinessAddressForm(details.businessAddress)))))
+        Ok(
+          html.update_business_address(
+            updateBusinessAddressForm.fill(models.UpdateBusinessAddressForm(details.businessAddress))))
       }
     }
   }
@@ -349,7 +368,7 @@ class BusinessIdentificationController @Inject()(
         updateBusinessAddressForm
           .bindFromRequest()
           .fold(
-            formWithErrors => Future.successful(Ok(html.update_business_address(formWithErrors))),
+            formWithErrors => Ok(html.update_business_address(formWithErrors)),
             validForm => {
               val updatedBusinessAddress = details.businessAddress.copy(
                 addressLine1 = validForm.addressLine1,
@@ -360,12 +379,13 @@ class BusinessIdentificationController @Inject()(
               )
               val updatedDetails = details.copy(businessAddress = updatedBusinessAddress)
 
-              val redirectCall = initialDetailsValidator.validatePostcode(Some(validForm.postCode)) match {
-                case Pass =>
-                  lookupNextPage(updatedDetails).map(Redirect(_))
-                case Failure(_) =>
-                  Future.successful(Redirect(routes.BusinessIdentificationController.showPostcodeNotAllowed()))
-              }
+              val redirectCall: Future[Result] =
+                initialDetailsValidator.validatePostcode(Some(validForm.postCode)) match {
+                  case Pass =>
+                    lookupNextPage(updatedDetails).map(Redirect)
+                  case Failure(_) =>
+                    Redirect(routes.BusinessIdentificationController.showPostcodeNotAllowed())
+                }
 
               sessionStoreService
                 .cacheInitialDetails(updatedDetails)
@@ -379,20 +399,20 @@ class BusinessIdentificationController @Inject()(
   val showPostcodeNotAllowed: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
       withInitialDetails { _ =>
-        Future.successful(Ok(html.postcode_not_allowed()))
+        Ok(html.postcode_not_allowed())
       }
     }
   }
 
   val showAlreadySubscribed: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      Future successful Ok(html.already_subscribed())
+      Ok(html.already_subscribed())
     }
   }
 
   def invasiveCheckStart: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      Future.successful(Ok(invasive_check_start(invasiveCheckStartSaAgentCode)))
+      Ok(invasive_check_start(invasiveCheckStartSaAgentCode))
     }
   }
 
@@ -402,22 +422,21 @@ class BusinessIdentificationController @Inject()(
         .bindFromRequest()
         .fold(
           formWithErrors => {
-            Future.successful(Ok(invasive_check_start(formWithErrors)))
+            Ok(invasive_check_start(formWithErrors))
           },
           correctForm => {
             correctForm.hasSaAgentCode
               .map {
-                case true => {
+                case true =>
                   val saAgentCode = correctForm.saAgentCode
                     .getOrElse(throw new IllegalStateException(
                       "Form validation should enforce saAgentCode is always defined if hasSaAgentCode is true"))
-                  Future successful Redirect(routes.BusinessIdentificationController.showClientDetailsForm())
+                  Redirect(routes.BusinessIdentificationController.showClientDetailsForm())
                     .withSession(request.session + ("saAgentReferenceToCheck" -> saAgentCode))
-                }
-                case false => {
+
+                case false =>
                   mark("Count-Subscription-InvasiveCheck-Declined")
-                  Future successful Redirect(routes.StartController.showCannotCreateAccount())
-                }
+                  Redirect(routes.StartController.showCannotCreateAccount())
               }
               .getOrElse(throw new IllegalStateException(
                 "InvasiveCheck invasiveCheckStartSaAgentCode.hasSaAgentCode should always be defined"))
@@ -428,7 +447,7 @@ class BusinessIdentificationController @Inject()(
 
   def showClientDetailsForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      Future.successful(Ok(html.client_details(clientDetailsForm)))
+      Ok(html.client_details(clientDetailsForm))
     }
   }
 
@@ -442,7 +461,7 @@ class BusinessIdentificationController @Inject()(
               Logger.warn("Selected invasive tax payer form variant was invalid")
               throw new BadRequestException("submitted form value did not contain valid tax payer option form variant")
             }
-            Future successful Ok(html.client_details(formWithErrors))
+            Ok(html.client_details(formWithErrors))
           },
           correctForm => {
             val retrievedVariant = correctForm.variant
@@ -463,7 +482,7 @@ class BusinessIdentificationController @Inject()(
               case NinoV                          => checkAndRedirect(nino, "nino")
               case _ =>
                 mark("Count-Subscription-InvasiveCheck-Could-Not-Provide-Tax-Payer-Identifier")
-                Future successful Redirect(routes.StartController.showCannotCreateAccount())
+                Redirect(routes.StartController.showCannotCreateAccount())
             }
           }
         )
@@ -472,7 +491,7 @@ class BusinessIdentificationController @Inject()(
 
   private def checkAndRedirect(
     value: TaxIdentifier,
-    taxIdentifierName: String)(implicit hc: HeaderCarrier, request: Request[AnyContent], agent: Agent) =
+    taxIdentifierName: String)(implicit hc: HeaderCarrier, request: Request[AnyContent], agent: Agent): Future[Result] =
     request.session.get("saAgentReferenceToCheck") match {
       case Some(saAgentReference) =>
         assuranceService
@@ -485,7 +504,7 @@ class BusinessIdentificationController @Inject()(
               mark("Count-Subscription-InvasiveCheck-Failed")
               Redirect(routes.StartController.showCannotCreateAccount())
           }
-      case None => Future.successful(Redirect(routes.BusinessIdentificationController.invasiveCheckStart()))
+      case None => Redirect(routes.BusinessIdentificationController.invasiveCheckStart())
     }
 
   private def cacheKnownFactsAndAudit(
@@ -510,7 +529,7 @@ class BusinessIdentificationController @Inject()(
       _ <- sessionStoreService.cacheKnownFactsResult(knownFactsResult)
       _ <- maybeAssuranceResults
             .map(auditService.sendAgentAssuranceAuditEvent(knownFactsResult, _))
-            .getOrElse(Future.successful(()))
+            .getOrElse(())
     } yield ()
   }
 
@@ -524,7 +543,7 @@ class BusinessIdentificationController @Inject()(
     agent: Agent): Future[Result] =
     assuranceService.assureIsAgent(knownFacts.utr).flatMap {
       case RefuseToDealWith(_) =>
-        Future.successful(Redirect(routes.StartController.showCannotCreateAccount()))
+        Redirect(routes.StartController.showCannotCreateAccount())
       case CheckedInvisibleAssuranceAndFailed(assuranceResults) =>
         cacheKnownFactsAndAudit(Some(assuranceResults), taxpayerName, knownFacts, registration).map { _ =>
           mark("Count-Subscription-InvasiveCheck-Start")

@@ -66,6 +66,12 @@ class SessionStoreService @Inject()(sessionCache: SessionCache) {
   def fetchGoBackUrl(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[String]] =
     sessionCache.fetchAndGetEntry[String]("goBackUrl")
 
+  def cacheIsChangingAnswers(changing: Boolean)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
+    sessionCache.cache("isChangingAnswers", changing).map(_ => ())
+
+  def fetchIsChangingAnswers(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[Boolean]] =
+    sessionCache.fetchAndGetEntry[Boolean]("isChangingAnswers")
+
   def remove()(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
     sessionCache.remove().map(_ => ())
 

@@ -18,7 +18,7 @@ following the ROSM (Register Once Subscribe Many) pattern.
 
 ### Running the app locally
 
-    sm --start AGENT_ONBOARDING -f
+    sm --start AGENT_ONBOARDING -r
     sm --stop AGENT_SUBSCRIPTION_FRONTEND
     sbt run
     

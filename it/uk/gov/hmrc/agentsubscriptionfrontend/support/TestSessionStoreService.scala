@@ -32,7 +32,8 @@ class TestSessionStoreService extends SessionStoreService(null) {
     var continueUrl: Option[ContinueUrl] = None,
     var wasEligibleForMapping: Option[Boolean] = None,
     var amlsDetails: Option[AMLSDetails] = None,
-    var goBackUrl: Option[String] = None)
+    var goBackUrl: Option[String] = None,
+    var changingAnswers: Option[Boolean] = None)
 
   private val sessions = collection.mutable.Map[String, Session]()
 
@@ -89,6 +90,12 @@ class TestSessionStoreService extends SessionStoreService(null) {
 
   override def fetchGoBackUrl(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[String]] =
     toFuture(currentSession.goBackUrl)
+
+  override def cacheIsChangingAnswers(changing: Boolean)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
+    toFuture(currentSession.changingAnswers =  Some(true))
+
+  override def fetchIsChangingAnswers(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[Boolean]] =
+    toFuture(currentSession.changingAnswers)
 
   override def remove()(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
     Future {

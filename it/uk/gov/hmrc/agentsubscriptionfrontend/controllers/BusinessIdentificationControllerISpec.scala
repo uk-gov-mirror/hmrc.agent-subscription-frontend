@@ -868,6 +868,20 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
       await(sessionStoreService.fetchInitialDetails).get.name shouldBe "new Agent name"
     }
 
+    "update business name after submission and redirect to /check-answers if user is changing answers" in {
+      implicit val request =
+        authenticatedAs(subscribingCleanAgentWithoutEnrolments).withFormUrlEncodedBody("name" -> "new Agent name")
+      sessionStoreService.currentSession.initialDetails = Some(initialDetails)
+      sessionStoreService.currentSession.changingAnswers = Some(true)
+
+      val result = await(controller.submitBusinessNameForm(request))
+      status(result) shouldBe 303
+      redirectLocation(result).head shouldBe routes.SubscriptionController.showCheckAnswers().url
+
+      await(sessionStoreService.fetchInitialDetails).get.name shouldBe "new Agent name"
+      await(sessionStoreService.fetchIsChangingAnswers) shouldBe Some(true)
+    }
+
     "show validation error when the form is submitted with empty name" in {
       implicit val request =
         authenticatedAs(subscribingCleanAgentWithoutEnrolments).withFormUrlEncodedBody("name" -> "")
@@ -963,6 +977,21 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
       redirectLocation(result).head shouldBe routes.AMLSController.showMoneyLaunderingComplianceForm().url
 
       await(sessionStoreService.fetchInitialDetails).get.email shouldBe Some("newagent@example.com")
+    }
+
+
+    "update business email after submission and redirect to /check-answers if user is chaning answers" in {
+      implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments).withFormUrlEncodedBody(
+        "email" -> "newagent@example.com")
+      sessionStoreService.currentSession.initialDetails = Some(initialDetails)
+      sessionStoreService.currentSession.changingAnswers = Some(true)
+
+      val result = await(controller.submitBusinessEmailForm(request))
+      status(result) shouldBe 303
+      redirectLocation(result).head shouldBe routes.SubscriptionController.showCheckAnswers().url
+
+      await(sessionStoreService.fetchInitialDetails).get.email shouldBe Some("newagent@example.com")
+      await(sessionStoreService.fetchIsChangingAnswers) shouldBe Some(true)
     }
 
     "show validation error when the form is submitted with empty email" in {
