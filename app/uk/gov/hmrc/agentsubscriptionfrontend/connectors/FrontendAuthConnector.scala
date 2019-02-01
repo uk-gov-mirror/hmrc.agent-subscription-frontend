@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,18 +17,27 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.connectors
 
 import java.net.URL
-import javax.inject.{Inject, Named, Singleton}
 
+import akka.actor.ActorSystem
+import com.typesafe.config.Config
+import javax.inject.{Inject, Named, Singleton}
+import play.api.Configuration
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.http.HttpPost
 import uk.gov.hmrc.play.http.ws.WSPost
 
 @Singleton
-class FrontendAuthConnector @Inject()(@Named("auth-baseUrl") baseUrl: URL) extends PlayAuthConnector {
+class FrontendAuthConnector @Inject()(
+  @Named("auth-baseUrl") baseUrl: URL,
+  val config: Configuration,
+  val _actorSystem: ActorSystem)
+    extends PlayAuthConnector {
 
   override val serviceUrl = baseUrl.toString
 
   override def http = new HttpPost with WSPost {
     override val hooks = NoneRequired
+    override protected def configuration: Option[Config] = Some(config.underlying)
+    override protected def actorSystem: ActorSystem = _actorSystem
   }
 }

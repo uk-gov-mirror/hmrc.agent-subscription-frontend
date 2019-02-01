@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,7 +90,6 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
         sentEvent.detail("authProviderType") shouldBe "GovernmentGateway"
 
         sentEvent.tags.contains("Authorization") shouldBe false
-        sentEvent.detail("Authorization") shouldBe "dummy bearer token"
 
         sentEvent.tags("transactionName") shouldBe "agent-assurance"
         sentEvent.tags("path") shouldBe "/path"

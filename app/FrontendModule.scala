@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,11 @@
 
 import java.net.URL
 
+import akka.actor.ActorSystem
 import com.google.inject.AbstractModule
 import com.google.inject.name.Names
 import com.google.inject.name.Names.named
+import com.typesafe.config.Config
 import javax.inject.{Inject, Named, Provider, Singleton}
 import org.slf4j.MDC
 import play.api.{Configuration, Environment, Logger, LoggerLike}
@@ -109,7 +111,12 @@ class AgentSubscriptionSessionCache @Inject()(
 }
 
 @Singleton
-class HttpVerbs @Inject()(val auditConnector: AuditConnector, @Named("appName") val appName: String)
+class HttpVerbs @Inject()(
+  val auditConnector: AuditConnector,
+  @Named("appName") val appName: String,
+  val config: Configuration,
+  val actorSystem: ActorSystem)
     extends HttpGet with HttpPost with HttpPut with HttpPatch with HttpDelete with WSHttp with HttpAuditing {
   override val hooks = Seq(AuditingHook)
+  override protected def configuration: Option[Config] = Some(config.underlying)
 }
