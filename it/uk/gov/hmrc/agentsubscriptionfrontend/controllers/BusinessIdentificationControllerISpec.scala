@@ -114,6 +114,7 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
       doc.getElementById("businessType-limited_company").`val`() shouldBe "limited_company"
       doc.getElementById("businessType-partnership").`val`() shouldBe "partnership"
       doc.getElementById("businessType-llp").`val`() shouldBe "llp"
+      doc.getElementById("businessType-invalid").`val`() shouldBe "invalid"
     }
 
     "contain a link to sign out" in {
@@ -149,11 +150,22 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
       }
     }
 
-    s"400 Exception ,when businessTypeIdentifier invalid" in {
-      val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
-        .withFormUrlEncodedBody("businessType" -> "unCateredBusinessTypeIdentifier")
+    "redirect to /invalid-business-type page" when {
+      "businessTypeIdentifier is unidentified" in {
+        val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+          .withFormUrlEncodedBody("businessType" -> "unCateredBusinessTypeIdentifier")
 
-      an[BadRequestException] shouldBe thrownBy(await(controller.submitBusinessTypeForm(request)))
+        await(controller.submitBusinessTypeForm(request)).header
+          .headers(LOCATION) shouldBe routes.BusinessIdentificationController.showInvalidBusinessType().url
+      }
+
+    "businessTypeIdentifier invalid" in {
+      val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+        .withFormUrlEncodedBody("businessType" -> "invalid")
+
+      await(controller.submitBusinessTypeForm(request)).header
+        .headers(LOCATION) shouldBe routes.BusinessIdentificationController.showInvalidBusinessType().url
+      }
     }
   }
 
@@ -170,6 +182,19 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
       val result = await(controller.redirectToBusinessType(authenticatedAs(subscribingCleanAgentWithoutEnrolments)))
 
       redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showBusinessTypeForm().url)
+    }
+  }
+
+  "showInvalidBusinessType" should {
+    "display invalid business type page" in {
+      val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+
+      val result = await(controller.showInvalidBusinessType(request))
+
+      result should containMessages("invalid.businessType.title",
+        "invalid.businessType.p1", "invalid.businessType.l1",
+        "invalid.businessType.l2", "invalid.businessType.l3",
+        "invalid.businessType.l4", "invalid.businessType.button")
     }
   }
 

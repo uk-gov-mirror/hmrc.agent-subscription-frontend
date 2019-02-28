@@ -38,7 +38,7 @@ class BindersSpec extends UnitSpec {
       }
 
       "successful BAD binding" when {
-        "IdentifyBusinessType.Undefined due to invalid input => Left => BadRequest" in {
+        "IdentifyBusinessType.Invalid due to invalid input => Left => BadRequest" in {
           val undefinedEmpty = Binders.businessTypeBinder.bind("businessType", Map("businessType" -> Seq("")))
           undefinedEmpty.get shouldBe Left("Submitted businessType value was invalid")
 
@@ -64,7 +64,7 @@ class BindersSpec extends UnitSpec {
       Binders.businessTypeBinder.unbind("businessType", IdentifyBusinessType.Llp) shouldBe "businessType=llp"
 
       //Undefined "businessType=invalid" shouldBe filtered and rejected
-      Binders.businessTypeBinder.unbind("businessType", IdentifyBusinessType.Undefined) shouldBe "businessType=invalid"
+      Binders.businessTypeBinder.unbind("businessType", IdentifyBusinessType.Invalid) shouldBe "businessType=invalid"
     }
   }
 }

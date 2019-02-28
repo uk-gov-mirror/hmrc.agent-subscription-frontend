@@ -33,7 +33,7 @@ object Binders {
           .map {
             case Right(input) => {
               IdentifyBusinessType(input) match {
-                case IdentifyBusinessType.Undefined =>
+                case IdentifyBusinessType.Invalid =>
                   Left("Submitted businessType value was invalid")
                 case anyType => Right(anyType)
               }
