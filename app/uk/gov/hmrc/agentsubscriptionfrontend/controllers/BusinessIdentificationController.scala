@@ -37,6 +37,7 @@ import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier}
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 import uk.gov.hmrc.agentsubscriptionfrontend.models
+import uk.gov.hmrc.agentsubscriptionfrontend.models.IdentifyBusinessType.Invalid
 import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidVariantsTaxPayerOptionForm._
 import uk.gov.hmrc.agentsubscriptionfrontend.validators.InitialDetailsValidator
@@ -95,17 +96,22 @@ class BusinessIdentificationController @Inject()(
         .bindFromRequest()
         .fold(
           formWithErrors => {
-            if (formWithErrors.errors.exists(_.message == "error.business-type-value.invalid")) {
-              Logger.warn("Select business-type form submitted with invalid identifier")
-              throw new BadRequestException("Submitted form value did not contain valid businessType identifier")
-            }
             Ok(html.business_type(formWithErrors))
           },
           validatedBusinessType => {
-            Redirect(
-              routes.BusinessIdentificationController.showBusinessDetailsForm(validatedBusinessType.businessType))
+            if (validatedBusinessType.businessType == Invalid)
+              Redirect(routes.BusinessIdentificationController.showInvalidBusinessType)
+            else
+              Redirect(
+                routes.BusinessIdentificationController.showBusinessDetailsForm(validatedBusinessType.businessType))
           }
         )
+    }
+  }
+
+  def showInvalidBusinessType: Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { implicit agent =>
+      Ok(html.invalid_business_type())
     }
   }
 

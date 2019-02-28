@@ -40,9 +40,6 @@ package object controllers {
       Form[BusinessType](
         mapping("businessType" -> optional(text).verifying(radioInputSelected("businessType.error.no-radio-selected")))(
           input => BusinessType(IdentifyBusinessType(input.get)))(bType => Some(Some(bType.businessType.key)))
-          .verifying(
-            "error.business-type-value.invalid",
-            identifiedType => identifiedType.businessType != IdentifyBusinessType.Undefined)
       )
 
     val confirmBusinessForm: Form[ConfirmBusiness] =

@@ -24,7 +24,7 @@ sealed trait IdentifyBusinessType {
     case IdentifyBusinessType.LimitedCompany => "limited_company"
     case IdentifyBusinessType.Partnership    => "partnership"
     case IdentifyBusinessType.Llp            => "llp"
-    case IdentifyBusinessType.Undefined      => "invalid"
+    case IdentifyBusinessType.Invalid        => "invalid"
   }
 }
 
@@ -34,13 +34,13 @@ object IdentifyBusinessType {
   case object LimitedCompany extends IdentifyBusinessType
   case object Partnership extends IdentifyBusinessType
   case object Llp extends IdentifyBusinessType
-  case object Undefined extends IdentifyBusinessType
+  case object Invalid extends IdentifyBusinessType
 
   def apply(convertToType: String): IdentifyBusinessType = convertToType match {
     case "sole_trader"     => IdentifyBusinessType.SoleTrader
     case "limited_company" => IdentifyBusinessType.LimitedCompany
     case "partnership"     => IdentifyBusinessType.Partnership
     case "llp"             => IdentifyBusinessType.Llp
-    case _                 => IdentifyBusinessType.Undefined // This type is not allowed, and should not allow to progress.
+    case _                 => IdentifyBusinessType.Invalid
   }
 }
