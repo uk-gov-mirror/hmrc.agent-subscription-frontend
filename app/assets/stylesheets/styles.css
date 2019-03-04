@@ -8,6 +8,11 @@
 .margin-bottom-0 {
     margin-bottom: 0px !important;
 }
+
+.margin-bottom-20 {
+    margin-bottom: 20px;
+}
+
 .app-check-your-answers {
     font-family: "nta", Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
