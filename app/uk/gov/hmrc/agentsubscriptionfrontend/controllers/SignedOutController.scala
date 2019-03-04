@@ -19,7 +19,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 import cats.data.OptionT
 import cats.instances.future._
 import javax.inject.{Inject, Singleton}
-import play.api.mvc.Action
+import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{ChainedSessionDetails, MappingEligibility}
 import uk.gov.hmrc.agentsubscriptionfrontend.repository.ChainedSessionDetailsRepository
@@ -84,5 +84,9 @@ class SignedOutController @Inject()(
 
   def redirectToBusinessTypeForm = Action { implicit request =>
     Redirect(routes.BusinessIdentificationController.showBusinessTypeForm()).withNewSession
+  }
+
+  def signOut: Action[AnyContent] = Action {
+    Redirect(routes.StartController.start()).withNewSession
   }
 }

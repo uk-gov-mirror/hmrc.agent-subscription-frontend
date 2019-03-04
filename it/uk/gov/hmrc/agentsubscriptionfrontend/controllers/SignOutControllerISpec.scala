@@ -198,6 +198,18 @@ trait SignOutControllerISpec extends BaseISpec {
       result.session.get("sessionId") shouldBe empty
     }
   }
+
+  "signOut" should {
+    "logout and redirect to start page" in {
+      implicit val request = fakeRequest.withSession("sessionId" -> "SomeSession")
+      val result = await(controller.signOut(request))
+
+      status(result) shouldBe 303
+
+      redirectLocation(result).head shouldBe routes.StartController.start().url
+      result.session.get("sessionId") shouldBe empty
+    }
+  }
 }
 
 class SignOutControllerWithAutoMappingOn extends SignOutControllerISpec {
