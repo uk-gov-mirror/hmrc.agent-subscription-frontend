@@ -302,7 +302,7 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
       val responseBody = bodyOf(result)
       responseBody should include(htmlEscapedMessage("businessDetails.title"))
       responseBody should include(htmlEscapedMessage("error.sautr.blank"))
-      responseBody should include("Enter a postcode")
+      responseBody should include("Enter a registered business postcode")
       noMetricExpectedAtThisPoint()
     }
 

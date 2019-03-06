@@ -203,6 +203,17 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
       await(sessionStoreService.fetchAMLSDetails) shouldBe empty
     }
 
+    "show validation error when the form is submitted with invalid amlsCode" in new Setup {
+      implicit val requst = authenticatedRequest.withFormUrlEncodedBody("amlsCode" -> "Invalid Text",
+        "membershipNumber" -> "12345", "expiry.day" -> expiryDay, "expiry.month" -> expiryMonth,  "expiry.year" -> expiryYear)
+
+      val result = await(controller.submitMoneyLaunderingComplianceForm(requst))
+      status(result) shouldBe 200
+      result should containMessages("moneyLaunderingCompliance.amls.title", "error.moneyLaunderingCompliance.amlscode.invalid")
+
+      await(sessionStoreService.fetchAMLSDetails) shouldBe empty
+    }
+
     "show validation error when the form is submitted with empty membership number" in new Setup {
       implicit val requst = authenticatedRequest.withFormUrlEncodedBody("amlsCode" -> "AAT",
         "membershipNumber" -> "", "expiry.day" -> expiryDay, "expiry.month" -> expiryMonth,  "expiry.year" -> expiryYear)
