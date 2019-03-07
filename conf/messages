@@ -94,7 +94,8 @@ confirmBusiness.error.no-radio-selected = Select yes if this is your business
 
 #No agency found
 noAgencyFound.title=There is a problem
-noAgencyFound.p1=We could not find any records that match the details you entered.
+noAgencyFound.p1=We could not find any records matching the details you entered.
+noAgencyFound.p2=Check the details and try again.
 
 #Already subscribed
 alreadySubscribed.title=Your business already has an agent services account
