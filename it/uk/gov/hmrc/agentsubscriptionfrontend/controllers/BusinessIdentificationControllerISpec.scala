@@ -450,7 +450,8 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
     "display the no agency found page if the current user is logged in and has affinity group = Agent" in {
       val result = await(controller.showNoAgencyFound(authenticatedAs(subscribingCleanAgentWithoutEnrolments)))
 
-      result should containMessages("noAgencyFound.title")
+      result should containMessages("noAgencyFound.title",
+        "noAgencyFound.p1","noAgencyFound.p2", "button.startAgain")
     }
   }
 
