@@ -113,5 +113,41 @@ package object controllers {
           "expiry"           -> expiryDate
         )(AMLSForm.apply)(AMLSForm.unapply))
 
+    import play.api.data.{Form, FormError}
+
+    def formWithRefinedErrors(form: Form[AMLSForm]): Form[AMLSForm] = {
+
+      val dateFieldErrors: Seq[FormError] = form.errors.filter(dateFields)
+
+      val refinedMessage = refineErrors(dateFieldErrors).getOrElse("")
+
+      dateFieldErrors match {
+        case Nil => form
+        case _ =>
+          form.copy(errors = form.errors.map { error =>
+            if (error.key.contains("expiry")) {
+              FormError(error.key, "", error.args)
+            } else error
+          }.toList :+ FormError(key = "expiry", message = refinedMessage, args = Seq()))
+      }
+    }
+
+    private val expiry = "expiry"
+    private val dateFields =
+      (error: FormError) => error.key == s"$expiry.day" || error.key == s"$expiry.month" || error.key == s"$expiry.year"
+
+    private def refineErrors(dateFieldErrors: Seq[FormError]): Option[String] =
+      dateFieldErrors.map(_.key).map(k => "expiry.".r.replaceFirstIn(k, "")).sorted match {
+        case List("day", "month", "year") => Some("error.moneyLaunderingCompliance.date.empty")
+        case List("day", "month")         => Some("error.moneyLaunderingCompliance.day.month.empty")
+        case List("day", "year")          => Some("error.moneyLaunderingCompliance.day.year.empty")
+        case List("day")                  => Some("error.moneyLaunderingCompliance.day.empty")
+        case List("month", "year")        => Some("error.moneyLaunderingCompliance.month.year.empty")
+        case List("month")                => Some("error.moneyLaunderingCompliance.month.empty")
+        case List("year")                 => Some("error.moneyLaunderingCompliance.year.empty")
+        case _                            => None
+      }
+
   }
+
 }

@@ -23,10 +23,30 @@
 
 @(amlsForm: Form[AMLSForm], amlsBodies: Map[String, String], mayBeGoBackUrl: Option[String] = None)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
-@noJsDateFieldsError = @{
-if(amlsForm("expiry.day").hasErrors || amlsForm("expiry.month").hasErrors || amlsForm("expiry.year").hasErrors)
-"nojs-date-fields-error"
+
+@DayFieldError = @{
+    if(amlsForm("expiry.day").hasErrors)
+        "day-field-error"
+    }
+
+@MonthFieldError = @{
+    if(amlsForm("expiry.month").hasErrors)
+        "month-field-error"
 }
+
+@YearFieldError = @{
+    if(amlsForm("expiry.year").hasErrors)
+        "year-field-error"
+}
+
+@DateFieldErrorsAll = @{
+    if(amlsForm("expiry").hasErrors && !amlsForm("expiry.day").hasErrors && !amlsForm("expiry.month").hasErrors && !amlsForm("expiry.year").hasErrors)
+        "date-field-errors-all"
+}
+    @dateFormWithRefinedErrors = @{
+        amlsForm.copy(errors = amlsForm.errors.filterNot(error => error.message == "" || !error.key.contains("expiry")))
+    }
+
 
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title =  error_prefix(amlsForm) + Messages("moneyLaunderingCompliance.title"), bodyClasses = None) {
 
@@ -57,7 +77,6 @@ if(amlsForm("expiry.day").hasErrors || amlsForm("expiry.month").hasErrors || aml
                 )
             </div>
 
-
             <div class="form-group">
                 @input(
                 amlsForm("membershipNumber"),
@@ -68,9 +87,9 @@ if(amlsForm("expiry.day").hasErrors || amlsForm("expiry.month").hasErrors || aml
                 )
             </div>
 
-            <div class="@noJsDateFieldsError">
+            <div class="@DayFieldError @MonthFieldError @YearFieldError @DateFieldErrorsAll">
                 @dateFieldsFreeInlineLegend(
-                amlsForm,
+                dateFormWithRefinedErrors,
                 "expiry",
                 '_legend -> Messages("moneyLaunderingCompliance.expiry.title"),
                 '_inputHint -> Messages("moneyLaunderingCompliance.expiry.hint"),

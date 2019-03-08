@@ -17,6 +17,7 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.validators
 
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 import play.api.data.Forms.{of, optional, text, tuple}
 import play.api.data.format.Formatter
@@ -94,11 +95,12 @@ object CommonValidators {
 
   def membershipNumber: Mapping[String] = nonEmptyTextWithMsg("error.moneyLaunderingCompliance.membershipNumber.empty")
 
+  import play.api.data.Forms._
   def expiryDate: Mapping[LocalDate] =
     tuple(
-      "year"  -> nonEmptyTextWithMsg("error.moneyLaunderingCompliance.year.empty"),
-      "month" -> nonEmptyTextWithMsg("error.moneyLaunderingCompliance.month.empty"),
-      "day"   -> nonEmptyTextWithMsg("error.moneyLaunderingCompliance.day.empty")
+      "year"  -> text.verifying("year", y => !y.trim.isEmpty || y.matches("^[0-9]{1,4}$")),
+      "month" -> text.verifying("month", y => !y.trim.isEmpty || y.matches("^[0-9]{1,2}$")),
+      "day"   -> text.verifying("day", d => !d.trim.isEmpty || d.matches("^[0-9]{1,2}$"))
     ).verifying(
         checkOneAtATime(Seq(invalidExpiryDateConstraint, pastExpiryDateConstraint, withinYearExpiryDateConstraint)))
       .transform(

@@ -225,14 +225,80 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
       await(sessionStoreService.fetchAMLSDetails) shouldBe empty
     }
 
-    "show validation error when the form is submitted with invalis expiry datge" in new Setup {
-      implicit val requst = authenticatedRequest.withFormUrlEncodedBody("amlsCode" -> "AAT",
+    "show validation error when the form is submitted with invalid expiry date" in new Setup {
+      implicit val request = authenticatedRequest.withFormUrlEncodedBody("amlsCode" -> "AAT",
         "membershipNumber" -> "12345", "expiry.day" -> "123", "expiry.month" -> expiryMonth,  "expiry.year" -> expiryYear)
 
-      val result = await(controller.submitMoneyLaunderingComplianceForm(requst))
+      val result = await(controller.submitMoneyLaunderingComplianceForm(request))
       status(result) shouldBe 200
       result should containMessages("moneyLaunderingCompliance.expiry.title", "error.moneyLaunderingCompliance.date.invalid")
 
+      await(sessionStoreService.fetchAMLSDetails) shouldBe empty
+    }
+
+    "show validation error when the form is submitted with empty day field" in new Setup {
+      implicit val request = authenticatedRequest.withFormUrlEncodedBody("amlsCode" -> "AAT",
+        "membershipNumber" -> "12345", "expiry.day" -> "", "expiry.month" -> expiryMonth,  "expiry.year" -> expiryYear)
+
+      val result = await(controller.submitMoneyLaunderingComplianceForm(request))
+      status(result) shouldBe 200
+      result should containMessages("moneyLaunderingCompliance.expiry.title", "error.moneyLaunderingCompliance.day.empty")
+
+      await(sessionStoreService.fetchAMLSDetails) shouldBe empty
+    }
+
+    "show validation error when the form is submitted with empty month field" in new Setup {
+      implicit val request = authenticatedRequest.withFormUrlEncodedBody("amlsCode" -> "AAT",
+        "membershipNumber" -> "12345", "expiry.day" -> expiryDay, "expiry.month" -> "",  "expiry.year" -> expiryYear)
+
+      val result = await(controller.submitMoneyLaunderingComplianceForm(request))
+      status(result) shouldBe 200
+      result should containMessages("moneyLaunderingCompliance.expiry.title", "error.moneyLaunderingCompliance.month.empty")
+
+      await(sessionStoreService.fetchAMLSDetails) shouldBe empty
+    }
+
+    "show validation error when the form is submitted with empty year field" in new Setup {
+      implicit val request = authenticatedRequest.withFormUrlEncodedBody("amlsCode" -> "AAT",
+        "membershipNumber" -> "12345", "expiry.day" -> expiryDay, "expiry.month" -> expiryMonth,  "expiry.year" -> "")
+
+      val result = await(controller.submitMoneyLaunderingComplianceForm(request))
+      status(result) shouldBe 200
+      result should containMessages("moneyLaunderingCompliance.expiry.title", "error.moneyLaunderingCompliance.year.empty")
+
+      await(sessionStoreService.fetchAMLSDetails) shouldBe empty
+    }
+
+    "show validation error when the form is submitted with empty day and month field" in new Setup {
+      implicit val request = authenticatedRequest.withFormUrlEncodedBody("amlsCode" -> "AAT",
+        "membershipNumber" -> "12345", "expiry.day" -> "", "expiry.month" -> "",  "expiry.year" -> expiryYear)
+
+      val result = await(controller.submitMoneyLaunderingComplianceForm(request))
+      status(result) shouldBe 200
+      result should containMessages("moneyLaunderingCompliance.expiry.title", "error.moneyLaunderingCompliance.day.month.empty")
+      result shouldNot containMessages("error.moneyLaunderingCompliance.day.empty", "error.moneyLaunderingCompliance.month.empty")
+      await(sessionStoreService.fetchAMLSDetails) shouldBe empty
+    }
+
+    "show validation error when the form is submitted with empty day and year field" in new Setup {
+      implicit val request = authenticatedRequest.withFormUrlEncodedBody("amlsCode" -> "AAT",
+        "membershipNumber" -> "12345", "expiry.day" -> "", "expiry.month" -> expiryMonth,  "expiry.year" -> "")
+
+      val result = await(controller.submitMoneyLaunderingComplianceForm(request))
+      status(result) shouldBe 200
+      result should containMessages("moneyLaunderingCompliance.expiry.title", "error.moneyLaunderingCompliance.day.year.empty")
+      result shouldNot containMessages("error.moneyLaunderingCompliance.day.empty", "error.moneyLaunderingCompliance.year.empty")
+      await(sessionStoreService.fetchAMLSDetails) shouldBe empty
+    }
+
+    "show validation error when the form is submitted with empty month and year field" in new Setup {
+      implicit val request = authenticatedRequest.withFormUrlEncodedBody("amlsCode" -> "AAT",
+        "membershipNumber" -> "12345", "expiry.day" -> expiryDay, "expiry.month" -> "",  "expiry.year" -> "")
+
+      val result = await(controller.submitMoneyLaunderingComplianceForm(request))
+      status(result) shouldBe 200
+      result should containMessages("moneyLaunderingCompliance.expiry.title", "error.moneyLaunderingCompliance.month.year.empty")
+      result shouldNot containMessages("error.moneyLaunderingCompliance.month.empty", "error.moneyLaunderingCompliance.year.empty")
       await(sessionStoreService.fetchAMLSDetails) shouldBe empty
     }
 

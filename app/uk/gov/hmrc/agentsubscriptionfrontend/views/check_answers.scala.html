@@ -19,6 +19,7 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessAddress
 @import uk.gov.hmrc.agentsubscriptionfrontend.models.AMLSDetails
 @import uk.gov.hmrc.play.views.html.helpers.{form, input, errorSummary}
+@import java.time.format.DateTimeFormatter
 
 @(registrationName: String, address: BusinessAddress, emailAddress: Option[String], mayBeAmlsDetails: Option[AMLSDetails])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
@@ -77,7 +78,7 @@
                 <dd class="app-check-your-answers__answer" id="amls">
                     @amlsDetails.supervisoryBody<br />
                     @amlsDetails.membershipNumber<br />
-                    @amlsDetails.membershipExpiresOn
+                    @amlsDetails.membershipExpiresOn.format(DateTimeFormatter.ofPattern("dd MM yyyy"))
                 </dd>
                 <dd class="app-check-your-answers__change">
                     <a href="@routes.AMLSController.showMoneyLaunderingComplianceForm()">@Messages("checkAnswers.change.button")<span class="visuallyhidden"> @Messages("checkAnswers.amlsDetails.label")</span></a>
