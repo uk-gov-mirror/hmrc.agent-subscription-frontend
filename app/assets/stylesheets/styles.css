@@ -6,12 +6,20 @@
     margin-top: 30px !important;
 }
 
+.margin-top-10 {
+    margin-top: 10px !important;
+}
+
 .margin-bottom-0 {
     margin-bottom: 0px !important;
 }
 
 .margin-bottom-20 {
     margin-bottom: 20px;
+}
+
+.margin-bottom-40 {
+    margin-bottom: 40px;
 }
 
 .app-check-your-answers {
@@ -295,16 +303,16 @@
     pointer-events: none
 }
 
+.autocomplete__option--odd {
+    background-color: #fafafa;
+}
+
 .autocomplete__option:first-of-type {
     border-top-width: 0
 }
 
 .autocomplete__option:last-of-type {
     border-bottom-width: 0
-}
-
-.autocomplete__option--odd {
-    background-color: #fafafa
 }
 
 .autocomplete__option--focused, .autocomplete__option:hover {
@@ -341,7 +349,13 @@ input[type="text"].autocomplete__input {
 }
 
 .autocomplete-wrapper {
-    width: 50%
+    width: 50%;
 }
+
+#hasSaAgentCodeField {
+    margin-left: 16px;
+    border-left-width: 5px;
+}
+
 
 

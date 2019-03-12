@@ -27,23 +27,32 @@
         @errorSummary(Messages("error.summary.heading"), radioResponseForm, Seq.empty, Some("enter-agent-code"))
     }
 
-
     @form(action = routes.BusinessIdentificationController.invasiveSaAgentCodePost(), 'class -> "form js-form") {
-        <div class="form-group @if(radioResponseForm.error("hasSaAgentCode").isDefined){form-group-error}" id="radioResponse">
+        <div class="form-group @if(radioResponseForm.error("hasSaAgentCode").isDefined){form-group-error}" id="hasSaAgentCode">
             <fieldset>
                 <legend>
-                    <h1 class="heading-large  @if(radioResponseForm.hasErrors){push--top}">@Messages("invasive.title.saCode")</h1>
+                    <h1 class="heading-xlarge margin-top-10 margin-bottom-40 @if(radioResponseForm.hasErrors){push--top}">@Messages("invasive.title.saCode")</h1>
                     <p>@Messages("invasive.check.p1")</p>
-                    @if(radioResponseForm.error("hasSaAgentCode").isDefined){
-                        <span class="error-message">@Messages("invasive.error.no-radio.selected")</span>
-                    }
                 </legend>
 
-                <div class="multiple-choice" data-target="hasSaAgentCode">
+                <details class="form-group">
+                    <summary>
+                        <span class="summary">@Messages("invasive.expandable.p1")</span>
+                    </summary>
+                    <div class="panel panel-border-narrow">
+                        <p>@Messages("invasive.expandable.p1.open")</p>
+                    </div>
+                </details>
+
+                @if(radioResponseForm.error("hasSaAgentCode").isDefined){
+                    <span class="error-message">@Messages("invasive.error.no-radio.selected")</span>
+                }
+
+                <div class="multiple-choice" data-target="hasSaAgentCodeField">
                     <input id="hasSaAgentCode_true" type="radio" name="hasSaAgentCode" value="true" @if(radioResponseForm.error("saAgentCode").isDefined){checked}>
                     <label for="hasSaAgentCode_true">@Messages("invasive.radioResponse.yes")</label>
                 </div>
-                <div class="panel panel-border-narrow js-hidden @if(radioResponseForm.error("saAgentCode").isDefined){form-group-error}" id="hasSaAgentCode">
+                <div class="panel panel-border-narrow js-hidden @if(radioResponseForm.error("saAgentCode").isDefined){form-group-error}" id="hasSaAgentCodeField">
                     <label class="form-label" for="saAgentCode">@Messages("invasive.radioResponse.hidden.input.label.sa")</label>
                     @radioResponseForm.errors("saAgentCode").map { formError => <span class="error-message">@Messages(formError.message)</span> }
                     <input data-uppercase="true" class="form-control @if(radioResponseForm.error("saAgentCode").isDefined){form-control-error}" name="saAgentCode" type="text" id="saAgentCode">
@@ -55,15 +64,6 @@
                 </div>
             </fieldset>
         </div>
-
-        <details class="form-group">
-            <summary>
-                <span class="summary">@Messages("invasive.expandable.p1")</span>
-            </summary>
-            <div class="panel panel-border-narrow">
-                <p>@Messages("invasive.expandable.p1.open")</p>
-            </div>
-        </details>
 
         <div class="form-group">
             <button class="button" type="submit" id="continue">@Messages("button.continue")</button>
