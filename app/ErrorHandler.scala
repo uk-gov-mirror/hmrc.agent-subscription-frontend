@@ -55,11 +55,15 @@ class ErrorHandler @Inject()(
 
   override def resolveError(request: RequestHeader, exception: Throwable) = {
     auditServerError(request, exception)
+
     exception match {
       case _: NoActiveSession =>
         toGGLogin(if (env.mode.equals(Mode.Dev)) s"http://${request.host}${request.uri}" else s"${request.uri}")
-      case _: InsufficientEnrolments => Forbidden
-      case _                         => super.resolveError(request, exception)
+      case _: InsufficientEnrolments =>
+        Forbidden(
+          standardErrorTemplate("global.error.403.title", "global.error.403.heading", "global.error.403.message")(
+            request))
+      case _ => super.resolveError(request, exception)
     }
   }
 

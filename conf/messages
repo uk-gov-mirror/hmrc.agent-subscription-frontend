@@ -15,9 +15,21 @@ startpage.l2.2=how to set up your agent services account
 startpage.l2.3=how to add clients to your agent services account
 startpage.l2.4=when to use your agent services account
 
-global.error.403.title=Forbidden - 403
-global.error.403.heading=Sorry, you haven''t been authorised to proceed.
-global.error.403.message=
+global.error.403.title=You cannot access this page
+global.error.403.heading=You cannot access this page
+global.error.403.message=Check you have permission to access this page.</p><p><a href="https://www.gov.uk/government/organisations/hm-revenue-customs/contact/vat-online-services-helpdesk">Call the VAT online services helpline</a> for help with Making Tax Digital for VAT.</p><p><a href="https://www.gov.uk/government/organisations/hm-revenue-customs/contact/self-assessment-online-services-helpdesk">Call the HMRC Self Assessment online services helpline</a> for help with Making Tax Digital for Income Tax.
+
+global.error.badRequest400.title=Page not found
+global.error.badRequest400.heading=Page not found
+global.error.badRequest400.message=If you typed the web address, check it is correct.</p><p>If you pasted the web address, check you copied the entire address.</p><p class="margin-bottom-0">If the web address is correct or you selected a link or button:</p><ul class="list-bullets"><li><a href="https://www.gov.uk/government/organisations/hm-revenue-customs/contact/vat-online-services-helpdesk">call the VAT online services helpline</a> for help with Making Tax Digital for VAT</li><li><a href="https://www.gov.uk/government/organisations/hm-revenue-customs/contact/self-assessment-online-services-helpdesk">call the HMRC Self Assessment online services helpline</a> for help with Making Tax Digital for Income Tax.</li></ul><p>
+
+global.error.pageNotFound404.title=Page not found
+global.error.pageNotFound404.heading=Page not found
+global.error.pageNotFound404.message=If you typed the web address, check it is correct.</p><p>If you pasted the web address, check you copied the entire address.</p><p class="margin-bottom-0">If the web address is correct or you selected a link or button:</p><ul class="list-bullets"><li><a href="https://www.gov.uk/government/organisations/hm-revenue-customs/contact/vat-online-services-helpdesk">call the VAT online services helpline</a> for help with Making Tax Digital for VAT</li><li><a href="https://www.gov.uk/government/organisations/hm-revenue-customs/contact/self-assessment-online-services-helpdesk">call the HMRC Self Assessment online services helpline</a> for help with Making Tax Digital for Income Tax.</li></ul><p>
+
+global.error.InternalServerError500.title=Sorry, there is a problem with the service
+global.error.InternalServerError500.heading=Sorry, there is a problem with the service
+global.error.InternalServerError500.message=Try again later.</p><p><a href="https://www.gov.uk/government/organisations/hm-revenue-customs/contact/vat-online-services-helpdesk">Call the VAT online services helpline</a> for help with Making Tax Digital for VAT.</p><p><a href="https://www.gov.uk/government/organisations/hm-revenue-customs/contact/self-assessment-online-services-helpdesk">Call the HMRC Self Assessment online services helpline</a> for help with Making Tax Digital for Income Tax.
 
 ##Errors that override Play default messages
 error.maxLength = You must not enter more than {0} figures

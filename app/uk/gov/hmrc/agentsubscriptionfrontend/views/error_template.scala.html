@@ -17,11 +17,15 @@
 @(pageTitle: String, heading: String, message: String)(implicit request: Request[_], messages: Messages, appConfig: uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig)
 
 @contentHeader = {
-  <h1 class="heading-xlarge">@heading</h1>
+    <div class="error__content">
+        <h1 class="heading-xlarge">@heading</h1>
+    </div>
 }
 
 @mainContent = {
-  <p>@message</p>
+    <div class="error__content">
+        <p>@Html(message)</p>
+    </div>
 }
 
 @govuk_wrapper(appConfig = appConfig, title = pageTitle, contentHeader = Some(contentHeader), mainContent = mainContent, userIsLoggedIn = false)

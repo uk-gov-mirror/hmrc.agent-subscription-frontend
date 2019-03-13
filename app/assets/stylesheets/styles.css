@@ -11,11 +11,15 @@
 }
 
 .margin-bottom-0 {
-    margin-bottom: 0px !important;
+    margin-bottom: 0 !important;
 }
 
 .margin-bottom-20 {
-    margin-bottom: 20px;
+    margin-bottom: 20px !important;
+}
+
+.margin-bottom-40 {
+    margin-bottom: 40px !important;
 }
 
 .margin-bottom-40 {
@@ -357,5 +361,92 @@ input[type="text"].autocomplete__input {
     border-left-width: 5px;
 }
 
+.autocomplete__menu--overlay {
+    box-shadow: rgba(0, 0, 0, .256863) 0 2px 6px;
+    left: 0;
+    position: absolute;
+    top: 100%;
+    z-index: 100
+}
 
+.autocomplete__menu--inline {
+    position: relative
+}
 
+.autocomplete__option {
+    border-bottom: solid #bfc1c3;
+    border-width: 1px 0;
+    cursor: pointer;
+    display: block;
+    position: relative
+}
+
+.autocomplete__option > * {
+    pointer-events: none
+}
+
+.autocomplete__option--odd {
+    background-color: #fafafa;
+}
+
+.autocomplete__option:first-of-type {
+    border-top-width: 0
+}
+
+.autocomplete__option:last-of-type {
+    border-bottom-width: 0
+}
+
+.autocomplete__option--focused, .autocomplete__option:hover {
+    background-color: #005ea5;
+    border-color: #005ea5;
+    color: #fff;
+    outline: 0
+}
+
+.autocomplete__option--no-results {
+    background-color: #fafafa;
+    color: #646b6f;
+    cursor: not-allowed
+}
+
+.autocomplete__hint, .autocomplete__input, .autocomplete__option {
+    font-size: 16px;
+    line-height: 1.25
+}
+
+.autocomplete__hint, .autocomplete__option {
+    padding: 4px
+}
+
+@media (min-width: 641px) {
+    .autocomplete__hint, .autocomplete__input, .autocomplete__option {
+        font-size: 19px;
+        line-height: 1.31579
+    }
+}
+
+input[type="text"].autocomplete__input {
+    width: 100%
+}
+
+.autocomplete-wrapper {
+    width: 50%;
+}
+
+#hasSaAgentCodeField {
+    margin-left: 16px;
+    border-left-width: 5px;
+}
+
+.list-bullets {
+    padding-left: 20px;
+    list-style-type: disc;
+}
+
+@media (min-width: 641px){
+
+    .error__content {
+        width: 61.666667%;
+    }
+}
