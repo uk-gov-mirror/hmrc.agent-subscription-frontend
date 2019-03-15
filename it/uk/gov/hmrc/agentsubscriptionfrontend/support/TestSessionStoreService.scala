@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.support
 
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{AMLSDetails, InitialDetails, KnownFactsResult}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AMLSDetails, AgentSession, InitialDetails, KnownFactsResult}
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.agentsubscriptionfrontend.util._
 import uk.gov.hmrc.http.HeaderCarrier
@@ -33,7 +33,8 @@ class TestSessionStoreService extends SessionStoreService(null) {
     var wasEligibleForMapping: Option[Boolean] = None,
     var amlsDetails: Option[AMLSDetails] = None,
     var goBackUrl: Option[String] = None,
-    var changingAnswers: Option[Boolean] = None)
+    var changingAnswers: Option[Boolean] = None,
+    var agentSession: Option[AgentSession] = None)
 
   private val sessions = collection.mutable.Map[String, Session]()
 
@@ -96,6 +97,12 @@ class TestSessionStoreService extends SessionStoreService(null) {
 
   override def fetchIsChangingAnswers(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[Boolean]] =
     toFuture(currentSession.changingAnswers)
+
+  override def cacheAgentSession(agentSession: AgentSession)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
+    toFuture(currentSession.agentSession = Some(agentSession))
+
+  override def fetchAgentSession(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[AgentSession]] =
+    toFuture(currentSession.agentSession)
 
   override def remove()(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
     Future {

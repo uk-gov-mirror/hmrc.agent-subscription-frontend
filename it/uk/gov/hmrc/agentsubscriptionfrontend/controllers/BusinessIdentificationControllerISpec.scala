@@ -137,7 +137,7 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
 
         val result = await(controller.submitBusinessTypeForm(request))
         result.header.headers(LOCATION) shouldBe routes.BusinessIdentificationController
-          .submitBusinessDetailsForm(validBusinessTypeIdentifier)
+          .showUtrForm(validBusinessTypeIdentifier)
           .url
       }
     }
@@ -195,6 +195,47 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
         "invalid.businessType.p1", "invalid.businessType.l1",
         "invalid.businessType.l2", "invalid.businessType.l3",
         "invalid.businessType.l4", "invalid.businessType.button")
+    }
+  }
+
+  "showUtrFormPage" should {
+    validBusinessTypes.foreach { validBusinessTypeIdentifier =>
+      s"display the page as expected when is business type is $validBusinessTypeIdentifier" in {
+        val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+
+        val result = await(controller.showUtrForm(validBusinessTypeIdentifier)(request))
+
+        result should containMessages(
+          "utr.title",
+          s"utr.header.${validBusinessTypeIdentifier.key}"
+        )
+
+        result should containSubstrings(Messages("utr.p1"))
+      }
+    }
+  }
+
+  "submitUtrFormPage" should {
+      "display the page as expected when the form is valid and redirect to /postcode page" in {
+        val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("utr" -> validUtr.value)
+
+        val result = await(controller.submitUtrForm(IdentifyBusinessType.SoleTrader)(request))
+
+        status(result) shouldBe 303
+        redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showBusinessDetailsForm(IdentifyBusinessType.SoleTrader).url)
+      }
+
+    "handle form with errors and show the same again" in {
+      val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("utr" -> "invalidUtr")
+
+      val result = await(controller.submitUtrForm(IdentifyBusinessType.SoleTrader)(request))
+
+      status(result) shouldBe 200
+      result should containMessages(
+        "utr.title",
+        s"utr.header.${IdentifyBusinessType.SoleTrader.key}",
+        "error.sautr.invalid"
+      )
     }
   }
 

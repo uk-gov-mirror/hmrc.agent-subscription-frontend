@@ -129,6 +129,14 @@ businessType.progressive.content.p1=You can only get an agent services account i
 businessType.progressive.content.link=Finish and sign out
 businessType.error.no-radio-selected = Select your business type
 
+#UTR details page
+utr.title=What is the Unique Taxpayer Reference (UTR) of your company?
+utr.header.sole_trader=What is the Unique Taxpayer Reference (UTR) you use for Self Assessment?
+utr.header.limited_company=What is the Unique Taxpayer Reference (UTR) of your company?
+utr.header.partnership=What is the Unique Taxpayer Reference (UTR) of your partnership?
+utr.header.llp=What is the Unique Taxpayer Reference (UTR) of your limited liability partnership?
+utr.p1=A Unique Taxpayer Reference is 10 numbers like 12345 67890. It will be on tax returns and other letters about Corporation Tax. It may be called 'reference', 'UTR' or 'official use'. <a href="https://www.gov.uk/find-lost-utr-number" target="_blank" rel="noopener noreferrer">Find a lost UTR (opens in a new window or tab)</a>.
+
 #Invalid Business Type
 invalid.businessType.title=You cannot create an agent services account
 invalid.businessType.p1=You can only create an agent services account if your business is one of the following:

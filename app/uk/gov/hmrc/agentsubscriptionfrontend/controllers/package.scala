@@ -18,6 +18,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend
 
 import play.api.data.Form
 import play.api.data.Forms.{mapping, _}
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TaxIdentifierFormatters._
@@ -40,6 +41,16 @@ package object controllers {
       Form[BusinessType](
         mapping("businessType" -> optional(text).verifying(radioInputSelected("businessType.error.no-radio-selected")))(
           input => BusinessType(IdentifyBusinessType(input.get)))(bType => Some(Some(bType.businessType.key)))
+      )
+
+    def utrForm(businessType: String): Form[Utr] =
+      Form[Utr](
+        mapping("utr" -> businessUtr(businessType))(input => Utr(input))(utr => Some(utr.value))
+      )
+
+    def postcodeForm: Form[Postcode] =
+      Form[Postcode](
+        mapping("postcode" -> postcode)(input => Postcode(input))(postcode => Some(postcode.value))
       )
 
     val confirmBusinessForm: Form[ConfirmBusiness] =

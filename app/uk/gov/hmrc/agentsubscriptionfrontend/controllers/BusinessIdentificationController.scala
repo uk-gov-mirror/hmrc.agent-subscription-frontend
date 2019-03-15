@@ -102,12 +102,47 @@ class BusinessIdentificationController @Inject()(
             if (validatedBusinessType.businessType == Invalid)
               Redirect(routes.BusinessIdentificationController.showInvalidBusinessType)
             else
-              Redirect(
-                routes.BusinessIdentificationController.showBusinessDetailsForm(validatedBusinessType.businessType))
+              Redirect(routes.BusinessIdentificationController.showUtrForm(validatedBusinessType.businessType))
           }
         )
     }
   }
+
+  def showUtrForm(businessType: IdentifyBusinessType): Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { implicit agent =>
+      withMaybeContinueUrlCached {
+        Ok(html.utr_details(utrForm(businessType.key), businessType))
+      }
+    }
+  }
+
+  def submitUtrForm(businessType: IdentifyBusinessType): Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { implicit agent =>
+      utrForm(businessType.key)
+        .bindFromRequest()
+        .fold(
+          formWithErrors => {
+            Ok(html.utr_details(formWithErrors, businessType))
+          },
+          validUtr => {
+            sessionStoreService.cacheAgentSession(AgentSession(Some(validUtr))).map { _ =>
+              //temporarily redirecting to business-details page instead of required /postcode page , so QA can continue the journey
+              Redirect(routes.BusinessIdentificationController.showBusinessDetailsForm(businessType))
+            }
+          }
+        )
+    }
+  }
+
+  def showPostcodeForm(): Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { implicit agent =>
+      withMaybeContinueUrlCached {
+        Ok(html.postcode(postcodeForm))
+      }
+    }
+  }
+
+  def submitPostcodeForm(): Action[AnyContent] = ???
 
   def showInvalidBusinessType: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { implicit agent =>
