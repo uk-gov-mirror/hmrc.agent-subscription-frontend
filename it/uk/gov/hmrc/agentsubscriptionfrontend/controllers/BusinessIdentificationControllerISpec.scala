@@ -209,8 +209,9 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
           "utr.title",
           s"utr.header.${validBusinessTypeIdentifier.key}"
         )
+        val utrTextKey = if(validBusinessTypeIdentifier.key == "limited_company" ) {"Corporation Tax"} else {"Self Assessment"}
 
-        result should containSubstrings(Messages("utr.p1"))
+        result should containSubstrings(Messages("utr.p1", utrTextKey))
       }
     }
   }

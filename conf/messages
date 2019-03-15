@@ -57,12 +57,14 @@ error.addressline.4.maxlength = Address line 4 must be 35 characters or less
 error.addressline.4.invalid = Address line 4 must only include letters a to z, numbers, commas, ampersands, single quotation marks, full stops, apostrophes, hyphens, forward slashes, and spaces
 error.utr.blank= Enter your business''s Unique Taxpayer Reference (UTR)
 error.utr.invalid = Unique Taxpayer Reference (UTR) must be 10 numbers
-error.sautr.blank=Enter your Self Assessment Unique Taxpayer Reference (UTR)
-error.sautr.invalid=Self Assessment Unique Taxpayer Reference (UTR) must be 10 numbers
-error.companyutr.blank=Enter your company Unique Taxpayer Reference (UTR)
-error.companyutr.invalid=Company Unique Taxpayer Reference (UTR) must be 10 numbers
-error.partnershiputr.blank=Enter your Partnership Unique Taxpayer Reference (UTR)
-error.partnershiputr.invalid=Partnership Unique Taxpayer Reference (UTR) must be 10 numbers
+error.sautr.blank=Enter the Unique Taxpayer Reference (UTR) you use for Self Assessment?
+error.sautr.invalid=The Unique Taxpayer Reference (UTR) you use for Self Assessment must be 10 numbers
+error.companyutr.blank=Enter your company''s Unique Taxpayer Reference (UTR)
+error.companyutr.invalid=Your company''s Unique Taxpayer Reference (UTR) must be 10 numbers
+error.partnershiputr.blank=Enter your partnership''s Unique Taxpayer Reference (UTR)
+error.partnershiputr.invalid=Your partnership''s Unique Taxpayer Reference (UTR) must be 10 numbers
+error.llputr.blank=Enter your partnership''s Unique Taxpayer Reference (UTR)
+error.llputr.invalid=Your limited liability partnership''s Unique Taxpayer Reference (UTR) must be 10 numbers
 error.client.sautr.blank=Enter the client''s Self Assessment Unique Taxpayer Reference (UTR)
 error.client.sautr.invalid=Self Assessment Unique Taxpayer Reference (UTR) must be 10 numbers
 error.business-name.empty = Enter your business name
@@ -135,7 +137,7 @@ utr.header.sole_trader=What is the Unique Taxpayer Reference (UTR) you use for S
 utr.header.limited_company=What is the Unique Taxpayer Reference (UTR) of your company?
 utr.header.partnership=What is the Unique Taxpayer Reference (UTR) of your partnership?
 utr.header.llp=What is the Unique Taxpayer Reference (UTR) of your limited liability partnership?
-utr.p1=A Unique Taxpayer Reference is 10 numbers like 12345 67890. It will be on tax returns and other letters about Corporation Tax. It may be called 'reference', 'UTR' or 'official use'. <a href="https://www.gov.uk/find-lost-utr-number" target="_blank" rel="noopener noreferrer">Find a lost UTR (opens in a new window or tab)</a>.
+utr.p1=A Unique Taxpayer Reference is 10 numbers like 12345 67890. It will be on tax returns and other letters about {0}. It may be called ''reference'', ''UTR'' or ''official use''. <a href="https://www.gov.uk/find-lost-utr-number" target="_blank" rel="noopener noreferrer">Find a lost UTR (opens in a new window or tab)</a>.
 
 #Invalid Business Type
 invalid.businessType.title=You cannot create an agent services account

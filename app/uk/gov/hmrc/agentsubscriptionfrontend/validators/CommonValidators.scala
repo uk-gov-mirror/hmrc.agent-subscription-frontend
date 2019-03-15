@@ -58,8 +58,10 @@ object CommonValidators {
         ("error.sautr.blank", "error.sautr.invalid")
       case "limited_company" =>
         ("error.companyutr.blank", "error.companyutr.invalid")
-      case "partnership" | "llp" =>
+      case "partnership" =>
         ("error.partnershiputr.blank", "error.partnershiputr.invalid")
+      case "llp" =>
+        ("error.llputr.blank", "error.llputr.invalid")
       case _ =>
         DefaultUtrErrors
     }
