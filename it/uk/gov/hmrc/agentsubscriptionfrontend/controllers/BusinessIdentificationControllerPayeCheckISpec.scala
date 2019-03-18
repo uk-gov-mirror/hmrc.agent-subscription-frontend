@@ -1,10 +1,11 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import play.api.test.Helpers._
-import uk.gov.hmrc.agentsubscriptionfrontend.models.KnownFactsResult
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, KnownFactsResult}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub.withMatchingUtrAndPostcode
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.subscribingAgentEnrolledForNonMTD
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class BusinessIdentificationControllerPayeCheckISpec extends BusinessIdentificationControllerISpec {
   override def agentAssuranceRun: Boolean = true
@@ -22,7 +23,9 @@ class BusinessIdentificationControllerPayeCheckISpec extends BusinessIdentificat
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
-      val result = await(controller.submitBusinessDetailsForm(validBusinessTypes.head)(request))
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(validBusinessTypes.head)))
+
+      val result = await(controller.submitBusinessDetailsForm()(request))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showConfirmBusinessForm().url)
@@ -47,7 +50,9 @@ class BusinessIdentificationControllerPayeCheckISpec extends BusinessIdentificat
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
-      val result = await(controller.submitBusinessDetailsForm(validBusinessTypes.head)(request))
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(validBusinessTypes.head)))
+
+      val result = await(controller.submitBusinessDetailsForm()(request))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.invasiveCheckStart().url)

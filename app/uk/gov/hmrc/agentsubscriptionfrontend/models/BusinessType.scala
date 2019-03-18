@@ -15,32 +15,61 @@
  */
 
 package uk.gov.hmrc.agentsubscriptionfrontend.models
+import play.api.libs.json._
 
-case class BusinessType(businessType: IdentifyBusinessType)
-
-sealed trait IdentifyBusinessType {
-  val key: String = this match {
-    case IdentifyBusinessType.SoleTrader     => "sole_trader"
-    case IdentifyBusinessType.LimitedCompany => "limited_company"
-    case IdentifyBusinessType.Partnership    => "partnership"
-    case IdentifyBusinessType.Llp            => "llp"
-    case IdentifyBusinessType.Invalid        => "invalid"
-  }
+sealed trait BusinessType {
+  val key: String
 }
 
-object IdentifyBusinessType {
+object BusinessType {
 
-  case object SoleTrader extends IdentifyBusinessType
-  case object LimitedCompany extends IdentifyBusinessType
-  case object Partnership extends IdentifyBusinessType
-  case object Llp extends IdentifyBusinessType
-  case object Invalid extends IdentifyBusinessType
+  case object SoleTrader extends BusinessType {
+    override val key: String = "sole_trader"
+  }
+  case object LimitedCompany extends BusinessType {
+    override val key: String = "limited_company"
+  }
 
-  def apply(convertToType: String): IdentifyBusinessType = convertToType match {
-    case "sole_trader"     => IdentifyBusinessType.SoleTrader
-    case "limited_company" => IdentifyBusinessType.LimitedCompany
-    case "partnership"     => IdentifyBusinessType.Partnership
-    case "llp"             => IdentifyBusinessType.Llp
-    case _                 => IdentifyBusinessType.Invalid
+  case object Partnership extends BusinessType {
+    override val key: String = "partnership"
+  }
+
+  case object Llp extends BusinessType {
+    override val key: String = "llp"
+  }
+
+  case object Invalid extends BusinessType {
+    override val key: String = "inValid"
+  }
+
+  def apply(convertToType: String): BusinessType = convertToType match {
+    case "sole_trader"     => SoleTrader
+    case "limited_company" => LimitedCompany
+    case "partnership"     => Partnership
+    case "llp"             => Llp
+    case _                 => Invalid
+  }
+
+  implicit val format: Format[BusinessType] = new Format[BusinessType] {
+
+    override def reads(json: JsValue): JsResult[BusinessType] = {
+      json.as[String] match {
+        case "sole_trader"     => JsSuccess(SoleTrader)
+        case "limited_company" => JsSuccess(LimitedCompany)
+        case "partnership"     => JsSuccess(Partnership)
+        case "llp"             => JsSuccess(Llp)
+        case e                 => JsError(s"invalid value for BusinessType: $e")
+      }
+      JsSuccess(BusinessType.apply(json.as[String]))
+    }
+
+    override def writes(o: BusinessType): JsValue =
+      o match {
+        case SoleTrader     => JsString("sole_trader")
+        case LimitedCompany => JsString("limited_company")
+        case Partnership    => JsString("partnership")
+        case Llp            => JsString("llp")
+        case e              => throw new RuntimeException(s"invalid BusinessType: $e")
+      }
   }
 }

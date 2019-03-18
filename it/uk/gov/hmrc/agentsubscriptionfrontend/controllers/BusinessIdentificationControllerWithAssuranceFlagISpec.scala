@@ -19,11 +19,12 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 import com.github.tomakehurst.wiremock.client.WireMock._
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentsubscriptionfrontend.audit.AgentSubscriptionFrontendEvent
-import uk.gov.hmrc.agentsubscriptionfrontend.models.KnownFactsResult
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, KnownFactsResult}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub.withMatchingUtrAndPostcode
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.subscribingAgentEnrolledForNonMTD
 import uk.gov.hmrc.play.encoding.UriPathEncoding.encodePathSegment
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class BusinessIdentificationControllerWithAssuranceFlagISpec extends BusinessIdentificationControllerISpec {
   override def agentAssuranceRun = true
@@ -42,7 +43,9 @@ class BusinessIdentificationControllerWithAssuranceFlagISpec extends BusinessIde
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
-      val result = await(controller.submitBusinessDetailsForm(validBusinessTypes.head)(request))
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(validBusinessTypes.head)))
+
+      val result = await(controller.submitBusinessDetailsForm()(request))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showConfirmBusinessForm().url)
@@ -67,7 +70,9 @@ class BusinessIdentificationControllerWithAssuranceFlagISpec extends BusinessIde
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
-      val result = await(controller.submitBusinessDetailsForm(validBusinessTypes.head)(request))
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(validBusinessTypes.head)))
+
+      val result = await(controller.submitBusinessDetailsForm()(request))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showConfirmBusinessForm().url)
@@ -91,7 +96,9 @@ class BusinessIdentificationControllerWithAssuranceFlagISpec extends BusinessIde
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
-      val result = await(controller.submitBusinessDetailsForm(validBusinessTypes.head)(request))
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(validBusinessTypes.head)))
+
+      val result = await(controller.submitBusinessDetailsForm()(request))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showAlreadySubscribed().url)
@@ -109,7 +116,9 @@ class BusinessIdentificationControllerWithAssuranceFlagISpec extends BusinessIde
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
-      val result = await(controller.submitBusinessDetailsForm(validBusinessTypes.head)(request))
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(validBusinessTypes.head)))
+
+      val result = await(controller.submitBusinessDetailsForm()(request))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.invasiveCheckStart().url)
@@ -131,7 +140,9 @@ class BusinessIdentificationControllerWithAssuranceFlagISpec extends BusinessIde
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
-      val result = await(controller.submitBusinessDetailsForm(validBusinessTypes.head)(request))
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(validBusinessTypes.head)))
+
+      val result = await(controller.submitBusinessDetailsForm()(request))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.invasiveCheckStart().url)
@@ -154,7 +165,9 @@ class BusinessIdentificationControllerWithAssuranceFlagISpec extends BusinessIde
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
-      val result = await(controller.submitBusinessDetailsForm(validBusinessTypes.head)(request))
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(validBusinessTypes.head)))
+
+      val result = await(controller.submitBusinessDetailsForm()(request))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showAlreadySubscribed().url)
@@ -172,7 +185,9 @@ class BusinessIdentificationControllerWithAssuranceFlagISpec extends BusinessIde
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
-      val result = await(controller.submitBusinessDetailsForm(validBusinessTypes.head)(request))
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(validBusinessTypes.head)))
+
+      val result = await(controller.submitBusinessDetailsForm()(request))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showConfirmBusinessForm().url)
@@ -194,7 +209,9 @@ class BusinessIdentificationControllerWithAssuranceFlagISpec extends BusinessIde
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
-      val result = await(controller.submitBusinessDetailsForm(validBusinessTypes.head)(request))
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(validBusinessTypes.head)))
+
+      val result = await(controller.submitBusinessDetailsForm()(request))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showConfirmBusinessForm().url)
@@ -216,7 +233,9 @@ class BusinessIdentificationControllerWithAssuranceFlagISpec extends BusinessIde
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
-      val result = await(controller.submitBusinessDetailsForm(validBusinessTypes.head)(request))
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(validBusinessTypes.head)))
+
+      val result = await(controller.submitBusinessDetailsForm()(request))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showConfirmBusinessForm().url)
@@ -238,7 +257,9 @@ class BusinessIdentificationControllerWithAssuranceFlagISpec extends BusinessIde
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
-      val result = await(controller.submitBusinessDetailsForm(validBusinessTypes.head)(request))
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(validBusinessTypes.head)))
+
+      val result = await(controller.submitBusinessDetailsForm()(request))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showConfirmBusinessForm().url)
@@ -260,7 +281,9 @@ class BusinessIdentificationControllerWithAssuranceFlagISpec extends BusinessIde
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
-      val result = await(controller.submitBusinessDetailsForm(validBusinessTypes.head)(request))
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(validBusinessTypes.head)))
+
+      val result = await(controller.submitBusinessDetailsForm()(request))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showConfirmBusinessForm().url)
@@ -282,7 +305,9 @@ class BusinessIdentificationControllerWithAssuranceFlagISpec extends BusinessIde
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
-      val result = await(controller.submitBusinessDetailsForm(validBusinessTypes.head)(request))
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(validBusinessTypes.head)))
+
+      val result = await(controller.submitBusinessDetailsForm()(request))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showConfirmBusinessForm().url)
@@ -299,7 +324,9 @@ class BusinessIdentificationControllerWithAssuranceFlagISpec extends BusinessIde
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
-      val result = await(controller.submitBusinessDetailsForm(validBusinessTypes.head)(request))
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(validBusinessTypes.head)))
+
+      val result = await(controller.submitBusinessDetailsForm()(request))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.StartController.showCannotCreateAccount().url)
@@ -327,7 +354,9 @@ class BusinessIdentificationControllerWithAssuranceFlagISpec extends BusinessIde
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
-      val result = await(controller.submitBusinessDetailsForm(validBusinessTypes.head)(request))
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(validBusinessTypes.head)))
+
+      val result = await(controller.submitBusinessDetailsForm()(request))
 
       verify(
         1,
@@ -349,7 +378,9 @@ class BusinessIdentificationControllerWithAssuranceFlagISpec extends BusinessIde
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
-      an[IllegalStateException] shouldBe thrownBy(await(controller.submitBusinessDetailsForm(validBusinessTypes.head)(request)))
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(validBusinessTypes.head)))
+
+      an[IllegalStateException] shouldBe thrownBy(await(controller.submitBusinessDetailsForm()(request)))
 
       verify(
         1,
@@ -367,7 +398,9 @@ class BusinessIdentificationControllerWithAssuranceFlagISpec extends BusinessIde
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
-      val result = await(controller.submitBusinessDetailsForm(validBusinessTypes.head)(request))
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(validBusinessTypes.head)))
+
+      val result = await(controller.submitBusinessDetailsForm()(request))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showConfirmBusinessForm().url)
@@ -398,7 +431,9 @@ class BusinessIdentificationControllerWithAssuranceFlagISpec extends BusinessIde
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
-      val result = await(controller.submitBusinessDetailsForm(validBusinessTypes.head)(request))
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(validBusinessTypes.head)))
+
+      val result = await(controller.submitBusinessDetailsForm()(request))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showConfirmBusinessForm().url)

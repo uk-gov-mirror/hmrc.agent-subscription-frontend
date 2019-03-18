@@ -8,15 +8,22 @@ GET         /return-after-gg-creds-created        uk.gov.hmrc.agentsubscriptionf
 GET         /business-type                        uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showBusinessTypeForm
 POST        /business-type                        uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.submitBusinessTypeForm
 
-GET         /unique-taxpayer-reference            uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showUtrForm(businessType: uk.gov.hmrc.agentsubscriptionfrontend.models.IdentifyBusinessType)
-POST        /unique-taxpayer-reference            uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.submitUtrForm(businessType: uk.gov.hmrc.agentsubscriptionfrontend.models.IdentifyBusinessType)
+GET         /unique-taxpayer-reference            uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showUtrForm()
+POST        /unique-taxpayer-reference            uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.submitUtrForm()
 
 GET         /postcode                             uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showPostcodeForm
 POST        /postcode                             uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.submitPostcodeForm
 
+GET         /national-insurance-number            uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showNationalInsuranceNumberPage
+POST        /national-insurance-number            uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.submitNationalInsuranceNumberPage
+
+GET         /company-registration-number          uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showCompanyRegNumberPage
+POST        /company-registration-number          uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.submitCompanyRegNumberPage
+
+
 GET         /invalid-business-type                uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showInvalidBusinessType
-GET         /business-details                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showBusinessDetailsForm(businessType: uk.gov.hmrc.agentsubscriptionfrontend.models.IdentifyBusinessType)
-POST        /business-details                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.submitBusinessDetailsForm(businessType: uk.gov.hmrc.agentsubscriptionfrontend.models.IdentifyBusinessType)
+GET         /business-details                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showBusinessDetailsForm()
+POST        /business-details                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.submitBusinessDetailsForm()
 GET         /no-match                             uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showNoAgencyFound
 GET         /confirm-business                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showConfirmBusinessForm
 POST        /confirm-business                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.submitConfirmBusinessForm

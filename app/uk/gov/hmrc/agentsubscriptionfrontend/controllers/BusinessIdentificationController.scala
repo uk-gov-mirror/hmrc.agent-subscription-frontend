@@ -16,8 +16,8 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
-import javax.inject.{Inject, Singleton}
 import com.kenshoo.play.metrics.Metrics
+import javax.inject.{Inject, Singleton}
 import play.api.Logger
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{AnyContent, Request, _}
@@ -26,26 +26,26 @@ import uk.gov.hmrc.agentsubscriptionfrontend.audit.AuditService
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.{Agent, AuthActions}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.{AgentAssuranceConnector, AgentSubscriptionConnector}
+import uk.gov.hmrc.agentsubscriptionfrontend.models
 import uk.gov.hmrc.agentsubscriptionfrontend.models.AssuranceResults._
+import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.{Invalid, LimitedCompany, Llp, Partnership, SoleTrader}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidVariantsTaxPayerOptionForm._
+import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidationResult.FailureReason._
+import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidationResult.{Failure, Pass}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.service._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{Monitoring, TaxIdentifierFormatters}
+import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
+import uk.gov.hmrc.agentsubscriptionfrontend.validators.InitialDetailsValidator
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html.invasive_check_start
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier}
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
-import uk.gov.hmrc.agentsubscriptionfrontend.models
-import uk.gov.hmrc.agentsubscriptionfrontend.models.IdentifyBusinessType.Invalid
-import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
-import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidVariantsTaxPayerOptionForm._
-import uk.gov.hmrc.agentsubscriptionfrontend.validators.InitialDetailsValidator
-import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidationResult.FailureReason._
-import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidationResult.{Failure, Pass}
-import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class BusinessIdentificationController @Inject()(
@@ -60,13 +60,15 @@ class BusinessIdentificationController @Inject()(
   val initialDetailsValidator: InitialDetailsValidator,
   auditService: AuditService,
   override implicit val appConfig: AppConfig,
+  override implicit val ec: ExecutionContext,
   val metrics: Metrics,
   commonRouting: CommonRouting)
-    extends FrontendController with I18nSupport with AuthActions with SessionDataSupport with Monitoring {
+    extends FrontendController with I18nSupport with AuthActions with SessionDataSupport with Monitoring
+    with SessionBehaviour {
 
-  import continueUrlActions._
   import BusinessIdentificationForms._
   import commonRouting.withCleanCreds
+  import continueUrlActions._
 
   val showCreateNewAccount: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
@@ -99,50 +101,115 @@ class BusinessIdentificationController @Inject()(
             Ok(html.business_type(formWithErrors))
           },
           validatedBusinessType => {
-            if (validatedBusinessType.businessType == Invalid)
-              Redirect(routes.BusinessIdentificationController.showInvalidBusinessType)
+            if (validatedBusinessType == Invalid)
+              Redirect(routes.BusinessIdentificationController.showInvalidBusinessType())
             else
-              Redirect(routes.BusinessIdentificationController.showUtrForm(validatedBusinessType.businessType))
+              sessionStoreService.cacheAgentSession(AgentSession(businessType = Some(validatedBusinessType))).map { _ =>
+                Redirect(routes.BusinessIdentificationController.showUtrForm())
+              }
           }
         )
     }
   }
 
-  def showUtrForm(businessType: IdentifyBusinessType): Action[AnyContent] = Action.async { implicit request =>
+  def showUtrForm(): Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { implicit agent =>
       withMaybeContinueUrlCached {
-        Ok(html.utr_details(utrForm(businessType.key), businessType))
+        withValidBusinessType { businessType =>
+          Ok(html.utr_details(utrForm(businessType.key), businessType))
+        }
       }
     }
   }
 
-  def submitUtrForm(businessType: IdentifyBusinessType): Action[AnyContent] = Action.async { implicit request =>
+  def submitUtrForm(): Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { implicit agent =>
-      utrForm(businessType.key)
-        .bindFromRequest()
-        .fold(
-          formWithErrors => {
-            Ok(html.utr_details(formWithErrors, businessType))
-          },
-          validUtr => {
-            sessionStoreService.cacheAgentSession(AgentSession(Some(validUtr))).map { _ =>
-              //temporarily redirecting to business-details page instead of required /postcode page , so QA can continue the journey
-              Redirect(routes.BusinessIdentificationController.showBusinessDetailsForm(businessType))
+      withValidBusinessType { businessType =>
+        utrForm(businessType.key)
+          .bindFromRequest()
+          .fold(
+            formWithErrors => {
+              Ok(html.utr_details(formWithErrors, businessType))
+            },
+            validUtr => {
+              sessionStoreService.fetchAgentSession.flatMap {
+                case Some(existingSession) =>
+                  sessionStoreService
+                    .cacheAgentSession(existingSession.copy(utr = Some(validUtr)))
+                    .map { _ =>
+                      Redirect(routes.BusinessIdentificationController.showPostcodeForm())
+                    }
+                case None => Redirect(routes.BusinessIdentificationController.showBusinessTypeForm())
+              }
+
             }
-          }
-        )
+          )
+      }
     }
   }
 
   def showPostcodeForm(): Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { implicit agent =>
       withMaybeContinueUrlCached {
-        Ok(html.postcode(postcodeForm))
+        withValidBusinessType { _ =>
+          Ok(html.postcode(postcodeForm))
+        }
       }
     }
   }
 
-  def submitPostcodeForm(): Action[AnyContent] = ???
+  def submitPostcodeForm(): Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { implicit agent =>
+      withMaybeContinueUrlCached {
+        withValidBusinessType { businessType =>
+          postcodeForm
+            .bindFromRequest()
+            .fold(
+              formWithErrors => Ok(html.postcode(formWithErrors)),
+              validPostcode => {
+                sessionStoreService.fetchAgentSession.flatMap {
+                  case Some(existingSession) =>
+                    sessionStoreService
+                      .cacheAgentSession(existingSession.copy(postcode = Some(validPostcode)))
+                      .map { _ =>
+                        if (businessType == SoleTrader || businessType == Partnership) {
+                          Redirect(routes.BusinessIdentificationController.showNationalInsuranceNumberPage())
+                        } else if (businessType == LimitedCompany || businessType == Llp) {
+                          Redirect(routes.BusinessIdentificationController.showCompanyRegNumberPage())
+                        } else {
+                          Redirect(routes.BusinessIdentificationController.showBusinessTypeForm())
+                        }
+                      }
+                  case None => Redirect(routes.BusinessIdentificationController.showBusinessTypeForm())
+                }
+              }
+            )
+        }
+      }
+    }
+  }
+
+  def showNationalInsuranceNumberPage(): Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { implicit agent =>
+      withMaybeContinueUrlCached {
+        //temporarily redirecting to business-details page until this page is implemented
+        Redirect(routes.BusinessIdentificationController.showBusinessDetailsForm())
+      }
+    }
+  }
+
+  def submitNationalInsuranceNumberPage: Action[AnyContent] = ???
+
+  def showCompanyRegNumberPage(): Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { implicit agent =>
+      withMaybeContinueUrlCached {
+        //temporarily redirecting to business-details page until this page is implemented
+        Redirect(routes.BusinessIdentificationController.showBusinessDetailsForm())
+      }
+    }
+  }
+
+  def submitCompanyRegNumberPage: Action[AnyContent] = ???
 
   def showInvalidBusinessType: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { implicit agent =>
@@ -150,20 +217,21 @@ class BusinessIdentificationController @Inject()(
     }
   }
 
-  def showBusinessDetailsForm(businessType: IdentifyBusinessType): Action[AnyContent] = Action.async {
-    implicit request =>
-      withSubscribingAgent { implicit agent =>
-        withMaybeContinueUrlCached {
+  def showBusinessDetailsForm(): Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { implicit agent =>
+      withMaybeContinueUrlCached {
 
-          mark("Count-Subscription-BusinessDetails-Start")
+        mark("Count-Subscription-BusinessDetails-Start")
+        withValidBusinessType { businessType =>
           Ok(html.business_details(knownFactsForm(businessType.key), businessType))
         }
       }
+    }
   }
 
-  def submitBusinessDetailsForm(businessType: IdentifyBusinessType): Action[AnyContent] = Action.async {
-    implicit request =>
-      withSubscribingAgent { implicit agent =>
+  def submitBusinessDetailsForm(): Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { implicit agent =>
+      withValidBusinessType { businessType =>
         knownFactsForm(businessType.key)
           .bindFromRequest()
           .fold(
@@ -171,7 +239,7 @@ class BusinessIdentificationController @Inject()(
             knownFacts =>
               if (Utr.isValid(knownFacts.utr.value)) {
                 checkBusinessDetailsGivenValidForm(knownFacts).map { resultWithSession =>
-                  val sessionData = (request.session.data ++ resultWithSession.session.data.toSeq) + ("businessType" -> businessType.key)
+                  val sessionData = request.session.data ++ resultWithSession.session.data.toSeq
                   resultWithSession.withSession(sessionData.toSeq: _*)
                 }
               } else {
@@ -180,6 +248,7 @@ class BusinessIdentificationController @Inject()(
             }
           )
       }
+    }
   }
 
   private def checkBusinessDetailsGivenValidForm(
@@ -235,17 +304,16 @@ class BusinessIdentificationController @Inject()(
 
   val showConfirmBusinessForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      if (request.session.get("businessType").isEmpty)
-        Redirect(routes.BusinessIdentificationController.showBusinessTypeForm())
-
-      withKnownFactsResult { knownFactsResult =>
-        Ok(
-          html.confirm_business(
-            confirmBusinessRadioForm = confirmBusinessForm,
-            registrationName = knownFactsResult.taxpayerName,
-            utr = TaxIdentifierFormatters.prettify(knownFactsResult.utr),
-            businessAddress = knownFactsResult.address.getOrElse(throw new Exception("address object missing"))
-          ))
+      withValidBusinessType { businessType =>
+        withKnownFactsResult { knownFactsResult =>
+          Ok(
+            html.confirm_business(
+              confirmBusinessRadioForm = confirmBusinessForm,
+              registrationName = knownFactsResult.taxpayerName,
+              utr = TaxIdentifierFormatters.prettify(knownFactsResult.utr),
+              businessAddress = knownFactsResult.address.getOrElse(throw new Exception("address object missing"))
+            ))
+        }
       }
     }
   }
@@ -269,11 +337,11 @@ class BusinessIdentificationController @Inject()(
               }
             },
             validatedBusiness => {
-              val response: Future[Call] = validatedBusiness.confirm match {
+              val response: Future[Result] = validatedBusiness.confirm match {
                 case Yes =>
                   if (knownFactsResult.isSubscribedToAgentServices) {
                     mark("Count-Subscription-AlreadySubscribed-RegisteredInETMP")
-                    routes.BusinessIdentificationController.showAlreadySubscribed()
+                    Redirect(routes.BusinessIdentificationController.showAlreadySubscribed())
                   } else {
                     val initialDetails = InitialDetails(
                       knownFactsResult.utr,
@@ -283,19 +351,14 @@ class BusinessIdentificationController @Inject()(
                       knownFactsResult.address.getOrElse(throw new Exception("address object missing"))
                     )
 
-                    lookupNextPage(initialDetails)
+                    lookupNextPage(initialDetails).map(Redirect)
                   }
                 case No =>
-                  toFuture(
-                    request.session
-                      .get("businessType")
-                      .map(typeFound =>
-                        routes.BusinessIdentificationController.showBusinessDetailsForm(
-                          IdentifyBusinessType.apply(typeFound)))
-                      .getOrElse(routes.BusinessIdentificationController.showBusinessTypeForm()))
+                  withValidBusinessType { _ =>
+                    Redirect(routes.BusinessIdentificationController.showBusinessDetailsForm())
+                  }
               }
-
-              response.map(Redirect)
+              response
             }
           )
       }

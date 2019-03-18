@@ -21,3 +21,29 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.models.Postcode
 
 @(postcodeForm: Form[Postcode])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+
+@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title =  error_prefix(postcodeForm) + Messages("postcode.title"), bodyClasses = None) {
+
+    <a href="@routes.BusinessIdentificationController.showUtrForm()" class="link-back">@Messages("button.back")</a>
+
+    @if(postcodeForm.hasErrors) {
+        @errorSummary(Messages("error.summary.heading"), postcodeForm, Seq.empty, Some("postcode"))
+    }
+
+    <h1 class="heading-xlarge margin-bottom-20">@Messages(s"postcode.title")</h1>
+
+    @form(
+    action = routes.BusinessIdentificationController.submitPostcodeForm(), 'class -> "form js-form") {
+
+    <div class="form-group">
+        @input(
+        postcodeForm("postcode"),
+        '_inputClass -> "form-control input--cleared"
+        )
+    </div>
+
+    <div class="form-field">
+        <button class="button" type="submit" id="submit-postcode">@Messages("button.continue")</button>
+    </div>
+    }
+}

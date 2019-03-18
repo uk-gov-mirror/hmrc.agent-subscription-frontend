@@ -38,10 +38,10 @@ error.email= Enter a valid email address, like yourname@example.com
 ##Errors
 error.email.invalidchars=Business email address must only contain letters a to z, numbers, full stops, hyphens, underscores and @ signs
 error.email.maxlength=Business email address must be 132 characters or less
-error.postcode.invalid = Enter a valid postcode, for example AA1 1AA
+error.postcode.invalid=Enter a valid postcode, for example AA1 1AA
 error.postcode.invalidchars=Postcode must only include letters a to z, numbers and spaces, like AA1 1AA
-error.postcode.blacklisted = You can''t use the postcode you''ve entered
-error.postcode.empty = Enter a registered business postcode
+error.postcode.blacklisted=You can''t use the postcode you''ve entered
+error.postcode.empty=Enter a valid postcode, like AA1 1AA
 error.postcode.maxlength=Postcode must be 8 characters or less
 error.addressline.1.empty = Enter address line 1
 error.addressline.1.maxlength = Address line 1 must be 35 characters or less
@@ -138,6 +138,9 @@ utr.header.limited_company=What is the Unique Taxpayer Reference (UTR) of your c
 utr.header.partnership=What is the Unique Taxpayer Reference (UTR) of your partnership?
 utr.header.llp=What is the Unique Taxpayer Reference (UTR) of your limited liability partnership?
 utr.p1=A Unique Taxpayer Reference is 10 numbers like 12345 67890. It will be on tax returns and other letters about {0}. It may be called ''reference'', ''UTR'' or ''official use''. <a href="https://www.gov.uk/find-lost-utr-number" target="_blank" rel="noopener noreferrer">Find a lost UTR (opens in a new window or tab)</a>.
+
+#Postcode page
+postcode.title=What is the postcode of your registered address?
 
 #Invalid Business Type
 invalid.businessType.title=You cannot create an agent services account

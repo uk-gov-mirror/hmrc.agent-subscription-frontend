@@ -53,7 +53,6 @@ lazy val root = Project("agent-subscription-frontend", file("."))
       Resolver.jcenterRepo
     ),
     libraryDependencies ++= compileDeps ++ testDeps("test") ++ testDeps("it"),
-    routesImport += "uk.gov.hmrc.agentsubscriptionfrontend.support.Binders._",
     publishingSettings,
     scoverageSettings,
     unmanagedResourceDirectories in Compile += baseDirectory.value / "resources",

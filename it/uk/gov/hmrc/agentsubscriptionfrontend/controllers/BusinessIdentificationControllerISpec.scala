@@ -23,6 +23,7 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.audit.AgentSubscriptionFrontendEvent
+import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.{LimitedCompany, Llp, Partnership, SoleTrader}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub
@@ -32,16 +33,16 @@ import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser._
 import uk.gov.hmrc.domain.{Nino, TaxIdentifier}
 import uk.gov.hmrc.http.{BadRequestException, Upstream4xxResponse, Upstream5xxResponse}
-import uk.gov.hmrc.play.HeaderCarrierConverter
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
 trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMissingSpec {
   val validBusinessTypes = Seq(
-    IdentifyBusinessType.SoleTrader,
-    IdentifyBusinessType.LimitedCompany,
-    IdentifyBusinessType.Partnership,
-    IdentifyBusinessType.Llp)
+    BusinessType.SoleTrader,
+    BusinessType.LimitedCompany,
+    BusinessType.Partnership,
+    BusinessType.Llp)
+
   val validUtr = Utr("2000000000")
   val validPostcode = "AA1 1AA"
   private val invalidPostcode = "11AAAA"
@@ -91,7 +92,6 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
 
     behave like aPageTakingContinueUrlAndCachingInSessionStore(
       controller.showBusinessTypeForm(_),
-      sessionStoreService,
       userIsAuthenticated(subscribingCleanAgentWithoutEnrolments))
 
     "contain page titles and header content" in {
@@ -137,7 +137,7 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
 
         val result = await(controller.submitBusinessTypeForm(request))
         result.header.headers(LOCATION) shouldBe routes.BusinessIdentificationController
-          .showUtrForm(validBusinessTypeIdentifier)
+          .showUtrForm()
           .url
       }
     }
@@ -174,7 +174,6 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
 
     behave like aPageTakingContinueUrlAndCachingInSessionStore(
       controller.redirectToBusinessType(_),
-      sessionStoreService,
       userIsAuthenticated(subscribingCleanAgentWithoutEnrolments),
       expectedStatusCode = 303)
 
@@ -199,15 +198,16 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
   }
 
   "showUtrFormPage" should {
-    validBusinessTypes.foreach { validBusinessTypeIdentifier =>
-      s"display the page as expected when is business type is $validBusinessTypeIdentifier" in {
-        val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+    validBusinessTypes.foreach { businessType =>
+      s"display the page as expected when is business type is $businessType" in {
+        implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+        await(sessionStoreService.cacheAgentSession(AgentSession(Some(businessType))))
 
-        val result = await(controller.showUtrForm(validBusinessTypeIdentifier)(request))
+        val result = await(controller.showUtrForm()(request))
 
         result should containMessages(
           "utr.title",
-          s"utr.header.${validBusinessTypeIdentifier.key}"
+          s"utr.header.${businessType.key}"
         )
         val utrTextKey = if(validBusinessTypeIdentifier.key == "limited_company" ) {"Corporation Tax"} else {"Self Assessment"}
 
@@ -218,73 +218,162 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
 
   "submitUtrFormPage" should {
       "display the page as expected when the form is valid and redirect to /postcode page" in {
-        val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("utr" -> validUtr.value)
+        implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("utr" -> validUtr.value)
+        sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(BusinessType.SoleTrader)))
 
-        val result = await(controller.submitUtrForm(IdentifyBusinessType.SoleTrader)(request))
+        val result = await(controller.submitUtrForm()(request))
 
         status(result) shouldBe 303
-        redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showBusinessDetailsForm(IdentifyBusinessType.SoleTrader).url)
+        redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showPostcodeForm().url)
       }
 
-    "handle form with errors and show the same again" in {
-      val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("utr" -> "invalidUtr")
+     "redirect to /business-type if businessType missing in the session" in {
+       val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("utr" -> validUtr.value)
+       val result = await(controller.submitUtrForm()(request))
 
-      val result = await(controller.submitUtrForm(IdentifyBusinessType.SoleTrader)(request))
+       status(result) shouldBe 303
+       redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showBusinessTypeForm().url)
+     }
+
+    "handle form with errors and show the same again" in {
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("utr" -> "invalidUtr")
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(BusinessType.SoleTrader)))
+
+      val result = await(controller.submitUtrForm()(request))
 
       status(result) shouldBe 200
       result should containMessages(
         "utr.title",
-        s"utr.header.${IdentifyBusinessType.SoleTrader.key}",
+        s"utr.header.${BusinessType.SoleTrader.key}",
         "error.sautr.invalid"
       )
     }
   }
 
-  "showBusinessDetailsForm" should {
-    val playRequestValidBusinessTypeIdentifier =
-      controller.showBusinessDetailsForm(validBusinessTypes.head)
+  "showPostcodePage" should {
 
-    behave like anAgentAffinityGroupOnlyEndpoint(playRequestValidBusinessTypeIdentifier(_))
+    "display the page with correct content" in {
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+      await(sessionStoreService.cacheAgentSession(AgentSession(Some(BusinessType.SoleTrader))))
+
+      val result = await(controller.showPostcodeForm()(request))
+
+      result should containMessages(
+        "postcode.title"
+      )
+    }
+
+    "redirect to /business-type if businessType is not found in session" in {
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+
+      val result = await(controller.showPostcodeForm()(request))
+
+      status(result) shouldBe 303
+
+      redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showBusinessTypeForm().url)
+    }
+  }
+
+  "submitPostcodeForm" should {
+
+    "read the form and redirect to /national-insurance-number if businessType is SoleTrader or Partnership" in {
+      List(SoleTrader, Partnership).foreach { businessType =>
+        implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("postcode" -> "AA12 1JN")
+        await(sessionStoreService.cacheAgentSession(AgentSession(Some(businessType))))
+
+        val result = await(controller.submitPostcodeForm()(request))
+
+        status(result) shouldBe 303
+
+        redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showNationalInsuranceNumberPage().url)
+      }
+    }
+
+    "read the form and redirect to /company-registration-number if businessType is Limited Company or Llp" in {
+      List(LimitedCompany, Llp).foreach { businessType =>
+        implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("postcode" -> "AA12 1JN")
+        await(sessionStoreService.cacheAgentSession(AgentSession(Some(businessType))))
+
+        val result = await(controller.submitPostcodeForm()(request))
+
+        status(result) shouldBe 303
+
+        redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showCompanyRegNumberPage().url)
+      }
+    }
+
+    "redirect to /business-type if businessType is not found in session" in {
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("postcode" -> "AA12 1JN")
+
+      val result = await(controller.submitPostcodeForm()(request))
+
+      status(result) shouldBe 303
+
+      redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showBusinessTypeForm().url)
+    }
+
+    "handle for with invalid postcodes" in {
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("postcode" -> "sdsds")
+      await(sessionStoreService.cacheAgentSession(AgentSession(Some(SoleTrader))))
+
+      val result = await(controller.submitPostcodeForm()(request))
+
+      status(result) shouldBe 200
+
+      result should containMessages(
+        "postcode.title",
+        "error.postcode.invalid"
+      )
+    }
+  }
+
+  "showBusinessDetailsForm" should {
+    val showBusinessDetailsRequest = controller.showBusinessDetailsForm()
+
+    behave like anAgentAffinityGroupOnlyEndpoint(showBusinessDetailsRequest(_))
 
     behave like aPageWithFeedbackLinks(
-      playRequestValidBusinessTypeIdentifier(_),
+      showBusinessDetailsRequest(_),
       authenticatedAs(subscribingCleanAgentWithoutEnrolments))
 
     "caches continue URL parameter" when {
       "valid businessType parameter was supplied" should {
         behave like aPageTakingContinueUrlAndCachingInSessionStore(
-          playRequestValidBusinessTypeIdentifier(_),
-          sessionStoreService,
+          showBusinessDetailsRequest(_),
           userIsAuthenticated(subscribingCleanAgentWithoutEnrolments))
       }
     }
 
     "display the check agency status page if the current user is logged in and has affinity group = Agent" in {
-      val result =
-        await(playRequestValidBusinessTypeIdentifier(authenticatedAs(subscribingCleanAgentWithoutEnrolments)))
+      implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(BusinessType.SoleTrader)))
+      val result = await(showBusinessDetailsRequest(request))
 
       result should containMessages("businessDetails.title")
       metricShouldExistAndBeUpdated("Count-Subscription-BusinessDetails-Start")
     }
 
     "display the AS Account Page if the current user has HMRC-AS-AGENT enrolment" in {
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForHMRCASAGENT)
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(BusinessType.SoleTrader)))
       val result =
-        await(playRequestValidBusinessTypeIdentifier(authenticatedAs(subscribingAgentEnrolledForHMRCASAGENT)))
+        await(showBusinessDetailsRequest(request))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(redirectUrl)
       metricShouldExistAndBeUpdated("Count-Subscription-AlreadySubscribed-HasEnrolment-AgentServicesAccount")
     }
 
-    validBusinessTypes.foreach { validBusinessTypeIdentifier =>
-      s"show check Agency Status page for valid businessTypeIdentifier: $validBusinessTypeIdentifier" in {
-        val result = await(
-          controller.showBusinessDetailsForm(validBusinessTypeIdentifier)(
-            authenticatedAs(subscribingCleanAgentWithoutEnrolments)))
+    validBusinessTypes.foreach { businessType =>
+      s"show check Agency Status page for valid businessTypeIdentifier: $businessType" in {
+        implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+        await(sessionStoreService.cacheAgentSession(AgentSession(Some(businessType))))
+
+        val result = await(controller.showBusinessDetailsForm()(request))
         status(result) shouldBe 200
 
         containSubstrings(routes.BusinessIdentificationController.showBusinessTypeForm().url)
-        containMessages("back.button", "businessDetails.title", s"businessDetails.label.utr.${validBusinessTypeIdentifier.key}")
+        containMessages("back.button", "businessDetails.title", s"businessDetails.label.utr.${businessType.key}")
       }
     }
   }
@@ -292,14 +381,15 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
   "submitBusinessDetailsForm" should {
 
     behave like anAgentAffinityGroupOnlyEndpoint(request =>
-      controller.submitBusinessDetailsForm(validBusinessTypes.head)(request))
+      controller.submitBusinessDetailsForm()(request))
 
     "return a 200 response to redisplay the form with an error message for invalidly-formatted UTR" in {
       val invalidUtr = "0123456"
-      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> invalidUtr, "postcode" -> validPostcode)
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(validBusinessTypes.head)))
       val result =
-        await(controller.submitBusinessDetailsForm(validBusinessTypes.head)(request))
+        await(controller.submitBusinessDetailsForm()(request))
 
       status(result) shouldBe OK
       containMessages("businessDetails.title", "error.sautr.invalid")
@@ -311,8 +401,10 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
       val invalidUtr = "2000000001" // Modulus11Check validation fails in this case
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> invalidUtr, "postcode" -> validPostcode)
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(validBusinessTypes.head)))
+
       val result =
-        await(controller.submitBusinessDetailsForm(validBusinessTypes.head)(request))
+        await(controller.submitBusinessDetailsForm()(request))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showNoAgencyFound().url)
@@ -322,8 +414,10 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
     "return a 200 response to redisplay the form with an error message for invalidly-formatted postcode" in {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> invalidPostcode)
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(validBusinessTypes.head)))
+
       val result =
-        await(controller.submitBusinessDetailsForm(validBusinessTypes.head)(request))
+        await(controller.submitBusinessDetailsForm()(request))
 
       status(result) shouldBe OK
       val responseBody = bodyOf(result)
@@ -337,14 +431,15 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
     "return a 200 response to redisplay the form with an error message for empty form parameters" in {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> "", "postcode" -> "")
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(validBusinessTypes.head)))
       val result =
-        await(controller.submitBusinessDetailsForm(validBusinessTypes.head)(request))
+        await(controller.submitBusinessDetailsForm()(request))
 
       status(result) shouldBe OK
       val responseBody = bodyOf(result)
       responseBody should include(htmlEscapedMessage("businessDetails.title"))
       responseBody should include(htmlEscapedMessage("error.sautr.blank"))
-      responseBody should include("Enter a registered business postcode")
+      responseBody should include("Enter a valid postcode, like AA1 1AA")
       noMetricExpectedAtThisPoint()
     }
 
@@ -352,8 +447,10 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
       withNonMatchingUtrAndPostcode(validUtr, validPostcode)
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(validBusinessTypes.head)))
+
       val result =
-        await(controller.submitBusinessDetailsForm(validBusinessTypes.head)(request))
+        await(controller.submitBusinessDetailsForm()(request))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showNoAgencyFound().url)
@@ -364,8 +461,10 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
       withNoOrganisationName(validUtr, validPostcode)
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(validBusinessTypes.head)))
+
       val e = intercept[IllegalStateException] {
-        await(controller.submitBusinessDetailsForm(validBusinessTypes.head)(request))
+        await(controller.submitBusinessDetailsForm()(request))
       }
       e.getMessage should include(validUtr.value)
     }
@@ -374,8 +473,10 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
       withMatchingUtrAndPostcode(validUtr, validPostcode, isSubscribedToAgentServices = true, isSubscribedToETMP = true)
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(validBusinessTypes.head)))
+
       val result =
-        await(controller.submitBusinessDetailsForm(validBusinessTypes.head)(request))
+        await(controller.submitBusinessDetailsForm()(request))
       redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showAlreadySubscribed().url)
     }
 
@@ -391,8 +492,10 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
 
       implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(validBusinessTypes.head)))
+
       val result =
-        await(controller.submitBusinessDetailsForm(validBusinessTypes.head)(request))
+        await(controller.submitBusinessDetailsForm()(request))
       redirectLocation(result) shouldBe Some(routes.SubscriptionController.showSubscriptionComplete().url)
     }
 
@@ -407,12 +510,11 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
-      val result =
-        await(controller.submitBusinessDetailsForm(validBusinessTypes.head)(request))
-      redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showCreateNewAccount().url)
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(validBusinessTypes.head)))
 
-      implicit val hc = HeaderCarrierConverter.fromHeadersAndSession(request.headers, Some(request.session))
-      import scala.concurrent.ExecutionContext.Implicits.global
+      val result =
+        await(controller.submitBusinessDetailsForm()(request))
+      redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showCreateNewAccount().url)
 
       await(sessionStoreService.fetchKnownFactsResult) shouldBe Some(
         KnownFactsResult(Utr("2000000000"), "AA1 1AA", "My Agency", isSubscribedToAgentServices = false, None, None))
@@ -431,8 +533,10 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
 
       implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(validBusinessTypes.head)))
+
       an[Upstream4xxResponse] shouldBe thrownBy(
-        await(controller.submitBusinessDetailsForm(validBusinessTypes.head)(request)))
+        await(controller.submitBusinessDetailsForm()(request)))
     }
 
     "Upstream4xxResponse partialSubscriptionFix failed with 409 as someone has already been allocated the enrolment" in {
@@ -447,8 +551,10 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
 
       implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(validBusinessTypes.head)))
+
       an[Upstream4xxResponse] shouldBe thrownBy(
-        await(controller.submitBusinessDetailsForm(validBusinessTypes.head)(request)))
+        await(controller.submitBusinessDetailsForm()(request)))
     }
 
     "Upstream5xxResponse partialSubscriptionFix failed for partiallySubscribed User" in {
@@ -463,8 +569,10 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
 
       implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
         .withFormUrlEncodedBody("utr" -> validUtr.value, "postcode" -> validPostcode)
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(validBusinessTypes.head)))
+
       an[Upstream5xxResponse] shouldBe thrownBy(
-        await(controller.submitBusinessDetailsForm(validBusinessTypes.head)(request)))
+        await(controller.submitBusinessDetailsForm()(request)))
     }
   }
 
@@ -507,6 +615,7 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
       val registrationName = "My Agency"
 
       implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(BusinessType.SoleTrader)))
       sessionStoreService.currentSession.knownFactsResult = Some(
         KnownFactsResult(
           utr = utr,
@@ -541,7 +650,7 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
       val registrationName = "My Agency"
 
       implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
-        .withSession("businessType" -> "sole_trader")
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(BusinessType.SoleTrader)))
       sessionStoreService.currentSession.knownFactsResult = Some(
         KnownFactsResult(
           utr = utr,
@@ -558,6 +667,7 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
 
     "redirect to GET /business-type when no businessType in session" in {
       implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(BusinessType.SoleTrader)))
 
       redirectLocation(await(controller.showConfirmBusinessForm(request)))
         .get shouldBe routes.BusinessIdentificationController.showBusinessTypeForm().url
@@ -565,7 +675,9 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
 
     "show a back button which allows the user to return to the business-details page" in {
       implicit val request =
-        authenticatedAs(subscribingAgentEnrolledForNonMTD).withSession("businessType" -> "sole_trader")
+        authenticatedAs(subscribingAgentEnrolledForNonMTD)
+
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(BusinessType.SoleTrader)))
       sessionStoreService.currentSession.knownFactsResult = Some(
         KnownFactsResult(
           utr = Utr("0123456789"),
@@ -578,12 +690,12 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
       val result = await(controller.showConfirmBusinessForm(request))
 
       result should containSubstrings(
-        routes.BusinessIdentificationController.submitBusinessDetailsForm(IdentifyBusinessType.SoleTrader).url)
+        routes.BusinessIdentificationController.submitBusinessDetailsForm().url)
     }
 
     "redirect to the Check Business Type  page if there is no KnownFactsResult in session because the user has returned to a bookmark" in {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
-
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(BusinessType.SoleTrader)))
       val result = await(controller.showConfirmBusinessForm(request))
 
       resultShouldBeSessionDataMissing(result)
@@ -598,8 +710,8 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
     "User chooses Yes" should {
       "redirect to showAlreadySubscribed if the user is already subscribed and isSubscribedToAgentServices=true" in {
         implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
-          .withSession("businessType" -> "sole_trader")
           .withFormUrlEncodedBody("confirmBusiness" -> "yes")
+        sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(BusinessType.SoleTrader)))
         sessionStoreService.currentSession.knownFactsResult = Some(
           KnownFactsResult(
             utr = Utr("0123456789"),
@@ -617,8 +729,8 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
 
       "redirect to showMoneyLaunderingComplianceForm if the user has clean creds and isSubscribedToAgentServices=false" in {
         implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
-          .withSession("businessType" -> "sole_trader")
           .withFormUrlEncodedBody("confirmBusiness" -> "yes")
+        sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(BusinessType.SoleTrader)))
         sessionStoreService.currentSession.knownFactsResult = Some(
           KnownFactsResult(
             utr = Utr("0123456789"),
@@ -637,8 +749,8 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
 
       "redirect to showBusinessEmailForm if the user has clean creds and isSubscribedToAgentServices=false and ETMP record contains empty email" in {
         implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
-          .withSession("businessType" -> "sole_trader")
           .withFormUrlEncodedBody("confirmBusiness" -> "yes")
+        sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(BusinessType.SoleTrader)))
         sessionStoreService.currentSession.knownFactsResult = Some(
           KnownFactsResult(
             utr = Utr("0123456789"),
@@ -657,8 +769,8 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
 
       "redirect to showBusinessNameForm if the user has clean creds and isSubscribedToAgentServices=false and ETMP record contains invalid name" in {
         implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
-          .withSession("businessType" -> "sole_trader")
           .withFormUrlEncodedBody("confirmBusiness" -> "yes")
+        sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(BusinessType.SoleTrader)))
         sessionStoreService.currentSession.knownFactsResult = Some(
           KnownFactsResult(
             utr = Utr("0123456789"),
@@ -678,8 +790,8 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
       "redirect to showBusinessNameForm if the user has clean creds and isSubscribedToAgentServices=false and " +
         "ETMP record contains invalid name and invalid address" in {
         implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
-          .withSession("businessType" -> "sole_trader")
           .withFormUrlEncodedBody("confirmBusiness" -> "yes")
+        sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(BusinessType.SoleTrader)))
         sessionStoreService.currentSession.knownFactsResult = Some(
           KnownFactsResult(
             utr = Utr("0123456789"),
@@ -700,8 +812,8 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
       "redirect to showUpdateBusinessAddressForm if the user has clean creds and isSubscribedToAgentServices=false " +
         "and ETMP record contains invalid address" in {
         implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
-          .withSession("businessType" -> "sole_trader")
           .withFormUrlEncodedBody("confirmBusiness" -> "yes")
+        sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(BusinessType.SoleTrader)))
         sessionStoreService.currentSession.knownFactsResult = Some(
           KnownFactsResult(
             utr = Utr("0123456789"),
@@ -724,8 +836,8 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
       "redirect to showUpdateBusinessAddressForm if the user has clean creds and isSubscribedToAgentServices=false and" when {
         "ETMP record contains blacklisted postcode" in {
           implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
-            .withSession("businessType" -> "sole_trader")
             .withFormUrlEncodedBody("confirmBusiness" -> "yes")
+          sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(BusinessType.SoleTrader)))
           sessionStoreService.currentSession.knownFactsResult = Some(
             KnownFactsResult(
               utr = Utr("0123456789"),
@@ -747,8 +859,8 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
 
         "ETMP record contains BFPO postcode starting with BF" in {
           implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
-            .withSession("businessType" -> "sole_trader")
             .withFormUrlEncodedBody("confirmBusiness" -> "yes")
+          sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(BusinessType.SoleTrader)))
           sessionStoreService.currentSession.knownFactsResult = Some(
             KnownFactsResult(
               utr = Utr("0123456789"),
@@ -770,8 +882,8 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
 
         "ETMP record contains BFPO postcode starting with BFPO" in {
           implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
-            .withSession("businessType" -> "sole_trader")
             .withFormUrlEncodedBody("confirmBusiness" -> "yes")
+          sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(BusinessType.SoleTrader)))
           sessionStoreService.currentSession.knownFactsResult = Some(
             KnownFactsResult(
               utr = Utr("0123456789"),
@@ -796,8 +908,8 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
     "User chooses No" should {
       "redirect to the business-details page" in {
         implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
-          .withSession("businessType" -> "sole_trader")
           .withFormUrlEncodedBody("confirmBusiness" -> "no")
+        sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(BusinessType.SoleTrader)))
         sessionStoreService.currentSession.knownFactsResult = Some(
           KnownFactsResult(
             utr = Utr("0123456789"),
@@ -810,7 +922,7 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
         val result = await(controller.submitConfirmBusinessForm(request))
 
         result.header.headers(LOCATION) shouldBe routes.BusinessIdentificationController
-          .showBusinessDetailsForm(validBusinessTypes.head)
+          .showBusinessDetailsForm()
           .url
       }
 
@@ -837,9 +949,8 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
     "choice is missing" should {
       "return 200 and redisplay the /confirm-business page with an error message for missing choice" in {
         implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
-          .withSession("businessType" -> "sole_trader")
           .withFormUrlEncodedBody("confirmBusiness" -> "")
-
+        sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(BusinessType.SoleTrader)))
         sessionStoreService.currentSession.knownFactsResult = Some(
           KnownFactsResult(
             utr = Utr("0123456789"),
@@ -858,8 +969,8 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
     "form value is invalid" should {
       "result in a BadRequest" in {
         implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
-          .withSession("businessType" -> "sole_trader")
           .withFormUrlEncodedBody("confirmBusiness" -> "INVALID")
+        sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(BusinessType.SoleTrader)))
         sessionStoreService.currentSession.knownFactsResult = Some(
           KnownFactsResult(
             utr = Utr("0123456789"),

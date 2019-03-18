@@ -15,10 +15,12 @@
  */
 
 package uk.gov.hmrc.agentsubscriptionfrontend.models
-import play.api.libs.json.{Format, Json}
+
+import uk.gov.hmrc.domain.{SimpleObjectReads, SimpleObjectWrites}
 
 case class Postcode(value: String)
 
 object Postcode {
-  implicit val format: Format[Postcode] = Json.format[Postcode]
+  implicit val utrReads = new SimpleObjectReads[Postcode]("value", Postcode.apply)
+  implicit val utrWrites = new SimpleObjectWrites[Postcode](_.value)
 }

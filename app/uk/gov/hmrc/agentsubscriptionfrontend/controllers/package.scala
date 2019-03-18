@@ -40,7 +40,7 @@ package object controllers {
     val businessTypeForm: Form[BusinessType] =
       Form[BusinessType](
         mapping("businessType" -> optional(text).verifying(radioInputSelected("businessType.error.no-radio-selected")))(
-          input => BusinessType(IdentifyBusinessType(input.get)))(bType => Some(Some(bType.businessType.key)))
+          input => BusinessType(input.get))(bType => Some(Some(bType.key)))
       )
 
     def utrForm(businessType: String): Form[Utr] =

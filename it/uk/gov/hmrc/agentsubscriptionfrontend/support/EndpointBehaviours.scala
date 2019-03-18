@@ -4,20 +4,21 @@ import java.net.URLEncoder
 
 import akka.stream.Materializer
 import org.scalatest.Assertion
-import org.scalatestplus.play.OneAppPerSuite
-import play.api.mvc.{AnyContent, AnyContentAsEmpty, Request, Result}
+import play.api.mvc._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, BusinessType}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub
-import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.{individual, subscribingCleanAgentWithoutEnrolments}
+import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.individual
 import uk.gov.hmrc.auth.core.{InsufficientEnrolments, SessionRecordNotFound}
 import uk.gov.hmrc.play.HeaderCarrierConverter
 import uk.gov.hmrc.play.binders.ContinueUrl
-import uk.gov.hmrc.play.test.UnitSpec
+
+import scala.concurrent.ExecutionContext.Implicits.global
 
 trait EndpointBehaviours {
-  me: UnitSpec with WireMockSupport with OneAppPerSuite with MetricTestSupport =>
+  me: BaseISpec =>
   type PlayRequest = Request[AnyContent] => Result
 
   private implicit val materializer: Materializer = app.materializer
@@ -66,21 +67,24 @@ trait EndpointBehaviours {
 
 
 
-  protected def aPageWithFeedbackLinks(action: PlayRequest, request: => Request[AnyContent] = FakeRequest()): Unit = {
+  protected def aPageWithFeedbackLinks(action: PlayRequest, request: => Request[AnyContent] = FakeRequest("GET", "url")): Unit = {
 
     "have a 'get help with this page' link" in {
+      await(sessionStoreService.cacheAgentSession(AgentSession(Some(BusinessType.SoleTrader)))(hc(request), global))
       val result = await(action(request))
 
       bodyOf(result) should include("Get help with this page.")
     }
 
     "have a beta feedback banner" in {
+      await(sessionStoreService.cacheAgentSession(AgentSession(Some(BusinessType.SoleTrader)))(hc(request), global))
       val result = await(action(request))
 
       bodyOf(result) should include("This is a new service")
     }
 
     "have a beta feedback link" in {
+      await(sessionStoreService.cacheAgentSession(AgentSession(Some(BusinessType.SoleTrader)))(hc(request), global))
       val result = await(action(request))
 
       bodyOf(result) should include("/contact/beta-feedback")
@@ -94,7 +98,8 @@ trait EndpointBehaviours {
                                      assertContinueUrlKept: (Request[AnyContent], Result, String) => Assertion,
                                      assertContinueUrlNotKept: (Request[AnyContent], Result, Option[String]) => Assertion): Unit = {
     def doRequestWithContinueUrl(continueUrl: String) = {
-      val request = FakeRequest("GET", s"?continue=${urlencoded(continueUrl)}").withSession(sessionKeys: _*)
+      implicit val request = FakeRequest("GET", s"?continue=${urlencoded(continueUrl)}").withSession(sessionKeys: _*)
+      await(sessionStoreService.cacheAgentSession(AgentSession(businessType = Some(BusinessType.SoleTrader))))
       val result = await(action(request))
       (request, result)
     }
@@ -136,7 +141,8 @@ trait EndpointBehaviours {
     }
 
     "not include a continue URL if it's not provided" in {
-      val request = FakeRequest("GET", "/").withSession(sessionKeys: _*)
+      implicit val request = FakeRequest("GET", "/").withSession(sessionKeys: _*)
+      await(sessionStoreService.cacheAgentSession(AgentSession(businessType = Some(BusinessType.SoleTrader))))
       val result = await(action(request))
       assertContinueUrlNotKept(request, result, None)
     }
@@ -174,7 +180,7 @@ trait EndpointBehaviours {
     }
   }
 
-  protected def aPageTakingContinueUrlAndCachingInSessionStore(action: PlayRequest, sessionStoreService: TestSessionStoreService, sessionKeys: => Seq[(String, String)], expectedStatusCode: Int = 200): Unit = {
+  protected def aPageTakingContinueUrlAndCachingInSessionStore(action: PlayRequest, sessionKeys: => Seq[(String, String)], expectedStatusCode: Int = 200): Unit = {
     aPageTakingContinueUrl(action, sessionKeys, checkContinueUrlIsInCache, checkContinueUrlIsNotInCache)
 
     def hc(request: Request[AnyContent]) = HeaderCarrierConverter.fromHeadersAndSession(request.headers, Some(request.session))

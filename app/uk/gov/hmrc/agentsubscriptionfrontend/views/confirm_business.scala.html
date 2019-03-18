@@ -19,7 +19,6 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessAddress
 @import uk.gov.hmrc.play.views.html.helpers._
 @import uk.gov.hmrc.agentsubscriptionfrontend.models.ConfirmBusiness
-@import uk.gov.hmrc.agentsubscriptionfrontend.models.IdentifyBusinessType
 
 @(confirmBusinessRadioForm: Form[ConfirmBusiness], registrationName: String, utr: String, businessAddress: BusinessAddress)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
@@ -78,8 +77,4 @@
 }
 
 
-@backButtonUrl = @{
-    request.session.get("businessType").map(businessType =>
-        routes.BusinessIdentificationController.submitBusinessDetailsForm(IdentifyBusinessType.apply(businessType))
-    ).getOrElse(routes.BusinessIdentificationController.showBusinessTypeForm())
-}
+@backButtonUrl = @{routes.BusinessIdentificationController.submitBusinessDetailsForm()}

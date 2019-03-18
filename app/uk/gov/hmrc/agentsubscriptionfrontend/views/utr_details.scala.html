@@ -18,9 +18,9 @@
 @import uk.gov.hmrc.play.views.html.helpers.{form, input, errorSummary}
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
 @import uk.gov.hmrc.agentmtdidentifiers.model.Utr
-@import uk.gov.hmrc.agentsubscriptionfrontend.models.IdentifyBusinessType
+@import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType
 
-@(utrForm: Form[Utr], businessType: IdentifyBusinessType)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+@(utrForm: Form[Utr], businessType: BusinessType)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title =  error_prefix(utrForm) + Messages("utr.title"), bodyClasses = None) {
 
@@ -36,7 +36,7 @@
 
 
     @form(
-        action = routes.BusinessIdentificationController.submitUtrForm(businessType),
+        action = routes.BusinessIdentificationController.submitUtrForm(),
         'class -> "form js-form") {
 
         <div class="form-group">

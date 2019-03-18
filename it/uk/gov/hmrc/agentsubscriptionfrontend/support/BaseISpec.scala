@@ -9,7 +9,7 @@ import org.scalatestplus.play.OneAppPerSuite
 import play.api.Application
 import play.api.i18n.{Lang, Messages, MessagesApi}
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.mvc.{AnyContentAsEmpty, Result}
+import play.api.mvc.{AnyContentAsEmpty, Request, Result}
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{contentType, _}
 import play.twirl.api.HtmlFormat.escape
@@ -210,8 +210,8 @@ abstract class BaseISpec
 
   protected def htmlEscapedMessage(key: String, args: Any*): String = escape(Messages(key, args: _*)).toString
 
-  implicit def hc(implicit request: FakeRequest[_]): HeaderCarrier =
-    HeaderCarrierConverter.fromHeadersAndSession(request.headers, Some(request.session))
+  implicit def hc(implicit request: Request[_]): HeaderCarrier  =
+  HeaderCarrierConverter.fromHeadersAndSession(request.headers, Some(request.session))
 
 protected def hasMessage(key: String, args: Any*): String = Messages(key, args: _*).toString
 

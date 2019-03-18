@@ -96,7 +96,7 @@ trait SignOutControllerISpec extends BaseISpec {
     "include a continue URL in the SOS redirect URL if a continue URL exists in the session store" in {
       val ourContinueUrl = ContinueUrl("/test-continue-url")
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
-      sessionStoreService.currentSession(hc(request)).continueUrl = Some(ourContinueUrl)
+      sessionStoreService.currentSession(hc).continueUrl = Some(ourContinueUrl)
       givenMappingCreatePreSubscriptionIsNotEligible(Utr("9876543210"))
 
       val result = await(controller.redirectToSos(authenticatedAs(subscribingAgentEnrolledForNonMTD)))
