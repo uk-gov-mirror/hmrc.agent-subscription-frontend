@@ -262,8 +262,8 @@ object CommonValidators {
     val formattedField = fieldValue.replaceAll("\\s", "").toUpperCase
 
     Constraints.nonEmpty(formattedField) match {
-      case _: Invalid                         => Invalid(ValidationError("error.clientdetails.nino.empty"))
-      case _ if !Nino.isValid(formattedField) => Invalid(ValidationError("error.clientdetails.nino.invalid"))
+      case _: Invalid                         => Invalid(ValidationError("error.nino.empty"))
+      case _ if !Nino.isValid(formattedField) => Invalid(ValidationError("error.nino.invalid"))
       case _                                  => Valid
     }
   }

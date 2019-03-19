@@ -173,9 +173,9 @@ class BusinessIdentificationController @Inject()(
                       .cacheAgentSession(existingSession.copy(postcode = Some(validPostcode)))
                       .map { _ =>
                         if (businessType == SoleTrader || businessType == Partnership) {
-                          Redirect(routes.BusinessIdentificationController.showNationalInsuranceNumberPage())
+                          Redirect(routes.BusinessIdentificationController.showNationalInsuranceNumberForm())
                         } else if (businessType == LimitedCompany || businessType == Llp) {
-                          Redirect(routes.BusinessIdentificationController.showCompanyRegNumberPage())
+                          Redirect(routes.BusinessIdentificationController.showCompanyRegNumberForm())
                         } else {
                           Redirect(routes.BusinessIdentificationController.showBusinessTypeForm())
                         }
@@ -189,7 +189,39 @@ class BusinessIdentificationController @Inject()(
     }
   }
 
-  def showNationalInsuranceNumberPage(): Action[AnyContent] = Action.async { implicit request =>
+  def showNationalInsuranceNumberForm(): Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { implicit agent =>
+      withMaybeContinueUrlCached {
+        Ok(html.national_insurance_number(ninoForm))
+      }
+    }
+  }
+
+  def submitNationalInsuranceNumberForm: Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { implicit agent =>
+      withMaybeContinueUrlCached {
+        ninoForm
+          .bindFromRequest()
+          .fold(
+            formWithErrors => Ok(html.national_insurance_number(formWithErrors)),
+            validNino => {
+              sessionStoreService.fetchAgentSession.flatMap {
+                case Some(existingSession) =>
+                  sessionStoreService
+                    .cacheAgentSession(existingSession.copy(nino = Some(validNino)))
+                    .map { _ =>
+                      Redirect(routes.BusinessIdentificationController.showDateOfBirthForm())
+                    }
+                case None => Redirect(routes.BusinessIdentificationController.showBusinessTypeForm())
+              }
+
+            }
+          )
+      }
+    }
+  }
+
+  def showCompanyRegNumberForm(): Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { implicit agent =>
       withMaybeContinueUrlCached {
         //temporarily redirecting to business-details page until this page is implemented
@@ -198,18 +230,11 @@ class BusinessIdentificationController @Inject()(
     }
   }
 
-  def submitNationalInsuranceNumberPage: Action[AnyContent] = ???
+  def submitCompanyRegNumberForm: Action[AnyContent] = ???
 
-  def showCompanyRegNumberPage(): Action[AnyContent] = Action.async { implicit request =>
-    withSubscribingAgent { implicit agent =>
-      withMaybeContinueUrlCached {
-        //temporarily redirecting to business-details page until this page is implemented
-        Redirect(routes.BusinessIdentificationController.showBusinessDetailsForm())
-      }
-    }
-  }
+  def showDateOfBirthForm(): Action[AnyContent] = ???
 
-  def submitCompanyRegNumberPage: Action[AnyContent] = ???
+  def submitDateOfBirthForm(): Action[AnyContent] = ???
 
   def showInvalidBusinessType: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { implicit agent =>

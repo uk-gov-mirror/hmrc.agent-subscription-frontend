@@ -614,15 +614,15 @@ class CommonValidatorsSpec extends UnitSpec with EitherValues {
     }
 
     "reject with error when invalid Nino" in {
-      bind("AAAAAAAA0").left.value should contain only FormError("testKey", "error.clientdetails.nino.invalid")
+      bind("AAAAAAAA0").left.value should contain only FormError("testKey", "error.nino.invalid")
     }
 
     "reject with error when nino field is empty" in {
-      bind("").left.value should contain only FormError("testKey", "error.clientdetails.nino.empty")
+      bind("").left.value should contain only FormError("testKey", "error.nino.empty")
     }
 
     "reject with error when nino field contain spaces only" in {
-      bind("    ").left.value should contain only FormError("testKey", "error.clientdetails.nino.empty")
+      bind("    ").left.value should contain only FormError("testKey", "error.nino.empty")
     }
   }
 

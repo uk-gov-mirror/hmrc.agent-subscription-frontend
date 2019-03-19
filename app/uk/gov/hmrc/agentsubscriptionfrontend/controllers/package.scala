@@ -23,6 +23,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TaxIdentifierFormatters._
 import uk.gov.hmrc.agentsubscriptionfrontend.validators.CommonValidators._
+import uk.gov.hmrc.domain.Nino
 import uk.gov.voa.play.form.ConditionalMappings.{mandatoryIfEqual, mandatoryIfTrue}
 
 package object controllers {
@@ -51,6 +52,11 @@ package object controllers {
     def postcodeForm: Form[Postcode] =
       Form[Postcode](
         mapping("postcode" -> postcode)(input => Postcode(input))(postcode => Some(postcode.value))
+      )
+
+    def ninoForm: Form[Nino] =
+      Form[Nino](
+        mapping("nino" -> clientDetailsNino)(input => Nino(input))(nino => Some(nino.value))
       )
 
     val confirmBusinessForm: Form[ConfirmBusiness] =

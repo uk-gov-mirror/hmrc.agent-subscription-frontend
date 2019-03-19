@@ -73,8 +73,8 @@ error.business-name.maxlength = Business name must be 40 characters or less
 error.business-email.empty=Enter your business email address
 error.summary.heading=There is a problem
 error.prefix=Error:
-error.clientdetails.nino.empty=Enter the client''s National Insurance number
-error.clientdetails.nino.invalid=National Insurance number must be 2 letters, 6 numbers, then A, B, C or D
+error.nino.empty=Enter your National Insurance number
+error.nino.invalid=Enter a National Insurance number in the correct format
 error.saAgentCode.invalid=Self Assessment agent code must only include letters and numbers
 error.saAgentCode.blank=Enter a Self Assessment agent code
 error.saAgentCode.length=Self Assessment agent code must be 6 characters, like SA1234
@@ -141,6 +141,10 @@ utr.p1=A Unique Taxpayer Reference is 10 numbers like 12345 67890. It will be on
 
 #Postcode page
 postcode.title=What is the postcode of your registered address?
+
+#Nino page
+nino.title=What is your National Insurance number?
+nino.hint=It''s on your National Insurance card, benefit letter, payslip or P60. For example, ''QQ 12 34 56 C''.
 
 #Invalid Business Type
 invalid.businessType.title=You cannot create an agent services account

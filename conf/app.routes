@@ -14,11 +14,14 @@ POST        /unique-taxpayer-reference            uk.gov.hmrc.agentsubscriptionf
 GET         /postcode                             uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showPostcodeForm
 POST        /postcode                             uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.submitPostcodeForm
 
-GET         /national-insurance-number            uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showNationalInsuranceNumberPage
-POST        /national-insurance-number            uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.submitNationalInsuranceNumberPage
+GET         /national-insurance-number            uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showNationalInsuranceNumberForm
+POST        /national-insurance-number            uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.submitNationalInsuranceNumberForm
 
-GET         /company-registration-number          uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showCompanyRegNumberPage
-POST        /company-registration-number          uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.submitCompanyRegNumberPage
+GET         /company-registration-number          uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showCompanyRegNumberForm
+POST        /company-registration-number          uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.submitCompanyRegNumberForm
+
+GET         /date-of-birth                        uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showDateOfBirthForm
+POST        /date-of-birth                        uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.submitDateOfBirthForm
 
 
 GET         /invalid-business-type                uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showInvalidBusinessType

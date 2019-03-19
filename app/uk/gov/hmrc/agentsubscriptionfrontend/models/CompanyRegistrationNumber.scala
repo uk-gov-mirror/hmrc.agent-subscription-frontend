@@ -15,18 +15,10 @@
  */
 
 package uk.gov.hmrc.agentsubscriptionfrontend.models
-
 import play.api.libs.json.{Format, Json}
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
-import uk.gov.hmrc.domain.Nino
 
-case class AgentSession(
-  businessType: Option[BusinessType] = None,
-  utr: Option[Utr] = None,
-  postcode: Option[Postcode] = None,
-  nino: Option[Nino] = None,
-  companyRegistrationNumber: Option[CompanyRegistrationNumber] = None)
+case class CompanyRegistrationNumber(value: String)
 
-object AgentSession {
-  implicit val format: Format[AgentSession] = Json.format[AgentSession]
+object CompanyRegistrationNumber {
+  implicit val format: Format[CompanyRegistrationNumber] = Json.format[CompanyRegistrationNumber]
 }

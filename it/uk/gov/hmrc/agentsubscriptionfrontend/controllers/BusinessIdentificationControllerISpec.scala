@@ -239,7 +239,7 @@ class BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
 
         status(result) shouldBe 303
 
-        redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showNationalInsuranceNumberPage().url)
+        redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showNationalInsuranceNumberForm().url)
       }
     }
 
@@ -252,7 +252,7 @@ class BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
 
         status(result) shouldBe 303
 
-        redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showCompanyRegNumberPage().url)
+        redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showCompanyRegNumberForm().url)
       }
     }
 
@@ -277,6 +277,47 @@ class BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
       result should containMessages(
         "postcode.title",
         "error.postcode.invalid"
+      )
+    }
+  }
+
+  "show /national-insurance-number form" should {
+    "display the form as expected" in {
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+      await(sessionStoreService.cacheAgentSession(AgentSession(Some(BusinessType.SoleTrader))))
+
+      val result = await(controller.showNationalInsuranceNumberForm()(request))
+
+      result should containMessages(
+        "nino.title",
+        "nino.hint"
+      )
+    }
+  }
+
+  "submit /national-insurance-number form" should {
+    "read the form and redirect to /date-of-birth page" in {
+        implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("nino" -> "AE123456C")
+        await(sessionStoreService.cacheAgentSession(AgentSession(Some(BusinessType.SoleTrader))))
+
+        val result = await(controller.submitNationalInsuranceNumberForm()(request))
+
+        status(result) shouldBe 303
+
+        redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showDateOfBirthForm().url)
+    }
+
+    "handle forms with invalid nino" in {
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("nino" -> "AE123456C_BLAH")
+
+      val result = await(controller.submitNationalInsuranceNumberForm()(request))
+
+      status(result) shouldBe 200
+
+      result should containMessages(
+        "nino.title",
+        "nino.hint",
+        "error.nino.invalid"
       )
     }
   }
@@ -1515,7 +1556,7 @@ class BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
           .withFormUrlEncodedBody(("variant", "nino"), ("nino", "AA123"))))
 
       status(result) shouldBe 200
-      bodyOf(result) should include(htmlEscapedMessage("error.clientdetails.nino.invalid"))
+      bodyOf(result) should include(htmlEscapedMessage("error.nino.invalid"))
     }
 
     "nino empty send back 200 with error page" in {
@@ -1525,7 +1566,7 @@ class BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
           .withFormUrlEncodedBody(("variant", "nino"), ("nino", ""))))
 
       status(result) shouldBe 200
-      bodyOf(result) should include(htmlEscapedMessage("error.clientdetails.nino.empty"))
+      bodyOf(result) should include(htmlEscapedMessage("error.nino.empty"))
     }
 
     "redirect to confirm business when successfully submitting UTR" in {
