@@ -1,17 +1,25 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
+import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers.{redirectLocation, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.audit.AgentSubscriptionFrontendEvent
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, KnownFactsResult}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub.withMatchingUtrAndPostcode
+import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.subscribingAgentEnrolledForNonMTD
+import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData._
 
-import scala.concurrent.ExecutionContext.Implicits.global
+class BusinessIdentificationControllerWithoutAssuranceFlagISpec extends BaseISpec {
 
-class BusinessIdentificationControllerWithoutAssuranceFlagISpec extends BusinessIdentificationControllerISpec {
+  override protected def appBuilder: GuiceApplicationBuilder =
+    super.appBuilder
+      .configure(
+        "features.agent-assurance-run"        -> false,
+        "features.agent-assurance-paye-check" -> true,
+        "government-gateway.url"              -> configuredGovernmentGatewayUrl
+      )
 
-  override val agentAssuranceRun: Boolean = false
-  override def agentAssurancePayeCheck: Boolean = true
+  lazy val controller: BusinessIdentificationController = app.injector.instanceOf[BusinessIdentificationController]
 
   "submitBusinessDetailsForm with the agentAssuranceFlag set to false" should {
     "redirect to confirm business page and store known facts result in the session store when a matching registration is found for the UTR and postcode" in {

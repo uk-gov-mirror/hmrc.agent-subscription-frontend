@@ -17,19 +17,30 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import com.github.tomakehurst.wiremock.client.WireMock._
+import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentsubscriptionfrontend.audit.AgentSubscriptionFrontendEvent
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, KnownFactsResult}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub.withMatchingUtrAndPostcode
+import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.subscribingAgentEnrolledForNonMTD
 import uk.gov.hmrc.play.encoding.UriPathEncoding.encodePathSegment
+
 import scala.concurrent.ExecutionContext.Implicits.global
+import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData._
 
-class BusinessIdentificationControllerWithAssuranceFlagISpec extends BusinessIdentificationControllerISpec {
-  override def agentAssuranceRun = true
+class BusinessIdentificationControllerWithAssuranceFlagISpec extends BaseISpec {
 
-  override def agentAssurancePayeCheck: Boolean = true
+  override protected def appBuilder: GuiceApplicationBuilder =
+    super.appBuilder
+      .configure(
+        "features.agent-assurance-run"        -> true,
+        "features.agent-assurance-paye-check" -> true,
+        "government-gateway.url"              -> configuredGovernmentGatewayUrl
+      )
+
+  lazy val controller: BusinessIdentificationController = app.injector.instanceOf[BusinessIdentificationController]
 
   "submitBusinessDetailsForm with the agentAssuranceFlag set to true" should {
     "redirect to /confirm-business page and store known facts result in the session store when a matching registration is found for the UTR and postcode" in {

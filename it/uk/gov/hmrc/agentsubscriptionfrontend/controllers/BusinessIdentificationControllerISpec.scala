@@ -19,10 +19,8 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 import org.jsoup.Jsoup
 import play.api.i18n.Messages
 import play.api.i18n.Messages.Implicits.applicationMessages
-import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
-import uk.gov.hmrc.agentsubscriptionfrontend.audit.AgentSubscriptionFrontendEvent
 import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.{LimitedCompany, Llp, Partnership, SoleTrader}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub._
@@ -31,59 +29,15 @@ import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub.userIsAuthenticated
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser._
-import uk.gov.hmrc.domain.{Nino, TaxIdentifier}
+import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData._
+import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.http.{BadRequestException, Upstream4xxResponse, Upstream5xxResponse}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMissingSpec {
-  val validBusinessTypes = Seq(
-    BusinessType.SoleTrader,
-    BusinessType.LimitedCompany,
-    BusinessType.Partnership,
-    BusinessType.Llp)
-
-  val validUtr = Utr("2000000000")
-  val validPostcode = "AA1 1AA"
-  private val invalidPostcode = "11AAAA"
-  private val blacklistedPostcode = "AB10 1ZT"
-
-  val utr = Utr("0123456789")
-  val postcode = "AA11AA"
-  val registrationName = "My Agency"
-  val businessAddress =
-    BusinessAddress(
-      "AddressLine1 A",
-      Some("AddressLine2 A"),
-      Some("AddressLine3 A"),
-      Some("AddressLine4 A"),
-      Some("AA11AA"),
-      "GB")
-
-  protected val initialDetails =
-    InitialDetails(
-      utr,
-      "AA11AA",
-      "My Agency",
-      Some("agency@example.com"),
-      businessAddress
-    )
-
-  def agentAssuranceRun: Boolean
-
-  def agentAssurancePayeCheck: Boolean
+class BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMissingSpec {
 
   private lazy val redirectUrl: String = "http://localhost:9401/agent-services-account"
-
-  private lazy val configuredGovernmentGatewayUrl = "http://configured-government-gateway.gov.uk/"
-
-  override protected def appBuilder: GuiceApplicationBuilder =
-    super.appBuilder
-      .configure(
-        "features.agent-assurance-run"        -> agentAssuranceRun,
-        "features.agent-assurance-paye-check" -> agentAssurancePayeCheck,
-        "government-gateway.url"              -> configuredGovernmentGatewayUrl
-      )
 
   lazy val controller: BusinessIdentificationController = app.injector.instanceOf[BusinessIdentificationController]
 
@@ -209,7 +163,7 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
           "utr.title",
           s"utr.header.${businessType.key}"
         )
-        val utrTextKey = if(validBusinessTypeIdentifier.key == "limited_company" ) {"Corporation Tax"} else {"Self Assessment"}
+        val utrTextKey = if(businessType.key == "limited_company" ) {"Corporation Tax"} else {"Self Assessment"}
 
         result should containSubstrings(Messages("utr.p1", utrTextKey))
       }
@@ -1498,7 +1452,7 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
         status(result) shouldBe 303
         redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showConfirmBusinessForm().url)
 
-        verifyAgentAssuranceAuditRequestSentWithClientIdentifier(Nino("AA123456A"), true, "SA6012", agentAssurancePayeCheck)
+        verifyAgentAssuranceAuditRequestSentWithClientIdentifier(Nino("AA123456A"), true, "SA6012", true)
         metricShouldExistAndBeUpdated("Count-Subscription-InvasiveCheck-Success")
       }
     }
@@ -1542,7 +1496,7 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.StartController.showCannotCreateAccount().url)
 
-      verifyAgentAssuranceAuditRequestSentWithClientIdentifier(Nino("AA123456A"), false, "SA6012", agentAssurancePayeCheck)
+      verifyAgentAssuranceAuditRequestSentWithClientIdentifier(Nino("AA123456A"), false, "SA6012", true)
       metricShouldExistAndBeUpdated("Count-Subscription-InvasiveCheck-Failed")
     }
 
@@ -1595,7 +1549,7 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showConfirmBusinessForm().url)
 
-      verifyAgentAssuranceAuditRequestSentWithClientIdentifier(Utr("4000000009"), true, "SA6012", agentAssurancePayeCheck)
+      verifyAgentAssuranceAuditRequestSentWithClientIdentifier(Utr("4000000009"), true, "SA6012", true)
       metricShouldExistAndBeUpdated("Count-Subscription-InvasiveCheck-Success")
     }
 
@@ -1620,7 +1574,7 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showConfirmBusinessForm().url)
 
-      verifyAgentAssuranceAuditRequestSentWithClientIdentifier(Utr("4000000009"), true, "SA6012", agentAssurancePayeCheck)
+      verifyAgentAssuranceAuditRequestSentWithClientIdentifier(Utr("4000000009"), true, "SA6012", true)
       metricShouldExistAndBeUpdated("Count-Subscription-InvasiveCheck-Success")
     }
 
@@ -1674,7 +1628,7 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
           Utr("4000000009"),
           false,
           "SA6012",
-          agentAssurancePayeCheck)
+        true)
       metricShouldExistAndBeUpdated("Count-Subscription-InvasiveCheck-Failed")
     }
 
@@ -1744,64 +1698,5 @@ trait BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
 
       status(result) shouldBe 200
     }
-  }
-
-  def verifyAgentAssuranceAuditRequestSent(
-                                            passPayeAgentAssuranceCheck: Option[Boolean],
-                                            passSaAgentAssuranceCheck: Option[Boolean],
-                                            passVatDecOrgAgentAssuranceCheck: Option[Boolean],
-                                            passIRCTAgentAssuranceCheck: Option[Boolean]): Unit = {
-    val optional = Seq(
-      passPayeAgentAssuranceCheck.map("passPayeAgentAssuranceCheck" -> _.toString),
-      passSaAgentAssuranceCheck.map("passSaAgentAssuranceCheck" -> _.toString),
-      passVatDecOrgAgentAssuranceCheck.map("passVatDecOrgAgentAssuranceCheck" -> _.toString),
-      passIRCTAgentAssuranceCheck.map("passIRCTAgentAssuranceCheck" -> _.toString)).flatten
-
-    verifyAuditRequestSent(
-      1,
-      AgentSubscriptionFrontendEvent.AgentAssurance,
-      detail = Map(
-        "utr" -> validUtr.value,
-        "postcode" -> validPostcode,
-        "isEnrolledSAAgent" -> "true",
-        "saAgentRef" -> "FOO1234",
-        //TODO "refuseToDealWith" -> ?,
-        "isEnrolledPAYEAgent" -> "true",
-        "payeAgentRef" -> "HZ1234",
-        "authProviderId" -> "12345-credId",
-        "authProviderType" -> "GovernmentGateway"
-      ) ++ optional,
-      tags = Map("transactionName" -> "agent-assurance", "path" -> "/")
-    )
-  }
-
-  def verifyAgentAssuranceAuditRequestSentWithClientIdentifier(
-                                                                identifier: TaxIdentifier,
-                                                                passCESAAgentAssuranceCheck: Boolean,
-                                                                saAgentRef: String,
-                                                                aAssurancePayeCheck: Boolean): Unit = {
-
-    val clientIdentifier = identifier match {
-      case nino@Nino(_) => ("userEnteredNino" -> nino.value)
-      case utr@Utr(_) => ("userEnteredUtr" -> utr.value)
-    }
-    val payeAudit = if (aAssurancePayeCheck) Seq("passPayeAgentAssuranceCheck" -> "false") else Seq.empty
-
-    verifyAuditRequestSent(
-      1,
-      AgentSubscriptionFrontendEvent.AgentAssurance,
-      detail = Map(
-        "utr" -> validUtr.value,
-        "postcode" -> validPostcode,
-        "isEnrolledSAAgent" -> "false",
-        "passSaAgentAssuranceCheck" -> "false",
-        "isEnrolledPAYEAgent" -> "false",
-        "passCESAAgentAssuranceCheck" -> passCESAAgentAssuranceCheck.toString,
-        "authProviderId" -> "12345-credId",
-        "authProviderType" -> "GovernmentGateway",
-        "userEnteredSaAgentRef" -> saAgentRef
-      ) + clientIdentifier ++ payeAudit,
-      tags = Map("transactionName" -> "agent-assurance", "path" -> "/")
-    )
   }
 }
