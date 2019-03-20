@@ -17,8 +17,8 @@ POST        /postcode                             uk.gov.hmrc.agentsubscriptionf
 GET         /national-insurance-number            uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showNationalInsuranceNumberForm
 POST        /national-insurance-number            uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.submitNationalInsuranceNumberForm
 
-GET         /company-registration-number          uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showCompanyRegNumberForm
-POST        /company-registration-number          uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.submitCompanyRegNumberForm
+GET         /company-registration-number          uk.gov.hmrc.agentsubscriptionfrontend.controllers.CompanyRegistrationController.showCompanyRegNumberForm
+POST        /company-registration-number          uk.gov.hmrc.agentsubscriptionfrontend.controllers.CompanyRegistrationController.submitCompanyRegNumberForm
 
 GET         /date-of-birth                        uk.gov.hmrc.agentsubscriptionfrontend.controllers.DateOfBirthController.showDateOfBirthForm
 POST        /date-of-birth                        uk.gov.hmrc.agentsubscriptionfrontend.controllers.DateOfBirthController.submitDateOfBirthForm

@@ -75,7 +75,7 @@ trait CommonRouting {
   private def continueToCompanyRegistrationPage(agentSession: AgentSession) =
     agentSession match {
       case _ if agentSession.companyRegistrationNumber.isEmpty =>
-        routes.BusinessIdentificationController.showCompanyRegNumberForm()
+        routes.CompanyRegistrationController.showCompanyRegNumberForm()
       case _ => continueToRegisteredForVatPage(agentSession)
     }
 

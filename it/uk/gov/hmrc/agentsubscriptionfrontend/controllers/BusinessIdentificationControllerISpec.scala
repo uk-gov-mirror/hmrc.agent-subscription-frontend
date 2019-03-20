@@ -254,7 +254,7 @@ class BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
 
         status(result) shouldBe 303
 
-        redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showCompanyRegNumberForm().url)
+        redirectLocation(result) shouldBe Some(routes.CompanyRegistrationController.showCompanyRegNumberForm().url)
 
         sessionStoreService.currentSession.agentSession = Some(agentSession.copy(postcode = Some(Postcode("AA12 1JN")), nino = None))
       }

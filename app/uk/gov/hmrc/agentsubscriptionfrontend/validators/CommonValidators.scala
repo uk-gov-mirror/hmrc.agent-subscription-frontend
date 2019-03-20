@@ -44,6 +44,8 @@ object CommonValidators {
   private val BusinessNameMaxLength = 40
   private val UtrMaxLength = 10
   private val SaAgentCodeMaxLength = 6
+  private val crnLength = 8
+  private val crnRegex = "[A-Z]{2}[0-9]{6}|[0-9]{8}"
 
   def saAgentCode = text verifying saAgentCodeConstraint
 
@@ -77,6 +79,8 @@ object CommonValidators {
   def postcodeWithBlacklist(blacklistedPostcodes: Set[String]): Mapping[String] =
     postcode
       .verifying("error.postcode.blacklisted", x => validateBlacklist(x, blacklistedPostcodes))
+
+  def crn: Mapping[String] = text verifying crnConstraint
 
   def emailAddress: Mapping[String] =
     text
@@ -184,6 +188,18 @@ object CommonValidators {
             Invalid(ValidationError("error.postcode.invalidchars"))
           case value if !value.matches(DesPostcodeRegex) => Invalid(ValidationError("error.postcode.invalid"))
           case _                                         => Valid
+        }
+    }
+  }
+
+  private val crnConstraint: Constraint[String] = Constraint[String] { fieldValue: String =>
+    nonEmptyWithMessage("error.crn.empty")(fieldValue) match {
+      case i: Invalid => i
+      case Valid =>
+        fieldValue match {
+          case value if value.length != crnLength || !value.matches(crnRegex) =>
+            Invalid(ValidationError("error.crn.invalid"))
+          case _ => Valid
         }
     }
   }

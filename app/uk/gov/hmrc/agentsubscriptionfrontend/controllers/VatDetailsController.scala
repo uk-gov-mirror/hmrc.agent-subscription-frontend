@@ -83,7 +83,7 @@ class VatDetailsController @Inject()(
     if (businessType == SoleTrader || businessType == Partnership) {
       routes.DateOfBirthController.showDateOfBirthForm().url
     } else {
-      routes.BusinessIdentificationController.showCompanyRegNumberForm().url
+      routes.CompanyRegistrationController.showCompanyRegNumberForm().url
     }
 }
 

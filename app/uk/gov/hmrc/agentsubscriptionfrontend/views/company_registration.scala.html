@@ -1,0 +1,57 @@
+@*
+ * Copyright 2019 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import uk.gov.hmrc.play.views.html.helpers.{form, input, errorSummary}
+@import uk.gov.hmrc.agentsubscriptionfrontend.models.CompanyRegistrationNumber
+@import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
+@import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
+
+
+@(crnForm: Form[CompanyRegistrationNumber])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+
+
+@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title =  error_prefix(crnForm) + Messages("crn.title"), bodyClasses = None) {
+
+  <a href="@routes.BusinessIdentificationController.showPostcodeForm()" class="link-back">@Messages("button.back")</a>
+
+  @if(crnForm.hasErrors) {
+        @errorSummary(Messages("error.summary.heading"), crnForm, Seq.empty, Some("crn"))
+    }
+
+    <h1 class="heading-xlarge margin-bottom-20">@Messages(s"crn.title")</h1>
+    <p class="form-hint">@Messages("crn.hint")</p>
+
+
+ @form(action = routes.CompanyRegistrationController.submitCompanyRegNumberForm(), 'class -> "form js-form"){
+
+  <div class="form-group">
+        @input(
+        crnForm("crn"),
+        '_inputClass -> "form-control input--cleared"
+        )
+    </div>
+
+    <div class="form-field">
+        <button class="button" type="submit" id="submit-crn">@Messages("button.continue")</button>
+    </div>
+ }
+}
+
+
+
+
+
+

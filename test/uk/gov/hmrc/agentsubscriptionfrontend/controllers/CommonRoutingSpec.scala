@@ -21,11 +21,10 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.connectors.MappingConnector
-import uk.gov.hmrc.agentsubscriptionfrontend.service.SubscriptionService
 import uk.gov.hmrc.agentsubscriptionfrontend.support.ResettingMockitoSugar
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
+
 import scala.concurrent.ExecutionContext
 
 class CommonRoutingSpec extends UnitSpec with WithFakeApplication with ResettingMockitoSugar {

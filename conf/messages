@@ -67,6 +67,8 @@ error.llputr.blank=Enter your partnership''s Unique Taxpayer Reference (UTR)
 error.llputr.invalid=Your limited liability partnership''s Unique Taxpayer Reference (UTR) must be 10 numbers
 error.client.sautr.blank=Enter the client''s Self Assessment Unique Taxpayer Reference (UTR)
 error.client.sautr.invalid=Self Assessment Unique Taxpayer Reference (UTR) must be 10 numbers
+error.crn.empty=Enter the company registration number of your business
+error.crn.invalid=Company registration number must be 8 numbers, or 2 letters followed by 6 numbers
 error.business-name.empty = Enter your business name
 error.business-name.invalid = Business name must only include letters a to z, numbers, commas, full stops, apostrophes, hyphens, forward slashes, and spaces
 error.business-name.maxlength = Business name must be 40 characters or less
@@ -138,6 +140,11 @@ utr.header.limited_company=What is the Unique Taxpayer Reference (UTR) of your c
 utr.header.partnership=What is the Unique Taxpayer Reference (UTR) of your partnership?
 utr.header.llp=What is the Unique Taxpayer Reference (UTR) of your limited liability partnership?
 utr.p1=A Unique Taxpayer Reference is 10 numbers like 12345 67890. It will be on tax returns and other letters about {0}. It may be called ''reference'', ''UTR'' or ''official use''. <a href="https://www.gov.uk/find-lost-utr-number" target="_blank" rel="noopener noreferrer">Find a lost UTR (opens in a new window or tab)</a>.
+
+#CRN details page
+crn.title=What is the company registration number of your business?
+crn.hint=For example, 01234567 or SC123456
+
 
 #Postcode page
 postcode.title=What is the postcode of your registered address?
