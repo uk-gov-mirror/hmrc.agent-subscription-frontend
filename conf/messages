@@ -160,6 +160,12 @@ date-of-birth.month-year.empty=Date of birth must include a month and year
 date-of-birth.must.be.past=Date of birth must be in the past
 date-of-birth.is.not.real=Enter a real date of birth
 
+#Registered for VAT page
+registered-for-vat.title=Is your business registered for VAT?
+registered-for-vat.option.yes=Yes
+registered-for-vat.option.no=No
+registered-for-vat.error.no-radio-selected=Select yes if your business is registered for VAT
+
 #Invalid Business Type
 invalid.businessType.title=You cannot create an agent services account
 invalid.businessType.p1=You can only create an agent services account if your business is one of the following:

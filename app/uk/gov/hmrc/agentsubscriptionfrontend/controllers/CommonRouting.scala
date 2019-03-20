@@ -60,21 +60,30 @@ trait CommonRouting {
 
   private def redirectAfterPostcode(agentSession: AgentSession): Call =
     agentSession.businessType match {
-      case Some(SoleTrader | Partnership) => continueFromNationalInsurancePage(agentSession)
-      case Some(LimitedCompany | Llp)     => continueFromCompanyRegistrationPage(agentSession)
+      case Some(SoleTrader | Partnership) => continueToNationalInsurancePage(agentSession)
+      case Some(LimitedCompany | Llp)     => continueToCompanyRegistrationPage(agentSession)
+      case _                              => routes.BusinessIdentificationController.showBusinessTypeForm()
     }
 
-  private def continueFromNationalInsurancePage(agentSession: AgentSession) =
+  private def continueToNationalInsurancePage(agentSession: AgentSession) =
     agentSession match {
       case _ if agentSession.nino.isEmpty        => routes.BusinessIdentificationController.showNationalInsuranceNumberForm()
       case _ if agentSession.dateOfBirth.isEmpty => routes.DateOfBirthController.showDateOfBirthForm()
-      case _ if agentSession.companyRegistrationNumber.isEmpty =>
-        routes.RegisteredForVatController.showRegisteredForVatForm()
+      case _                                     => continueToRegisteredForVatPage(agentSession)
     }
 
-  private def continueFromCompanyRegistrationPage(agentSession: AgentSession) =
+  private def continueToCompanyRegistrationPage(agentSession: AgentSession) =
     agentSession match {
       case _ if agentSession.companyRegistrationNumber.isEmpty =>
         routes.BusinessIdentificationController.showCompanyRegNumberForm()
+      case _ => continueToRegisteredForVatPage(agentSession)
+    }
+
+  private def continueToRegisteredForVatPage(agentSession: AgentSession) =
+    agentSession match {
+      case _ if agentSession.registeredForVat.isEmpty => routes.VatDetailsController.showRegisteredForVatForm()
+      case _ if agentSession.registeredForVat.contains(true) && agentSession.vatDetails.isEmpty =>
+        routes.VatDetailsController.showVatDeatilsForm()
+      case _ => routes.BusinessIdentificationController.showConfirmBusinessForm()
     }
 }

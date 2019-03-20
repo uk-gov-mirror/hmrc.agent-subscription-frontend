@@ -31,7 +31,7 @@ class DateOfBirthControllerSpec extends BaseISpec with SessionDataMissingSpec {
       val result = await(controller.submitDateOfBirthForm()(request))
 
       status(result) shouldBe 303
-      redirectLocation(result) shouldBe Some(routes.RegisteredForVatController.showRegisteredForVatForm().url)
+      redirectLocation(result) shouldBe Some(routes.VatDetailsController.showRegisteredForVatForm().url)
 
       val dob = DateOfBirth(LocalDate.of(1950, 1, 1))
 

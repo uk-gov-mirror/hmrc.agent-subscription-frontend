@@ -16,20 +16,4 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.models
 
-import play.api.libs.json.{Format, Json}
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
-import uk.gov.hmrc.domain.Nino
-
-case class AgentSession(
-  businessType: Option[BusinessType] = None,
-  utr: Option[Utr] = None,
-  postcode: Option[Postcode] = None,
-  nino: Option[Nino] = None,
-  companyRegistrationNumber: Option[CompanyRegistrationNumber] = None,
-  dateOfBirth: Option[DateOfBirth] = None,
-  registeredForVat: Option[Boolean] = None,
-  vatDetails: Option[String] = None)
-
-object AgentSession {
-  implicit val format: Format[AgentSession] = Json.format[AgentSession]
-}
+case class RegisteredForVat(confirm: RadioInputAnswer)
