@@ -21,10 +21,9 @@ import cats.instances.future._
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.Inject
 import play.api.Logger
-import play.api.i18n.{I18nSupport, MessagesApi}
+import play.api.i18n.MessagesApi
 import play.api.mvc.{Action, AnyContent, Request, Result}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
-import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.models.MappingEligibility.IsEligible
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{ChainedSessionDetails, MappingEligibility}
@@ -34,33 +33,32 @@ import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class StartController @Inject()(
-  override val messagesApi: MessagesApi,
   override val authConnector: AuthConnector,
   chainedSessionDetailsRepository: ChainedSessionDetailsRepository,
-  val continueUrlActions: ContinueUrlActions,
-  val metrics: Metrics,
-  override implicit val appConfig: AppConfig,
-  sessionStoreService: SessionStoreService,
-  subscriptionService: SubscriptionService,
-  commonRouting: CommonRouting)
-    extends FrontendController with I18nSupport with AuthActions {
+  continueUrlActions: ContinueUrlActions,
+  val sessionStoreService: SessionStoreService,
+  subscriptionService: SubscriptionService)(
+  implicit override implicit val appConfig: AppConfig,
+  metrics: Metrics,
+  override val messagesApi: MessagesApi,
+  val ec: ExecutionContext)
+    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig) with SessionDataSupport
+    with SessionBehaviour {
 
-  import continueUrlActions._
   import uk.gov.hmrc.agentsubscriptionfrontend.support.CallOps._
 
   val root: Action[AnyContent] = Action.async { implicit request =>
-    withMaybeContinueUrl { urlOpt =>
+    continueUrlActions.withMaybeContinueUrl { urlOpt =>
       Redirect(routes.StartController.start().toURLWithParams("continue" -> urlOpt.map(_.url)))
     }
   }
 
   def start: Action[AnyContent] = Action.async { implicit request =>
-    withMaybeContinueUrl { urlOpt =>
+    continueUrlActions.withMaybeContinueUrl { urlOpt =>
       Ok(html.start(urlOpt))
     }
   }
@@ -72,7 +70,7 @@ class StartController @Inject()(
   }
 
   def returnAfterGGCredsCreated(id: Option[String] = None): Action[AnyContent] = Action.async { implicit request =>
-    withMaybeContinueUrlCached {
+    continueUrlActions.withMaybeContinueUrlCached {
 
       val chainedSessionDetailsOpt: Future[Option[ChainedSessionDetails]] =
         (for {
@@ -112,8 +110,7 @@ class StartController @Inject()(
                                                 .cacheInitialDetails(chainedSessionDetails.initialDetails.getOrElse(
                                                   throw new Exception("initial details is empty")))
                                                 .flatMap(_ =>
-                                                  commonRouting.handleAutoMapping(
-                                                    chainedSessionDetails.wasEligibleForMapping))
+                                                  handleAutoMapping(chainedSessionDetails.wasEligibleForMapping))
                                             }
           } yield continuedSubscriptionResponse
         case None => Redirect(routes.BusinessIdentificationController.showBusinessTypeForm())

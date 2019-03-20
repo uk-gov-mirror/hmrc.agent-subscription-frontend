@@ -1,6 +1,8 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.support
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{BusinessAddress, BusinessType, InitialDetails}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.SoleTrader
+import uk.gov.hmrc.agentsubscriptionfrontend.models._
+import uk.gov.hmrc.domain.Nino
 
 object TestData {
 
@@ -27,4 +29,7 @@ object TestData {
     )
 
   val configuredGovernmentGatewayUrl = "http://configured-government-gateway.gov.uk/"
+
+  val agentSession: AgentSession =
+    AgentSession(businessType = Some(SoleTrader), utr = Some(Utr("abc")), postcode = Some(Postcode("bn13 1hn")), nino = Some(Nino("AE123456C")))
 }

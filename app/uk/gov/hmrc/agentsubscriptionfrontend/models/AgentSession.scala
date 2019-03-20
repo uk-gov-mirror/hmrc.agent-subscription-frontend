@@ -25,7 +25,8 @@ case class AgentSession(
   utr: Option[Utr] = None,
   postcode: Option[Postcode] = None,
   nino: Option[Nino] = None,
-  companyRegistrationNumber: Option[CompanyRegistrationNumber] = None)
+  companyRegistrationNumber: Option[CompanyRegistrationNumber] = None,
+  dateOfBirth: Option[DateOfBirth] = None)
 
 object AgentSession {
   implicit val format: Format[AgentSession] = Json.format[AgentSession]

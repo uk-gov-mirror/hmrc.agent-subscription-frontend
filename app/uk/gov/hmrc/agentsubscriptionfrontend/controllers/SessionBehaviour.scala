@@ -17,14 +17,14 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 import play.api.mvc.Result
 import play.api.mvc.Results._
-import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, BusinessType}
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
 
-trait SessionBehaviour {
+trait SessionBehaviour extends CommonRouting {
 
   val sessionStoreService: SessionStoreService
   implicit val ec: ExecutionContext
@@ -40,4 +40,8 @@ trait SessionBehaviour {
         }
       case None => Redirect(routes.BusinessIdentificationController.showBusinessTypeForm())
     }
+
+  protected def updateSessionAndRedirectToNextPage(updatedSession: AgentSession)(
+    implicit hc: HeaderCarrier): Future[Result] =
+    sessionStoreService.cacheAgentSession(updatedSession).map(_ => Redirect(redirectToNextPage(updatedSession)))
 }

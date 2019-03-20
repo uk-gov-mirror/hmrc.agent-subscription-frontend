@@ -29,12 +29,11 @@ import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 import scala.concurrent.ExecutionContext
 
 class CommonRoutingSpec extends UnitSpec with WithFakeApplication with ResettingMockitoSugar {
-  private val mockMappingConnector = resettingMock[MappingConnector]
-  private val mockSubscriptionService = resettingMock[SubscriptionService]
   private val mockAppConfig = resettingMock[AppConfig]
 
-  private val commonRouting =
-    new CommonRouting(mockMappingConnector, mockSubscriptionService, mockAppConfig)
+  private val commonRouting = new CommonRouting {
+    override val appConfig: AppConfig = mockAppConfig
+  }
 
   private val utr = Utr("9876543210")
   private implicit val hc = HeaderCarrier()

@@ -57,7 +57,7 @@ error.addressline.4.maxlength = Address line 4 must be 35 characters or less
 error.addressline.4.invalid = Address line 4 must only include letters a to z, numbers, commas, ampersands, single quotation marks, full stops, apostrophes, hyphens, forward slashes, and spaces
 error.utr.blank= Enter your business''s Unique Taxpayer Reference (UTR)
 error.utr.invalid = Unique Taxpayer Reference (UTR) must be 10 numbers
-error.sautr.blank=Enter the Unique Taxpayer Reference (UTR) you use for Self Assessment?
+error.sautr.blank=Enter the Unique Taxpayer Reference (UTR) you use for Self Assessment
 error.sautr.invalid=The Unique Taxpayer Reference (UTR) you use for Self Assessment must be 10 numbers
 error.companyutr.blank=Enter your company''s Unique Taxpayer Reference (UTR)
 error.companyutr.invalid=Your company''s Unique Taxpayer Reference (UTR) must be 10 numbers
@@ -145,6 +145,20 @@ postcode.title=What is the postcode of your registered address?
 #Nino page
 nino.title=What is your National Insurance number?
 nino.hint=It''s on your National Insurance card, benefit letter, payslip or P60. For example, ''QQ 12 34 56 C''.
+
+#Date of Birth page
+date-of-birth.title=What is your date of birth?
+date-of-birth.hint=For example, 31 3 1980
+date-of-birth.empty=Enter your date of birth
+date-of-birth.invalid=Date of birth is not valid
+date-of-birth.day.invalid=Date of birth must include a valid day
+date-of-birth.day-month.empty=Date of birth must include a day and month
+date-of-birth.day-year.empty=Date of birth must include a day and year
+date-of-birth.month.invalid=Date of birth must include a valid month
+date-of-birth.year.invalid=Date of birth must include a valid year
+date-of-birth.month-year.empty=Date of birth must include a month and year
+date-of-birth.must.be.past=Date of birth must be in the past
+date-of-birth.is.not.real=Enter a real date of birth
 
 #Invalid Business Type
 invalid.businessType.title=You cannot create an agent services account

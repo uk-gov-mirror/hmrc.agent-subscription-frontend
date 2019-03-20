@@ -15,8 +15,64 @@
  *@
 
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-@import uk.gov.hmrc.play.views.html.helpers.{form, input, errorSummary}
+@import uk.gov.hmrc.play.views.html.helpers.{form, input, errorSummary, dateFieldsFreeInlineLegend}
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
-@import uk.gov.hmrc.agentmtdidentifiers.model.Utr
-@import uk.gov.hmrc.domain.Nino
+@import uk.gov.hmrc.agentsubscriptionfrontend.models.DateOfBirth
+
+@(dobForm: Form[DateOfBirth])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+
+    @DayFieldError = @{
+        if(dobForm("dob.day").hasErrors)
+        "day-field-error"
+    }
+
+    @MonthFieldError = @{
+        if(dobForm("dob.month").hasErrors)
+        "month-field-error"
+    }
+
+    @YearFieldError = @{
+        if(dobForm("dob.year").hasErrors)
+        "year-field-error"
+    }
+
+    @DateFieldErrorsAll = @{
+        if(dobForm("dob").hasErrors && !dobForm("dob.day").hasErrors && !dobForm("dob.month").hasErrors && !dobForm("dob.year").hasErrors)
+        "date-field-errors-all"
+    }
+
+    @dateFormWithRefinedErrors = @{
+        dobForm.copy(errors = dobForm.errors.filterNot(error => error.message == "" || !error.key.contains("dob")))
+    }
+
+@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title =  error_prefix(dobForm) + Messages("date-of-birth.title"), bodyClasses = None) {
+
+   <a href="@routes.BusinessIdentificationController.showNationalInsuranceNumberForm()" class="link-back">@Messages("button.back")</a>
+
+   @if(dobForm.hasErrors) {
+     @errorSummary(Messages("error.summary.heading"), dobForm, Seq.empty, Some("dob"))
+   }
+
+   <h1 class="heading-xlarge margin-bottom-20">@Messages(s"date-of-birth.title")</h1>
+   <p class="form-hint">@Messages("date-of-birth.hint")</p>
+
+   @form(action = routes.DateOfBirthController.submitDateOfBirthForm(), 'class -> "form js-form") {
+
+    <fieldset>
+        <div class="@DayFieldError @MonthFieldError @YearFieldError @DateFieldErrorsAll">
+            @dateFieldsFreeInlineLegend(
+            dateFormWithRefinedErrors,
+            "dob",
+            '_legendSpanClass -> "form-label-bold",
+            '_legendClass -> "flush--ends"
+            )
+        </div>
+    </fieldset>
+
+       <div class="form-field">
+        <button class="button" type="submit" id="submit-date-of-birth">@Messages("button.continue")</button>
+       </div>
+   }
+}
+
 

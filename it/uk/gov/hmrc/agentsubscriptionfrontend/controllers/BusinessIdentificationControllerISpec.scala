@@ -233,26 +233,30 @@ class BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
     "read the form and redirect to /national-insurance-number if businessType is SoleTrader or Partnership" in {
       List(SoleTrader, Partnership).foreach { businessType =>
         implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("postcode" -> "AA12 1JN")
-        await(sessionStoreService.cacheAgentSession(AgentSession(Some(businessType))))
+        sessionStoreService.currentSession.agentSession = Some(agentSession.copy(postcode = None, nino = None))
 
         val result = await(controller.submitPostcodeForm()(request))
 
         status(result) shouldBe 303
 
         redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showNationalInsuranceNumberForm().url)
+
+        sessionStoreService.currentSession.agentSession = Some(agentSession.copy(postcode = Some(Postcode("AA12 1JN")), nino = None))
       }
     }
 
     "read the form and redirect to /company-registration-number if businessType is Limited Company or Llp" in {
       List(LimitedCompany, Llp).foreach { businessType =>
         implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("postcode" -> "AA12 1JN")
-        await(sessionStoreService.cacheAgentSession(AgentSession(Some(businessType))))
+        sessionStoreService.currentSession.agentSession = Some(agentSession.copy(businessType = Some(businessType), postcode = None, nino = None))
 
         val result = await(controller.submitPostcodeForm()(request))
 
         status(result) shouldBe 303
 
         redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showCompanyRegNumberForm().url)
+
+        sessionStoreService.currentSession.agentSession = Some(agentSession.copy(postcode = Some(Postcode("AA12 1JN")), nino = None))
       }
     }
 
@@ -298,13 +302,13 @@ class BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
   "submit /national-insurance-number form" should {
     "read the form and redirect to /date-of-birth page" in {
         implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("nino" -> "AE123456C")
-        await(sessionStoreService.cacheAgentSession(AgentSession(Some(BusinessType.SoleTrader))))
+        sessionStoreService.currentSession.agentSession = Some(agentSession)
 
         val result = await(controller.submitNationalInsuranceNumberForm()(request))
 
         status(result) shouldBe 303
 
-        redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showDateOfBirthForm().url)
+        redirectLocation(result) shouldBe Some(routes.DateOfBirthController.showDateOfBirthForm().url)
     }
 
     "handle forms with invalid nino" in {

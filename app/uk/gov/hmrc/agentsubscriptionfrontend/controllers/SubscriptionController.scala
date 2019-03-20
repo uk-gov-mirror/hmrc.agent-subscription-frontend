@@ -36,7 +36,7 @@ import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException}
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 
 @Singleton
@@ -47,14 +47,14 @@ class SubscriptionController @Inject()(
   override val sessionStoreService: SessionStoreService,
   addressLookUpConnector: AddressLookupFrontendConnector,
   mappingConnector: MappingConnector,
-  commonRouting: CommonRouting,
   val continueUrlActions: ContinueUrlActions,
   val metrics: Metrics,
-  override implicit val appConfig: AppConfig)
-    extends FrontendController with I18nSupport with AuthActions with SessionDataSupport with Monitoring {
+  override implicit val appConfig: AppConfig,
+  override implicit val ec: ExecutionContext)
+    extends FrontendController with I18nSupport with AuthActions with SessionDataSupport with Monitoring
+    with SessionBehaviour {
 
   import SubscriptionControllerForms._
-  import commonRouting.withCleanCreds
 
   private val JourneyName: String = appConfig.journeyName
   private val blacklistedPostCodes: Set[String] = appConfig.blacklistedPostcodes

@@ -20,9 +20,11 @@ POST        /national-insurance-number            uk.gov.hmrc.agentsubscriptionf
 GET         /company-registration-number          uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showCompanyRegNumberForm
 POST        /company-registration-number          uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.submitCompanyRegNumberForm
 
-GET         /date-of-birth                        uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showDateOfBirthForm
-POST        /date-of-birth                        uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.submitDateOfBirthForm
+GET         /date-of-birth                        uk.gov.hmrc.agentsubscriptionfrontend.controllers.DateOfBirthController.showDateOfBirthForm
+POST        /date-of-birth                        uk.gov.hmrc.agentsubscriptionfrontend.controllers.DateOfBirthController.submitDateOfBirthForm
 
+GET         /registered-for-vat                   uk.gov.hmrc.agentsubscriptionfrontend.controllers.RegisteredForVatController.showRegisteredForVatForm
+POST        /registered-for-vat                   uk.gov.hmrc.agentsubscriptionfrontend.controllers.RegisteredForVatController.submitRegisteredForVatForm
 
 GET         /invalid-business-type                uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showInvalidBusinessType
 GET         /business-details                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showBusinessDetailsForm()

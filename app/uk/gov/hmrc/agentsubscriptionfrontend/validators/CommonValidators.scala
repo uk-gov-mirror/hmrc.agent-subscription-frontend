@@ -228,7 +228,7 @@ object CommonValidators {
       }
   }
 
-  private def checkOneAtATime[A](constraints: Seq[Constraint[A]]): Constraint[A] = Constraint[A] { fieldValue: A =>
+  def checkOneAtATime[A](constraints: Seq[Constraint[A]]): Constraint[A] = Constraint[A] { fieldValue: A =>
     @tailrec
     def loop(c: Seq[Constraint[A]]): ValidationResult =
       c match {
