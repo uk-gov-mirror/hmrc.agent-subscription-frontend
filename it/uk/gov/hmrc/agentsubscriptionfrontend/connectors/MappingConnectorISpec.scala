@@ -8,6 +8,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.models.MappingEligibility.{IsEligib
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.MappingStubs
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, MetricTestSupport}
 import uk.gov.hmrc.http._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class MappingConnectorISpec extends BaseISpec with MetricTestSupport {
 

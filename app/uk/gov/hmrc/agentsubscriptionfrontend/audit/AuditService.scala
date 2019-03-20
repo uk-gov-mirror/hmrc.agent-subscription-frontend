@@ -18,18 +18,16 @@ package uk.gov.hmrc.agentsubscriptionfrontend.audit
 
 import java.util.concurrent.ConcurrentHashMap
 
-import javax.inject.Inject
 import com.google.inject.Singleton
+import javax.inject.Inject
 import play.api.mvc.{AnyContent, Request}
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{AssuranceCheckInput, AssuranceResults, KnownFactsResult}
-import uk.gov.hmrc.domain.{Nino, TaxIdentifier}
+import uk.gov.hmrc.domain.TaxIdentifier
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.AuditExtensions.auditHeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.DataEvent
-import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
 import scala.collection.JavaConversions
 import scala.concurrent.{ExecutionContext, Future}
@@ -55,7 +53,7 @@ class AuditData {
 }
 
 @Singleton
-class AuditService @Inject()(val auditConnector: AuditConnector) {
+class AuditService @Inject()(val auditConnector: AuditConnector)(implicit ec: ExecutionContext) {
 
   import AgentSubscriptionFrontendEvent._
 

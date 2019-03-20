@@ -43,5 +43,7 @@ trait SessionBehaviour extends CommonRouting {
 
   protected def updateSessionAndRedirectToNextPage(updatedSession: AgentSession)(
     implicit hc: HeaderCarrier): Future[Result] =
-    sessionStoreService.cacheAgentSession(updatedSession).map(_ => Redirect(redirectToNextPage(updatedSession)))
+    sessionStoreService
+      .cacheAgentSession(updatedSession)
+      .map(_ => Redirect(redirectToNextPage(updatedSession)))
 }

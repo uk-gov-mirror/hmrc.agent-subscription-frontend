@@ -18,7 +18,9 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import cats.data.OptionT
 import cats.instances.future._
+import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
+import play.api.i18n.MessagesApi
 import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{ChainedSessionDetails, MappingEligibility}
@@ -26,17 +28,24 @@ import uk.gov.hmrc.agentsubscriptionfrontend.repository.ChainedSessionDetailsRep
 import uk.gov.hmrc.agentsubscriptionfrontend.repository.StashedChainedSessionDetails.StashedChainnedSessionId
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{MappingService, SessionStoreService}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.CallOps.addParamsToUrl
+import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class SignedOutController @Inject()(
   chainedSessionRepository: ChainedSessionDetailsRepository,
   mappingService: MappingService,
-  sessionStoreService: SessionStoreService)(implicit appConfig: AppConfig)
-    extends FrontendController {
+  val sessionStoreService: SessionStoreService,
+  continueUrlActions: ContinueUrlActions,
+  override val authConnector: AuthConnector)(
+  implicit messagesApi: MessagesApi,
+  override val appConfig: AppConfig,
+  override val metrics: Metrics,
+  override val ec: ExecutionContext)
+    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig) with SessionDataSupport
+    with SessionBehaviour {
 
   def redirectToSos = Action.async { implicit request =>
     for {

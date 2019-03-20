@@ -21,22 +21,17 @@ import play.api.Logger
 import play.api.mvc._
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{HostnameWhiteListService, SessionStoreService}
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.HeaderCarrierConverter
 import uk.gov.hmrc.play.binders.ContinueUrl
-import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 
 @Singleton
-class ContinueUrlActions @Inject()(
-  whiteListService: HostnameWhiteListService,
-  sessionStoreService: SessionStoreService) {
+class ContinueUrlActions @Inject()(whiteListService: HostnameWhiteListService, sessionStoreService: SessionStoreService)(
+  implicit executor: ExecutionContext) {
 
-  def extractContinueUrl[A](implicit request: Request[A]): Future[Option[ContinueUrl]] = {
-    implicit val hc = HeaderCarrierConverter.fromHeadersAndSession(request.headers, Option(request.session))
-
+  def extractContinueUrl[A](implicit request: Request[A], hc: HeaderCarrier): Future[Option[ContinueUrl]] =
     request.getQueryString("continue") match {
       case Some(continueUrl) =>
         Try(ContinueUrl(continueUrl)) match {
@@ -57,7 +52,6 @@ class ContinueUrlActions @Inject()(
       case None =>
         Future.successful(None)
     }
-  }
 
   def withMaybeContinueUrl[A](
     block: Option[ContinueUrl] => Future[Result])(implicit request: Request[A], hc: HeaderCarrier): Future[Result] = {

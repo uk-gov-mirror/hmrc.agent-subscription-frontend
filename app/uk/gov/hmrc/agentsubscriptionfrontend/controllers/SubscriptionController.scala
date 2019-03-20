@@ -19,39 +19,37 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
 import play.api.Logger
-import play.api.i18n.{I18nSupport, MessagesApi}
+import play.api.i18n.MessagesApi
 import play.api.mvc.{AnyContent, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
-import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.{AddressLookupFrontendConnector, MappingConnector}
 import uk.gov.hmrc.agentsubscriptionfrontend.form.DesAddressForm
 import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionReturnedHttpError, SubscriptionService}
-import uk.gov.hmrc.agentsubscriptionfrontend.support.{Monitoring, TaxIdentifierFormatters}
+import uk.gov.hmrc.agentsubscriptionfrontend.support.TaxIdentifierFormatters
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException}
-import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 
 @Singleton
 class SubscriptionController @Inject()(
-  override val messagesApi: MessagesApi,
   override val authConnector: AuthConnector,
   subscriptionService: SubscriptionService,
   override val sessionStoreService: SessionStoreService,
   addressLookUpConnector: AddressLookupFrontendConnector,
   mappingConnector: MappingConnector,
-  val continueUrlActions: ContinueUrlActions,
-  val metrics: Metrics,
-  override implicit val appConfig: AppConfig,
-  override implicit val ec: ExecutionContext)
-    extends FrontendController with I18nSupport with AuthActions with SessionDataSupport with Monitoring
+  continueUrlActions: ContinueUrlActions)(
+  implicit messagesApi: MessagesApi,
+  override val appConfig: AppConfig,
+  override val metrics: Metrics,
+  override val ec: ExecutionContext)
+    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig) with SessionDataSupport
     with SessionBehaviour {
 
   import SubscriptionControllerForms._

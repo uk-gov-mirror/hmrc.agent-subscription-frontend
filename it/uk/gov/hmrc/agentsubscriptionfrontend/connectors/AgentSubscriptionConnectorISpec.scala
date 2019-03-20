@@ -7,7 +7,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, MetricTestSupport}
 import uk.gov.hmrc.http._
 import com.kenshoo.play.metrics.Metrics
-
+import scala.concurrent.ExecutionContext.Implicits.global
 class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {
 
   private implicit val hc = HeaderCarrier()

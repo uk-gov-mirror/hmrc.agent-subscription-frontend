@@ -26,15 +26,14 @@ import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.models.MappingEligibility
 import uk.gov.hmrc.http._
-import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext.fromLoggingDetails
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class MappingConnector @Inject()(
   @Named("agent-mapping-baseUrl") baseUrl: URL,
   http: HttpGet with HttpPost with HttpPut with HttpDelete,
-  metrics: Metrics)
+  metrics: Metrics)(implicit ec: ExecutionContext)
     extends HttpAPIMonitor {
   override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
 

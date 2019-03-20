@@ -18,34 +18,33 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
-import play.api.i18n.{I18nSupport, MessagesApi}
+import play.api.i18n.MessagesApi
 import play.api.mvc.{AnyContent, _}
-import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.config.amls.AMLSLoader
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentAssuranceConnector
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{AMLSDetails, AMLSForm}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.AMLSDetails
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
-import uk.gov.hmrc.agentsubscriptionfrontend.support.Monitoring
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 import scala.collection.immutable.Map
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class AMLSController @Inject()(
-  override val messagesApi: MessagesApi,
   override val authConnector: AuthConnector,
   val agentAssuranceConnector: AgentAssuranceConnector,
-  implicit override val appConfig: AppConfig,
   override val continueUrlActions: ContinueUrlActions,
+  override val sessionStoreService: SessionStoreService)(
+  implicit messagesApi: MessagesApi,
+  override val appConfig: AppConfig,
   override val metrics: Metrics,
-  override val sessionStoreService: SessionStoreService)
-    extends FrontendController with I18nSupport with AuthActions with SessionDataSupport with Monitoring {
+  override val ec: ExecutionContext)
+    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig) with SessionDataSupport
+    with SessionBehaviour {
 
   import AMLSForms._
 

@@ -6,6 +6,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.stubs.SsoStub
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, MetricTestSupport}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpGet}
 import com.kenshoo.play.metrics.Metrics
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class SsoConnectorISpec extends BaseISpec with MetricTestSupport {
 
@@ -24,7 +25,7 @@ class SsoConnectorISpec extends BaseISpec with MetricTestSupport {
       }
     }
 
-    "return false for a nonwhitelisted url" in {
+    "return false for a non whitelisted url" in {
       withMetricsTimerUpdate("ConsumedAPI-SSO-validateExternalDomain-GET") {
         SsoStub.givenDomainIsNotWhitelisted("invalid-example.com")
         val result = await(connector.validateExternalDomain("invalid-example.com"))

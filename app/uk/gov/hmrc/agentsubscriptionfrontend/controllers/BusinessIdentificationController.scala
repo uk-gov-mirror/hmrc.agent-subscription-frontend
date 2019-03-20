@@ -19,23 +19,22 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
 import play.api.Logger
-import play.api.i18n.{I18nSupport, MessagesApi}
+import play.api.i18n.MessagesApi
 import play.api.mvc.{AnyContent, Request, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.audit.AuditService
-import uk.gov.hmrc.agentsubscriptionfrontend.auth.{Agent, AuthActions}
+import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.connectors.{AgentAssuranceConnector, AgentSubscriptionConnector}
 import uk.gov.hmrc.agentsubscriptionfrontend.models
 import uk.gov.hmrc.agentsubscriptionfrontend.models.AssuranceResults._
-import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.{Invalid, LimitedCompany, Llp, Partnership, SoleTrader}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.Invalid
 import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidVariantsTaxPayerOptionForm._
 import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidationResult.FailureReason._
 import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidationResult.{Failure, Pass}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.service._
-import uk.gov.hmrc.agentsubscriptionfrontend.support.{Monitoring, TaxIdentifierFormatters}
+import uk.gov.hmrc.agentsubscriptionfrontend.support.TaxIdentifierFormatters
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.validators.InitialDetailsValidator
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
@@ -43,30 +42,26 @@ import uk.gov.hmrc.agentsubscriptionfrontend.views.html.invasive_check_start
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier}
-import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class BusinessIdentificationController @Inject()(
   assuranceService: AssuranceService,
-  val agentAssuranceConnector: AgentAssuranceConnector,
-  override val messagesApi: MessagesApi,
   override val authConnector: AuthConnector,
-  val agentSubscriptionConnector: AgentSubscriptionConnector,
   val subscriptionService: SubscriptionService,
   override val sessionStoreService: SessionStoreService,
-  val continueUrlActions: ContinueUrlActions,
+  continueUrlActions: ContinueUrlActions,
   val initialDetailsValidator: InitialDetailsValidator,
-  auditService: AuditService,
-  override implicit val appConfig: AppConfig,
-  override implicit val ec: ExecutionContext,
-  val metrics: Metrics)
-    extends FrontendController with I18nSupport with AuthActions with SessionDataSupport with Monitoring
+  auditService: AuditService)(
+  implicit messagesApi: MessagesApi,
+  override val appConfig: AppConfig,
+  override val metrics: Metrics,
+  override val ec: ExecutionContext)
+    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig) with SessionDataSupport
     with SessionBehaviour {
 
   import BusinessIdentificationForms._
-  import continueUrlActions._
 
   val showCreateNewAccount: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
@@ -76,7 +71,7 @@ class BusinessIdentificationController @Inject()(
 
   val redirectToBusinessType: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      withMaybeContinueUrlCached {
+      continueUrlActions.withMaybeContinueUrlCached {
         Redirect(routes.BusinessIdentificationController.showBusinessTypeForm())
       }
     }
@@ -84,7 +79,7 @@ class BusinessIdentificationController @Inject()(
 
   def showBusinessTypeForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { implicit agent =>
-      withMaybeContinueUrlCached {
+      continueUrlActions.withMaybeContinueUrlCached {
         Ok(html.business_type(businessTypeForm))
       }
     }
@@ -203,7 +198,7 @@ class BusinessIdentificationController @Inject()(
 
   def showBusinessDetailsForm(): Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { implicit agent =>
-      withMaybeContinueUrlCached {
+      continueUrlActions.withMaybeContinueUrlCached {
 
         mark("Count-Subscription-BusinessDetails-Start")
         withValidBusinessType { businessType =>
