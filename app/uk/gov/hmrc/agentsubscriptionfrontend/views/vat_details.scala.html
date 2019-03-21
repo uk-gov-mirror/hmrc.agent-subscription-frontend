@@ -1,0 +1,88 @@
+@*
+ * Copyright 2019 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
+@import uk.gov.hmrc.play.views.html.helpers.{form, input, errorSummary, dateFieldsFreeInlineLegend}
+@import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
+@import uk.gov.hmrc.agentsubscriptionfrontend.models.VatDetails
+
+@(vatDetailsForm: Form[VatDetails])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+
+@DayFieldError = @{
+    if(vatDetailsForm("regDate.day").hasErrors)
+    "day-field-error"
+}
+
+@MonthFieldError = @{
+    if(vatDetailsForm("regDate.month").hasErrors)
+    "month-field-error"
+}
+
+@YearFieldError = @{
+    if(vatDetailsForm("regDate.year").hasErrors)
+    "year-field-error"
+}
+
+@DateFieldErrorsAll = @{
+    if(vatDetailsForm("regDate").hasErrors && !vatDetailsForm("regDate.day").hasErrors && !vatDetailsForm("regDate.month").hasErrors && !vatDetailsForm("regDate.year").hasErrors)
+    "date-field-errors-all"
+}
+
+@dateFormWithRefinedErrors = @{
+    vatDetailsForm.copy(errors = vatDetailsForm.errors.filterNot(error => error.message == "" || !error.key.contains("regDate")))
+}
+
+@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title =  error_prefix(vatDetailsForm) + Messages("vat-details.title"), bodyClasses = None) {
+
+    <a href="@routes.VatDetailsController.showRegisteredForVatForm()" class="link-back">@Messages("button.back")</a>
+
+    @if(vatDetailsForm.hasErrors) {
+        @errorSummary(Messages("error.summary.heading"), vatDetailsForm, Seq.empty, Some("vat-details"))
+    }
+
+    <h1 class="heading-xlarge margin-bottom-20">@Messages(s"vat-details.title")</h1>
+
+    @form(action = routes.VatDetailsController.submitVatDetailsForm(), 'class -> "form js-form") {
+
+        <fieldset>
+            <div class="form-group">
+                @input(
+                vatDetailsForm("vrn"),
+                '_label -> Messages("vat-details.vrn.title"),
+                '_inputHint -> Messages("vat-details.vrn.hint"),
+                '_inputClass -> "form-control input--cleared"
+                )
+            </div>
+
+            <div class="@DayFieldError @MonthFieldError @YearFieldError @DateFieldErrorsAll">
+                @dateFieldsFreeInlineLegend(
+                dateFormWithRefinedErrors,
+                "regDate",
+                '_legend -> Messages("vat-details.reg-date.title"),
+                '_inputHint -> Messages("vat-details.reg-date.hint"),
+                '_inputClass -> "form-control input--cleared",
+                '_labelClass -> "heading-small soft--ends"
+                )
+            </div>
+        </fieldset>
+
+        <div class="form-field">
+            <button class="button" type="submit" id="submit-vat-details">@Messages("button.continue")</button>
+        </div>
+    }
+}
+
+

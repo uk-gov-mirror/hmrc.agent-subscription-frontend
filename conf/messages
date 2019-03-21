@@ -173,6 +173,26 @@ registered-for-vat.option.yes=Yes
 registered-for-vat.option.no=No
 registered-for-vat.error.no-radio-selected=Select yes if your business is registered for VAT
 
+#Vat Details page
+vat-details.title=Your VAT registration details
+vat-details.vrn.title=VAT registration number
+vat-details.vrn.hint=For example, 123456789
+vat-details.reg-date.title=VAT registration date
+vat-details.reg-date.hint=For example, 31 3 1980
+vat-details.vrn.required=Enter your VAT registration number
+vat-details.vrn.regex-failure=VAT registration number must be 9 numbers
+vat-details.vrn.checksum-failure=Enter a valid VAT registration number
+vat-details.regDate.required=Enter your VAT registration date
+vat-details.regDate.invalid=VAT registration date is not valid
+vat-details.regDate.day.invalid=VAT registration date must include a valid day
+vat-details.regDate.day-month.empty=VAT registration date must include a day and month
+vat-details.regDate.day-year.empty=VAT registration date must include a day and year
+vat-details.regDate.month.invalid=VAT registration date must include a valid month
+vat-details.regDate.year.invalid=VAT registration date must include a valid year
+vat-details.regDate.month-year.empty=VAT registration date must include a month and year
+vat-details.regDate.must.be.in.past=VAT registration date must be in the past
+vat-details.regDate.is.not.real=Enter a real VAT registration date
+
 #Invalid Business Type
 invalid.businessType.title=You cannot create an agent services account
 invalid.businessType.p1=You can only create an agent services account if your business is one of the following:

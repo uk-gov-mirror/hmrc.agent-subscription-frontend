@@ -83,7 +83,7 @@ trait CommonRouting {
     agentSession match {
       case _ if agentSession.registeredForVat.isEmpty => routes.VatDetailsController.showRegisteredForVatForm()
       case _ if agentSession.registeredForVat.contains(true) && agentSession.vatDetails.isEmpty =>
-        routes.VatDetailsController.showVatDeatilsForm()
+        routes.VatDetailsController.showVatDetailsForm()
       case _ => routes.BusinessIdentificationController.showConfirmBusinessForm()
     }
 }

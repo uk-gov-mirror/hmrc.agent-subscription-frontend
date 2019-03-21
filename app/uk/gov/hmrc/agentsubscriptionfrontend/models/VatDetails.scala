@@ -15,21 +15,13 @@
  */
 
 package uk.gov.hmrc.agentsubscriptionfrontend.models
+import java.time.LocalDate
 
 import play.api.libs.json.{Format, Json}
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
-import uk.gov.hmrc.domain.Nino
+import uk.gov.hmrc.agentmtdidentifiers.model.Vrn
 
-case class AgentSession(
-  businessType: Option[BusinessType] = None,
-  utr: Option[Utr] = None,
-  postcode: Option[Postcode] = None,
-  nino: Option[Nino] = None,
-  companyRegistrationNumber: Option[CompanyRegistrationNumber] = None,
-  dateOfBirth: Option[DateOfBirth] = None,
-  registeredForVat: Option[Boolean] = None,
-  vatDetails: Option[VatDetails] = None)
+case class VatDetails(vrn: Vrn, regDate: LocalDate)
 
-object AgentSession {
-  implicit val format: Format[AgentSession] = Json.format[AgentSession]
+object VatDetails {
+  implicit val format: Format[VatDetails] = Json.format[VatDetails]
 }
