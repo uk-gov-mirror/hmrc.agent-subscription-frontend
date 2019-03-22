@@ -24,7 +24,7 @@
 
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title =  error_prefix(utrForm) + Messages("utr.title"), bodyClasses = None) {
 
-    <a href="@routes.BusinessIdentificationController.showBusinessTypeForm" class="link-back">@Messages("button.back")</a>
+    <a href="@routes.BusinessTypeController.showBusinessTypeForm" class="link-back">@Messages("button.back")</a>
 
     @if(utrForm.hasErrors) {
         @errorSummary(Messages("error.summary.heading"), utrForm, Seq.empty, Some("utr-details"))
@@ -36,7 +36,7 @@
 
 
     @form(
-        action = routes.BusinessIdentificationController.submitUtrForm(),
+        action = routes.UtrController.submitUtrForm(),
         'class -> "form js-form") {
 
         <div class="form-group">

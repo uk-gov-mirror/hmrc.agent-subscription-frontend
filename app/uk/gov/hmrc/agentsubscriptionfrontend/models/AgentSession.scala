@@ -27,7 +27,7 @@ case class AgentSession(
   nino: Option[Nino] = None,
   companyRegistrationNumber: Option[CompanyRegistrationNumber] = None,
   dateOfBirth: Option[DateOfBirth] = None,
-  registeredForVat: Option[Boolean] = None,
+  registeredForVat: Option[String] = None,
   vatDetails: Option[VatDetails] = None)
 
 object AgentSession {

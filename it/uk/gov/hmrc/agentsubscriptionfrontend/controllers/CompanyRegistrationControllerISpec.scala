@@ -1,10 +1,15 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
+import java.time.LocalDate
+
+import org.jsoup.Jsoup
 import play.api.test.Helpers.{redirectLocation, _}
-import uk.gov.hmrc.agentsubscriptionfrontend.models.CompanyRegistrationNumber
+import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.SoleTrader
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, CompanyRegistrationNumber, DateOfBirth}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.subscribingAgentEnrolledForNonMTD
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class CompanyRegistrationControllerISpec extends BaseISpec with SessionDataMissingSpec {
 
@@ -14,10 +19,24 @@ class CompanyRegistrationControllerISpec extends BaseISpec with SessionDataMissi
 
     "display the page with expected content" in {
 
-      val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+      await(sessionStoreService.cacheAgentSession(AgentSession(Some(SoleTrader))))
       val result = await(controller.showCompanyRegNumberForm()(request))
 
       result should containMessages("crn.title", "crn.hint")
+    }
+
+    "pre-populate the crn if one is already stored in the session" in {
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+      await(sessionStoreService.cacheAgentSession(AgentSession(Some(SoleTrader), companyRegistrationNumber = Some(CompanyRegistrationNumber("12345")))))
+
+      val result = await(controller.showCompanyRegNumberForm()(request))
+
+      val doc = Jsoup.parse(bodyOf(result))
+
+      val link = doc.getElementById("crn")
+      link.attr("value") shouldBe "12345"
+
     }
   }
 

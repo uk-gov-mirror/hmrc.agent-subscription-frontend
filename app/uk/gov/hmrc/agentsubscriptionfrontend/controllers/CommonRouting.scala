@@ -52,9 +52,9 @@ trait CommonRouting {
 
   protected def redirectToNextPage(agentSession: AgentSession): Call =
     agentSession match {
-      case _ if agentSession.businessType.isEmpty => routes.BusinessIdentificationController.showBusinessTypeForm()
-      case _ if agentSession.utr.isEmpty          => routes.BusinessIdentificationController.showUtrForm()
-      case _ if agentSession.postcode.isEmpty     => routes.BusinessIdentificationController.showPostcodeForm()
+      case _ if agentSession.businessType.isEmpty => routes.BusinessTypeController.showBusinessTypeForm()
+      case _ if agentSession.utr.isEmpty          => routes.UtrController.showUtrForm()
+      case _ if agentSession.postcode.isEmpty     => routes.PostcodeController.showPostcodeForm()
       case _ if agentSession.postcode.isDefined   => redirectAfterPostcode(agentSession)
     }
 
@@ -62,12 +62,12 @@ trait CommonRouting {
     agentSession.businessType match {
       case Some(SoleTrader | Partnership) => continueToNationalInsurancePage(agentSession)
       case Some(LimitedCompany | Llp)     => continueToCompanyRegistrationPage(agentSession)
-      case _                              => routes.BusinessIdentificationController.showBusinessTypeForm()
+      case _                              => routes.BusinessTypeController.showBusinessTypeForm()
     }
 
   private def continueToNationalInsurancePage(agentSession: AgentSession) =
     agentSession match {
-      case _ if agentSession.nino.isEmpty        => routes.BusinessIdentificationController.showNationalInsuranceNumberForm()
+      case _ if agentSession.nino.isEmpty        => routes.NationalInsuranceController.showNationalInsuranceNumberForm()
       case _ if agentSession.dateOfBirth.isEmpty => routes.DateOfBirthController.showDateOfBirthForm()
       case _                                     => continueToRegisteredForVatPage(agentSession)
     }
@@ -82,7 +82,7 @@ trait CommonRouting {
   private def continueToRegisteredForVatPage(agentSession: AgentSession) =
     agentSession match {
       case _ if agentSession.registeredForVat.isEmpty => routes.VatDetailsController.showRegisteredForVatForm()
-      case _ if agentSession.registeredForVat.contains(true) && agentSession.vatDetails.isEmpty =>
+      case _ if agentSession.registeredForVat.contains("Yes") && agentSession.vatDetails.isEmpty =>
         routes.VatDetailsController.showVatDetailsForm()
       case _ => routes.BusinessIdentificationController.showConfirmBusinessForm()
     }

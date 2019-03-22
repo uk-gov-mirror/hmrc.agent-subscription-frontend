@@ -47,7 +47,7 @@
 
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title =  error_prefix(dobForm) + Messages("date-of-birth.title"), bodyClasses = None) {
 
-   <a href="@routes.BusinessIdentificationController.showNationalInsuranceNumberForm()" class="link-back">@Messages("button.back")</a>
+   <a href="@routes.NationalInsuranceController.showNationalInsuranceNumberForm()" class="link-back">@Messages("button.back")</a>
 
    @if(dobForm.hasErrors) {
      @errorSummary(Messages("error.summary.heading"), dobForm, Seq.empty, Some("dob"))

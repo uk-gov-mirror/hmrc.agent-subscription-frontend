@@ -36,9 +36,9 @@ trait SessionBehaviour extends CommonRouting {
         agentSession.businessType match {
           case Some(businessType) =>
             body(businessType)
-          case None => Redirect(routes.BusinessIdentificationController.showBusinessTypeForm())
+          case None => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
         }
-      case None => Redirect(routes.BusinessIdentificationController.showBusinessTypeForm())
+      case None => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
     }
 
   protected def updateSessionAndRedirectToNextPage(updatedSession: AgentSession)(

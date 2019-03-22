@@ -136,7 +136,7 @@ trait StartControllerISpec extends BaseISpec {
       val result = await(controller.start(FakeRequest()))
       val doc = Jsoup.parse(bodyOf(result))
       val startLink = doc.getElementById("start")
-      startLink.attr("href") shouldBe routes.BusinessIdentificationController.showBusinessTypeForm().url
+      startLink.attr("href") shouldBe routes.BusinessTypeController.showBusinessTypeForm().url
       startLink.text() shouldBe htmlEscapedMessage("startpage.continue")
     }
 
@@ -247,14 +247,14 @@ trait StartControllerISpec extends BaseISpec {
       val result = await(controller.returnAfterGGCredsCreated(id = Some(invalidId))(FakeRequest()))
 
       status(result) shouldBe 303
-      redirectLocation(result).head should include(routes.BusinessIdentificationController.showBusinessTypeForm().url)
+      redirectLocation(result).head should include(routes.BusinessTypeController.showBusinessTypeForm().url)
     }
 
     "redirect to /business-type page if there is no valid ChainedSessionDetails ID" in {
       val result = await(controller.returnAfterGGCredsCreated(id = None)(FakeRequest()))
 
       status(result) shouldBe 303
-      redirectLocation(result).head should include(routes.BusinessIdentificationController.showBusinessTypeForm().url)
+      redirectLocation(result).head should include(routes.BusinessTypeController.showBusinessTypeForm().url)
     }
 
     "delete the persisted ChainedSessionDetails if given a valid ChainedSessionDetails ID" in new ValidKnownFactsCached with UnsubscribedAgentStub {

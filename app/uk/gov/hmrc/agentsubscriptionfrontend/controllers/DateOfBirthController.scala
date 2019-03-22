@@ -51,7 +51,15 @@ class DateOfBirthController @Inject()(
 
   def showDateOfBirthForm(): Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      Ok(html.date_of_birth(dateOfBirthForm))
+      sessionStoreService.fetchAgentSession.flatMap {
+        case Some(agentSession) =>
+          agentSession.dateOfBirth match {
+            case Some(dob) =>
+              Ok(html.date_of_birth(dateOfBirthForm.fill(dob)))
+            case None => Ok(html.date_of_birth(dateOfBirthForm))
+          }
+        case None => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
+      }
     }
   }
 
@@ -60,12 +68,12 @@ class DateOfBirthController @Inject()(
       dateOfBirthForm
         .bindFromRequest()
         .fold(
-          formWithErrors => Ok(html.date_of_birth(DateOfBirthController.formWithRefinedErrors(formWithErrors))),
+          formWithErrors => Ok(html.date_of_birth(formWithRefinedErrors(formWithErrors))),
           validDob => {
             sessionStoreService.fetchAgentSession.flatMap {
               case Some(existingSession) =>
                 updateSessionAndRedirectToNextPage(existingSession.copy(dateOfBirth = Some(validDob)))
-              case None => Redirect(routes.BusinessIdentificationController.showBusinessTypeForm())
+              case None => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
             }
           }
         )
@@ -97,7 +105,7 @@ object DateOfBirthController {
       Try {
         val dob = LocalDate.of(year.toInt, month.toInt, day.toInt)
         if (dob.isBefore(LocalDate.of(1900, 1, 1)))
-          Invalid(ValidationError("date-of-birth.is.not.real"))
+          Invalid(ValidationError("date-of-birth.must.be.later.than.1900"))
         else
           Valid
       } match {

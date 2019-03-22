@@ -1,11 +1,15 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 import java.time.LocalDate
 
+import org.jsoup.Jsoup
 import play.api.test.Helpers.{redirectLocation, _}
-import uk.gov.hmrc.agentsubscriptionfrontend.models.DateOfBirth
+import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.SoleTrader
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, DateOfBirth}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.subscribingAgentEnrolledForNonMTD
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData._
+
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class DateOfBirthControllerSpec extends BaseISpec with SessionDataMissingSpec {
 
@@ -15,10 +19,30 @@ class DateOfBirthControllerSpec extends BaseISpec with SessionDataMissingSpec {
 
     "display the page with expected content" in {
 
-      val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+      await(sessionStoreService.cacheAgentSession(AgentSession(Some(SoleTrader))))
       val result = await(controller.showDateOfBirthForm()(request))
 
       result should containMessages("date-of-birth.title", "date-of-birth.hint")
+    }
+
+    "pre-populate the date-of-birth if one is already stored in the session" in {
+      val dob = LocalDate.of(2010, 1, 1)
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+      await(sessionStoreService.cacheAgentSession(AgentSession(Some(SoleTrader), dateOfBirth = Some(DateOfBirth(dob)))))
+
+      val result = await(controller.showDateOfBirthForm()(request))
+
+      val doc = Jsoup.parse(bodyOf(result))
+
+      var link = doc.getElementById("dob.day")
+      link.attr("value") shouldBe "1"
+
+      link = doc.getElementById("dob.month")
+      link.attr("value") shouldBe "1"
+
+      link = doc.getElementById("dob.year")
+      link.attr("value") shouldBe "2010"
     }
   }
 
@@ -57,7 +81,7 @@ class DateOfBirthControllerSpec extends BaseISpec with SessionDataMissingSpec {
       val result = await(controller.submitDateOfBirthForm()(request))
 
       status(result) shouldBe 200
-      result should containMessages("date-of-birth.title", "date-of-birth.hint", "date-of-birth.is.not.real")
+      result should containMessages("date-of-birth.title", "date-of-birth.hint", "date-of-birth.must.be.later.than.1900")
     }
 
     "handle forms with date-of-birth fields as non-digits" in {

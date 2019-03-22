@@ -1,12 +1,16 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 import java.time.LocalDate
 
+import org.jsoup.Jsoup
 import play.api.test.Helpers.{redirectLocation, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.Vrn
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{DateOfBirth, VatDetails}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.SoleTrader
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, DateOfBirth, VatDetails}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.subscribingAgentEnrolledForNonMTD
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData._
+
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class VatDetailsControllerISpec extends BaseISpec with SessionDataMissingSpec {
 
@@ -19,6 +23,19 @@ class VatDetailsControllerISpec extends BaseISpec with SessionDataMissingSpec {
       val result = await(controller.showRegisteredForVatForm()(request))
 
       result should containMessages("registered-for-vat.title", "registered-for-vat.option.yes", "registered-for-vat.option.no")
+    }
+
+    "pre-populate the registeredForVat if one is already stored in the session" in {
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+      await(sessionStoreService.cacheAgentSession(AgentSession(Some(SoleTrader), registeredForVat = Some("Yes"))))
+
+      val result = await(controller.showRegisteredForVatForm()(request))
+
+      val doc = Jsoup.parse(bodyOf(result))
+
+      val link = doc.getElementById("registeredForVat-yes")
+      link.attr("checked") shouldBe "checked"
+
     }
   }
 
@@ -67,13 +84,35 @@ class VatDetailsControllerISpec extends BaseISpec with SessionDataMissingSpec {
         "vat-details.reg-date.title",
         "vat-details.reg-date.hint")
     }
+
+    "pre-populate the vatDetails if one is already stored in the session" in {
+      val vrd = LocalDate.of(2010, 1, 1)
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+      await(sessionStoreService.cacheAgentSession(AgentSession(Some(SoleTrader), vatDetails = Some(VatDetails(Vrn("688931961"), vrd)))))
+
+      val result = await(controller.showVatDetailsForm()(request))
+
+      val doc = Jsoup.parse(bodyOf(result))
+
+      var link = doc.getElementById("vrn")
+      link.attr("value") shouldBe "688931961"
+
+      link = doc.getElementById("regDate.day")
+      link.attr("value") shouldBe "1"
+
+      link = doc.getElementById("regDate.month")
+      link.attr("value") shouldBe "1"
+
+      link = doc.getElementById("regDate.year")
+      link.attr("value") shouldBe "2010"
+    }
   }
 
   "POST /vat-registration-details" should {
 
     "handle valid forms, store data in session and redirect" in {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("vrn" -> "688931961", "regDate.day" -> "1", "regDate.month" -> "11", "regDate.year" -> "2010")
-      sessionStoreService.currentSession.agentSession = Some(agentSession.copy(dateOfBirth = Some(DateOfBirth(LocalDate.now())), registeredForVat = Some(true)))
+      sessionStoreService.currentSession.agentSession = Some(agentSession.copy(dateOfBirth = Some(DateOfBirth(LocalDate.now())), registeredForVat = Some("Yes")))
 
       val result = await(controller.submitVatDetailsForm()(request))
       status(result) shouldBe 303
@@ -84,7 +123,7 @@ class VatDetailsControllerISpec extends BaseISpec with SessionDataMissingSpec {
 
     "handle forms with missing vrn" in {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("vrn" -> "")
-      sessionStoreService.currentSession.agentSession = Some(agentSession.copy(dateOfBirth = Some(DateOfBirth(LocalDate.now())), registeredForVat = Some(true)))
+      sessionStoreService.currentSession.agentSession = Some(agentSession.copy(dateOfBirth = Some(DateOfBirth(LocalDate.now())), registeredForVat = Some("Yes")))
 
       val result = await(controller.submitVatDetailsForm()(request))
       status(result) shouldBe 200
@@ -95,7 +134,7 @@ class VatDetailsControllerISpec extends BaseISpec with SessionDataMissingSpec {
 
     "handle forms containing vrn with invalid text" in {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("vrn" -> "blah")
-      sessionStoreService.currentSession.agentSession = Some(agentSession.copy(dateOfBirth = Some(DateOfBirth(LocalDate.now())), registeredForVat = Some(true)))
+      sessionStoreService.currentSession.agentSession = Some(agentSession.copy(dateOfBirth = Some(DateOfBirth(LocalDate.now())), registeredForVat = Some("Yes")))
 
       val result = await(controller.submitVatDetailsForm()(request))
       status(result) shouldBe 200
@@ -106,7 +145,7 @@ class VatDetailsControllerISpec extends BaseISpec with SessionDataMissingSpec {
 
     "handle forms with invalid vrn" in {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("vrn" -> "123456789")
-      sessionStoreService.currentSession.agentSession = Some(agentSession.copy(dateOfBirth = Some(DateOfBirth(LocalDate.now())), registeredForVat = Some(true)))
+      sessionStoreService.currentSession.agentSession = Some(agentSession.copy(dateOfBirth = Some(DateOfBirth(LocalDate.now())), registeredForVat = Some("Yes")))
 
       val result = await(controller.submitVatDetailsForm()(request))
       status(result) shouldBe 200
@@ -117,7 +156,7 @@ class VatDetailsControllerISpec extends BaseISpec with SessionDataMissingSpec {
 
     "handle forms with missing vat registration date" in {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("regDate.day" -> "", "regDate.month" -> "", "regDate.year" -> "")
-      sessionStoreService.currentSession.agentSession = Some(agentSession.copy(dateOfBirth = Some(DateOfBirth(LocalDate.now())), registeredForVat = Some(true)))
+      sessionStoreService.currentSession.agentSession = Some(agentSession.copy(dateOfBirth = Some(DateOfBirth(LocalDate.now())), registeredForVat = Some("Yes")))
 
       val result = await(controller.submitVatDetailsForm()(request))
       status(result) shouldBe 200
@@ -128,18 +167,18 @@ class VatDetailsControllerISpec extends BaseISpec with SessionDataMissingSpec {
 
     "handle forms with very old vat registration date < 1900" in {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("regDate.day" -> "1", "regDate.month" -> "1", "regDate.year" -> "1010")
-      sessionStoreService.currentSession.agentSession = Some(agentSession.copy(dateOfBirth = Some(DateOfBirth(LocalDate.now())), registeredForVat = Some(true)))
+      sessionStoreService.currentSession.agentSession = Some(agentSession.copy(dateOfBirth = Some(DateOfBirth(LocalDate.now())), registeredForVat = Some("Yes")))
 
       val result = await(controller.submitVatDetailsForm()(request))
       status(result) shouldBe 200
 
-      result should containMessages("vat-details.regDate.is.not.real")
+      result should containMessages("vat-details.regDate.must.be.later.than.1900")
 
     }
 
     "handle forms with future dated vat registration" in {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("regDate.day" -> "1", "regDate.month" -> "1", "regDate.year" -> "3010")
-      sessionStoreService.currentSession.agentSession = Some(agentSession.copy(dateOfBirth = Some(DateOfBirth(LocalDate.now())), registeredForVat = Some(true)))
+      sessionStoreService.currentSession.agentSession = Some(agentSession.copy(dateOfBirth = Some(DateOfBirth(LocalDate.now())), registeredForVat = Some("Yes")))
 
       val result = await(controller.submitVatDetailsForm()(request))
       status(result) shouldBe 200
@@ -150,7 +189,7 @@ class VatDetailsControllerISpec extends BaseISpec with SessionDataMissingSpec {
 
     "handle forms with vat registration date as non-digits" in {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("regDate.day" -> "qq", "regDate.month" -> "we", "regDate.year" -> "erd")
-      sessionStoreService.currentSession.agentSession = Some(agentSession.copy(dateOfBirth = Some(DateOfBirth(LocalDate.now())), registeredForVat = Some(true)))
+      sessionStoreService.currentSession.agentSession = Some(agentSession.copy(dateOfBirth = Some(DateOfBirth(LocalDate.now())), registeredForVat = Some("Yes")))
 
       val result = await(controller.submitVatDetailsForm()(request))
       status(result) shouldBe 200
@@ -162,7 +201,7 @@ class VatDetailsControllerISpec extends BaseISpec with SessionDataMissingSpec {
     "display consolidated error when month and year are empty" in {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("regDate.day" -> "1")
-      sessionStoreService.currentSession.agentSession = Some(agentSession.copy(dateOfBirth = Some(DateOfBirth(LocalDate.now())), registeredForVat = Some(true)))
+      sessionStoreService.currentSession.agentSession = Some(agentSession.copy(dateOfBirth = Some(DateOfBirth(LocalDate.now())), registeredForVat = Some("Yes")))
 
       val result = await(controller.submitVatDetailsForm()(request))
 
@@ -173,7 +212,7 @@ class VatDetailsControllerISpec extends BaseISpec with SessionDataMissingSpec {
     "display consolidated error when day and year are empty" in {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("regDate.month" -> "1")
-      sessionStoreService.currentSession.agentSession = Some(agentSession.copy(dateOfBirth = Some(DateOfBirth(LocalDate.now())), registeredForVat = Some(true)))
+      sessionStoreService.currentSession.agentSession = Some(agentSession.copy(dateOfBirth = Some(DateOfBirth(LocalDate.now())), registeredForVat = Some("Yes")))
 
       val result = await(controller.submitVatDetailsForm()(request))
 
@@ -184,7 +223,7 @@ class VatDetailsControllerISpec extends BaseISpec with SessionDataMissingSpec {
     "display consolidated error when day and month are empty" in {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("regDate.year" -> "1980")
-      sessionStoreService.currentSession.agentSession = Some(agentSession.copy(dateOfBirth = Some(DateOfBirth(LocalDate.now())), registeredForVat = Some(true)))
+      sessionStoreService.currentSession.agentSession = Some(agentSession.copy(dateOfBirth = Some(DateOfBirth(LocalDate.now())), registeredForVat = Some("Yes")))
 
       val result = await(controller.submitVatDetailsForm()(request))
 

@@ -15,7 +15,7 @@
  *@
 
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-@import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes.BusinessIdentificationController
+@import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes.BusinessTypeController
 @import uk.gov.hmrc.play.binders.ContinueUrl
 @import java.net.URLEncoder
 @import uk.gov.hmrc.agentsubscriptionfrontend.support.CallOps._
@@ -23,7 +23,7 @@
 @(continueUrlOpt: Option[ContinueUrl])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 @continueUrl = @{
-    BusinessIdentificationController.showBusinessTypeForm().toURLWithParams("continue" -> continueUrlOpt.map(_.url))
+BusinessTypeController.showBusinessTypeForm().toURLWithParams("continue" -> continueUrlOpt.map(_.url))
 }
 
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = Messages("startpage.title"), bodyClasses = None, userIsLoggedIn = false) {

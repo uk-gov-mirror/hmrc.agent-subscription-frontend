@@ -15,22 +15,21 @@
  */
 
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
-
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
 import play.api.i18n.MessagesApi
 import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
+import uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationForms.ninoForm
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.auth.core.AuthConnector
-import CompanyRegistrationForms._
-import uk.gov.hmrc.agentsubscriptionfrontend.controllers.DateOfBirthController.dateOfBirthForm
 
 import scala.concurrent.ExecutionContext
+
 @Singleton
-class CompanyRegistrationController @Inject()(
+class NationalInsuranceController @Inject()(
   override val continueUrlActions: ContinueUrlActions,
   override val authConnector: AuthConnector,
   val sessionStoreService: SessionStoreService)(
@@ -41,36 +40,34 @@ class CompanyRegistrationController @Inject()(
     extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig) with SessionDataSupport
     with SessionBehaviour {
 
-  def showCompanyRegNumberForm(): Action[AnyContent] = Action.async { implicit request =>
-    withSubscribingAgent { _ =>
+  def showNationalInsuranceNumberForm(): Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { implicit agent =>
       sessionStoreService.fetchAgentSession.flatMap {
         case Some(agentSession) =>
-          agentSession.companyRegistrationNumber match {
-            case Some(crn) =>
-              Ok(html.company_registration(crnForm.fill(crn)))
-            case None => Ok(html.company_registration(crnForm))
+          agentSession.nino match {
+            case Some(nino) =>
+              Ok(html.national_insurance_number(ninoForm.fill(nino)))
+            case None => Ok(html.national_insurance_number(ninoForm))
           }
         case None => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
       }
     }
   }
 
-  def submitCompanyRegNumberForm(): Action[AnyContent] = Action.async { implicit request =>
+  def submitNationalInsuranceNumberForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { implicit agent =>
-      withValidBusinessType { _ =>
-        crnForm
-          .bindFromRequest()
-          .fold(
-            formWithErrors => Ok(html.company_registration(formWithErrors)),
-            validCrn => {
-              sessionStoreService.fetchAgentSession.flatMap {
-                case Some(existingSession) =>
-                  updateSessionAndRedirectToNextPage(existingSession.copy(companyRegistrationNumber = Some(validCrn)))
-                case None => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
-              }
+      ninoForm
+        .bindFromRequest()
+        .fold(
+          formWithErrors => Ok(html.national_insurance_number(formWithErrors)),
+          validNino => {
+            sessionStoreService.fetchAgentSession.flatMap {
+              case Some(existingSession) =>
+                updateSessionAndRedirectToNextPage(existingSession.copy(nino = Some(validNino)))
+              case None => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
             }
-          )
-      }
+          }
+        )
     }
   }
 

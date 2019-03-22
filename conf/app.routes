@@ -5,17 +5,17 @@ GET         /start                                uk.gov.hmrc.agentsubscriptionf
 GET         /not-agent                            uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.showNotAgent
 GET         /return-after-gg-creds-created        uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.returnAfterGGCredsCreated(id: Option[String] ?= None)
 
-GET         /business-type                        uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showBusinessTypeForm
-POST        /business-type                        uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.submitBusinessTypeForm
+GET         /business-type                        uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessTypeController.showBusinessTypeForm
+POST        /business-type                        uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessTypeController.submitBusinessTypeForm
 
-GET         /unique-taxpayer-reference            uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showUtrForm()
-POST        /unique-taxpayer-reference            uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.submitUtrForm()
+GET         /unique-taxpayer-reference            uk.gov.hmrc.agentsubscriptionfrontend.controllers.UtrController.showUtrForm()
+POST        /unique-taxpayer-reference            uk.gov.hmrc.agentsubscriptionfrontend.controllers.UtrController.submitUtrForm()
 
-GET         /postcode                             uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showPostcodeForm
-POST        /postcode                             uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.submitPostcodeForm
+GET         /postcode                             uk.gov.hmrc.agentsubscriptionfrontend.controllers.PostcodeController.showPostcodeForm
+POST        /postcode                             uk.gov.hmrc.agentsubscriptionfrontend.controllers.PostcodeController.submitPostcodeForm
 
-GET         /national-insurance-number            uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showNationalInsuranceNumberForm
-POST        /national-insurance-number            uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.submitNationalInsuranceNumberForm
+GET         /national-insurance-number            uk.gov.hmrc.agentsubscriptionfrontend.controllers.NationalInsuranceController.showNationalInsuranceNumberForm
+POST        /national-insurance-number            uk.gov.hmrc.agentsubscriptionfrontend.controllers.NationalInsuranceController.submitNationalInsuranceNumberForm
 
 GET         /company-registration-number          uk.gov.hmrc.agentsubscriptionfrontend.controllers.CompanyRegistrationController.showCompanyRegNumberForm
 POST        /company-registration-number          uk.gov.hmrc.agentsubscriptionfrontend.controllers.CompanyRegistrationController.submitCompanyRegNumberForm
@@ -29,23 +29,31 @@ POST        /registered-for-vat                   uk.gov.hmrc.agentsubscriptionf
 GET         /vat-registration-details             uk.gov.hmrc.agentsubscriptionfrontend.controllers.VatDetailsController.showVatDetailsForm
 POST        /vat-registration-details             uk.gov.hmrc.agentsubscriptionfrontend.controllers.VatDetailsController.submitVatDetailsForm
 
-GET         /invalid-business-type                uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showInvalidBusinessType
+GET         /invalid-business-type                uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessTypeController.showInvalidBusinessType
+
 GET         /business-details                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showBusinessDetailsForm()
 POST        /business-details                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.submitBusinessDetailsForm()
+
 GET         /no-match                             uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showNoAgencyFound
+
 GET         /confirm-business                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showConfirmBusinessForm
 POST        /confirm-business                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.submitConfirmBusinessForm
+
 GET         /already-subscribed                   uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showAlreadySubscribed
+
 GET         /money-laundering-compliance          uk.gov.hmrc.agentsubscriptionfrontend.controllers.AMLSController.showMoneyLaunderingComplianceForm
 POST        /money-laundering-compliance          uk.gov.hmrc.agentsubscriptionfrontend.controllers.AMLSController.submitMoneyLaunderingComplianceForm
+
 GET         /create-new-account                   uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showCreateNewAccount
+
 # GET /check-agency-status is deprecated, please use GET /business-type instead
-GET         /check-agency-status                  uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.redirectToBusinessType
+GET         /check-agency-status                  uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessTypeController.showBusinessTypeForm
 # GET /check-business-type is deprecated, please use GET /business-type instead
-GET         /check-business-type                  uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.redirectToBusinessType
+GET         /check-business-type                  uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessTypeController.showBusinessTypeForm
 
 GET         /enter-agent-code                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.invasiveCheckStart
 POST        /enter-agent-code                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.invasiveSaAgentCodePost
+
 GET         /client-details                       uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showClientDetailsForm
 POST        /client-details                       uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.submitClientDetailsForm
 
@@ -78,7 +86,6 @@ GET         /redirect-to-asaccount                uk.gov.hmrc.agentsubscriptionf
 GET         /start-survey                         uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.startSurvey
 GET         /sign-out                             uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.signOutWithContinueUrl
 GET         /finish-sign-out                      uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.signOut
-GET         /redirect-to-businesstype             uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.redirectToBusinessTypeForm
 
 GET         /cannot-create-account                uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.showCannotCreateAccount
 

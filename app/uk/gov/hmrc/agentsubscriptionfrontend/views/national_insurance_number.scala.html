@@ -24,7 +24,7 @@
 
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title =  error_prefix(ninoForm) + Messages("nino.title"), bodyClasses = None) {
 
-    <a href="@routes.BusinessIdentificationController.showPostcodeForm()" class="link-back">@Messages("button.back")</a>
+    <a href="@routes.PostcodeController.showPostcodeForm()" class="link-back">@Messages("button.back")</a>
 
     @if(ninoForm.hasErrors) {
         @errorSummary(Messages("error.summary.heading"), ninoForm, Seq.empty, Some("nino"))
@@ -33,7 +33,7 @@
     <h1 class="heading-xlarge margin-bottom-20">@Messages(s"nino.title")</h1>
     <p class="form-hint">@Messages("nino.hint")</p>
 
-    @form(action = routes.BusinessIdentificationController.submitNationalInsuranceNumberForm(), 'class -> "form js-form") {
+    @form(action = routes.NationalInsuranceController.submitNationalInsuranceNumberForm(), 'class -> "form js-form") {
 
         <div class="form-group">
             @input(

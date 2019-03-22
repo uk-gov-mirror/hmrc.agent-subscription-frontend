@@ -157,7 +157,7 @@ nino.hint=It''s on your National Insurance card, benefit letter, payslip or P60.
 date-of-birth.title=What is your date of birth?
 date-of-birth.hint=For example, 31 3 1980
 date-of-birth.empty=Enter your date of birth
-date-of-birth.invalid=Date of birth is not valid
+date-of-birth.invalid=Enter a real date of birth
 date-of-birth.day.invalid=Date of birth must include a valid day
 date-of-birth.day-month.empty=Date of birth must include a day and month
 date-of-birth.day-year.empty=Date of birth must include a day and year
@@ -165,7 +165,7 @@ date-of-birth.month.invalid=Date of birth must include a valid month
 date-of-birth.year.invalid=Date of birth must include a valid year
 date-of-birth.month-year.empty=Date of birth must include a month and year
 date-of-birth.must.be.past=Date of birth must be in the past
-date-of-birth.is.not.real=Enter a real date of birth
+date-of-birth.must.be.later.than.1900=Date of birth must be later than 1 January 1900
 
 #Registered for VAT page
 registered-for-vat.title=Is your business registered for VAT?
@@ -183,7 +183,7 @@ vat-details.vrn.required=Enter your VAT registration number
 vat-details.vrn.regex-failure=VAT registration number must be 9 numbers
 vat-details.vrn.checksum-failure=Enter a valid VAT registration number
 vat-details.regDate.required=Enter your VAT registration date
-vat-details.regDate.invalid=VAT registration date is not valid
+vat-details.regDate.invalid=Enter a real VAT registration date
 vat-details.regDate.day.invalid=VAT registration date must include a valid day
 vat-details.regDate.day-month.empty=VAT registration date must include a day and month
 vat-details.regDate.day-year.empty=VAT registration date must include a day and year
@@ -191,7 +191,7 @@ vat-details.regDate.month.invalid=VAT registration date must include a valid mon
 vat-details.regDate.year.invalid=VAT registration date must include a valid year
 vat-details.regDate.month-year.empty=VAT registration date must include a month and year
 vat-details.regDate.must.be.in.past=VAT registration date must be in the past
-vat-details.regDate.is.not.real=Enter a real VAT registration date
+vat-details.regDate.must.be.later.than.1900=VAT registration date must be later than 1 January 1900
 
 #Invalid Business Type
 invalid.businessType.title=You cannot create an agent services account
