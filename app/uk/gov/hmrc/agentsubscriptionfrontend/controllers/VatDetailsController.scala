@@ -28,7 +28,6 @@ import play.api.i18n.MessagesApi
 import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.agentmtdidentifiers.model.Vrn
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationForms.postcodeForm
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.VatDetailsController.{formWithRefinedErrors, registeredForVatForm, vatDetailsForm}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.{Partnership, SoleTrader}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
@@ -82,8 +81,14 @@ class VatDetailsController @Inject()(
             choice => {
               sessionStoreService.fetchAgentSession.flatMap {
                 case Some(existingSession) =>
-                  updateSessionAndRedirectToNextPage(
-                    existingSession.copy(registeredForVat = Some(choice.confirm.toString)))
+                  val nextPage = if (choice.confirm == Yes) {
+                    routes.VatDetailsController.showVatDetailsForm()
+                  } else {
+                    routes.BusinessIdentificationController.showConfirmBusinessForm()
+                  }
+
+                  updateSessionAndRedirect(existingSession.copy(registeredForVat = Some(choice.confirm.toString)))(
+                    nextPage)
                 case None => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
               }
             }
@@ -115,7 +120,8 @@ class VatDetailsController @Inject()(
           validForm => {
             sessionStoreService.fetchAgentSession.flatMap {
               case Some(existingSession) =>
-                updateSessionAndRedirectToNextPage(existingSession.copy(vatDetails = Some(validForm)))
+                updateSessionAndRedirect(existingSession.copy(vatDetails = Some(validForm)))(
+                  routes.BusinessIdentificationController.showConfirmBusinessForm())
               case None => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
             }
 

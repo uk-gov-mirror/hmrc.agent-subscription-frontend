@@ -21,6 +21,8 @@ import play.api.i18n.MessagesApi
 import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationForms.postcodeForm
+import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType
+import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.{Partnership, SoleTrader}
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
@@ -64,7 +66,8 @@ class PostcodeController @Inject()(
             validPostcode => {
               sessionStoreService.fetchAgentSession.flatMap {
                 case Some(existingSession) =>
-                  updateSessionAndRedirectToNextPage(existingSession.copy(postcode = Some(validPostcode)))
+                  updateSessionAndRedirect(existingSession.copy(postcode = Some(validPostcode)))(
+                    getNextPage(existingSession.businessType))
                 case None => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
               }
             }
@@ -73,4 +76,15 @@ class PostcodeController @Inject()(
     }
   }
 
+  private def getNextPage(businessType: Option[BusinessType]) =
+    businessType match {
+      case Some(bt) =>
+        if (bt == SoleTrader || bt == Partnership) {
+          routes.NationalInsuranceController.showNationalInsuranceNumberForm()
+        } else {
+          routes.CompanyRegistrationController.showCompanyRegNumberForm()
+        }
+
+      case None => routes.BusinessTypeController.showBusinessTypeForm()
+    }
 }

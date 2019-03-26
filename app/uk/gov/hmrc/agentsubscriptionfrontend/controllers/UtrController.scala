@@ -68,7 +68,8 @@ class UtrController @Inject()(
             validUtr => {
               sessionStoreService.fetchAgentSession.flatMap {
                 case Some(existingSession) =>
-                  updateSessionAndRedirectToNextPage(existingSession.copy(utr = Some(validUtr)))
+                  updateSessionAndRedirect(existingSession.copy(utr = Some(validUtr)))(
+                    routes.PostcodeController.showPostcodeForm())
                 case None => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
               }
 
