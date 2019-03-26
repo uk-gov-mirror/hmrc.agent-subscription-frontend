@@ -21,19 +21,19 @@ import javax.inject.{Inject, Singleton}
 import play.api.i18n.MessagesApi
 import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
+import uk.gov.hmrc.agentsubscriptionfrontend.controllers.CompanyRegistrationForms._
+import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.auth.core.AuthConnector
-import CompanyRegistrationForms._
-import uk.gov.hmrc.agentsubscriptionfrontend.controllers.DateOfBirthController.dateOfBirthForm
 
 import scala.concurrent.ExecutionContext
 @Singleton
 class CompanyRegistrationController @Inject()(
   override val continueUrlActions: ContinueUrlActions,
   override val authConnector: AuthConnector,
-  val sessionStoreService: SessionStoreService)(
+  val sessionStoreService: SessionStoreService,
+  val subscriptionService: SubscriptionService)(
   implicit override val metrics: Metrics,
   override val appConfig: AppConfig,
   val ec: ExecutionContext,
@@ -64,9 +64,18 @@ class CompanyRegistrationController @Inject()(
             formWithErrors => Ok(html.company_registration(formWithErrors)),
             validCrn => {
               sessionStoreService.fetchAgentSession.flatMap {
-                case Some(existingSession) =>
-                  updateSessionAndRedirectToNextPage(existingSession.copy(companyRegistrationNumber = Some(validCrn)))
-                case None => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
+                case Some(existingSession) if existingSession.utr.nonEmpty =>
+                  subscriptionService.matchCorporationTaxUtrWithCrn(existingSession.utr.get, validCrn).flatMap {
+                    foundMatch =>
+                      if (foundMatch)
+                        updateSessionAndRedirectToNextPage(
+                          existingSession.copy(companyRegistrationNumber = Some(validCrn)))
+                      else
+                        Redirect(routes.BusinessIdentificationController.showNoAgencyFound())
+                  }
+                case Some(existingSession) if existingSession.utr.isEmpty =>
+                  Redirect(routes.UtrController.showUtrForm())
+                case _ => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
               }
             }
           )

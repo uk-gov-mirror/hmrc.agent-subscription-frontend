@@ -1,14 +1,14 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
-import java.time.LocalDate
-
 import org.jsoup.Jsoup
 import play.api.test.Helpers.{redirectLocation, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.SoleTrader
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, CompanyRegistrationNumber, DateOfBirth}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, CompanyRegistrationNumber}
+import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.subscribingAgentEnrolledForNonMTD
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData._
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class CompanyRegistrationControllerISpec extends BaseISpec with SessionDataMissingSpec {
@@ -42,9 +42,13 @@ class CompanyRegistrationControllerISpec extends BaseISpec with SessionDataMissi
 
   "POST /company-registration-number" should {
 
-    "read the crn as expected and save it to the session" in {
+    "read the crn as expected and save it to the session when supplied utr matches with DES utr (retrieved using crn)" in {
+      val crn = CompanyRegistrationNumber("12345678")
+
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("crn" -> "12345678")
+
+      AgentSubscriptionStub.withMatchingCtUtrAndCrn(agentSessionForLimitedCompany.utr.get, crn)
 
       sessionStoreService.currentSession.agentSession = Some(agentSessionForLimitedCompany)
 
@@ -53,9 +57,39 @@ class CompanyRegistrationControllerISpec extends BaseISpec with SessionDataMissi
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.VatDetailsController.showRegisteredForVatForm().url)
 
+      sessionStoreService.currentSession.agentSession shouldBe Some(agentSessionForLimitedCompany.copy(companyRegistrationNumber = Some(crn)))
+    }
+
+    "redirect to /no-match page when supplied utr does not matches with DES utr (retrieved using crn)" in {
       val crn = CompanyRegistrationNumber("12345678")
 
-      sessionStoreService.currentSession.agentSession shouldBe Some(agentSessionForLimitedCompany.copy(companyRegistrationNumber = Some(crn)))
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+        .withFormUrlEncodedBody("crn" -> "12345678")
+
+      AgentSubscriptionStub.withNonMatchingCtUtrAndCrn(agentSessionForLimitedCompany.utr.get, crn)
+
+      sessionStoreService.currentSession.agentSession = Some(agentSessionForLimitedCompany)
+
+      val result = await(controller.submitCompanyRegNumberForm()(request))
+
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showNoAgencyFound().url)
+
+      sessionStoreService.currentSession.agentSession shouldBe Some(agentSessionForLimitedCompany.copy(companyRegistrationNumber = None))
+    }
+
+    "redirect to /unique-taxpayer-reference page utr is not available in agent session" in {
+      val crn = CompanyRegistrationNumber("12345678")
+
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+        .withFormUrlEncodedBody("crn" -> "12345678")
+
+      sessionStoreService.currentSession.agentSession = Some(agentSessionForLimitedCompany.copy(utr = None))
+
+      val result = await(controller.submitCompanyRegNumberForm()(request))
+
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.UtrController.showUtrForm().url)
     }
 
     "handle forms with empty field" in {

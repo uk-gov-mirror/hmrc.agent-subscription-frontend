@@ -110,4 +110,10 @@ class SubscriptionService @Inject()(agentSubscriptionConnector: AgentSubscriptio
 
       case None => SubscriptionProcess(SubscriptionState.NoRegistrationFound, None)
     }
+
+  def matchCorporationTaxUtrWithCrn(utr: Utr, crn: CompanyRegistrationNumber)(
+    implicit hc: HeaderCarrier,
+    ec: ExecutionContext): Future[Boolean] =
+    agentSubscriptionConnector.matchCorporationTaxUtrWithCrn(utr, crn)
+
 }

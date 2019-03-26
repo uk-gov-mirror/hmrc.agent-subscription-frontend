@@ -21,8 +21,8 @@ import java.net.URL
 import javax.inject.{Inject, Named, Singleton}
 import play.api.libs.json.JsValue
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{CompletePartialSubscriptionBody, Registration, SubscriptionRequest}
-import uk.gov.hmrc.http.{HeaderCarrier, HttpGet, HttpPost, HttpPut}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{CompanyRegistrationNumber, CompletePartialSubscriptionBody, Registration, SubscriptionRequest}
+import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.encoding.UriPathEncoding.encodePathSegment
 import com.codahale.metrics.MetricRegistry
 import com.kenshoo.play.metrics.Metrics
@@ -42,6 +42,21 @@ class AgentSubscriptionConnector @Inject()(
     monitor(s"ConsumedAPI-Agent-Subscription-hasAcceptableNumberOfClients-GET") {
       val url = getRegistrationUrlFor(utr, postcode)
       http.GET[Option[Registration]](url)
+    }
+
+  def matchCorporationTaxUtrWithCrn(utr: Utr, crn: CompanyRegistrationNumber)(
+    implicit hc: HeaderCarrier): Future[Boolean] =
+    monitor(s"ConsumedAPI-Agent-Subscription-matchCorporationTaxUtrWithCrn-GET") {
+      val url = new URL(
+        baseUrl,
+        s"/agent-subscription/corporation-tax-utr/${encodePathSegment(utr.value)}/crn/${encodePathSegment(crn.value)}")
+
+      http
+        .GET[HttpResponse](url.toString)
+        .map(_.status == 200)
+        .recover {
+          case _: NotFoundException => false
+        }
     }
 
   def subscribeAgencyToMtd(subscriptionRequest: SubscriptionRequest)(implicit hc: HeaderCarrier): Future[Arn] =

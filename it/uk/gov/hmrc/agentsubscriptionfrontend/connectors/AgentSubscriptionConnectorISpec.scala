@@ -19,6 +19,8 @@ class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {
       app.injector.instanceOf[Metrics])
 
   private val utr = Utr("0123456789")
+  private val crn = CompanyRegistrationNumber("SC123456")
+
   "getRegistration" should {
 
     "return a subscribed Registration when agent-subscription returns a 200 response (for a matching UTR and postcode)" in {
@@ -191,6 +193,36 @@ class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {
         }
 
         e.upstreamResponseCode shouldBe 500
+      }
+    }
+  }
+
+  "matchCorporationTaxUtrWithCrn" should {
+
+    "return true when agent-subscription returns a 200 response (for a matching UTR and CRN)" in {
+      withMetricsTimerUpdate("ConsumedAPI-Agent-Subscription-matchCorporationTaxUtrWithCrn-GET") {
+        AgentSubscriptionStub
+          .withMatchingCtUtrAndCrn(utr, crn)
+
+        await(connector.matchCorporationTaxUtrWithCrn(utr, crn)) shouldBe true
+      }
+    }
+
+    "return false when agent-subscription returns a 404 response (for a non-matching UTR and CRN)" in {
+      withMetricsTimerUpdate("ConsumedAPI-Agent-Subscription-matchCorporationTaxUtrWithCrn-GET") {
+        AgentSubscriptionStub.withNonMatchingCtUtrAndCrn(utr, crn)
+
+        await(connector.matchCorporationTaxUtrWithCrn(utr, crn)) shouldBe false
+      }
+    }
+
+    "throw an exception when agent-subscription returns a 500 response" in {
+      withMetricsTimerUpdate("ConsumedAPI-Agent-Subscription-matchCorporationTaxUtrWithCrn-GET") {
+        AgentSubscriptionStub.withErrorForCtUtrAndCrn(utr, crn)
+
+        intercept[Upstream5xxResponse] {
+          await(connector.matchCorporationTaxUtrWithCrn(utr, crn))
+        }
       }
     }
   }
