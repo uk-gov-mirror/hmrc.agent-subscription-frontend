@@ -291,7 +291,8 @@ button.finishSignOut=Finish and sign out
 
 #Setup Incomplete
 setupIncomplete.title=You cannot set up an agent services account with the details you entered
-setupIncomplete.p1=<a href="{0}">Try again using a different agent user ID</a> if your agency uses more than one Government Gateway account, for example for Self Assessment or PAYE.
+setupIncomplete.p1=<a href="{0}">Try again using a different Government Gateway user ID</a>.
+setupIncomplete.p2=If you do not have another user ID, <a href="#">create a new user ID</a>.
 
 #Invasive check
 invasive.title.saCode=Do you have a Self Assessment agent code?
