@@ -16,11 +16,12 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.service
 
-import javax.inject.{Inject, Singleton}
+import java.time.LocalDate
 
+import javax.inject.{Inject, Singleton}
 import play.api.Logger
 import play.api.http.Status
-import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
+import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr, Vrn}
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentSubscriptionConnector
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.http.{HeaderCarrier, Upstream4xxResponse}
@@ -115,5 +116,10 @@ class SubscriptionService @Inject()(agentSubscriptionConnector: AgentSubscriptio
     implicit hc: HeaderCarrier,
     ec: ExecutionContext): Future[Boolean] =
     agentSubscriptionConnector.matchCorporationTaxUtrWithCrn(utr, crn)
+
+  def matchVatKnownFacts(vrn: Vrn, vatRegistrationDate: LocalDate)(
+    implicit hc: HeaderCarrier,
+    ec: ExecutionContext): Future[Boolean] =
+    agentSubscriptionConnector.matchVatKnownFacts(vrn, vatRegistrationDate)
 
 }

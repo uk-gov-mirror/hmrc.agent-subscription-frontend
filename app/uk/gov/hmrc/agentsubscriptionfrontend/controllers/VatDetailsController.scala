@@ -32,7 +32,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.controllers.VatDetailsController.{f
 import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.{Partnership, SoleTrader}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
-import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
+import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.validators.CommonValidators.{checkOneAtATime, radioInputSelected}
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
@@ -45,7 +45,8 @@ import scala.util.{Failure, Success, Try}
 class VatDetailsController @Inject()(
   override val continueUrlActions: ContinueUrlActions,
   override val authConnector: AuthConnector,
-  val sessionStoreService: SessionStoreService)(
+  val sessionStoreService: SessionStoreService,
+  val subscriptionService: SubscriptionService)(
   implicit override val metrics: Metrics,
   override val appConfig: AppConfig,
   val ec: ExecutionContext,
@@ -120,8 +121,13 @@ class VatDetailsController @Inject()(
           validForm => {
             sessionStoreService.fetchAgentSession.flatMap {
               case Some(existingSession) =>
-                updateSessionAndRedirect(existingSession.copy(vatDetails = Some(validForm)))(
-                  routes.BusinessIdentificationController.showConfirmBusinessForm())
+                subscriptionService.matchVatKnownFacts(validForm.vrn, validForm.regDate).flatMap { foundMatch =>
+                  if (foundMatch)
+                    updateSessionAndRedirect(existingSession.copy(vatDetails = Some(validForm)))(
+                      routes.BusinessIdentificationController.showConfirmBusinessForm())
+                  else
+                    Redirect(routes.BusinessIdentificationController.showNoAgencyFound())
+                }
               case None => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
             }
 
