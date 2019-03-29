@@ -31,6 +31,10 @@ global.error.InternalServerError500.title=Sorry, there is a problem with the ser
 global.error.InternalServerError500.heading=Sorry, there is a problem with the service
 global.error.InternalServerError500.message=Try again later.</p><p><a href="https://www.gov.uk/government/organisations/hm-revenue-customs/contact/vat-online-services-helpdesk">Call the VAT online services helpline</a> for help with Making Tax Digital for VAT.</p><p><a href="https://www.gov.uk/government/organisations/hm-revenue-customs/contact/self-assessment-online-services-helpdesk">Call the HMRC Self Assessment online services helpline</a> for help with Making Tax Digital for Income Tax.
 
+#Offline
+offline.title=You are offline
+offline.p1=Please connect to continue with the Agent Subscription.
+
 ##Errors that override Play default messages
 error.maxLength = You must not enter more than {0} figures
 error.email= Enter a valid email address, like yourname@example.com

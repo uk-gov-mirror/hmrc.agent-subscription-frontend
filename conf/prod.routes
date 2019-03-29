@@ -1,6 +1,13 @@
 # Add all the application routes to the app.routes file
-->         /agent-subscription        app.Routes
-->         /                          health.Routes
-->     	   /template                  template.Routes
+->          /agent-subscription        app.Routes
+->          /                          health.Routes
+->     	    /template                  template.Routes
 
-GET        /admin/metrics             @com.kenshoo.play.metrics.MetricsController.metrics
+GET         /admin/metrics             @com.kenshoo.play.metrics.MetricsController.metrics
+
+# Offline
+GET         /offline.html              uk.gov.hmrc.agentsubscriptionfrontend.controllers.OfflineController.offline
+GET         /service-worker.js         controllers.Assets.at(path="/public", file="service-worker.js")
+GET         /manifest.json             controllers.Assets.at(path="/public", file="manifest.json")
+GET         /sw.js                     controllers.Assets.at(path="/public", file="sw.js")
+GET         /images/icons/icon.png     controllers.Assets.at(path="/public", file="images/icons/icon.png")
