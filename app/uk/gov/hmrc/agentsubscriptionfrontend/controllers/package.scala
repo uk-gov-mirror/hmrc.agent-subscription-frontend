@@ -18,25 +18,18 @@ package uk.gov.hmrc.agentsubscriptionfrontend
 
 import play.api.data.Form
 import play.api.data.Forms.{mapping, _}
+import play.api.data.validation.{Invalid, Valid, ValidationError}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
-import uk.gov.hmrc.agentsubscriptionfrontend.support.TaxIdentifierFormatters._
 import uk.gov.hmrc.agentsubscriptionfrontend.validators.CommonValidators._
 import uk.gov.hmrc.domain.Nino
 import uk.gov.voa.play.form.ConditionalMappings.{mandatoryIfEqual, mandatoryIfTrue}
 
+import scala.util.{Success, Try}
+
 package object controllers {
   object BusinessIdentificationForms {
-
-    def knownFactsForm(businessType: String): Form[KnownFacts] =
-      Form[KnownFacts](
-        mapping("utr" -> businessUtr(businessType), "postcode" -> postcode)(
-          (utrStr, postcode) =>
-            normalizeUtr(utrStr)
-              .map(utr => KnownFacts(utr, postcode))
-              .getOrElse(throw new Exception("Invalid utr found after validation")))(knownFacts =>
-          Some((knownFacts.utr.value, knownFacts.postcode))))
 
     val businessTypeForm: Form[BusinessType] =
       Form[BusinessType](
@@ -61,13 +54,9 @@ package object controllers {
 
     val confirmBusinessForm: Form[ConfirmBusiness] =
       Form[ConfirmBusiness](
-        mapping(
-          "confirmBusiness" -> optional(text).verifying(radioInputSelected("confirmBusiness.error.no-radio-selected")))(
-          answer => ConfirmBusiness(RadioInputAnswer.apply(answer.getOrElse(""))))(answer =>
-          Some(RadioInputAnswer.unapply(answer.confirm)))
-          .verifying(
-            "error.confirm-business-value.invalid",
-            submittedAnswer => Seq(Yes, No).contains(submittedAnswer.confirm)))
+        mapping("confirmBusiness" -> text
+          .verifying("error.confirm-business-value.invalid", value => value == "yes" || value == "no"))(answer =>
+          ConfirmBusiness(RadioInputAnswer.apply(answer)))(answer => RadioInputAnswer.unapply(answer.confirm)))
 
     val businessEmailForm = Form[BusinessEmail](
       mapping(

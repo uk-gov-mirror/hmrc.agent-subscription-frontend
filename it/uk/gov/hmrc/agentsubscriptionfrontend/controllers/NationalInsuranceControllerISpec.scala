@@ -55,7 +55,7 @@ class NationalInsuranceControllerISpec extends BaseISpec with SessionDataMissing
 
     "handle forms with invalid nino" in {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("nino" -> "AE123456C_BLAH")
-
+      sessionStoreService.currentSession.agentSession = Some(agentSession)
       val result = await(controller.submitNationalInsuranceNumberForm()(request))
 
       status(result) shouldBe 200

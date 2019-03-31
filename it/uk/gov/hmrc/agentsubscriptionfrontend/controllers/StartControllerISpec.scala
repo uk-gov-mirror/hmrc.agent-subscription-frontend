@@ -6,12 +6,13 @@ import org.jsoup.Jsoup
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{contentType, _}
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{AMLSDetails, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.repository.ChainedSessionDetailsRepository
+import uk.gov.hmrc.agentsubscriptionfrontend.repository.StashedChainedSessionDetails.StashedChainnedSessionId
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.{AgentSubscriptionStub, AuthStub}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.individual
+import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData._
 import uk.gov.hmrc.http.{Upstream4xxResponse, Upstream5xxResponse}
 import uk.gov.hmrc.play.binders.ContinueUrl
 
@@ -24,83 +25,34 @@ trait StartControllerISpec extends BaseISpec {
   protected lazy val configuredGovernmentGatewayUrl = "http://configured-government-gateway.gov.uk/"
   protected lazy val repo = app.injector.instanceOf[ChainedSessionDetailsRepository]
 
-  private val initialDetails =
-    InitialDetails(
-      Utr("9876543210"),
-      "AA11AA",
-      "My Agency",
-      Some("agency@example.com"),
-      BusinessAddress(
-        "AddressLine1 A",
-        Some("AddressLine2 A"),
-        Some("AddressLine3 A"),
-        Some("AddressLine4 A"),
-        Some("AA11AA"),
-        "GB")
-    )
-
   override protected def appBuilder: GuiceApplicationBuilder =
     super.appBuilder
-      .configure("government-gateway.url" -> configuredGovernmentGatewayUrl,
-        "features.auto-map-agent-enrolments" -> featureFlagAutoMapping)
-
+      .configure("government-gateway.url" -> configuredGovernmentGatewayUrl, "features.auto-map-agent-enrolments" -> featureFlagAutoMapping)
 
   object FixturesForReturnAfterGGCredsCreated {
 
+    val amlsSDetails = AMLSDetails("supervisory", "123456789", LocalDate.now())
+
+    val agentSession =
+      AgentSession(Some(BusinessType.SoleTrader), utr = Some(validUtr), postcode = Some(Postcode(postcode)), registration = Some(registration), amlsDetails = Some(amlsSDetails))
+
     class ValidKnownFactsCached(val wasEligibleForMapping: Option[Boolean] = Some(false), includeInitialDetails: Boolean = true) {
-      val knownFactsResult =
-        KnownFactsResult(Utr("9876543210"), "AA11AA", "Test organisation name", isSubscribedToAgentServices = false, Some(BusinessAddress(
-          "AddressLine1 A",
-          Some("AddressLine2 A"),
-          Some("AddressLine3 A"),
-          Some("AddressLine4 A"),
-          Some("AA11AA"),
-          "GB")), Some("someone@example.com"))
-      private val validBusinessAddress = BusinessAddress(
-        "AddressLine1 A",
-        Some("AddressLine2 A"),
-        Some("AddressLine3 A"),
-        Some("AddressLine4 A"),
-        Some("AA11AA"),
-        "GB")
-
-      private  val validInitialDetails = if (includeInitialDetails)
-        Some(InitialDetails(
-          Utr("9876543210"),
-          "AA11AA",
-          "My Agency",
-          Some("agency@example.com"),
-          validBusinessAddress
-        )) else None
-
-      val amlsSDetails = AMLSDetails("supervisory", "123456789", LocalDate.now())
-
-      val persistedId = await(repo.create(ChainedSessionDetails(knownFactsResult, wasEligibleForMapping, validInitialDetails, Some(amlsSDetails))))
+      def persistedId: StashedChainnedSessionId = await(repo.create(ChainedSessionDetails(wasEligibleForMapping, agentSession)))
     }
 
     trait UnsubscribedAgentStub {
       self: ValidKnownFactsCached =>
-      AgentSubscriptionStub.withMatchingUtrAndPostcode(
-        knownFactsResult.utr,
-        knownFactsResult.postcode)
+      AgentSubscriptionStub.withMatchingUtrAndPostcode(validUtr, postcode)
     }
 
     trait SubscribedAgentStub {
       self: ValidKnownFactsCached =>
-      AgentSubscriptionStub.withMatchingUtrAndPostcode(
-        knownFactsResult.utr,
-        knownFactsResult.postcode,
-        isSubscribedToAgentServices = true,
-        isSubscribedToETMP = true)
+      AgentSubscriptionStub.withMatchingUtrAndPostcode(validUtr, postcode, isSubscribedToAgentServices = true, isSubscribedToETMP = true)
     }
 
     trait PartiallySubscribedAgentStub {
       self: ValidKnownFactsCached =>
-      AgentSubscriptionStub.withMatchingUtrAndPostcode(
-        knownFactsResult.utr,
-        knownFactsResult.postcode,
-        isSubscribedToAgentServices = false,
-        isSubscribedToETMP = true)
+      AgentSubscriptionStub.withMatchingUtrAndPostcode(validUtr, postcode, isSubscribedToAgentServices = false, isSubscribedToETMP = true)
     }
 
   }
@@ -178,9 +130,7 @@ trait StartControllerISpec extends BaseISpec {
       }
     }
 
-    behave like aPageWithFeedbackLinks(
-      request => controller.showNotAgent(request),
-      authenticatedAs(individual))
+    behave like aPageWithFeedbackLinks(request => controller.showNotAgent(request), authenticatedAs(individual))
   }
 
   "returnAfterGGCredsCreated" should {
@@ -188,10 +138,9 @@ trait StartControllerISpec extends BaseISpec {
     "redirect to the /check-answers page if given a valid StashedChainedSessionDetails ID" when {
       "agent is unsubscribed" in new ValidKnownFactsCached with UnsubscribedAgentStub {
         implicit val request = FakeRequest()
-        sessionStoreService.currentSession.initialDetails = Some(initialDetails)
+        sessionStoreService.currentSession.agentSession = Some(agentSession)
 
         val result = await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(request))
-
 
         status(result) shouldBe 303
         redirectLocation(result).head should include(routes.SubscriptionController.showCheckAnswers().url)
@@ -207,10 +156,12 @@ trait StartControllerISpec extends BaseISpec {
 
     "redirect to correct page if given a valid StashedChainedSessionDetails ID and agent is partially subscribed (subscribed in ETMP but not enrolled)" when {
 
-
-      "agent was not eligible for mapping, should redirect to /subscription-complete" in new ValidKnownFactsCached(wasEligibleForMapping = Some(false), includeInitialDetails = false) with PartiallySubscribedAgentStub {
-        AgentSubscriptionStub.partialSubscriptionWillSucceed(CompletePartialSubscriptionBody(utr = knownFactsResult.utr,
-          knownFacts = SubscriptionRequestKnownFacts(knownFactsResult.postcode)), arn = "TARN00023")
+      "agent was not eligible for mapping, should redirect to /subscription-complete" in new ValidKnownFactsCached(
+        wasEligibleForMapping = Some(false),
+        includeInitialDetails = false) with PartiallySubscribedAgentStub {
+        AgentSubscriptionStub.partialSubscriptionWillSucceed(
+          CompletePartialSubscriptionBody(utr = validUtr, knownFacts = SubscriptionRequestKnownFacts(postcode)),
+          arn = "TARN00023")
 
         implicit val request = FakeRequest()
         val result = await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(request))
@@ -220,23 +171,26 @@ trait StartControllerISpec extends BaseISpec {
       }
     }
 
-    "throw Upstream4xxResponse if agent-subscription returns 403 when completing partial subscription" in new ValidKnownFactsCached(includeInitialDetails = false) with PartiallySubscribedAgentStub {
-      AgentSubscriptionStub.partialSubscriptionWillReturnStatus(CompletePartialSubscriptionBody(utr = knownFactsResult.utr,
-        knownFacts = SubscriptionRequestKnownFacts(knownFactsResult.postcode)), 403)
+    "throw Upstream4xxResponse if agent-subscription returns 403 when completing partial subscription" in new ValidKnownFactsCached(
+      includeInitialDetails = false) with PartiallySubscribedAgentStub {
+      AgentSubscriptionStub
+        .partialSubscriptionWillReturnStatus(CompletePartialSubscriptionBody(utr = validUtr, knownFacts = SubscriptionRequestKnownFacts(postcode)), 403)
 
       an[Upstream4xxResponse] shouldBe thrownBy(await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(FakeRequest())))
     }
 
-    "throw Upstream4xxResponse if agent-subscription returns 409 when completing partial subscription" in new ValidKnownFactsCached(includeInitialDetails = false) with PartiallySubscribedAgentStub {
-      AgentSubscriptionStub.partialSubscriptionWillReturnStatus(CompletePartialSubscriptionBody(utr = knownFactsResult.utr,
-        knownFacts = SubscriptionRequestKnownFacts(knownFactsResult.postcode)), 409)
+    "throw Upstream4xxResponse if agent-subscription returns 409 when completing partial subscription" in new ValidKnownFactsCached(
+      includeInitialDetails = false) with PartiallySubscribedAgentStub {
+      AgentSubscriptionStub
+        .partialSubscriptionWillReturnStatus(CompletePartialSubscriptionBody(utr = validUtr, knownFacts = SubscriptionRequestKnownFacts(postcode)), 409)
 
       an[Upstream4xxResponse] shouldBe thrownBy(await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(FakeRequest())))
     }
 
-    "throw Upstream5xxResponse, 500 when executing partialSubscriptionFix" in new ValidKnownFactsCached(includeInitialDetails = false) with PartiallySubscribedAgentStub {
-      AgentSubscriptionStub.partialSubscriptionWillReturnStatus(CompletePartialSubscriptionBody(utr = knownFactsResult.utr,
-        knownFacts = SubscriptionRequestKnownFacts(knownFactsResult.postcode)), 500)
+    "throw Upstream5xxResponse, 500 when executing partialSubscriptionFix" in new ValidKnownFactsCached(includeInitialDetails = false)
+    with PartiallySubscribedAgentStub {
+      AgentSubscriptionStub
+        .partialSubscriptionWillReturnStatus(CompletePartialSubscriptionBody(utr = validUtr, knownFacts = SubscriptionRequestKnownFacts(postcode)), 500)
 
       an[Upstream5xxResponse] shouldBe thrownBy(await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(FakeRequest())))
     }
@@ -258,17 +212,16 @@ trait StartControllerISpec extends BaseISpec {
     }
 
     "delete the persisted ChainedSessionDetails if given a valid ChainedSessionDetails ID" in new ValidKnownFactsCached with UnsubscribedAgentStub {
-      await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(FakeRequest()))
-
-      await(repo.findChainedSessionDetails(persistedId)) shouldBe None
+      val id = persistedId
+      val result = await(controller.returnAfterGGCredsCreated(id = Some(id))(FakeRequest()))
+      status(result) shouldBe 303
+      await(repo.findChainedSessionDetails(id)) shouldBe None
     }
 
     "place the known facts back in the session store, if given a valid ChainedSessionDetails ID" in new ValidKnownFactsCached with UnsubscribedAgentStub {
       implicit val request = FakeRequest()
 
       await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(request))
-
-      sessionStoreService.currentSession.knownFactsResult shouldBe Some(knownFactsResult)
     }
 
     "place a provided continue URL in session store, if given a valid ChainedSessionDetails ID" in new ValidKnownFactsCached with UnsubscribedAgentStub {
@@ -283,10 +236,11 @@ trait StartControllerISpec extends BaseISpec {
 }
 
 class StartControllerWithAutoMappingOn extends StartControllerISpec {
+  import FixturesForReturnAfterGGCredsCreated._
   override def featureFlagAutoMapping: Boolean = true
 
   "returnAfterGGCredsCreated" should {
-    import FixturesForReturnAfterGGCredsCreated.{ValidKnownFactsCached, PartiallySubscribedAgentStub, UnsubscribedAgentStub}
+    import FixturesForReturnAfterGGCredsCreated.{PartiallySubscribedAgentStub, UnsubscribedAgentStub, ValidKnownFactsCached}
 
     "given normal flow" when {
       "not session store wasEligibleForMapping as flag is false" in new ValidKnownFactsCached(wasEligibleForMapping = None) {
@@ -297,11 +251,14 @@ class StartControllerWithAutoMappingOn extends StartControllerISpec {
       }
     }
 
-    "agent was eligible for mapping, should redirect to /link-clients" in new ValidKnownFactsCached(wasEligibleForMapping = Some(true), includeInitialDetails = false) with PartiallySubscribedAgentStub {
-      AgentSubscriptionStub.partialSubscriptionWillSucceed(CompletePartialSubscriptionBody(utr = knownFactsResult.utr,
-        knownFacts = SubscriptionRequestKnownFacts(knownFactsResult.postcode)))
+    "agent was eligible for mapping, should redirect to /link-clients" in new ValidKnownFactsCached(
+      wasEligibleForMapping = Some(true),
+      includeInitialDetails = false) with PartiallySubscribedAgentStub {
+      AgentSubscriptionStub.partialSubscriptionWillSucceed(
+        CompletePartialSubscriptionBody(utr = validUtr, knownFacts = SubscriptionRequestKnownFacts(postcode)))
 
       implicit val request = FakeRequest()
+      sessionStoreService.currentSession.agentSession = Some(agentSession)
       val result = await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(request))
 
       status(result) shouldBe 303
@@ -309,9 +266,11 @@ class StartControllerWithAutoMappingOn extends StartControllerISpec {
       result.session.get("isPartiallySubscribed").contains("true") shouldBe true
     }
 
-    "agent NOT Eligible for mapping, should redirect to /link-clients" in new ValidKnownFactsCached(wasEligibleForMapping = Some(false), includeInitialDetails = false) with PartiallySubscribedAgentStub {
-      AgentSubscriptionStub.partialSubscriptionWillSucceed(CompletePartialSubscriptionBody(utr = knownFactsResult.utr,
-        knownFacts = SubscriptionRequestKnownFacts(knownFactsResult.postcode)))
+    "agent NOT Eligible for mapping, should redirect to /link-clients" in new ValidKnownFactsCached(
+      wasEligibleForMapping = Some(false),
+      includeInitialDetails = false) with PartiallySubscribedAgentStub {
+      AgentSubscriptionStub.partialSubscriptionWillSucceed(
+        CompletePartialSubscriptionBody(utr = validUtr, knownFacts = SubscriptionRequestKnownFacts(postcode)))
 
       implicit val request = FakeRequest()
       val result = await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(request))
@@ -334,7 +293,7 @@ class StartControllerWithAutoMappingOff extends StartControllerISpec {
   override def featureFlagAutoMapping: Boolean = false
 
   "returnAfterGGCredsCreated" should {
-    import FixturesForReturnAfterGGCredsCreated.ValidKnownFactsCached
+    import FixturesForReturnAfterGGCredsCreated._
 
     "do not store wasEligibleForMapping in sessionStore" in new ValidKnownFactsCached(wasEligibleForMapping = None) {
       implicit val request = FakeRequest()

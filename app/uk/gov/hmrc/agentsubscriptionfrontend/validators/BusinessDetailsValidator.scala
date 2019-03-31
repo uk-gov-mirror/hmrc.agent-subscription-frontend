@@ -19,30 +19,33 @@ package uk.gov.hmrc.agentsubscriptionfrontend.validators
 import javax.inject.{Inject, Singleton}
 import play.api.data.validation.{Constraints, Invalid, Valid, ValidationResult => PlayValdationResult}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{BusinessAddress, InitialDetails, ValidationResult}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidationResult.FailureReason._
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{BusinessAddress, Registration, ValidationResult}
 
 @Singleton
-class InitialDetailsValidator @Inject()(appConfig: AppConfig) {
-  import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidationResult._
+class BusinessDetailsValidator @Inject()(appConfig: AppConfig) {
   import CommonValidators._
+  import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidationResult._
 
   private val blacklistedPostcodes = appConfig.blacklistedPostcodes
 
-  def validate(initialDetails: InitialDetails): ValidationResult = {
-    val allValidations = Set(
-      validateEmail(initialDetails.email),
-      validateBusinessName(initialDetails.name),
-      validatePostcode(initialDetails.businessAddress.postalCode),
-      validateBusinessAddress(initialDetails.businessAddress)
-    )
+  def validate(business: Option[Registration]): ValidationResult =
+    business match {
+      case Some(details) =>
+        val allValidations = Set(
+          validateEmail(details.emailAddress),
+          validateBusinessName(details.taxpayerName),
+          validatePostcode(details.address.postalCode),
+          validateBusinessAddress(details.address)
+        )
 
-    val reasons: Set[FailureReason] = allValidations.collect {
-      case Failure(reasons) => reasons
-    }.flatten
+        val reasons: Set[FailureReason] = allValidations.collect {
+          case Failure(failureReasons) => failureReasons
+        }.flatten
 
-    if (reasons.nonEmpty) Failure(reasons) else Pass
-  }
+        if (reasons.nonEmpty) Failure(reasons) else Pass
+      case None => Failure(Set.empty[FailureReason])
+    }
 
   def validatePostcode(postcodeOpt: Option[String]): ValidationResult =
     postcodeOpt
@@ -65,10 +68,14 @@ class InitialDetailsValidator @Inject()(appConfig: AppConfig) {
       case _           => Failure(InvalidEmail)
     }
 
-  private def validateBusinessName(businessName: String): ValidationResult =
-    if (CommonValidators.businessName.constraints.map(_(businessName)).forall(_ == Valid))
-      Pass
-    else Failure(InvalidBusinessName)
+  private def validateBusinessName(businessName: Option[String]): ValidationResult =
+    businessName match {
+      case Some(name) =>
+        if (CommonValidators.businessName.constraints.map(_(name)).forall(_ == Valid))
+          Pass
+        else Failure(InvalidBusinessName)
+      case None => Failure(InvalidBusinessName)
+    }
 
   private def validateBusinessAddress(businessAddress: BusinessAddress): ValidationResult = {
     def maybeAddressLineValidator(addressLine: Option[String]): Seq[PlayValdationResult] =

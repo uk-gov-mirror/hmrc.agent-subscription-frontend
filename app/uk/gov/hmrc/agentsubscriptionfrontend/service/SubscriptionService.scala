@@ -45,10 +45,10 @@ class SubscriptionService @Inject()(
 
   import SubscriptionDetails._
 
-  def subscribe(details: InitialDetails, address: DesAddress, mayBeAmlsDetails: Option[AMLSDetails])(
+  def subscribe(utr: Utr, postcode: Postcode, registration: Registration, amlsDetails: Option[AMLSDetails])(
     implicit hc: HeaderCarrier,
     ec: ExecutionContext): Future[Either[SubscriptionReturnedHttpError, (Arn, String)]] = {
-    val subscriptionDetails = mapper(details, address, mayBeAmlsDetails)
+    val subscriptionDetails = mapper(utr, postcode, registration, amlsDetails)
     subscribeAgencyToMtd(subscriptionDetails) map {
       case Right(arn) => Right((arn, subscriptionDetails.name))
       case Left(x)    => Left(SubscriptionReturnedHttpError(x))
@@ -83,22 +83,22 @@ class SubscriptionService @Inject()(
     }
   }
 
-  def completePartialSubscription(utr: Utr, businessPostCode: String)(
+  def completePartialSubscription(utr: Utr, businessPostCode: Postcode)(
     implicit hc: HeaderCarrier,
     ec: ExecutionContext): Future[Arn] =
     agentSubscriptionConnector
       .completePartialSubscription(
-        CompletePartialSubscriptionBody(utr, SubscriptionRequestKnownFacts(businessPostCode)))
+        CompletePartialSubscriptionBody(utr, SubscriptionRequestKnownFacts(businessPostCode.value)))
       .recover {
         case e: Upstream4xxResponse if Seq(Status.FORBIDDEN, Status.CONFLICT) contains e.upstreamResponseCode =>
           Logger.warn(s"Eligibility checks failed for partialSubscriptionFix, with status: ${e.upstreamResponseCode}")
           throw e
       }
 
-  def getSubscriptionStatus(utr: Utr, postcode: String)(
+  def getSubscriptionStatus(utr: Utr, postcode: Postcode)(
     implicit hc: HeaderCarrier,
     ec: ExecutionContext): Future[SubscriptionProcess] =
-    agentSubscriptionConnector.getRegistration(utr, postcode).map {
+    agentSubscriptionConnector.getRegistration(utr, postcode.value).map {
 
       case Some(reg) if reg.isSubscribedToAgentServices =>
         SubscriptionProcess(SubscriptionState.SubscribedAndEnrolled, Some(reg))

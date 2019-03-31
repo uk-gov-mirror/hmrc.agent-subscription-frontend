@@ -17,8 +17,8 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.service
 
 import javax.inject.{Inject, Singleton}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.AgentSession
 import uk.gov.hmrc.agentsubscriptionfrontend.models.ContinueUrlJsonFormat._
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{AMLSDetails, AgentSession, InitialDetails, KnownFactsResult}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.cache.client.SessionCache
 import uk.gov.hmrc.play.binders.ContinueUrl
@@ -27,19 +27,6 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class SessionStoreService @Inject()(sessionCache: SessionCache) {
-
-  def fetchKnownFactsResult(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[KnownFactsResult]] =
-    sessionCache.fetchAndGetEntry[KnownFactsResult]("knownFactsResult")
-
-  def cacheKnownFactsResult(
-    knownFactsResult: KnownFactsResult)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
-    sessionCache.cache("knownFactsResult", knownFactsResult).map(_ => ())
-
-  def fetchInitialDetails(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[InitialDetails]] =
-    sessionCache.fetchAndGetEntry[InitialDetails]("initialDetails")
-
-  def cacheInitialDetails(details: InitialDetails)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
-    sessionCache.cache("initialDetails", details).map(_ => ())
 
   def fetchContinueUrl(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[ContinueUrl]] =
     sessionCache.fetchAndGetEntry[ContinueUrl]("continueUrl")
@@ -53,12 +40,6 @@ class SessionStoreService @Inject()(sessionCache: SessionCache) {
   def cacheMappingEligible(
     wasEligibleForMapping: Boolean)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
     sessionCache.cache("mappingEligible", wasEligibleForMapping).map(_ => ())
-
-  def fetchAMLSDetails(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[AMLSDetails]] =
-    sessionCache.fetchAndGetEntry[AMLSDetails]("amlsDetails")
-
-  def cacheAMLSDetails(amlsDetails: AMLSDetails)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
-    sessionCache.cache("amlsDetails", amlsDetails).map(_ => ())
 
   def cacheGoBackUrl(url: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
     sessionCache.cache("goBackUrl", url).map(_ => ())

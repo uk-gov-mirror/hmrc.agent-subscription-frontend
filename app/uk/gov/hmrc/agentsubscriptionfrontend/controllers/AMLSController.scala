@@ -23,7 +23,7 @@ import play.api.mvc.{AnyContent, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.config.amls.AMLSLoader
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentAssuranceConnector
-import uk.gov.hmrc.agentsubscriptionfrontend.models.AMLSDetails
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AMLSDetails, AgentSession}
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
@@ -43,8 +43,7 @@ class AMLSController @Inject()(
   override val appConfig: AppConfig,
   override val metrics: Metrics,
   override val ec: ExecutionContext)
-    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig) with SessionDataSupport
-    with SessionBehaviour {
+    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig) with SessionBehaviour {
 
   import AMLSForms._
 
@@ -52,24 +51,26 @@ class AMLSController @Inject()(
 
   val showMoneyLaunderingComplianceForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      withManuallyAssuredAgent {
-        for {
-          cachedAmlsDetails <- sessionStoreService.fetchAMLSDetails
-          cachedGoBackUrl   <- sessionStoreService.fetchGoBackUrl
-        } yield {
-          (cachedAmlsDetails, cachedGoBackUrl) match {
-            case (Some(amlsDetails), mayBeGoBackUrl) =>
-              val form: Map[String, String] =
-                Map(
-                  "amlsCode"         -> amlsBodies.find(_._2 == amlsDetails.supervisoryBody).map(_._1).getOrElse(""),
-                  "membershipNumber" -> amlsDetails.membershipNumber,
-                  "expiry.day"       -> amlsDetails.membershipExpiresOn.getDayOfMonth.toString,
-                  "expiry.month"     -> amlsDetails.membershipExpiresOn.getMonthValue.toString,
-                  "expiry.year"      -> amlsDetails.membershipExpiresOn.getYear.toString
-                )
-              Ok(html.money_laundering_compliance(amlsForm(amlsBodies.keySet).bind(form), amlsBodies, mayBeGoBackUrl))
+      withValidSession { (_, existingSession) =>
+        withManuallyAssuredAgent(existingSession) {
+          for {
+            cachedAmlsDetails <- existingSession.map(_.amlsDetails)
+            cachedGoBackUrl   <- sessionStoreService.fetchGoBackUrl
+          } yield {
+            (cachedAmlsDetails, cachedGoBackUrl) match {
+              case (Some(amlsDetails), mayBeGoBackUrl) =>
+                val form: Map[String, String] =
+                  Map(
+                    "amlsCode"         -> amlsBodies.find(_._2 == amlsDetails.supervisoryBody).map(_._1).getOrElse(""),
+                    "membershipNumber" -> amlsDetails.membershipNumber,
+                    "expiry.day"       -> amlsDetails.membershipExpiresOn.getDayOfMonth.toString,
+                    "expiry.month"     -> amlsDetails.membershipExpiresOn.getMonthValue.toString,
+                    "expiry.year"      -> amlsDetails.membershipExpiresOn.getYear.toString
+                  )
+                Ok(html.money_laundering_compliance(amlsForm(amlsBodies.keySet).bind(form), amlsBodies, mayBeGoBackUrl))
 
-            case (None, _) => Ok(html.money_laundering_compliance(amlsForm(amlsBodies.keySet), amlsBodies))
+              case (None, _) => Ok(html.money_laundering_compliance(amlsForm(amlsBodies.keySet), amlsBodies))
+            }
           }
         }
       }
@@ -78,40 +79,43 @@ class AMLSController @Inject()(
 
   def submitMoneyLaunderingComplianceForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      withManuallyAssuredAgent {
-        amlsForm(amlsBodies.keys.toSet)
-          .bindFromRequest()
-          .fold(
-            formWithErrors => {
-              val form = AMLSForms.formWithRefinedErrors(formWithErrors)
-              toFuture(Ok(html.money_laundering_compliance(form, amlsBodies)))
-            },
-            validForm => {
-              val amlsDetails = AMLSDetails(
-                amlsBodies.getOrElse(validForm.amlsCode, throw new Exception("Invalid AMLS code")),
-                validForm.membershipNumber,
-                validForm.expiry
-              )
+      withValidSession { (_, existingSession) =>
+        withManuallyAssuredAgent(existingSession) {
+          amlsForm(amlsBodies.keys.toSet)
+            .bindFromRequest()
+            .fold(
+              formWithErrors => {
+                val form = AMLSForms.formWithRefinedErrors(formWithErrors)
+                Ok(html.money_laundering_compliance(form, amlsBodies))
+              },
+              validForm => {
+                val amlsDetails = AMLSDetails(
+                  amlsBodies.getOrElse(validForm.amlsCode, throw new Exception("Invalid AMLS code")),
+                  validForm.membershipNumber,
+                  validForm.expiry
+                )
 
-              sessionStoreService
-                .cacheAMLSDetails(amlsDetails)
-                .map { _ =>
-                  mark("Count-Subscription-CleanCreds-Start")
-                  Redirect(routes.SubscriptionController.showCheckAnswers())
-                }
-            }
-          )
+                sessionStoreService
+                  .cacheAgentSession(existingSession.copy(amlsDetails = Some(amlsDetails)))
+                  .map { _ =>
+                    Redirect(routes.SubscriptionController.showCheckAnswers())
+                  }
+              }
+            )
+        }
       }
     }
   }
 
-  private def withManuallyAssuredAgent(body: => Future[Result])(implicit hc: HeaderCarrier): Future[Result] =
-    withInitialDetails { details =>
-      agentAssuranceConnector.isManuallyAssuredAgent(details.utr).flatMap { response =>
-        if (response) {
-          mark("Count-Subscription-CleanCreds-Start")
-          toFuture(Redirect(routes.SubscriptionController.showCheckAnswers()))
-        } else body
-      }
+  private def withManuallyAssuredAgent(agentSession: AgentSession)(body: => Future[Result])(
+    implicit hc: HeaderCarrier): Future[Result] =
+    agentSession.utr match {
+      case Some(utr) =>
+        agentAssuranceConnector.isManuallyAssuredAgent(utr).flatMap { response =>
+          if (response) {
+            toFuture(Redirect(routes.SubscriptionController.showCheckAnswers()))
+          } else body
+        }
+      case None => Redirect(routes.UtrController.showUtrForm())
     }
 }

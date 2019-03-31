@@ -73,6 +73,7 @@ error.business-name.empty = Enter your business name
 error.business-name.invalid = Business name must only include letters a to z, numbers, commas, full stops, apostrophes, hyphens, forward slashes, and spaces
 error.business-name.maxlength = Business name must be 40 characters or less
 error.business-email.empty=Enter your business email address
+error.confirm-business-value.invalid=Please choose one of the below options
 error.summary.heading=There is a problem
 error.prefix=Error:
 error.nino.empty=Enter your National Insurance number
@@ -110,7 +111,7 @@ confirmBusiness.title=Is this your business?
 confirmBusiness.content.utr=These are the details we hold for Unique Taxpayer Reference (UTR) <strong class="bold">{0}</strong>. You will be able to change these details in a moment for your agent services account.
 confirmBusiness.option.yes=Yes
 confirmBusiness.option.no=No - I want to enter a different UTR
-confirmBusiness.error.no-radio-selected = Select yes if this is your business
+confirmBusiness.error.no-radio-selected=Select yes if this is your business
 
 #No agency found
 noAgencyFound.title=There is a problem

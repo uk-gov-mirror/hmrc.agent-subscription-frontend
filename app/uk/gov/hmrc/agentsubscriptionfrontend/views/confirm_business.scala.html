@@ -20,11 +20,11 @@
 @import uk.gov.hmrc.play.views.html.helpers._
 @import uk.gov.hmrc.agentsubscriptionfrontend.models.ConfirmBusiness
 
-@(confirmBusinessRadioForm: Form[ConfirmBusiness], registrationName: String, utr: String, businessAddress: BusinessAddress)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+@(confirmBusinessRadioForm: Form[ConfirmBusiness], registrationName: String, utr: String, businessAddress: BusinessAddress, backLink: Call)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = error_prefix(confirmBusinessRadioForm) + Messages("confirmBusiness.title"), bodyClasses = None) {
 
-    <a href="@backButtonUrl" class="link-back">@Messages("button.back")</a>
+    <a href="@backLink" class="link-back">@Messages("button.back")</a>
 
     @if(confirmBusinessRadioForm.hasErrors) {
         @errorSummary(Messages("error.summary.heading"), confirmBusinessRadioForm, Seq.empty, Some("confirm-business"))
@@ -75,6 +75,3 @@
         </div>
     }
 }
-
-
-@backButtonUrl = @{routes.BusinessIdentificationController.submitBusinessDetailsForm()}

@@ -25,6 +25,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentAssuranceConnector
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
+import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -100,27 +101,34 @@ class AssuranceService @Inject()(
         }
 
         for {
-          knownFactResultOpt <- sessionStoreService.fetchKnownFactsResult
-          _ <- knownFactResultOpt match {
-                case Some(knownFactsResult) =>
-                  auditService.sendAgentAssuranceAuditEvent(
-                    knownFactsResult = knownFactsResult,
-                    assuranceResults = AssuranceResults(
-                      isOnRefusalToDealWithList = false,
-                      isManuallyAssured = false,
-                      hasAcceptableNumberOfPayeClients = if (appConfig.agentAssurancePayeCheck) Some(false) else None,
-                      hasAcceptableNumberOfSAClients = Some(false),
-                      hasAcceptableNumberOfVatDecOrgClients = Some(false),
-                      hasAcceptableNumberOfIRCTClients = Some(false)
-                    ),
-                    assuranceCheckInput = Some(
-                      AssuranceCheckInput(
-                        passCesaAgentAssuranceCheck = Some(relationshipExists),
-                        userEnteredSaAgentRef = Some(saAgentReference.value),
-                        userEnteredUtr = userEnteredUtr,
-                        userEnteredNino = userEnteredNino
-                      ))
-                  )
+          agentSessionOpt <- sessionStoreService.fetchAgentSession
+          _ <- agentSessionOpt match {
+                case Some(agentSession) =>
+                  (agentSession.utr, agentSession.postcode) match {
+                    case (Some(utr), Some(postcode)) =>
+                      auditService.sendAgentAssuranceAuditEvent(
+                        utr = utr,
+                        postcode = postcode,
+                        assuranceResults = AssuranceResults(
+                          isOnRefusalToDealWithList = false,
+                          isManuallyAssured = false,
+                          hasAcceptableNumberOfPayeClients =
+                            if (appConfig.agentAssurancePayeCheck) Some(false) else None,
+                          hasAcceptableNumberOfSAClients = Some(false),
+                          hasAcceptableNumberOfVatDecOrgClients = Some(false),
+                          hasAcceptableNumberOfIRCTClients = Some(false)
+                        ),
+                        assuranceCheckInput = Some(
+                          AssuranceCheckInput(
+                            passCesaAgentAssuranceCheck = Some(relationshipExists),
+                            userEnteredSaAgentRef = Some(saAgentReference.value),
+                            userEnteredUtr = userEnteredUtr,
+                            userEnteredNino = userEnteredNino
+                          ))
+                      )
+                    case _ => toFuture(())
+                  }
+
                 case None =>
                   Future.successful(
                     Logger(getClass).warn("Could not send audit events due to empty knownfacts results"))

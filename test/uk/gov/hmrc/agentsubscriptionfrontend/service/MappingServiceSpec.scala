@@ -20,8 +20,8 @@ import org.mockito.Mockito._
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.MappingConnector
+import uk.gov.hmrc.agentsubscriptionfrontend.models.AgentSession
 import uk.gov.hmrc.agentsubscriptionfrontend.models.MappingEligibility.{IsEligible, IsNotEligible, UnknownEligibility}
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{BusinessAddress, KnownFactsResult}
 import uk.gov.hmrc.agentsubscriptionfrontend.repository.ChainedSessionDetailsRepository
 import uk.gov.hmrc.agentsubscriptionfrontend.support.ResettingMockitoSugar
 import uk.gov.hmrc.http.HeaderCarrier
@@ -48,22 +48,24 @@ class MappingServiceSpec extends UnitSpec with ResettingMockitoSugar {
   "captureTempMappingsPreSubscription" when {
     "auto mapping is enabled" should {
       "return UnknownEligibility if session store does not contain known facts" in new AutoMappingEnabled {
-        when(mockSessionStoreService.fetchKnownFactsResult).thenReturn(Future.successful(None))
+        when(mockSessionStoreService.fetchAgentSession).thenReturn(Future.successful(None))
         await(mappingService.captureTempMappingsPreSubscription) shouldBe UnknownEligibility
         verifyZeroInteractions(mockMappingConnector)
       }
 
       Seq(IsEligible, IsNotEligible, UnknownEligibility) foreach { eligibility =>
-        s"return mapping outcome if session store contains known facts and mapping returns $eligibility" in new AutoMappingEnabled
-        with KnownFactsInSessionStore {
+        s"return mapping outcome if session store contains known facts and mapping returns $eligibility" in new AutoMappingEnabled {
+          when(mockSessionStoreService.fetchAgentSession)
+            .thenReturn(Future.successful(Some(AgentSession(utr = Some(Utr("9876543210"))))))
           when(mockMappingConnector.createPreSubscription(Utr("9876543210"))).thenReturn(Future.successful(eligibility))
           await(mappingService.captureTempMappingsPreSubscription) shouldBe eligibility
         }
       }
 
-      "return failed future if session store contains known facts but mapping fails" in new AutoMappingEnabled
-      with KnownFactsInSessionStore {
+      "return failed future if session store contains known facts but mapping fails" in new AutoMappingEnabled {
         val someException = new Exception("Some mapping problem")
+        when(mockSessionStoreService.fetchAgentSession)
+          .thenReturn(Future.successful(Some(AgentSession(utr = Some(Utr("9876543210"))))))
         when(mockMappingConnector.createPreSubscription(Utr("9876543210"))).thenReturn(Future.failed(someException))
         intercept[Exception] {
           await(mappingService.captureTempMappingsPreSubscription)
@@ -85,25 +87,5 @@ class MappingServiceSpec extends UnitSpec with ResettingMockitoSugar {
 
   private trait AutoMappingDisabled {
     when(mockAppConfig.autoMapAgentEnrolments).thenReturn(false)
-  }
-
-  trait KnownFactsInSessionStore {
-    val knownFactsResult =
-      KnownFactsResult(
-        Utr("9876543210"),
-        "AA11AA",
-        "Test organisation name",
-        isSubscribedToAgentServices = true,
-        Some(
-          BusinessAddress(
-            "AddressLine1 A",
-            Some("AddressLine2 A"),
-            Some("AddressLine3 A"),
-            Some("AddressLine4 A"),
-            Some("AA1AA"),
-            "GB")),
-        Some("someone@example.com")
-      )
-    when(mockSessionStoreService.fetchKnownFactsResult).thenReturn(Future.successful(Some(knownFactsResult)))
   }
 }

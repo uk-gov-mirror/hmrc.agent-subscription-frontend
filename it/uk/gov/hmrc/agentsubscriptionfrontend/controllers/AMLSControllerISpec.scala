@@ -22,6 +22,7 @@ import org.jsoup.Jsoup
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.config.amls.AMLSLoader
+import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.SoleTrader
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub.{givenAgentIsManuallyAssured, givenAgentIsNotManuallyAssured}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
@@ -43,18 +44,9 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
       Some("AA11AA"),
       "GB")
 
-  protected val initialDetails =
-    InitialDetails(
-      utr,
-      "AA11AA",
-      "My Agency",
-      Some("agency@example.com"),
-      businessAddress
-    )
-
   trait Setup {
     implicit val authenticatedRequest = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
-    sessionStoreService.currentSession.initialDetails = Some(initialDetails)
+    sessionStoreService.currentSession.agentSession = Some(AgentSession(businessType = Some(SoleTrader), utr = Some(utr)))
     givenAgentIsNotManuallyAssured(utr.value)
   }
 
@@ -136,14 +128,13 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
 
     "redirect to /check-answers page if the agent is manually assured" in {
       implicit val authenticatedRequest = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
-      sessionStoreService.currentSession.initialDetails = Some(initialDetails)
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(businessType = Some(SoleTrader), utr = Some(utr)))
       givenAgentIsManuallyAssured(utr.value)
 
       val result = await(controller.showMoneyLaunderingComplianceForm(authenticatedRequest))
 
       status(result) shouldBe 303
       redirectLocation(result).get shouldBe routes.SubscriptionController.showCheckAnswers().url
-      metricShouldExistAndBeUpdated("Count-Subscription-CleanCreds-Start")
     }
 
     "redirect to the /business-type page if there is no InitialDetails in session because the user has returned to a bookmark" in {
@@ -154,10 +145,11 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
       resultShouldBeSessionDataMissing(result)
     }
 
-    " pre-populate amls form if they are coming from /check_answers and also go to /check_answers page when user clicks on 'Go Back' link" in new Setup {
+    "pre-populate amls form if they are coming from /check_answers and also go to /check_answers page when user clicks on 'Go Back' link" in new Setup {
 
       //pre-state
-      sessionStoreService.currentSession.amlsDetails = Some(AMLSDetails("Insolvency Practitioners Association (IPA)", "123456789", LocalDate.now()))
+      val amlsDetails = AMLSDetails("Insolvency Practitioners Association (IPA)", "123456789", LocalDate.now())
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(businessType = Some(SoleTrader), utr = Some(utr), amlsDetails = Some(amlsDetails)))
       sessionStoreService.currentSession.goBackUrl = Some(routes.SubscriptionController.showCheckAnswers().url)
 
       val result = await(controller.showMoneyLaunderingComplianceForm(authenticatedRequest))
@@ -186,8 +178,7 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
       status(result) shouldBe 303
       redirectLocation(result).get shouldBe routes.SubscriptionController.showCheckAnswers().url
 
-      await(sessionStoreService.fetchAMLSDetails) should not be empty
-      val amlsDetails = await(sessionStoreService.fetchAMLSDetails).get
+      val amlsDetails = await(sessionStoreService.fetchAgentSession).get.amlsDetails.get
 
       amlsDetails shouldBe AMLSDetails("Association of AccountingTechnicians (AAT)", "12345", expiryDate)
     }
@@ -200,7 +191,7 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
       status(result) shouldBe 200
       result should containMessages("moneyLaunderingCompliance.amls.title", "error.moneyLaunderingCompliance.amlscode.empty")
 
-      await(sessionStoreService.fetchAMLSDetails) shouldBe empty
+      await(sessionStoreService.fetchAgentSession).get.amlsDetails shouldBe empty
     }
 
     "show validation error when the form is submitted with invalid amlsCode" in new Setup {
@@ -211,7 +202,7 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
       status(result) shouldBe 200
       result should containMessages("moneyLaunderingCompliance.amls.title", "error.moneyLaunderingCompliance.amlscode.invalid")
 
-      await(sessionStoreService.fetchAMLSDetails) shouldBe empty
+      await(sessionStoreService.fetchAgentSession).get.amlsDetails shouldBe empty
     }
 
     "show validation error when the form is submitted with empty membership number" in new Setup {
@@ -222,7 +213,7 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
       status(result) shouldBe 200
       result should containMessages("moneyLaunderingCompliance.membershipNumber.title", "error.moneyLaunderingCompliance.membershipNumber.empty")
 
-      await(sessionStoreService.fetchAMLSDetails) shouldBe empty
+      await(sessionStoreService.fetchAgentSession).get.amlsDetails shouldBe empty
     }
 
     "show validation error when the form is submitted with invalid expiry date" in new Setup {
@@ -233,7 +224,7 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
       status(result) shouldBe 200
       result should containMessages("moneyLaunderingCompliance.expiry.title", "error.moneyLaunderingCompliance.date.invalid")
 
-      await(sessionStoreService.fetchAMLSDetails) shouldBe empty
+      await(sessionStoreService.fetchAgentSession).get.amlsDetails shouldBe empty
     }
 
     "show validation error when the form is submitted with empty day field" in new Setup {
@@ -244,7 +235,7 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
       status(result) shouldBe 200
       result should containMessages("moneyLaunderingCompliance.expiry.title", "error.moneyLaunderingCompliance.day.empty")
 
-      await(sessionStoreService.fetchAMLSDetails) shouldBe empty
+      await(sessionStoreService.fetchAgentSession).get.amlsDetails shouldBe empty
     }
 
     "show validation error when the form is submitted with empty month field" in new Setup {
@@ -255,7 +246,7 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
       status(result) shouldBe 200
       result should containMessages("moneyLaunderingCompliance.expiry.title", "error.moneyLaunderingCompliance.month.empty")
 
-      await(sessionStoreService.fetchAMLSDetails) shouldBe empty
+      await(sessionStoreService.fetchAgentSession).get.amlsDetails shouldBe empty
     }
 
     "show validation error when the form is submitted with empty year field" in new Setup {
@@ -266,7 +257,7 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
       status(result) shouldBe 200
       result should containMessages("moneyLaunderingCompliance.expiry.title", "error.moneyLaunderingCompliance.year.empty")
 
-      await(sessionStoreService.fetchAMLSDetails) shouldBe empty
+      await(sessionStoreService.fetchAgentSession).get.amlsDetails shouldBe empty
     }
 
     "show validation error when the form is submitted with empty day and month field" in new Setup {
@@ -277,7 +268,7 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
       status(result) shouldBe 200
       result should containMessages("moneyLaunderingCompliance.expiry.title", "error.moneyLaunderingCompliance.day.month.empty")
       result shouldNot containMessages("error.moneyLaunderingCompliance.day.empty", "error.moneyLaunderingCompliance.month.empty")
-      await(sessionStoreService.fetchAMLSDetails) shouldBe empty
+      await(sessionStoreService.fetchAgentSession).get.amlsDetails shouldBe empty
     }
 
     "show validation error when the form is submitted with empty day and year field" in new Setup {
@@ -288,7 +279,7 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
       status(result) shouldBe 200
       result should containMessages("moneyLaunderingCompliance.expiry.title", "error.moneyLaunderingCompliance.day.year.empty")
       result shouldNot containMessages("error.moneyLaunderingCompliance.day.empty", "error.moneyLaunderingCompliance.year.empty")
-      await(sessionStoreService.fetchAMLSDetails) shouldBe empty
+      await(sessionStoreService.fetchAgentSession).get.amlsDetails shouldBe empty
     }
 
     "show validation error when the form is submitted with empty month and year field" in new Setup {
@@ -299,19 +290,18 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
       status(result) shouldBe 200
       result should containMessages("moneyLaunderingCompliance.expiry.title", "error.moneyLaunderingCompliance.month.year.empty")
       result shouldNot containMessages("error.moneyLaunderingCompliance.month.empty", "error.moneyLaunderingCompliance.year.empty")
-      await(sessionStoreService.fetchAMLSDetails) shouldBe empty
+      await(sessionStoreService.fetchAgentSession).get.amlsDetails shouldBe empty
     }
 
     "redirect to /check-answers page if the agent is manually assured" in {
       implicit val authenticatedRequest = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
-      sessionStoreService.currentSession.initialDetails = Some(initialDetails)
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(businessType = Some(SoleTrader), utr = Some(utr)))
       givenAgentIsManuallyAssured(utr.value)
 
       val result = await(controller.submitMoneyLaunderingComplianceForm(authenticatedRequest))
 
       status(result) shouldBe 303
       redirectLocation(result).get shouldBe routes.SubscriptionController.showCheckAnswers().url
-      metricShouldExistAndBeUpdated("Count-Subscription-CleanCreds-Start")
     }
 
     "redirect to the /business-type page if there is no InitialDetails in session because the user has returned to a bookmark" in {

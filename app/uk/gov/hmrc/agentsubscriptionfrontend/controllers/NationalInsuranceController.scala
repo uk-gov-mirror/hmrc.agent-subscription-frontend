@@ -15,6 +15,7 @@
  */
 
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
+
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
 import play.api.i18n.MessagesApi
@@ -37,39 +38,32 @@ class NationalInsuranceController @Inject()(
   override val appConfig: AppConfig,
   val ec: ExecutionContext,
   override val messagesApi: MessagesApi)
-    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig) with SessionDataSupport
-    with SessionBehaviour {
+    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig) with SessionBehaviour {
 
   def showNationalInsuranceNumberForm(): Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { implicit agent =>
-      sessionStoreService.fetchAgentSession.flatMap {
-        case Some(agentSession) =>
-          agentSession.nino match {
-            case Some(nino) =>
-              Ok(html.national_insurance_number(ninoForm.fill(nino)))
-            case None => Ok(html.national_insurance_number(ninoForm))
-          }
-        case None => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
+      withValidSession { (_, existingSession) =>
+        existingSession.nino match {
+          case Some(nino) =>
+            Ok(html.national_insurance_number(ninoForm.fill(nino)))
+          case None => Ok(html.national_insurance_number(ninoForm))
+        }
       }
     }
   }
 
   def submitNationalInsuranceNumberForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { implicit agent =>
-      ninoForm
-        .bindFromRequest()
-        .fold(
-          formWithErrors => Ok(html.national_insurance_number(formWithErrors)),
-          validNino => {
-            sessionStoreService.fetchAgentSession.flatMap {
-              case Some(existingSession) =>
-                updateSessionAndRedirect(existingSession.copy(nino = Some(validNino)))(
-                  routes.DateOfBirthController.showDateOfBirthForm())
-              case None => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
-            }
-          }
-        )
+      withValidSession { (_, existingSession) =>
+        ninoForm
+          .bindFromRequest()
+          .fold(
+            formWithErrors => Ok(html.national_insurance_number(formWithErrors)),
+            validNino =>
+              updateSessionAndRedirect(existingSession.copy(nino = Some(validNino)))(
+                routes.DateOfBirthController.showDateOfBirthForm())
+          )
+      }
     }
   }
-
 }

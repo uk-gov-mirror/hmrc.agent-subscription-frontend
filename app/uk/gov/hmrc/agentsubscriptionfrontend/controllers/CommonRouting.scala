@@ -32,10 +32,8 @@ trait CommonRouting {
 
   val appConfig: AppConfig
 
-  private[controllers] def handleAutoMapping(eligibleForMapping: Option[Boolean])(
-    implicit request: Request[AnyContent],
-    hc: HeaderCarrier,
-    ec: ExecutionContext): Future[Result] =
+  private[controllers] def handleAutoMapping(
+    eligibleForMapping: Option[Boolean])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Result] =
     MappingEligibility.apply(eligibleForMapping) match {
       case IsEligible if appConfig.autoMapAgentEnrolments =>
         toFuture(Redirect(routes.SubscriptionController.showLinkClients()))
