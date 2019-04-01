@@ -238,9 +238,8 @@ invalidAddress.p1=Sorry, the address is not in a format that our system can acce
 invalidAddress.button.changeAddress=Change address
 
 #Has other enrolments
-createNewAccount.title=You need a new Government Gateway agent account
-createNewAccount.p1=You cannot use your current Government Gateway account to create an agent services account.
-createNewAccount.p2=You will need to create a new Government Gateway agent account. You can do this now.
+createNewAccount.title=Create a new Government Gateway user ID
+createNewAccount.p1=You will need this user ID to sign in to your new agent services account.
 
 #Non agent
 nonAgent.title=You have not signed in with an agent user ID
@@ -282,7 +281,7 @@ button.continue=Continue
 button.yes=Yes
 button.no=No
 button.createAccount=Create account
-button.register=Create a Government Gateway account
+button.register=Continue
 button.back=Back
 button.finishSignOut=Finish and sign out
 
