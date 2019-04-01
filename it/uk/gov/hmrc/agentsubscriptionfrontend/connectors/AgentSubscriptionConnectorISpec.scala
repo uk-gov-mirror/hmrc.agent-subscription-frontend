@@ -1,12 +1,15 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.connectors
 
 import java.net.URL
-import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
+import java.time.LocalDate
+
+import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr, Vrn}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, MetricTestSupport}
 import uk.gov.hmrc.http._
 import com.kenshoo.play.metrics.Metrics
+
 import scala.concurrent.ExecutionContext.Implicits.global
 class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {
 
@@ -20,6 +23,8 @@ class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {
 
   private val utr = Utr("0123456789")
   private val crn = CompanyRegistrationNumber("SC123456")
+  private val vrn = Vrn("888913457")
+  private val dateOfReg = LocalDate.parse("2010-03-31")
 
   "getRegistration" should {
 
@@ -222,6 +227,35 @@ class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {
 
         intercept[Upstream5xxResponse] {
           await(connector.matchCorporationTaxUtrWithCrn(utr, crn))
+        }
+      }
+    }
+  }
+
+  "matchVatKnownFacts" should {
+    "return true when agent-subscription returns a 200 response (for a matching VRN and registration date)" in {
+      withMetricsTimerUpdate("ConsumedAPI-Agent-Subscription-matchVatKnownFacts-GET") {
+        AgentSubscriptionStub
+          .withMatchingVrnAndDateOfReg(vrn, dateOfReg)
+
+        await(connector.matchVatKnownFacts(vrn, dateOfReg)) shouldBe true
+      }
+    }
+
+    "return false when agent-subscription returns a 404 response (for a non-matching VRN and registration date)" in {
+      withMetricsTimerUpdate("ConsumedAPI-Agent-Subscription-matchVatKnownFacts-GET") {
+        AgentSubscriptionStub.withNonMatchingVrnAndDateOfReg(vrn, dateOfReg)
+
+        await(connector.matchVatKnownFacts(vrn, dateOfReg)) shouldBe false
+      }
+    }
+
+    "throw an exception when agent-subscription returns a 500 response" in {
+      withMetricsTimerUpdate("ConsumedAPI-Agent-Subscription-matchVatKnownFacts-GET") {
+        AgentSubscriptionStub.withErrorForVrnAndDateOfReg(vrn, dateOfReg)
+
+        intercept[Upstream5xxResponse] {
+          await(connector.matchVatKnownFacts(vrn, dateOfReg))
         }
       }
     }

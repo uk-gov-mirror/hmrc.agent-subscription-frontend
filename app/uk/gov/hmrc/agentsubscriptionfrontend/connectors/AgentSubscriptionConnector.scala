@@ -17,16 +17,17 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.connectors
 
 import java.net.URL
+import java.time.LocalDate
 
+import com.codahale.metrics.MetricRegistry
+import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Named, Singleton}
 import play.api.libs.json.JsValue
-import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
+import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
+import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr, Vrn}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{CompanyRegistrationNumber, CompletePartialSubscriptionBody, Registration, SubscriptionRequest}
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.encoding.UriPathEncoding.encodePathSegment
-import com.codahale.metrics.MetricRegistry
-import com.kenshoo.play.metrics.Metrics
-import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -50,6 +51,21 @@ class AgentSubscriptionConnector @Inject()(
       val url = new URL(
         baseUrl,
         s"/agent-subscription/corporation-tax-utr/${encodePathSegment(utr.value)}/crn/${encodePathSegment(crn.value)}")
+
+      http
+        .GET[HttpResponse](url.toString)
+        .map(_.status == 200)
+        .recover {
+          case _: NotFoundException => false
+        }
+    }
+
+  def matchVatKnownFacts(vrn: Vrn, vatRegistrationDate: LocalDate)(implicit hc: HeaderCarrier): Future[Boolean] =
+    monitor(s"ConsumedAPI-Agent-Subscription-matchVatKnownFacts-GET") {
+      val url = new URL(
+        baseUrl,
+        s"/agent-subscription/vat-known-facts/vrn/${encodePathSegment(vrn.value)}/dateOfRegistration/${encodePathSegment(vatRegistrationDate.toString)}"
+      )
 
       http
         .GET[HttpResponse](url.toString)

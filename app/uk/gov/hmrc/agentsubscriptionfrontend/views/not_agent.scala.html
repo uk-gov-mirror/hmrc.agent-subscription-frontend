@@ -21,16 +21,6 @@
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = Messages("nonAgent.title"), bodyClasses = None) {
 
     <h1 class="heading-xlarge">@Messages("nonAgent.title")</h1>
-
     <p>@Html(Messages("nonAgent.p1", routes.BusinessTypeController.showBusinessTypeForm))</p>
-    <p>@Messages("nonAgent.p2")</p>
-
-    <ul class="list list-bullet">
-        <li>@Messages("nonAgent.l1")</li>
-        <li>@Messages("nonAgent.l2")</li>
-    </ul>
-
-
-
-    <p><a class="button" href="@routes.SignedOutController.redirectToSos" role="button" id="buttonRegisterNow">@Messages("button.register")</a></p>
+    <p>@Html(Messages("nonAgent.p2", routes.SignedOutController.redirectToSos))</p>
 }

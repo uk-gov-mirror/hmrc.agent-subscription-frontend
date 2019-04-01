@@ -63,7 +63,8 @@ class NationalInsuranceController @Inject()(
           validNino => {
             sessionStoreService.fetchAgentSession.flatMap {
               case Some(existingSession) =>
-                updateSessionAndRedirectToNextPage(existingSession.copy(nino = Some(validNino)))
+                updateSessionAndRedirect(existingSession.copy(nino = Some(validNino)))(
+                  routes.DateOfBirthController.showDateOfBirthForm())
               case None => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
             }
           }

@@ -15,7 +15,8 @@
  */
 
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
-import play.api.mvc.Result
+
+import play.api.mvc.{Call, Result}
 import play.api.mvc.Results._
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, BusinessType}
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
@@ -41,9 +42,9 @@ trait SessionBehaviour extends CommonRouting {
       case None => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
     }
 
-  protected def updateSessionAndRedirectToNextPage(updatedSession: AgentSession)(
+  protected def updateSessionAndRedirect(updatedSession: AgentSession)(redirectTo: Call)(
     implicit hc: HeaderCarrier): Future[Result] =
     sessionStoreService
       .cacheAgentSession(updatedSession)
-      .map(_ => Redirect(redirectToNextPage(updatedSession)))
+      .map(_ => Redirect(redirectTo))
 }

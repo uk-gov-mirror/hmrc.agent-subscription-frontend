@@ -70,9 +70,11 @@ class BusinessTypeController @Inject()(
             else
               sessionStoreService.fetchAgentSession.flatMap {
                 case Some(existingSession) =>
-                  updateSessionAndRedirectToNextPage(existingSession.copy(businessType = Some(validatedBusinessType)))
+                  updateSessionAndRedirect(existingSession.copy(businessType = Some(validatedBusinessType)))(
+                    routes.UtrController.showUtrForm())
                 case None =>
-                  updateSessionAndRedirectToNextPage(AgentSession(businessType = Some(validatedBusinessType)))
+                  updateSessionAndRedirect(AgentSession(businessType = Some(validatedBusinessType)))(
+                    routes.UtrController.showUtrForm())
               }
           }
         )

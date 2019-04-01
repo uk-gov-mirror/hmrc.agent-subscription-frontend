@@ -6,6 +6,7 @@ import play.api.test.Helpers.{redirectLocation, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.Vrn
 import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.SoleTrader
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, DateOfBirth, VatDetails}
+import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.subscribingAgentEnrolledForNonMTD
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData._
@@ -110,15 +111,30 @@ class VatDetailsControllerISpec extends BaseISpec with SessionDataMissingSpec {
 
   "POST /vat-registration-details" should {
 
-    "handle valid forms, store data in session and redirect" in {
+    "handle valid forms, check vat known facts, store data in session and redirect" in {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("vrn" -> "688931961", "regDate.day" -> "1", "regDate.month" -> "11", "regDate.year" -> "2010")
       sessionStoreService.currentSession.agentSession = Some(agentSession.copy(dateOfBirth = Some(DateOfBirth(LocalDate.now())), registeredForVat = Some("Yes")))
+
+      AgentSubscriptionStub.withMatchingVrnAndDateOfReg(Vrn("688931961"),  LocalDate.of(2010, 11, 1))
 
       val result = await(controller.submitVatDetailsForm()(request))
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showConfirmBusinessForm().url)
 
       sessionStoreService.currentSession.agentSession.flatMap(_.vatDetails) shouldBe Some(VatDetails(Vrn("688931961"), LocalDate.of(2010, 11, 1)))
+    }
+
+    "redirect to /mo-match page if the vat known facts check fails" in {
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("vrn" -> "688931961", "regDate.day" -> "1", "regDate.month" -> "11", "regDate.year" -> "2010")
+      sessionStoreService.currentSession.agentSession = Some(agentSession.copy(dateOfBirth = Some(DateOfBirth(LocalDate.now())), registeredForVat = Some("Yes")))
+
+      AgentSubscriptionStub.withNonMatchingVrnAndDateOfReg(Vrn("688931961"),  LocalDate.of(2010, 11, 1))
+
+      val result = await(controller.submitVatDetailsForm()(request))
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showNoAgencyFound().url)
+
+      sessionStoreService.currentSession.agentSession.flatMap(_.vatDetails) shouldBe None
     }
 
     "handle forms with missing vrn" in {
