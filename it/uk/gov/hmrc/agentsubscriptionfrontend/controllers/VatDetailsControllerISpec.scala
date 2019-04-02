@@ -132,7 +132,7 @@ class VatDetailsControllerISpec extends BaseISpec with SessionDataMissingSpec {
 
       val result = await(controller.submitVatDetailsForm()(request))
       status(result) shouldBe 303
-      redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showNoAgencyFound().url)
+      redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showNoMatchFound().url)
 
       sessionStoreService.currentSession.agentSession.flatMap(_.vatDetails) shouldBe None
     }

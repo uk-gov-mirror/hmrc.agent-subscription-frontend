@@ -73,7 +73,7 @@ class CompanyRegistrationControllerISpec extends BaseISpec with SessionDataMissi
       val result = await(controller.submitCompanyRegNumberForm()(request))
 
       status(result) shouldBe 303
-      redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showNoAgencyFound().url)
+      redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showNoMatchFound().url)
 
       sessionStoreService.currentSession.agentSession shouldBe Some(agentSessionForLimitedCompany.copy(companyRegistrationNumber = None))
     }

@@ -25,7 +25,7 @@ import scala.concurrent.Future
 
 abstract class BaseISpec
     extends UnitSpec with OneAppPerSuite with MongoApp with WireMockSupport with EndpointBehaviours with DataStreamStubs
-    with MetricTestSupport {
+     with MetricTestSupport {
 
   override implicit lazy val app: Application = appBuilder.build()
 

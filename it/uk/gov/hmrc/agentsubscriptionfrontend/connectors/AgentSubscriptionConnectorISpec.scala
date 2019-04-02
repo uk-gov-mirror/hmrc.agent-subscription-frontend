@@ -9,6 +9,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, MetricTestSupport}
 import uk.gov.hmrc.http._
 import com.kenshoo.play.metrics.Metrics
+import uk.gov.hmrc.domain.Nino
 
 import scala.concurrent.ExecutionContext.Implicits.global
 class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {
@@ -258,6 +259,31 @@ class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {
           await(connector.matchVatKnownFacts(vrn, dateOfReg))
         }
       }
+    }
+  }
+
+  "check citizen details" should {
+    val nino = Nino("XX121212B")
+    val dob = DateOfBirth(LocalDate.now)
+    val request = CitizenDetailsRequest(nino,dob)
+
+    "return true if nino and dob match" in {
+      AgentSubscriptionStub.givenAGoodCombinationNinoAndDobMatchCitizenDetails(nino, dob)
+      await(connector.matchCitizenDetails(request)) shouldBe true
+    }
+
+    "return false if nino and dob do not match" in {
+      AgentSubscriptionStub.givenABadCombinationNinoAndDobDoNotMatch(nino, dob)
+      await(connector.matchCitizenDetails(request)) shouldBe false
+    }
+
+    "throw a Upstream5xxResponse error when there is a network problem" in {
+      AgentSubscriptionStub.givenANetworkProblemWithSubscriptionCitizenDetails(nino, dob)
+      val e = intercept[Upstream5xxResponse] {
+        await(connector.matchCitizenDetails(request))
+      }
+
+      e.upstreamResponseCode shouldBe 500
     }
   }
 

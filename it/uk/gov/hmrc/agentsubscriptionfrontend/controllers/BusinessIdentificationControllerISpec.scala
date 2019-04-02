@@ -121,7 +121,7 @@ class BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
         await(controller.submitBusinessDetailsForm()(request))
 
       status(result) shouldBe 303
-      redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showNoAgencyFound().url)
+      redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showNoMatchFound().url)
       metricShouldExistAndBeUpdated("Count-Subscription-NoAgencyFound")
     }
 
@@ -167,7 +167,7 @@ class BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
         await(controller.submitBusinessDetailsForm()(request))
 
       status(result) shouldBe 303
-      redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showNoAgencyFound().url)
+      redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showNoMatchFound().url)
       metricShouldExistAndBeUpdated("Count-Subscription-NoAgencyFound")
     }
 
@@ -306,13 +306,13 @@ class BusinessIdentificationControllerISpec extends BaseISpec with SessionDataMi
 
   "showNoAgencyFound" should {
 
-    behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showNoAgencyFound(request))
+    behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showNoMatchFound(request))
     behave like aPageWithFeedbackLinks(request => {
-      controller.showNoAgencyFound(request)
+      controller.showNoMatchFound(request)
     }, authenticatedAs(subscribingCleanAgentWithoutEnrolments))
 
     "display the no agency found page if the current user is logged in and has affinity group = Agent" in {
-      val result = await(controller.showNoAgencyFound(authenticatedAs(subscribingCleanAgentWithoutEnrolments)))
+      val result = await(controller.showNoMatchFound(authenticatedAs(subscribingCleanAgentWithoutEnrolments)))
 
       result should containMessages("noAgencyFound.title",
         "noAgencyFound.p1","noAgencyFound.p2", "button.startAgain")

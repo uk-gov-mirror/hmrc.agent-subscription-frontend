@@ -34,7 +34,7 @@ GET         /invalid-business-type                uk.gov.hmrc.agentsubscriptionf
 GET         /business-details                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showBusinessDetailsForm()
 POST        /business-details                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.submitBusinessDetailsForm()
 
-GET         /no-match                             uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showNoAgencyFound
+GET         /no-match                             uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showNoMatchFound
 
 GET         /confirm-business                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showConfirmBusinessForm
 POST        /confirm-business                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.submitConfirmBusinessForm

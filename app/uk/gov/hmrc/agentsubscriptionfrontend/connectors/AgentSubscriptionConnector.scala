@@ -25,7 +25,7 @@ import javax.inject.{Inject, Named, Singleton}
 import play.api.libs.json.JsValue
 import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr, Vrn}
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{CompanyRegistrationNumber, CompletePartialSubscriptionBody, Registration, SubscriptionRequest}
+import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.encoding.UriPathEncoding.encodePathSegment
 
@@ -87,6 +87,18 @@ class AgentSubscriptionConnector @Inject()(
       http.PUT[CompletePartialSubscriptionBody, JsValue](subscriptionUrl.toString, details).map { js =>
         (js \ "arn").as[Arn]
       }
+    }
+
+  def matchCitizenDetails(citizenDetailsRequest: CitizenDetailsRequest)(implicit hc: HeaderCarrier): Future[Boolean] =
+    monitor(s"ConsumedAPI-Agent-Subscription-getCitizenDetails-POST") {
+      val endpoint = s"/agent-subscription/citizen-details"
+      http
+        .POST[CitizenDetailsRequest, HttpResponse](new URL(baseUrl, endpoint).toString, citizenDetailsRequest)
+        .map(_.status == 200)
+        .recover {
+          case e: BadRequestException => false
+          case f: NotFoundException   => false
+        }
     }
 
   private val subscriptionUrl = new URL(baseUrl, s"/agent-subscription/subscription")

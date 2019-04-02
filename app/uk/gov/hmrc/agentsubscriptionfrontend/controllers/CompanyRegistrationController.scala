@@ -72,7 +72,7 @@ class CompanyRegistrationController @Inject()(
                         updateSessionAndRedirect(existingSession.copy(companyRegistrationNumber = Some(validCrn)))(
                           routes.VatDetailsController.showRegisteredForVatForm())
                       else
-                        Redirect(routes.BusinessIdentificationController.showNoAgencyFound())
+                        Redirect(routes.BusinessIdentificationController.showNoMatchFound())
                   }
                 case Some(existingSession) if existingSession.utr.isEmpty =>
                   Redirect(routes.UtrController.showUtrForm())

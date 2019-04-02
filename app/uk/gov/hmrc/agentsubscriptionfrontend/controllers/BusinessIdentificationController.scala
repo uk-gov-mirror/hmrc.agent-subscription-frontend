@@ -95,7 +95,7 @@ class BusinessIdentificationController @Inject()(
                 }
               } else {
                 mark("Count-Subscription-NoAgencyFound")
-                Redirect(routes.BusinessIdentificationController.showNoAgencyFound())
+                Redirect(routes.BusinessIdentificationController.showNoMatchFound())
             }
           )
       }
@@ -138,12 +138,12 @@ class BusinessIdentificationController @Inject()(
       }
       case _ =>
         mark("Count-Subscription-NoAgencyFound")
-        Redirect(routes.BusinessIdentificationController.showNoAgencyFound())
+        Redirect(routes.BusinessIdentificationController.showNoMatchFound())
     }
 
-  val showNoAgencyFound: Action[AnyContent] = Action.async { implicit request =>
+  val showNoMatchFound: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      Ok(html.no_agency_found())
+      Ok(html.no_match_found())
     }
   }
 

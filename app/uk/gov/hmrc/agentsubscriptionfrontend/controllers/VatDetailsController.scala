@@ -126,7 +126,7 @@ class VatDetailsController @Inject()(
                     updateSessionAndRedirect(existingSession.copy(vatDetails = Some(validForm)))(
                       routes.BusinessIdentificationController.showConfirmBusinessForm())
                   else
-                    Redirect(routes.BusinessIdentificationController.showNoAgencyFound())
+                    Redirect(routes.BusinessIdentificationController.showNoMatchFound())
                 }
               case None => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
             }

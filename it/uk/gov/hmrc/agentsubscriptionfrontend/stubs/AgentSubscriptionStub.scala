@@ -19,9 +19,11 @@ package uk.gov.hmrc.agentsubscriptionfrontend.stubs
 import java.time.LocalDate
 
 import com.github.tomakehurst.wiremock.client.WireMock.{request, _}
+import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import play.api.http.Status
 import uk.gov.hmrc.agentmtdidentifiers.model.{Utr, Vrn}
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{CompanyRegistrationNumber, CompletePartialSubscriptionBody, SubscriptionRequest}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{CompanyRegistrationNumber, CompletePartialSubscriptionBody, DateOfBirth, SubscriptionRequest}
+import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.play.encoding.UriPathEncoding.encodePathSegment
 
 object AgentSubscriptionStub {
@@ -184,6 +186,54 @@ object AgentSubscriptionStub {
       subscriptionRequestFor(utr, request)
         .willReturn(aResponse()
           .withStatus(500)))
+
+  def givenAGoodCombinationNinoAndDobMatchCitizenDetails(
+                                                          nino: Nino,
+                                                          dob: DateOfBirth): StubMapping =
+    stubFor(
+      post(urlEqualTo(
+        s"/agent-subscription/citizen-details"
+      )).withRequestBody(equalToJson(
+        s"""
+           |{
+           |"nino": "${nino.value}",
+           |"dateOfBirth": "${dob.value}"
+           |}
+        """.stripMargin)).willReturn(aResponse().withStatus(200))
+    )
+
+  def givenABadCombinationNinoAndDobDoNotMatch(
+                                                nino: Nino,
+                                                dob: DateOfBirth): StubMapping =
+    stubFor(
+      post(urlEqualTo(
+        s"/agent-subscription/citizen-details"
+      )).withRequestBody(equalToJson(
+        s"""
+           |{
+           |"nino": "${nino.value}",
+           |"dateOfBirth": "${dob.value}"
+           |}
+        """.stripMargin)).willReturn(aResponse().withStatus(400))
+    )
+
+  def givenANetworkProblemWithSubscriptionCitizenDetails(
+                                                          nino: Nino,
+                                                          dob: DateOfBirth): StubMapping =
+    stubFor(
+      post(urlEqualTo(
+        s"/agent-subscription/citizen-details"
+      )).withRequestBody(equalToJson(
+        s"""
+           |{
+           |"nino": "${nino.value}",
+           |"dateOfBirth": "${dob.value}"
+           |}
+        """.stripMargin)).willReturn(aResponse().withStatus(500))
+    )
+
+
+
 
   private def subscriptionRequestFor(utr: Utr, request: SubscriptionRequest) = {
     val agency = request.agency
