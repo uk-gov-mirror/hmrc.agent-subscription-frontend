@@ -27,7 +27,7 @@ self.addEventListener("fetch", function(event) {
                 caches.open('agents-offline')
                     .then(function add(cache) {
                         var accepts = event.request.headers.get('Accept'),
-                        html = accepts.indexOf('text/html');
+                        html = accepts.indexOf('text/html,application/xhtml+xml');
 
                         if(event.request && html === -1){
                             cache.put(event.request, cacheCopy);
