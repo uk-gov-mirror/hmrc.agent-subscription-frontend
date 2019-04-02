@@ -14,6 +14,7 @@ self.addEventListener("fetch", function(event) {
     }
 
     event.respondWith(
+
         caches.match(event.request)
         .then(function(cached) {
             var networked = fetch(event.request)
@@ -36,10 +37,11 @@ self.addEventListener("fetch", function(event) {
             }
 
             function unableToResolve () {
-                return cache.match('offline.html');
+                return caches.open('agents-offline').then(function(cache) {
+                    return cache.match('offline.html');
+                });
             }
-        })
-    );
+        }));
 });
 
 // Event to update the offline page
