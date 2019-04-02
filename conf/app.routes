@@ -86,6 +86,7 @@ GET         /redirect-to-asaccount                uk.gov.hmrc.agentsubscriptionf
 GET         /start-survey                         uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.startSurvey
 GET         /sign-out                             uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.signOutWithContinueUrl
 GET         /finish-sign-out                      uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.signOut
+GET         /redirect-to-businesstype             uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.redirectToBusinessTypeForm
 
 GET         /cannot-create-account                uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.showCannotCreateAccount
 

@@ -94,4 +94,8 @@ class SignedOutController @Inject()(
   def signOut: Action[AnyContent] = Action {
     Redirect(routes.StartController.start()).withNewSession
   }
+
+  def redirectToBusinessTypeForm = Action { implicit request =>
+    Redirect(routes.BusinessTypeController.showBusinessTypeForm()).withNewSession
+  }
 }
