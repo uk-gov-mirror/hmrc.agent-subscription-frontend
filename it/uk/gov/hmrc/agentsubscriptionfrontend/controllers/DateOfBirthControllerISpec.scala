@@ -13,7 +13,7 @@ import uk.gov.hmrc.domain.Nino
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class DateOfBirthControllerSpec extends BaseISpec with SessionDataMissingSpec {
+class DateOfBirthControllerISpec extends BaseISpec with SessionDataMissingSpec {
 
   lazy val controller: DateOfBirthController = app.injector.instanceOf[DateOfBirthController]
 

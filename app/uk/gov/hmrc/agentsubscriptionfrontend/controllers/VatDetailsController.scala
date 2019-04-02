@@ -20,6 +20,7 @@ import java.time.LocalDate
 
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
+import org.apache.http.cookie.SM
 import play.api.data.Forms.{mapping, of, optional, text, _}
 import play.api.data.format.Formats._
 import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
@@ -51,8 +52,7 @@ class VatDetailsController @Inject()(
   override val appConfig: AppConfig,
   val ec: ExecutionContext,
   override val messagesApi: MessagesApi)
-    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig) with SessionDataSupport
-    with SessionBehaviour {
+    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig) with SessionBehaviour {
 
   def showRegisteredForVatForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
@@ -74,24 +74,19 @@ class VatDetailsController @Inject()(
 
   def submitRegisteredForVatForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      withValidBusinessType { businessType =>
+      withValidSession { (businessType, existingSession) =>
         registeredForVatForm
           .bindFromRequest()
           .fold(
             formWithErrors => Ok(html.registered_for_vat(formWithErrors, getBackLink(businessType))),
             choice => {
-              sessionStoreService.fetchAgentSession.flatMap {
-                case Some(existingSession) =>
-                  val nextPage = if (choice.confirm == Yes) {
-                    routes.VatDetailsController.showVatDetailsForm()
-                  } else {
-                    routes.BusinessIdentificationController.showConfirmBusinessForm()
-                  }
-
-                  updateSessionAndRedirect(existingSession.copy(registeredForVat = Some(choice.confirm.toString)))(
-                    nextPage)
-                case None => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
+              val nextPage = if (choice.confirm == Yes) {
+                routes.VatDetailsController.showVatDetailsForm()
+              } else {
+                routes.BusinessIdentificationController.showConfirmBusinessForm()
               }
+
+              updateSessionAndRedirect(existingSession.copy(registeredForVat = Some(choice.confirm.toString)))(nextPage)
             }
           )
       }
@@ -100,39 +95,34 @@ class VatDetailsController @Inject()(
 
   def showVatDetailsForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      sessionStoreService.fetchAgentSession.flatMap {
-        case Some(agentSession) =>
-          agentSession.vatDetails match {
-            case Some(vatDetails) =>
-              Ok(html.vat_details(vatDetailsForm.fill(vatDetails)))
-            case None => Ok(html.vat_details(vatDetailsForm))
-          }
-        case None => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
+      withValidSession { (_, existingSession) =>
+        existingSession.vatDetails match {
+          case Some(vatDetails) =>
+            Ok(html.vat_details(vatDetailsForm.fill(vatDetails)))
+          case None => Ok(html.vat_details(vatDetailsForm))
+        }
       }
     }
   }
 
   def submitVatDetailsForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      vatDetailsForm
-        .bindFromRequest()
-        .fold(
-          formWithErrors => Ok(html.vat_details(formWithRefinedErrors(formWithErrors))),
-          validForm => {
-            sessionStoreService.fetchAgentSession.flatMap {
-              case Some(existingSession) =>
-                subscriptionService.matchVatKnownFacts(validForm.vrn, validForm.regDate).flatMap { foundMatch =>
-                  if (foundMatch)
-                    updateSessionAndRedirect(existingSession.copy(vatDetails = Some(validForm)))(
-                      routes.BusinessIdentificationController.showConfirmBusinessForm())
-                  else
-                    Redirect(routes.BusinessIdentificationController.showNoMatchFound())
-                }
-              case None => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
+      withValidSession { (_, existingSession) =>
+        vatDetailsForm
+          .bindFromRequest()
+          .fold(
+            formWithErrors => Ok(html.vat_details(formWithRefinedErrors(formWithErrors))),
+            validForm => {
+              subscriptionService.matchVatKnownFacts(validForm.vrn, validForm.regDate).flatMap { foundMatch =>
+                if (foundMatch)
+                  updateSessionAndRedirect(existingSession.copy(vatDetails = Some(validForm)))(
+                    routes.BusinessIdentificationController.showConfirmBusinessForm())
+                else
+                  Redirect(routes.BusinessIdentificationController.showNoMatchFound())
+              }
             }
-
-          }
-        )
+          )
+      }
     }
   }
 

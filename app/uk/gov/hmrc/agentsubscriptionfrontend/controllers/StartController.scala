@@ -16,8 +16,6 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
-import cats.data.OptionT
-import cats.instances.future._
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
 import play.api.Logger
@@ -26,7 +24,7 @@ import play.api.mvc.{Action, AnyContent, Request, Result}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.models.MappingEligibility.IsEligible
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{ChainedSessionDetails, MappingEligibility}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, MappingEligibility, Postcode}
 import uk.gov.hmrc.agentsubscriptionfrontend.repository.ChainedSessionDetailsRepository
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionService, SubscriptionState}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
@@ -47,8 +45,7 @@ class StartController @Inject()(
   metrics: Metrics,
   override val messagesApi: MessagesApi,
   val ec: ExecutionContext)
-    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig) with SessionDataSupport
-    with SessionBehaviour {
+    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig) with SessionBehaviour {
 
   import uk.gov.hmrc.agentsubscriptionfrontend.support.CallOps._
 
@@ -72,59 +69,57 @@ class StartController @Inject()(
 
   def returnAfterGGCredsCreated(id: Option[String] = None): Action[AnyContent] = Action.async { implicit request =>
     continueUrlActions.withMaybeContinueUrlCached {
-
-      val chainedSessionDetailsOpt: Future[Option[ChainedSessionDetails]] =
-        (for {
-          id                    <- OptionT.fromOption[Future](id)
-          chainedSessionDetails <- OptionT(chainedSessionDetailsRepository.findChainedSessionDetails(id))
-          _                     <- OptionT.liftF(chainedSessionDetailsRepository.delete(id))
-        } yield chainedSessionDetails).value
-
-      chainedSessionDetailsOpt.flatMap {
-        case Some(chainedSessionDetails) =>
-          val knownFacts = chainedSessionDetails.knownFacts
-          for {
-            _ <- sessionStoreService.cacheKnownFactsResult(knownFacts)
-            _ <- if (appConfig.autoMapAgentEnrolments) {
-                  sessionStoreService.cacheMappingEligible(
-                    chainedSessionDetails.wasEligibleForMapping.getOrElse {
-                      Logger.warn("chainedSessionDetails did not cache wasEligibleForMapping")
-                      false
-                    }
-                  )
-                } else ()
-            _ <- {
-              chainedSessionDetails.amlsDetails match {
-                case Some(amlsDetails) => sessionStoreService.cacheAMLSDetails(amlsDetails)
-                case None              => ()
+      id match {
+        case Some(value) =>
+          chainedSessionDetailsRepository.findChainedSessionDetails(value).flatMap {
+            case Some(chainedSessionDetails) =>
+              chainedSessionDetailsRepository.delete(value).flatMap { _ =>
+                storeAgentSessionAndRedirect(
+                  chainedSessionDetails.agentSession,
+                  chainedSessionDetails.wasEligibleForMapping)
               }
-            }
-            subscriptionProcess <- subscriptionService.getSubscriptionStatus(knownFacts.utr, knownFacts.postcode)
-            isPartiallySubscribed = subscriptionProcess.state == SubscriptionState.SubscribedButNotEnrolled
-            continuedSubscriptionResponse <- if (isPartiallySubscribed) {
-                                              handlePartialSubscription(
-                                                knownFacts.utr,
-                                                knownFacts.postcode,
-                                                chainedSessionDetails.wasEligibleForMapping)
-                                            } else {
-                                              sessionStoreService
-                                                .cacheInitialDetails(chainedSessionDetails.initialDetails.getOrElse(
-                                                  throw new Exception("initial details is empty")))
-                                                .flatMap(_ =>
-                                                  handleAutoMapping(chainedSessionDetails.wasEligibleForMapping))
-                                            }
-          } yield continuedSubscriptionResponse
+
+            case None => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
+          }
         case None => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
       }
     }
   }
+
+  private def storeAgentSessionAndRedirect(agentSession: AgentSession, wasEligibleForMapping: Option[Boolean])(
+    implicit hc: HeaderCarrier,
+    request: Request[_]): Future[Result] =
+    sessionStoreService.cacheAgentSession(agentSession).flatMap { _ =>
+      val result = if (appConfig.autoMapAgentEnrolments) {
+        sessionStoreService.cacheMappingEligible(
+          wasEligibleForMapping.getOrElse {
+            Logger.warn("chainedSessionDetails did not cache wasEligibleForMapping")
+            false
+          }
+        )
+      } else toFuture(())
+
+      result.flatMap { _ =>
+        (agentSession.utr, agentSession.postcode) match {
+          case (Some(utr), Some(postcode)) =>
+            subscriptionService.getSubscriptionStatus(utr, postcode).flatMap { subscriptionProcess =>
+              if (subscriptionProcess.state == SubscriptionState.SubscribedButNotEnrolled) {
+                handlePartialSubscription(utr, postcode.value, wasEligibleForMapping)
+              } else {
+                handleAutoMapping(wasEligibleForMapping)
+              }
+            }
+          case _ => toFuture(Redirect(routes.BusinessTypeController.showBusinessTypeForm()))
+        }
+      }
+    }
 
   def showCannotCreateAccount: Action[AnyContent] = Action { implicit request =>
     Ok(html.cannot_create_account())
   }
 
   private def handlePartialSubscription(kfcUtr: Utr, kfcPostcode: String, eligibleForMapping: Option[Boolean])(
-    implicit request: Request[AnyContent],
+    implicit request: Request[_],
     hc: HeaderCarrier): Future[Result] =
     MappingEligibility.apply(eligibleForMapping) match {
       case IsEligible =>
@@ -132,7 +127,7 @@ class StartController @Inject()(
           .withSession(request.session + ("isPartiallySubscribed" -> "true"))
       case _ =>
         subscriptionService
-          .completePartialSubscription(kfcUtr, kfcPostcode)
+          .completePartialSubscription(kfcUtr, Postcode(kfcPostcode))
           .map { _ =>
             mark("Count-Subscription-PartialSubscriptionCompleted")
             Redirect(routes.SubscriptionController.showSubscriptionComplete())

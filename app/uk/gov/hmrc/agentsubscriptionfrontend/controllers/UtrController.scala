@@ -20,7 +20,7 @@ import javax.inject.{Inject, Singleton}
 import play.api.i18n.MessagesApi
 import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationForms.{businessTypeForm, utrForm}
+import uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationForms.utrForm
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
@@ -37,8 +37,7 @@ class UtrController @Inject()(
   override val appConfig: AppConfig,
   val ec: ExecutionContext,
   override val messagesApi: MessagesApi)
-    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig) with SessionDataSupport
-    with SessionBehaviour {
+    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig) with SessionBehaviour {
 
   def showUtrForm(): Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { implicit agent =>
@@ -58,22 +57,16 @@ class UtrController @Inject()(
 
   def submitUtrForm(): Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { implicit agent =>
-      withValidBusinessType { businessType =>
+      withValidSession { (businessType, existingSession) =>
         utrForm(businessType.key)
           .bindFromRequest()
           .fold(
             formWithErrors => {
               Ok(html.utr_details(formWithErrors, businessType))
             },
-            validUtr => {
-              sessionStoreService.fetchAgentSession.flatMap {
-                case Some(existingSession) =>
-                  updateSessionAndRedirect(existingSession.copy(utr = Some(validUtr)))(
-                    routes.PostcodeController.showPostcodeForm())
-                case None => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
-              }
-
-            }
+            validUtr =>
+              updateSessionAndRedirect(existingSession.copy(utr = Some(validUtr)))(
+                routes.PostcodeController.showPostcodeForm())
           )
       }
     }

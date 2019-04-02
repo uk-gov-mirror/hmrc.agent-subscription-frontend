@@ -44,8 +44,7 @@ class SignedOutController @Inject()(
   override val appConfig: AppConfig,
   override val metrics: Metrics,
   override val ec: ExecutionContext)
-    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig) with SessionDataSupport
-    with SessionBehaviour {
+    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig) with SessionBehaviour {
 
   def redirectToSos = Action.async { implicit request =>
     for {
@@ -65,13 +64,10 @@ class SignedOutController @Inject()(
   private def prepareChainedSession(mappingEligibility: MappingEligibility)(
     implicit hc: HeaderCarrier): Future[Option[StashedChainnedSessionId]] =
     (for {
-      knownFacts        <- OptionT(sessionStoreService.fetchKnownFactsResult)
-      initialDetailsOpt <- OptionT.liftF(sessionStoreService.fetchInitialDetails)
-      amlsDetailsOpt    <- OptionT.liftF(sessionStoreService.fetchAMLSDetails)
+      agentSession <- OptionT(sessionStoreService.fetchAgentSession)
       id <- OptionT(
              chainedSessionRepository
-               .create(
-                 ChainedSessionDetails(knownFacts, mappingEligibility.isEligible, initialDetailsOpt, amlsDetailsOpt))
+               .create(ChainedSessionDetails(mappingEligibility.isEligible, agentSession))
                .map(id => Option(id)))
     } yield id).value
 

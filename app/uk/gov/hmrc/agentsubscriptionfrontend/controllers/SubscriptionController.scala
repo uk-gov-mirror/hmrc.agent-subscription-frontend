@@ -32,7 +32,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.support.TaxIdentifierFormatters
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpException}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
@@ -49,8 +49,7 @@ class SubscriptionController @Inject()(
   override val appConfig: AppConfig,
   override val metrics: Metrics,
   override val ec: ExecutionContext)
-    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig) with SessionDataSupport
-    with SessionBehaviour {
+    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig) with SessionBehaviour {
 
   import SubscriptionControllerForms._
 
@@ -62,27 +61,24 @@ class SubscriptionController @Inject()(
   val showCheckAnswers: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { agent =>
       withCleanCreds(agent) {
-        val details = for {
-          mayBeInitialDetails <- sessionStoreService.fetchInitialDetails
-          mayBeAmlsDetails    <- sessionStoreService.fetchAMLSDetails
-        } yield (mayBeInitialDetails, mayBeAmlsDetails)
-
-        details.flatMap {
-          case (Some(initialDetails), mayBeAmlsDetails) =>
-            sessionStoreService
-              .cacheGoBackUrl(routes.SubscriptionController.showCheckAnswers().url)
-              .map { _ =>
-                mark("Count-Subscription-CleanCreds-Success")
-                Ok(
-                  html.check_answers(
-                    registrationName = initialDetails.name,
-                    address = initialDetails.businessAddress,
-                    emailAddress = initialDetails.email,
-                    mayBeAmlsDetails = mayBeAmlsDetails
+        withValidSession { (_, existingSession) =>
+          existingSession.registration match {
+            case Some(registration) =>
+              sessionStoreService
+                .cacheGoBackUrl(routes.SubscriptionController.showCheckAnswers().url)
+                .map { _ =>
+                  Ok(html.check_answers(
+                    registrationName = registration.taxpayerName.getOrElse(""),
+                    address = registration.address,
+                    emailAddress = registration.emailAddress,
+                    mayBeAmlsDetails = existingSession.amlsDetails
                   ))
-              }
+                }
 
-          case (None, _) => sessionMissingRedirect("InitialDetails")
+            case None =>
+              Logger(getClass).warn(s"Missing data in session or keystore, redirecting back to /business-type")
+              Redirect(routes.BusinessTypeController.showBusinessTypeForm())
+          }
         }
       }
     }
@@ -91,27 +87,17 @@ class SubscriptionController @Inject()(
   val submitCheckAnswers: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { agent =>
       withCleanCreds(agent) {
-        val details = for {
-          initialDetails <- sessionStoreService.fetchInitialDetails
-          amlsDetails    <- sessionStoreService.fetchAMLSDetails
-        } yield (initialDetails, amlsDetails)
+        withValidSession { (_, existingSession) =>
+          (existingSession.utr, existingSession.postcode, existingSession.registration) match {
+            case (Some(utr), Some(postcode), Some(registration)) =>
+              subscriptionService
+                .subscribe(utr, postcode, registration, existingSession.amlsDetails)
+                .flatMap(redirectSubscriptionResponse(_, utr))
 
-        details.flatMap {
-          case (Some(initialDetails), mayBeAmlsDetails) =>
-            val desAddress = DesAddress(
-              initialDetails.businessAddress.addressLine1,
-              initialDetails.businessAddress.addressLine2,
-              initialDetails.businessAddress.addressLine3,
-              initialDetails.businessAddress.addressLine4,
-              initialDetails.businessAddress.postalCode.getOrElse(throw new Exception("Postcode should not be empty")),
-              initialDetails.businessAddress.countryCode
-            )
-
-            subscriptionService
-              .subscribe(initialDetails, desAddress, mayBeAmlsDetails)
-              .flatMap(redirectSubscriptionResponse(_, initialDetails.utr))
-
-          case (None, _) => toFuture(sessionMissingRedirect("InitialDetails"))
+            case _ =>
+              Logger(getClass).warn(s"Missing data in session, redirecting back to /business-type")
+              Redirect(routes.BusinessTypeController.showBusinessTypeForm())
+          }
         }
       }
     }
@@ -119,7 +105,7 @@ class SubscriptionController @Inject()(
 
   val showBusinessAddressForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      withInitialDetails { _ =>
+      withValidSession { (_, existingSession) =>
         mark("Count-Subscription-AddressLookup-Start")
         addressLookUpConnector
           .initJourney(routes.SubscriptionController.returnFromAddressLookup(), JourneyName)
@@ -137,7 +123,7 @@ class SubscriptionController @Inject()(
 
       case Left(SubscriptionReturnedHttpError(CONFLICT)) =>
         mark("Count-Subscription-AlreadySubscribed-APIResponse")
-        toFuture(Redirect(routes.BusinessIdentificationController.showAlreadySubscribed()))
+        Redirect(routes.BusinessIdentificationController.showAlreadySubscribed())
 
       case Left(SubscriptionReturnedHttpError(status)) =>
         mark("Count-Subscription-Failed")
@@ -146,21 +132,28 @@ class SubscriptionController @Inject()(
 
   def returnFromAddressLookup(id: String): Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      withInitialDetails { details =>
-        addressLookUpConnector.getAddressDetails(id).flatMap { address =>
-          desAddressForm
-            .bindAddressLookupFrontendAddress(details.utr, address)
-            .fold(
-              formWithErrors => Future successful Ok(html.address_form_with_errors(formWithErrors)),
-              validDesAddress => {
-                mark("Count-Subscription-AddressLookup-Success")
-                sessionStoreService
-                  .cacheInitialDetails(details.copy(
-                    businessAddress = BusinessAddress(validDesAddress)
-                  ))
-                  .map(_ => Redirect(routes.SubscriptionController.showCheckAnswers()))
-              }
-            )
+      withValidSession { (_, existingSession) =>
+        existingSession.utr match {
+          case Some(utr) =>
+            addressLookUpConnector.getAddressDetails(id).flatMap { address =>
+              desAddressForm
+                .bindAddressLookupFrontendAddress(utr, address)
+                .fold(
+                  formWithErrors => Future successful Ok(html.address_form_with_errors(formWithErrors)),
+                  validDesAddress => {
+                    mark("Count-Subscription-AddressLookup-Success")
+                    val updatedReg = existingSession.registration match {
+                      case Some(reg) => reg.copy(address = BusinessAddress(validDesAddress))
+                      case None =>
+                        throw new IllegalStateException("expecting registration in the session, but not found") //TODO
+                    }
+                    sessionStoreService
+                      .cacheAgentSession(existingSession.copy(registration = Some(updatedReg)))
+                      .map(_ => Redirect(routes.SubscriptionController.showCheckAnswers()))
+                  }
+                )
+            }
+          case None => Redirect(routes.UtrController.showUtrForm())
         }
       }
     }
@@ -168,18 +161,21 @@ class SubscriptionController @Inject()(
 
   def submitModifiedAddress: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      withInitialDetails { initialDetails =>
+      withValidSession { (_, existingSession) =>
         desAddressForm.form
           .bindFromRequest()
           .fold(
             formWithErrors => Future successful Ok(html.address_form_with_errors(formWithErrors)),
-            validDesAddress =>
+            validDesAddress => {
+              val updatedReg = existingSession.registration match {
+                case Some(reg) => reg.copy(address = BusinessAddress(validDesAddress))
+                case None =>
+                  throw new IllegalStateException("expecting registration in the session, but not found") //TODO
+              }
               sessionStoreService
-                .cacheInitialDetails(
-                  initialDetails.copy(
-                    businessAddress = BusinessAddress(validDesAddress)
-                  ))
+                .cacheAgentSession(existingSession.copy(registration = Some(updatedReg)))
                 .map(_ => Redirect(routes.SubscriptionController.showCheckAnswers()))
+            }
           )
       }
     }
@@ -189,7 +185,7 @@ class SubscriptionController @Inject()(
     appConfig.autoMapAgentEnrolments match {
       case true =>
         withSubscribingAgent { _ =>
-          withKnownFactsResult { _ =>
+          withValidSession { (_, existingSession) =>
             toFuture(Ok(html.link_clients(linkClientsForm)))
           }
         }
@@ -201,54 +197,47 @@ class SubscriptionController @Inject()(
     appConfig.autoMapAgentEnrolments match {
       case true =>
         withSubscribingAgent { _ =>
-          withKnownFactsResult { knownFactsResult =>
-            linkClientsForm
-              .bindFromRequest()
-              .fold(
-                formWithErrors => {
-                  if (formWithErrors.errors.exists(_.message == "error.link-clients-value.invalid")) {
-                    throw new BadRequestException("Form submitted with strange input value")
-                  } else {
-                    toFuture(Ok(html.link_clients(formWithErrors)))
-                  }
-                },
-                validatedLinkClients => {
-                  val isPartiallySubscribed = request.session.get("isPartiallySubscribed").contains("true")
+          withValidSession { (_, existingSession) =>
+            (existingSession.utr, existingSession.postcode) match {
+              case (Some(utr), Some(postcode)) =>
+                linkClientsForm
+                  .bindFromRequest()
+                  .fold(
+                    formWithErrors => Ok(html.link_clients(formWithErrors)),
+                    validatedLinkClients => {
+                      val isPartiallySubscribed = request.session.get("isPartiallySubscribed").contains("true")
 
-                  validatedLinkClients.autoMapping match {
-                    case Yes =>
-                      isPartiallySubscribed match {
-                        case false =>
-                          toFuture(Redirect(routes.SubscriptionController.showCheckAnswers())
-                            .withSession(request.session + ("performAutoMapping" -> "true")))
-                        case true =>
-                          for {
-                            _ <- subscriptionService
-                                  .completePartialSubscription(knownFactsResult.utr, knownFactsResult.postcode)
-                            _ = mark("Count-Subscription-PartialSubscriptionCompleted")
-                            returnResult <- completeMappingWhenAvailable(
-                                             knownFactsResult.utr,
-                                             completedPartialSub = true)
-                          } yield returnResult.withSession(request.session - "isPartiallySubscribed")
-                      }
+                      validatedLinkClients.autoMapping match {
+                        case Yes =>
+                          if (isPartiallySubscribed) {
+                            for {
+                              _ <- subscriptionService.completePartialSubscription(utr, postcode)
+                              _ = mark("Count-Subscription-PartialSubscriptionCompleted")
+                              returnResult <- completeMappingWhenAvailable(utr, completedPartialSub = true)
+                            } yield returnResult.withSession(request.session - "isPartiallySubscribed")
+                          } else {
+                            toFuture(Redirect(routes.SubscriptionController.showCheckAnswers())
+                              .withSession(request.session + ("performAutoMapping" -> "true")))
+                          }
 
-                    case No =>
-                      isPartiallySubscribed match {
-                        case false =>
-                          toFuture(Redirect(routes.SubscriptionController.showCheckAnswers())
-                            .withSession(request.session - "performAutoMapping"))
-                        case true =>
-                          subscriptionService
-                            .completePartialSubscription(knownFactsResult.utr, knownFactsResult.postcode)
-                            .map { _ =>
-                              mark("Count-Subscription-PartialSubscriptionCompleted")
-                              Redirect(routes.SubscriptionController.showSubscriptionComplete())
-                                .withSession(request.session - "isPartiallySubscribed")
-                            }
+                        case No =>
+                          if (isPartiallySubscribed) {
+                            subscriptionService
+                              .completePartialSubscription(utr, postcode)
+                              .map { _ =>
+                                mark("Count-Subscription-PartialSubscriptionCompleted")
+                                Redirect(routes.SubscriptionController.showSubscriptionComplete())
+                                  .withSession(request.session - "isPartiallySubscribed")
+                              }
+                          } else {
+                            toFuture(Redirect(routes.SubscriptionController.showCheckAnswers())
+                              .withSession(request.session - "performAutoMapping"))
+                          }
                       }
-                  }
-                }
-              )
+                    }
+                  )
+              case _ => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
+            }
           }
         }
 

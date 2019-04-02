@@ -1,59 +1,42 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
-import org.jsoup.Jsoup
+
+import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers.{redirectLocation, _}
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.{LimitedCompany, Llp, Partnership, SoleTrader}
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, BusinessType, Postcode}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, Postcode}
+import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub._
+import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.subscribingAgentEnrolledForNonMTD
-import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData.agentSession
+import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class PostcodeControllerISpec extends BaseISpec with SessionDataMissingSpec {
+class PostcodeControllerWithAssuranceFlagISpec extends BaseISpec with SessionDataMissingSpec {
+
+  override protected def appBuilder: GuiceApplicationBuilder =
+    super.appBuilder
+      .configure(
+        "features.agent-assurance-run"        -> true,
+        "features.agent-assurance-paye-check" -> true,
+        "government-gateway.url"              -> configuredGovernmentGatewayUrl
+      )
 
   lazy val controller: PostcodeController = app.injector.instanceOf[PostcodeController]
-
-  "showPostcodePage" should {
-
-    "display the page with correct content" in {
-      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
-      await(sessionStoreService.cacheAgentSession(AgentSession(Some(BusinessType.SoleTrader))))
-
-      val result = await(controller.showPostcodeForm()(request))
-
-      result should containMessages(
-        "postcode.title"
-      )
-    }
-
-    "redirect to /business-type if businessType is not found in session" in {
-      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
-
-      val result = await(controller.showPostcodeForm()(request))
-
-      status(result) shouldBe 303
-
-      redirectLocation(result) shouldBe Some(routes.BusinessTypeController.showBusinessTypeForm().url)
-    }
-
-    "pre-populate the postcode if one is already stored in the session" in {
-      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
-      await(sessionStoreService.cacheAgentSession(AgentSession(Some(SoleTrader), Some(Utr("abcd")), postcode = Some(Postcode("AB12 3EF")))))
-
-      val result = await(controller.showPostcodeForm()(request))
-
-      val doc = Jsoup.parse(bodyOf(result))
-      val link = doc.getElementById("postcode")
-      link.attr("value") shouldBe "AB12 3EF"
-    }
-  }
 
   "submitPostcodeForm" should {
 
     "read the form and redirect to /national-insurance-number if businessType is SoleTrader or Partnership" in {
       List(SoleTrader, Partnership).foreach { businessType =>
-        implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("postcode" -> "AA12 1JN")
+        withMatchingUtrAndPostcode(validUtr, validPostcode)
+        givenUserIsAnAgentWithAnAcceptableNumberOfClients("IR-PAYE")
+        givenUserIsAnAgentWithAnAcceptableNumberOfClients("IR-SA")
+        givenUserIsAnAgentWithAnAcceptableNumberOfClients("HMCE-VATDEC-ORG")
+        givenUserIsAnAgentWithAnAcceptableNumberOfClients("IR-CT")
+        givenRefusalToDealWithUtrIsNotForbidden(validUtr.value)
+        givenAgentIsNotManuallyAssured(validUtr.value)
+
+        implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("postcode" -> validPostcode)
         sessionStoreService.currentSession.agentSession = Some(agentSession.copy(postcode = None, nino = None))
 
         val result = await(controller.submitPostcodeForm()(request))
@@ -62,13 +45,21 @@ class PostcodeControllerISpec extends BaseISpec with SessionDataMissingSpec {
 
         redirectLocation(result) shouldBe Some(routes.NationalInsuranceController.showNationalInsuranceNumberForm().url)
 
-        sessionStoreService.currentSession.agentSession = Some(agentSession.copy(postcode = Some(Postcode("AA12 1JN")), nino = None))
+        sessionStoreService.currentSession.agentSession shouldBe Some(agentSession.copy(postcode = Some(Postcode(validPostcode)), nino = None, registration = Some(registration.copy(emailAddress = Some("someone@example.com")))))
       }
     }
 
     "read the form and redirect to /company-registration-number if businessType is Limited Company or Llp" in {
       List(LimitedCompany, Llp).foreach { businessType =>
-        implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("postcode" -> "AA12 1JN")
+        withMatchingUtrAndPostcode(validUtr, validPostcode)
+        givenUserIsAnAgentWithAnAcceptableNumberOfClients("IR-PAYE")
+        givenUserIsAnAgentWithAnAcceptableNumberOfClients("IR-SA")
+        givenUserIsAnAgentWithAnAcceptableNumberOfClients("HMCE-VATDEC-ORG")
+        givenUserIsAnAgentWithAnAcceptableNumberOfClients("IR-CT")
+        givenRefusalToDealWithUtrIsNotForbidden(validUtr.value)
+        givenAgentIsNotManuallyAssured(validUtr.value)
+
+        implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("postcode" -> validPostcode)
         sessionStoreService.currentSession.agentSession = Some(agentSession.copy(businessType = Some(businessType), postcode = None, nino = None))
 
         val result = await(controller.submitPostcodeForm()(request))
@@ -77,7 +68,7 @@ class PostcodeControllerISpec extends BaseISpec with SessionDataMissingSpec {
 
         redirectLocation(result) shouldBe Some(routes.CompanyRegistrationController.showCompanyRegNumberForm().url)
 
-        sessionStoreService.currentSession.agentSession = Some(agentSession.copy(postcode = Some(Postcode("AA12 1JN")), nino = None))
+        sessionStoreService.currentSession.agentSession.get.registration shouldBe Some(registration.copy(emailAddress = Some("someone@example.com")))
       }
     }
 

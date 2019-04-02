@@ -15,28 +15,10 @@
  */
 
 package uk.gov.hmrc.agentsubscriptionfrontend.models
+import play.api.libs.json.{Format, Json}
 
-import play.api.libs.json.Json
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
-
-case class ChainedSessionDetails(
-  knownFacts: KnownFactsResult,
-  wasEligibleForMapping: Option[Boolean],
-  initialDetails: Option[InitialDetails],
-  amlsDetails: Option[AMLSDetails])
-
-case class KnownFactsResult(
-  utr: Utr,
-  postcode: String,
-  taxpayerName: String,
-  isSubscribedToAgentServices: Boolean,
-  address: Option[BusinessAddress],
-  emailAddress: Option[String])
-
-object KnownFactsResult {
-  implicit val formatKnownFacts = Json.format[KnownFactsResult]
-}
+case class ChainedSessionDetails(wasEligibleForMapping: Option[Boolean], agentSession: AgentSession)
 
 object ChainedSessionDetails {
-  implicit val formatChainedSession = Json.format[ChainedSessionDetails]
+  implicit val format: Format[ChainedSessionDetails] = Json.format[ChainedSessionDetails]
 }

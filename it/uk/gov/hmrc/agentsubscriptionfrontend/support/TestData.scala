@@ -14,25 +14,18 @@ object TestData {
   val blacklistedPostcode = "AB10 1ZT"
 
   val utr = Utr("0123456789")
-  val postcode = "AA11AA"
+  val postcode = "AA1 1AA"
   val registrationName = "My Agency"
   val businessAddress =
     BusinessAddress("AddressLine1 A", Some("AddressLine2 A"), Some("AddressLine3 A"), Some("AddressLine4 A"), Some("AA11AA"), "GB")
 
-  val initialDetails =
-    InitialDetails(
-      utr,
-      "AA11AA",
-      "My Agency",
-      Some("agency@example.com"),
-      businessAddress
-    )
-
   val configuredGovernmentGatewayUrl = "http://configured-government-gateway.gov.uk/"
 
   val agentSession: AgentSession =
-    AgentSession(businessType = Some(SoleTrader), utr = Some(Utr("abc")), postcode = Some(Postcode("bn13 1hn")), nino = Some(Nino("AE123456C")))
+    AgentSession(businessType = Some(SoleTrader), utr = Some(validUtr), postcode = Some(Postcode("bn13 1hn")), nino = Some(Nino("AE123456C")))
 
   val agentSessionForLimitedCompany: AgentSession = agentSession.copy(businessType = Some(LimitedCompany))
+
+  val registration = Registration(Some(registrationName), false, false, businessAddress, Some("test@gmail.com"))
 
 }

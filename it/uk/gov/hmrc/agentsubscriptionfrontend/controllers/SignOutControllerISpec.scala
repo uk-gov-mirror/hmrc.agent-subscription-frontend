@@ -12,6 +12,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.repository.{ChainedSessionDetailsRe
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.MappingStubs._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser._
+import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData._
 import uk.gov.hmrc.http.Upstream5xxResponse
 import uk.gov.hmrc.play.HeaderCarrierConverter
 import uk.gov.hmrc.play.binders.ContinueUrl
@@ -30,25 +31,9 @@ trait SignOutControllerISpec extends BaseISpec {
       .configure("features.auto-map-agent-enrolments" -> featureFlagAutoMapping)
 
   private val fakeRequest = FakeRequest()
-  val knownFactsResult = KnownFactsResult(Utr("9876543210"), "AA11AA", "Test organisation name", isSubscribedToAgentServices = true, None, None)
-  val validBusinessAddress = BusinessAddress(
-    "AddressLine1 A",
-    Some("AddressLine2 A"),
-    Some("AddressLine3 A"),
-    Some("AddressLine4 A"),
-    Some("AA11AA"),
-    "GB")
-  val validInitialDetails =
-    InitialDetails(
-      Utr("9876543210"),
-      "AA11AA",
-      "My Agency",
-      Some("agency@example.com"),
-      validBusinessAddress
-    )
 
   def findByUtr(utr: String): Option[StashedChainedSessionDetails] = {
-    await(repo.find("chainedSessionDetails.knownFacts.utr" -> utr).map(_.headOption))
+    await(repo.find("chainedSessionDetails.agentSession.utr" -> utr).map(_.headOption))
   }
 
   "redirectToSos" should {
@@ -61,8 +46,8 @@ trait SignOutControllerISpec extends BaseISpec {
 
     "the SOS redirect URL should include an ID of the saved ChainedSessionDetails" in {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
-      sessionStoreService.currentSession.knownFactsResult = Some(knownFactsResult)
-      sessionStoreService.currentSession.initialDetails = Some(validInitialDetails)
+      sessionStoreService.currentSession.agentSession =
+        Some(AgentSession(Some(BusinessType.SoleTrader), utr = Some(Utr("9876543210")), registration = Some(registration)))
 
       givenMappingCreatePreSubscriptionIsNotEligible(Utr("9876543210"))
 
@@ -74,8 +59,8 @@ trait SignOutControllerISpec extends BaseISpec {
 
     "the SOS redirect URL should include an ID of the saved ChainedSessionDetails when initial dsetails is empty" in {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
-      sessionStoreService.currentSession.knownFactsResult = Some(knownFactsResult)
-      sessionStoreService.currentSession.initialDetails = None
+      sessionStoreService.currentSession.agentSession =
+        Some(AgentSession(Some(BusinessType.SoleTrader), utr = Some(Utr("9876543210")), registration = Some(registration)))
 
       givenMappingCreatePreSubscriptionIsNotEligible(Utr("9876543210"))
 
@@ -96,7 +81,8 @@ trait SignOutControllerISpec extends BaseISpec {
     "include a continue URL in the SOS redirect URL if a continue URL exists in the session store" in {
       val ourContinueUrl = ContinueUrl("/test-continue-url")
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
-      sessionStoreService.currentSession(hc).continueUrl = Some(ourContinueUrl)
+      sessionStoreService.currentSession.continueUrl = Some(ourContinueUrl)
+
       givenMappingCreatePreSubscriptionIsNotEligible(Utr("9876543210"))
 
       val result = await(controller.redirectToSos(authenticatedAs(subscribingAgentEnrolledForNonMTD)))
@@ -111,9 +97,9 @@ trait SignOutControllerISpec extends BaseISpec {
     "include both an ID and a continue URL in the SOS redirect URL if both a continue URL and KnownFacts exist in the session store" in {
       val ourContinueUrl = ContinueUrl("/test-continue-url")
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
-      sessionStoreService.currentSession.knownFactsResult = Some(knownFactsResult)
+      sessionStoreService.currentSession.agentSession =
+        Some(AgentSession(Some(BusinessType.SoleTrader), utr = Some(Utr("9876543210")), registration = Some(registration)))
       sessionStoreService.currentSession.continueUrl = Some(ourContinueUrl)
-      sessionStoreService.currentSession.initialDetails = Some(validInitialDetails)
 
       givenMappingCreatePreSubscriptionIsNotEligible(Utr("9876543210"))
 
@@ -205,19 +191,16 @@ class SignOutControllerWithAutoMappingOn extends SignOutControllerISpec {
     "save the ChainedSessionDetails in the DB" when {
       "was eligible for mapping" in {
         implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
-        sessionStoreService.currentSession.knownFactsResult = Some(knownFactsResult)
-        sessionStoreService.currentSession.initialDetails = Some(validInitialDetails)
-        sessionStoreService.currentSession.amlsDetails = Some(amlsDetails)
+        sessionStoreService.currentSession.agentSession =
+          Some(AgentSession(Some(BusinessType.SoleTrader), utr = Some(Utr("9876543210")), registration = Some(registration)))
 
         givenMappingCreatePreSubscription(Utr("9876543210"))
 
         await(controller.redirectToSos(request))
         findByUtr("9876543210").map(_.chainedSessionDetails) shouldBe Some(
           ChainedSessionDetails(
-            knownFactsResult,
             wasEligibleForMapping = Some(true),
-            Some(validInitialDetails),
-            Some(amlsDetails)
+            AgentSession(Some(BusinessType.SoleTrader), utr = Some(Utr("9876543210")), registration = Some(registration))
           )
         )
         verifyMappingCreatePreSubscriptionCalled(Utr("9876543210"), times = 1)
@@ -225,19 +208,15 @@ class SignOutControllerWithAutoMappingOn extends SignOutControllerISpec {
 
       "was not eligible for mapping" in {
         implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
-        sessionStoreService.currentSession.knownFactsResult = Some(knownFactsResult)
-        sessionStoreService.currentSession.initialDetails = Some(validInitialDetails)
-        sessionStoreService.currentSession.amlsDetails = Some(amlsDetails)
+        sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(BusinessType.SoleTrader), utr = Some(Utr("9876543210")), registration = Some(registration)))
 
         givenMappingCreatePreSubscriptionIsNotEligible(Utr("9876543210"))
 
         await(controller.redirectToSos(request))
         findByUtr("9876543210").map(_.chainedSessionDetails) shouldBe Some(
           ChainedSessionDetails(
-            knownFactsResult,
             wasEligibleForMapping = Some(false),
-            Some(validInitialDetails),
-            Some(amlsDetails)
+            AgentSession(Some(BusinessType.SoleTrader), utr = Some(Utr("9876543210")), registration = Some(registration))
           )
         )
         verifyMappingCreatePreSubscriptionCalled(Utr("9876543210"), times = 1)
@@ -246,9 +225,7 @@ class SignOutControllerWithAutoMappingOn extends SignOutControllerISpec {
 
     "throw an exception if the call to create pre-subscription mapping fails" in {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
-      sessionStoreService.currentSession.knownFactsResult = Some(knownFactsResult)
-      sessionStoreService.currentSession.initialDetails = Some(validInitialDetails)
-
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(BusinessType.SoleTrader), utr = Some(Utr("9876543210")), registration = Some(registration)))
       givenMappingCreatePreSubscription(Utr("9876543210"), httpReturnCode = 500)
 
       an[Upstream5xxResponse] should be thrownBy await(controller.redirectToSos(request))
@@ -260,28 +237,22 @@ class SignOutControllerWithAutoMappingOff extends SignOutControllerISpec {
   override def featureFlagAutoMapping: Boolean = false
 
   "redirectToSos" should {
-    val amlsDetails = AMLSDetails("supervisory", "123456789", LocalDate.now())
     "save the ChainedSessionDetails in the DB with a missing mapping eligibility result" in {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
-      sessionStoreService.currentSession.knownFactsResult = Some(knownFactsResult)
-      sessionStoreService.currentSession.initialDetails = Some(validInitialDetails)
-      sessionStoreService.currentSession.amlsDetails = Some(amlsDetails)
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(BusinessType.SoleTrader), utr = Some(Utr("9876543210")), registration = Some(registration)))
 
       await(controller.redirectToSos(request))
       findByUtr("9876543210").map(_.chainedSessionDetails) shouldBe Some(
         ChainedSessionDetails(
-          knownFactsResult,
           wasEligibleForMapping = None,
-          Some(validInitialDetails),
-          Some(amlsDetails)
+          AgentSession(Some(BusinessType.SoleTrader), utr = Some(Utr("9876543210")), registration = Some(registration))
         )
       )
     }
 
     "not call agent-mapping backend" in {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
-      sessionStoreService.currentSession.knownFactsResult = Some(knownFactsResult)
-      sessionStoreService.currentSession.initialDetails = Some(validInitialDetails)
+      Some(AgentSession(Some(BusinessType.SoleTrader), utr = Some(Utr("9876543210")), registration = Some(registration)))
 
       await(controller.redirectToSos(request))
       verifyMappingCreatePreSubscriptionCalled(Utr("9876543210"), times = 0)

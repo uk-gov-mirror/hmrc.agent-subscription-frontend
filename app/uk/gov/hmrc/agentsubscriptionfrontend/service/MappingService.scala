@@ -15,6 +15,7 @@
  */
 
 package uk.gov.hmrc.agentsubscriptionfrontend.service
+
 import javax.inject.{Inject, Singleton}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.MappingConnector
@@ -22,6 +23,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.models.MappingEligibility
 import uk.gov.hmrc.agentsubscriptionfrontend.models.MappingEligibility.UnknownEligibility
 import uk.gov.hmrc.agentsubscriptionfrontend.repository.ChainedSessionDetailsRepository
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 
 import scala.concurrent._
 
@@ -34,10 +36,11 @@ class MappingService @Inject()(
   def captureTempMappingsPreSubscription(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[MappingEligibility] =
     if (appConfig.autoMapAgentEnrolments) {
       for {
-        knownFactsOpt <- sessionStoreService.fetchKnownFactsResult
-        mappingEligibility <- knownFactsOpt
-                               .map(knownFacts => mappingConnector.createPreSubscription(knownFacts.utr))
-                               .getOrElse(Future.successful(UnknownEligibility))
+        agentSessionOpt <- sessionStoreService.fetchAgentSession
+        utrOpt          <- toFuture(agentSessionOpt.flatMap(_.utr))
+        mappingEligibility <- utrOpt
+                               .map(mappingConnector.createPreSubscription(_))
+                               .getOrElse(toFuture(UnknownEligibility))
       } yield mappingEligibility
     } else {
       Future.successful(UnknownEligibility)

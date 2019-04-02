@@ -30,13 +30,13 @@ trait SessionBehaviour extends CommonRouting {
   val sessionStoreService: SessionStoreService
   implicit val ec: ExecutionContext
 
-  protected def withValidBusinessType(body: BusinessType => Future[Result])(
+  protected def withValidSession(body: (BusinessType, AgentSession) => Future[Result])(
     implicit hc: HeaderCarrier): Future[Result] =
     sessionStoreService.fetchAgentSession.flatMap {
       case Some(agentSession) =>
         agentSession.businessType match {
           case Some(businessType) =>
-            body(businessType)
+            body(businessType, agentSession)
           case None => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
         }
       case None => Redirect(routes.BusinessTypeController.showBusinessTypeForm())

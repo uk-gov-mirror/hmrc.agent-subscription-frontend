@@ -21,8 +21,9 @@ import java.util.concurrent.ConcurrentHashMap
 import com.google.inject.Singleton
 import javax.inject.Inject
 import play.api.mvc.{AnyContent, Request}
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{AssuranceCheckInput, AssuranceResults, KnownFactsResult}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AssuranceCheckInput, AssuranceResults, Postcode}
 import uk.gov.hmrc.domain.TaxIdentifier
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.AuditExtensions.auditHeaderCarrier
@@ -78,7 +79,8 @@ class AuditService @Inject()(val auditConnector: AuditConnector)(implicit ec: Ex
   )
 
   def sendAgentAssuranceAuditEvent(
-    knownFactsResult: KnownFactsResult,
+    utr: Utr,
+    postcode: Postcode,
     assuranceResults: AssuranceResults,
     assuranceCheckInput: Option[AssuranceCheckInput] = None)(
     implicit request: Request[AnyContent],
@@ -88,8 +90,8 @@ class AuditService @Inject()(val auditConnector: AuditConnector)(implicit ec: Ex
     implicit val auditData: AuditData = new AuditData
 
     auditData
-      .set("utr", knownFactsResult.utr)
-      .set("postcode", knownFactsResult.postcode)
+      .set("utr", utr)
+      .set("postcode", postcode.value)
 
     assuranceResults.hasAcceptableNumberOfSAClients.foreach(auditData.set("passSaAgentAssuranceCheck", _))
     assuranceResults.hasAcceptableNumberOfPayeClients.foreach(auditData.set("passPayeAgentAssuranceCheck", _))

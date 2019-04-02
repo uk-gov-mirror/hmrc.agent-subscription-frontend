@@ -20,6 +20,7 @@ import java.time.LocalDate
 
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
+import org.apache.http.cookie.SM
 import play.api.data.Forms.{mapping, text, tuple}
 import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
 import play.api.data.{Form, FormError, Mapping}
@@ -48,19 +49,16 @@ class DateOfBirthController @Inject()(
   override val appConfig: AppConfig,
   val ec: ExecutionContext,
   override val messagesApi: MessagesApi)
-    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig) with SessionDataSupport
-    with SessionBehaviour {
+    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig) with SessionBehaviour {
 
   def showDateOfBirthForm(): Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      sessionStoreService.fetchAgentSession.flatMap {
-        case Some(agentSession) =>
-          agentSession.dateOfBirth match {
-            case Some(dob) =>
-              Ok(html.date_of_birth(dateOfBirthForm.fill(dob)))
-            case None => Ok(html.date_of_birth(dateOfBirthForm))
-          }
-        case None => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
+      withValidSession { (_, existingSession) =>
+        existingSession.dateOfBirth match {
+          case Some(dob) =>
+            Ok(html.date_of_birth(dateOfBirthForm.fill(dob)))
+          case None => Ok(html.date_of_birth(dateOfBirthForm))
+        }
       }
     }
   }

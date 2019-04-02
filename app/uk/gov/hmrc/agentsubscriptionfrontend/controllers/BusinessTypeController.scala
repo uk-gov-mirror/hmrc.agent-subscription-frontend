@@ -39,8 +39,7 @@ class BusinessTypeController @Inject()(
   override val appConfig: AppConfig,
   val ec: ExecutionContext,
   override val messagesApi: MessagesApi)
-    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig) with SessionDataSupport
-    with SessionBehaviour {
+    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig) with SessionBehaviour {
 
   def showBusinessTypeForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { implicit agent =>
@@ -68,14 +67,12 @@ class BusinessTypeController @Inject()(
             if (validatedBusinessType == Invalid)
               Redirect(routes.BusinessTypeController.showInvalidBusinessType())
             else
-              sessionStoreService.fetchAgentSession.flatMap {
-                case Some(existingSession) =>
-                  updateSessionAndRedirect(existingSession.copy(businessType = Some(validatedBusinessType)))(
+              sessionStoreService.fetchAgentSession
+                .flatMap(_.getOrElse(AgentSession()))
+                .flatMap { agentSession =>
+                  updateSessionAndRedirect(agentSession.copy(businessType = Some(validatedBusinessType)))(
                     routes.UtrController.showUtrForm())
-                case None =>
-                  updateSessionAndRedirect(AgentSession(businessType = Some(validatedBusinessType)))(
-                    routes.UtrController.showUtrForm())
-              }
+                }
           }
         )
     }

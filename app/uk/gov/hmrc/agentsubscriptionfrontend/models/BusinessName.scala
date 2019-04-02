@@ -15,20 +15,7 @@
  */
 
 package uk.gov.hmrc.agentsubscriptionfrontend.models
-
 import play.api.libs.json.Json
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
-
-case class InitialDetails(
-  utr: Utr,
-  knownFactsPostcode: String,
-  name: String,
-  email: Option[String],
-  businessAddress: BusinessAddress)
-
-object InitialDetails {
-  implicit val format = Json.format[InitialDetails]
-}
 
 case class BusinessName(name: String)
 

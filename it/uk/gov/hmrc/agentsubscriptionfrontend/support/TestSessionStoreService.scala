@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.support
 
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{AMLSDetails, AgentSession, InitialDetails, KnownFactsResult}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AMLSDetails, AgentSession}
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.agentsubscriptionfrontend.util._
 import uk.gov.hmrc.http.HeaderCarrier
@@ -27,11 +27,8 @@ import scala.concurrent.{ExecutionContext, Future}
 class TestSessionStoreService extends SessionStoreService(null) {
 
   class Session(
-    var knownFactsResult: Option[KnownFactsResult] = None,
-    var initialDetails: Option[InitialDetails] = None,
     var continueUrl: Option[ContinueUrl] = None,
     var wasEligibleForMapping: Option[Boolean] = None,
-    var amlsDetails: Option[AMLSDetails] = None,
     var goBackUrl: Option[String] = None,
     var changingAnswers: Option[Boolean] = None,
     var agentSession: Option[AgentSession] = None)
@@ -52,22 +49,6 @@ class TestSessionStoreService extends SessionStoreService(null) {
   def allSessionsRemoved: Boolean =
     sessions.isEmpty
 
-  override def fetchKnownFactsResult(
-    implicit hc: HeaderCarrier,
-    ec: ExecutionContext): Future[Option[KnownFactsResult]] =
-    Future successful currentSession.knownFactsResult
-
-  override def cacheKnownFactsResult(
-    knownFactsResult: KnownFactsResult)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
-    Future.successful(currentSession.knownFactsResult = Some(knownFactsResult))
-
-  override def fetchInitialDetails(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[InitialDetails]] =
-    Future successful currentSession.initialDetails
-
-  override def cacheInitialDetails(
-    details: InitialDetails)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
-    Future.successful(currentSession.initialDetails = Some(details))
-
   override def fetchContinueUrl(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[ContinueUrl]] =
     Future successful currentSession.continueUrl
 
@@ -79,12 +60,6 @@ class TestSessionStoreService extends SessionStoreService(null) {
 
   override def cacheMappingEligible(wasEligibleForMapping: Boolean)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
     Future.successful(currentSession.wasEligibleForMapping = Some(wasEligibleForMapping))
-
-  override def fetchAMLSDetails(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[AMLSDetails]] =
-    Future.successful(currentSession.amlsDetails)
-
-  override def cacheAMLSDetails(amlsDetails: AMLSDetails)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
-    Future.successful(currentSession.amlsDetails = Some(amlsDetails))
 
   override def cacheGoBackUrl(url: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
     toFuture(currentSession.goBackUrl =  Some(url))

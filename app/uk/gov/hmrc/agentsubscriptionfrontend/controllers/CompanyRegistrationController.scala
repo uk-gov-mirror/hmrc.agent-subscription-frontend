@@ -39,45 +39,38 @@ class CompanyRegistrationController @Inject()(
   override val appConfig: AppConfig,
   val ec: ExecutionContext,
   override val messagesApi: MessagesApi)
-    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig) with SessionDataSupport
-    with SessionBehaviour {
+    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig) with SessionBehaviour {
 
   def showCompanyRegNumberForm(): Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      sessionStoreService.fetchAgentSession.flatMap {
-        case Some(agentSession) =>
-          agentSession.companyRegistrationNumber match {
-            case Some(crn) =>
-              Ok(html.company_registration(crnForm.fill(crn)))
-            case None => Ok(html.company_registration(crnForm))
-          }
-        case None => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
+      withValidSession { (_, existingSession) =>
+        existingSession.companyRegistrationNumber match {
+          case Some(crn) =>
+            Ok(html.company_registration(crnForm.fill(crn)))
+          case None => Ok(html.company_registration(crnForm))
+        }
       }
     }
   }
 
   def submitCompanyRegNumberForm(): Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { implicit agent =>
-      withValidBusinessType { _ =>
+      withValidSession { (_, existingSession) =>
         crnForm
           .bindFromRequest()
           .fold(
             formWithErrors => Ok(html.company_registration(formWithErrors)),
-            validCrn => {
-              sessionStoreService.fetchAgentSession.flatMap {
-                case Some(existingSession) if existingSession.utr.nonEmpty =>
-                  subscriptionService.matchCorporationTaxUtrWithCrn(existingSession.utr.get, validCrn).flatMap {
-                    foundMatch =>
-                      if (foundMatch)
-                        updateSessionAndRedirect(existingSession.copy(companyRegistrationNumber = Some(validCrn)))(
-                          routes.VatDetailsController.showRegisteredForVatForm())
-                      else
-                        Redirect(routes.BusinessIdentificationController.showNoMatchFound())
+            validCrn =>
+              existingSession.utr match {
+                case Some(utr) =>
+                  subscriptionService.matchCorporationTaxUtrWithCrn(utr, validCrn).flatMap { foundMatch =>
+                    if (foundMatch)
+                      updateSessionAndRedirect(existingSession.copy(companyRegistrationNumber = Some(validCrn)))(
+                        routes.VatDetailsController.showRegisteredForVatForm())
+                    else
+                      Redirect(routes.BusinessIdentificationController.showNoMatchFound())
                   }
-                case Some(existingSession) if existingSession.utr.isEmpty =>
-                  Redirect(routes.UtrController.showUtrForm())
-                case _ => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
-              }
+                case _ => Redirect(routes.UtrController.showUtrForm())
             }
           )
       }
