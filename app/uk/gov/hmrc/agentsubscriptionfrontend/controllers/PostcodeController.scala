@@ -123,15 +123,18 @@ class PostcodeController @Inject()(
       case RefuseToDealWith(_) =>
         Redirect(routes.StartController.showCannotCreateAccount())
       case CheckedInvisibleAssuranceAndFailed(assuranceResults) =>
-        auditService.sendAgentAssuranceAuditEvent(utr, postcode, assuranceResults).map { _ =>
-          mark("Count-Subscription-InvasiveCheck-Start")
-          Redirect(routes.BusinessIdentificationController.invasiveCheckStart())
-        }
+        auditService
+          .sendAgentAssuranceAuditEvent(utr, postcode, assuranceResults)
+          .flatMap { _ =>
+            mark("Count-Subscription-InvasiveCheck-Start")
+            updateSessionAndRedirect(agentSession.copy(postcode = Some(postcode), registration = Some(registration)))(
+              routes.BusinessIdentificationController.invasiveCheckStart())
+          }
       case maybeAssured @ (None | ManuallyAssured(_) | CheckedInvisibleAssuranceAndPassed(_)) =>
         maybeAssured match {
-          case Some(assured) =>
+          case Some(assuranceResults) =>
             auditService
-              .sendAgentAssuranceAuditEvent(utr, postcode, assured)
+              .sendAgentAssuranceAuditEvent(utr, postcode, assuranceResults)
               .flatMap { _ =>
                 updateSessionAndRedirect(
                   agentSession.copy(postcode = Some(postcode), registration = Some(registration)))(
