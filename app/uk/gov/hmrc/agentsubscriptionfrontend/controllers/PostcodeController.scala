@@ -128,7 +128,7 @@ class PostcodeController @Inject()(
           .flatMap { _ =>
             mark("Count-Subscription-InvasiveCheck-Start")
             updateSessionAndRedirect(agentSession.copy(postcode = Some(postcode), registration = Some(registration)))(
-              routes.BusinessIdentificationController.invasiveCheckStart())
+              routes.InvasiveChecksController.invasiveCheckStart())
           }
       case maybeAssured @ (None | ManuallyAssured(_) | CheckedInvisibleAssuranceAndPassed(_)) =>
         maybeAssured match {

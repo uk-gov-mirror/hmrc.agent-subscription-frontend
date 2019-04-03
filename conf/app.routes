@@ -48,11 +48,11 @@ GET         /check-agency-status                  uk.gov.hmrc.agentsubscriptionf
 # GET /check-business-type is deprecated, please use GET /business-type instead
 GET         /check-business-type                  uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessTypeController.showBusinessTypeForm
 
-GET         /enter-agent-code                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.invasiveCheckStart
-POST        /enter-agent-code                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.invasiveSaAgentCodePost
+GET         /enter-agent-code                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.InvasiveChecksController.invasiveCheckStart
+POST        /enter-agent-code                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.InvasiveChecksController.invasiveSaAgentCodePost
 
-GET         /client-details                       uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showClientDetailsForm
-POST        /client-details                       uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.submitClientDetailsForm
+GET         /client-details                       uk.gov.hmrc.agentsubscriptionfrontend.controllers.InvasiveChecksController.showClientDetailsForm
+POST        /client-details                       uk.gov.hmrc.agentsubscriptionfrontend.controllers.InvasiveChecksController.submitClientDetailsForm
 
 GET         /update-business-address              uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showUpdateBusinessAddressForm
 POST        /update-business-address              uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.submitUpdateBusinessAddressForm

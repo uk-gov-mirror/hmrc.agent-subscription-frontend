@@ -22,13 +22,10 @@ import play.api.Logger
 import play.api.data.Form
 import play.api.i18n.MessagesApi
 import play.api.mvc.{AnyContent, Request, _}
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.audit.AuditService
-import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.models
 import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
-import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidVariantsTaxPayerOptionForm._
 import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidationResult.FailureReason._
 import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidationResult.{Failure, Pass}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
@@ -37,12 +34,10 @@ import uk.gov.hmrc.agentsubscriptionfrontend.support.TaxIdentifierFormatters
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.validators.BusinessDetailsValidator
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
-import uk.gov.hmrc.agentsubscriptionfrontend.views.html.invasive_check_start
 import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
 import uk.gov.hmrc.http.HeaderCarrier
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
 @Singleton
 class BusinessIdentificationController @Inject()(
@@ -320,97 +315,6 @@ class BusinessIdentificationController @Inject()(
       Ok(html.already_subscribed())
     }
   }
-
-  def invasiveCheckStart: Action[AnyContent] = Action.async { implicit request =>
-    withSubscribingAgent { _ =>
-      Ok(invasive_check_start(invasiveCheckStartSaAgentCode))
-    }
-  }
-
-  def invasiveSaAgentCodePost: Action[AnyContent] = Action.async { implicit request =>
-    withSubscribingAgent { _ =>
-      invasiveCheckStartSaAgentCode
-        .bindFromRequest()
-        .fold(
-          formWithErrors => {
-            Ok(invasive_check_start(formWithErrors))
-          },
-          correctForm => {
-            correctForm.hasSaAgentCode
-              .map {
-                case true =>
-                  val saAgentCode = correctForm.saAgentCode
-                    .getOrElse(throw new IllegalStateException(
-                      "Form validation should enforce saAgentCode is always defined if hasSaAgentCode is true"))
-                  Redirect(routes.BusinessIdentificationController.showClientDetailsForm())
-                    .withSession(request.session + ("saAgentReferenceToCheck" -> saAgentCode))
-
-                case false =>
-                  mark("Count-Subscription-InvasiveCheck-Declined")
-                  Redirect(routes.StartController.showCannotCreateAccount())
-              }
-              .getOrElse(throw new IllegalStateException(
-                "InvasiveCheck invasiveCheckStartSaAgentCode.hasSaAgentCode should always be defined"))
-          }
-        )
-    }
-  }
-
-  def showClientDetailsForm: Action[AnyContent] = Action.async { implicit request =>
-    withSubscribingAgent { _ =>
-      Ok(html.client_details(clientDetailsForm))
-    }
-  }
-
-  def submitClientDetailsForm: Action[AnyContent] = Action.async { implicit request =>
-    withSubscribingAgent { implicit agent =>
-      clientDetailsForm
-        .bindFromRequest()
-        .fold(
-          formWithErrors => Ok(html.client_details(formWithErrors)),
-          correctForm => {
-            val retrievedVariant = correctForm.variant
-              .getOrElse(throw new IllegalStateException(
-                "Form validation should return error when submitting unavailable variant"))
-
-            def utr: Utr =
-              correctForm.utr
-                .flatMap(TaxIdentifierFormatters.normalizeUtr)
-                .getOrElse(throw new Exception("utr should not be empty"))
-            def nino: Nino =
-              correctForm.nino
-                .flatMap(TaxIdentifierFormatters.normalizeNino)
-                .getOrElse(throw new Exception("nino should not be empty"))
-
-            ValidVariantsTaxPayerOptionForm.withName(retrievedVariant) match {
-              case UtrV if Utr.isValid(utr.value) => checkAndRedirect(utr, "utr")
-              case NinoV                          => checkAndRedirect(nino, "nino")
-              case _ =>
-                mark("Count-Subscription-InvasiveCheck-Could-Not-Provide-Tax-Payer-Identifier")
-                Redirect(routes.StartController.showCannotCreateAccount())
-            }
-          }
-        )
-    }
-  }
-
-  private def checkAndRedirect(
-    value: TaxIdentifier,
-    taxIdentifierName: String)(implicit hc: HeaderCarrier, request: Request[AnyContent], agent: Agent): Future[Result] =
-    request.session.get("saAgentReferenceToCheck") match {
-      case Some(saAgentReference) =>
-        assuranceService
-          .checkActiveCesaRelationship(value, taxIdentifierName, SaAgentReference(saAgentReference.toUpperCase))
-          .map {
-            case true =>
-              mark("Count-Subscription-InvasiveCheck-Success")
-              Redirect(routes.BusinessIdentificationController.showConfirmBusinessForm())
-            case false =>
-              mark("Count-Subscription-InvasiveCheck-Failed")
-              Redirect(routes.StartController.showCannotCreateAccount())
-          }
-      case None => Redirect(routes.BusinessIdentificationController.invasiveCheckStart())
-    }
 
   def hasInvalidBusinessName(registration: Option[Registration]): Boolean =
     businessDetailsValidator.validate(registration) match {
