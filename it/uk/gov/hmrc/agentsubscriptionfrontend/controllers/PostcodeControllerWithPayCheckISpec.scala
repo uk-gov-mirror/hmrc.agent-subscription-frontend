@@ -94,6 +94,8 @@ class PostcodeControllerWithPayCheckISpec extends BaseISpec with SessionDataMiss
         passSaAgentAssuranceCheck = Some(false),
         passVatDecOrgAgentAssuranceCheck = Some(false),
         passIRCTAgentAssuranceCheck = Some(false))
+
+      sessionStoreService.fetchAgentSession.get.registration.get.taxpayerName shouldBe Some(registrationName)
     }
 
     "redirect to /business-type if businessType is not found in session" in {
