@@ -11,3 +11,5 @@ GET         /service-worker.js         controllers.Assets.at(path="/public", fil
 GET         /manifest.json             controllers.Assets.at(path="/public", file="manifest.json")
 GET         /sw.js                     controllers.Assets.at(path="/public", file="sw.js")
 GET         /images/icons/icon.png     controllers.Assets.at(path="/public", file="images/icons/icon.png")
+GET         /images/icons/icon-192.png     controllers.Assets.at(path="/public", file="images/icons/icon-192.png")
+GET         /images/icons/icon-512.png     controllers.Assets.at(path="/public", file="images/icons/icon-512.png")
