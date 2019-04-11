@@ -24,7 +24,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 abstract class BaseISpec
-    extends UnitSpec with OneAppPerSuite with MongoApp with WireMockSupport with EndpointBehaviours with DataStreamStubs
+    extends UnitSpec with OneAppPerSuite with WireMockSupport with EndpointBehaviours with DataStreamStubs
      with MetricTestSupport {
 
   override implicit lazy val app: Application = appBuilder.build()
@@ -42,7 +42,6 @@ abstract class BaseISpec
         "auditing.consumer.baseUri.host"                     -> wireMockHost,
         "auditing.consumer.baseUri.port"                     -> wireMockPort
       )
-      .configure(mongoConfiguration)
       .overrides(new TestGuiceModule)
 
   override def commonStubs(): Unit = {

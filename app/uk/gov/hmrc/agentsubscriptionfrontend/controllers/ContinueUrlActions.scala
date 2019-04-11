@@ -27,6 +27,8 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 
+import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
+
 @Singleton
 class ContinueUrlActions @Inject()(whiteListService: HostnameWhiteListService, sessionStoreService: SessionStoreService)(
   implicit executor: ExecutionContext) {
@@ -38,19 +40,20 @@ class ContinueUrlActions @Inject()(whiteListService: HostnameWhiteListService, s
           case Success(url) =>
             isRelativeOrAbsoluteWhiteListed(url)
               .collect {
-                case true => Some(url)
+                case true  => Some(url)
+                case false => None
               }
               .recover {
                 case NonFatal(e) =>
-                  Logger(getClass).warn(s"Check for whitelisted hostname failed", e)
+                  Logger.warn(s"Check for whitelisted hostname failed")
                   None
               }
           case Failure(e) =>
-            Logger(getClass).warn(s"$continueUrl is not a valid continue URL", e)
-            Future.successful(None)
+            Logger.warn(s"$continueUrl is not a valid continue URL")
+            None
         }
       case None =>
-        Future.successful(None)
+        None
     }
 
   def withMaybeContinueUrl[A](
@@ -69,5 +72,5 @@ class ContinueUrlActions @Inject()(whiteListService: HostnameWhiteListService, s
 
   private def isRelativeOrAbsoluteWhiteListed(continueUrl: ContinueUrl)(implicit hc: HeaderCarrier): Future[Boolean] =
     if (!continueUrl.isRelativeUrl) whiteListService.isAbsoluteUrlWhiteListed(continueUrl)
-    else Future.successful(true)
+    else true
 }

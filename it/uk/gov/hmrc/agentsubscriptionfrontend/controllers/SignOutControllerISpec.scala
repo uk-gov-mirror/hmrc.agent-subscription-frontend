@@ -3,6 +3,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 import java.net.URLEncoder
 import java.time.LocalDate
 
+import org.scalatest.BeforeAndAfterEach
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{redirectLocation, _}
@@ -19,7 +20,7 @@ import uk.gov.hmrc.play.binders.ContinueUrl
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-trait SignOutControllerISpec extends BaseISpec {
+trait SignOutControllerISpec extends BaseISpec with BeforeAndAfterEach {
   protected def featureFlagAutoMapping: Boolean
 
   protected lazy val sosRedirectUrl = "/government-gateway-registration-frontend?accountType=agent"
@@ -31,6 +32,11 @@ trait SignOutControllerISpec extends BaseISpec {
       .configure("features.auto-map-agent-enrolments" -> featureFlagAutoMapping)
 
   private val fakeRequest = FakeRequest()
+
+  override def beforeEach(): Unit = {
+    super.beforeEach()
+    await(repo.drop)
+  }
 
   def findByUtr(utr: String): Option[StashedChainedSessionDetails] = {
     await(repo.find("chainedSessionDetails.agentSession.utr" -> utr).map(_.headOption))

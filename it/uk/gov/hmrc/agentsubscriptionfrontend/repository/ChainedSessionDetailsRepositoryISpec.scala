@@ -3,24 +3,23 @@ package uk.gov.hmrc.agentsubscriptionfrontend.repository
 import java.time.LocalDate
 import java.util.UUID
 
+import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.Eventually
 import org.scalatestplus.play.OneAppPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
-import uk.gov.hmrc.agentsubscriptionfrontend.support.MongoApp
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData._
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
-class ChainedSessionDetailsRepositoryISpec extends UnitSpec with OneAppPerSuite with MongoApp with Eventually {
+class ChainedSessionDetailsRepositoryISpec extends UnitSpec with OneAppPerSuite with Eventually with BeforeAndAfterEach {
 
   protected def appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
-      .configure(mongoConfiguration)
       .configure("Test.mongodb.chainedsessiondetails.ttl" -> 1)
 
   override implicit lazy val app: Application = appBuilder.build()
@@ -38,7 +37,7 @@ class ChainedSessionDetailsRepositoryISpec extends UnitSpec with OneAppPerSuite 
 
   override def beforeEach() {
     super.beforeEach()
-    await(repo.ensureIndexes)
+    await(repo.drop)
   }
 
   "ChainedSessionDetailsRepository" should {
