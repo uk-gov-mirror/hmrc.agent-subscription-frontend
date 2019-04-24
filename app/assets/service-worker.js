@@ -2,7 +2,7 @@ self.addEventListener('install', function (event) {
     event.waitUntil(
         caches.open('agents-offline').then(function (cache) {
             return cache.addAll([
-                'offline.html'
+                '/offline.html'
             ]);
         })
     );
