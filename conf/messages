@@ -287,9 +287,9 @@ button.back=Back
 button.finishSignOut=Finish and sign out
 
 #Setup Incomplete
-setupIncomplete.title=You cannot set up an agent services account with the details you entered
-setupIncomplete.p1=<a href="{0}">Try again using a different agent user ID</a> if your agency uses more than one Government Gateway account, for example for Self Assessment or PAYE.
-
+setupIncomplete.title=We could not confirm your identity
+setupIncomplete.p1=Before you can create an agent services account, we need to be sure that a client has authorised you to deal with HMRC.
+setupIncomplete.p2=<a href="{0}">Sign in with a different Government Gateway user ID</a> that you use for a client that has authorised you.
 #Invasive check
 invasive.title.saCode=Do you have a Self Assessment agent code?
 invasive.title.option=Client details
