@@ -40,7 +40,6 @@ class BusinessTypeControllerISpec extends BaseISpec with SessionDataMissingSpec 
       doc.getElementById("businessType-limited_company").`val`() shouldBe "limited_company"
       doc.getElementById("businessType-partnership").`val`() shouldBe "partnership"
       doc.getElementById("businessType-llp").`val`() shouldBe "llp"
-      doc.getElementById("businessType-invalid").`val`() shouldBe "invalid"
     }
 
     "contain a link to sign out" in {
@@ -84,37 +83,6 @@ class BusinessTypeControllerISpec extends BaseISpec with SessionDataMissingSpec 
         val result = await(controller.submitBusinessTypeForm(request))
         result should containMessages("businessType.error.no-radio-selected")
       }
-    }
-
-    "redirect to /invalid-business-type page" when {
-      "businessTypeIdentifier is unidentified" in {
-        val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
-          .withFormUrlEncodedBody("businessType" -> "unCateredBusinessTypeIdentifier")
-
-        await(controller.submitBusinessTypeForm(request)).header
-          .headers(LOCATION) shouldBe routes.BusinessTypeController.showInvalidBusinessType().url
-      }
-
-      "businessTypeIdentifier invalid" in {
-        val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
-          .withFormUrlEncodedBody("businessType" -> "invalid")
-
-        await(controller.submitBusinessTypeForm(request)).header
-          .headers(LOCATION) shouldBe routes.BusinessTypeController.showInvalidBusinessType().url
-      }
-    }
-  }
-
-  "showInvalidBusinessType" should {
-    "display invalid business type page" in {
-      val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
-
-      val result = await(controller.showInvalidBusinessType(request))
-
-      result should containMessages("invalid.businessType.title",
-        "invalid.businessType.p1", "invalid.businessType.l1",
-        "invalid.businessType.l2", "invalid.businessType.l3",
-        "invalid.businessType.l4", "invalid.businessType.button")
     }
   }
 

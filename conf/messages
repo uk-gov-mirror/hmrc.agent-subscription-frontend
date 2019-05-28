@@ -194,15 +194,6 @@ vat-details.regDate.month-year.empty=VAT registration date must include a month 
 vat-details.regDate.must.be.in.past=VAT registration date must be in the past
 vat-details.regDate.must.be.later.than.1900=VAT registration date must be later than 1 January 1900
 
-#Invalid Business Type
-invalid.businessType.title=You cannot create an agent services account
-invalid.businessType.p1=You can only create an agent services account if your business is one of the following:
-invalid.businessType.l1=a sole trader business
-invalid.businessType.l2=a limited company
-invalid.businessType.l3=a partnership
-invalid.businessType.l4=a limited liability partnership (LLP)
-invalid.businessType.button=Finish and Sign out
-
 #Business details
 businessDetails.title=Enter your business details
 businessDetails.p1=This will help us match your details against information we currently hold.

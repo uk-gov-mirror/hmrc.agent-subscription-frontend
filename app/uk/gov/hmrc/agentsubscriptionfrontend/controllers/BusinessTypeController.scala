@@ -23,7 +23,6 @@ import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationForms.businessTypeForm
 import uk.gov.hmrc.agentsubscriptionfrontend.models.AgentSession
-import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.Invalid
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
@@ -64,23 +63,14 @@ class BusinessTypeController @Inject()(
         .fold(
           formWithErrors => Ok(html.business_type(formWithErrors)),
           validatedBusinessType => {
-            if (validatedBusinessType == Invalid)
-              Redirect(routes.BusinessTypeController.showInvalidBusinessType())
-            else
-              sessionStoreService.fetchAgentSession
-                .flatMap(_.getOrElse(AgentSession()))
-                .flatMap { agentSession =>
-                  updateSessionAndRedirect(agentSession.copy(businessType = Some(validatedBusinessType)))(
-                    routes.UtrController.showUtrForm())
-                }
+            sessionStoreService.fetchAgentSession
+              .flatMap(_.getOrElse(AgentSession()))
+              .flatMap { agentSession =>
+                updateSessionAndRedirect(agentSession.copy(businessType = Some(validatedBusinessType)))(
+                  routes.UtrController.showUtrForm())
+              }
           }
         )
-    }
-  }
-
-  def showInvalidBusinessType: Action[AnyContent] = Action.async { implicit request =>
-    withSubscribingAgent { implicit agent =>
-      Ok(html.invalid_business_type())
     }
   }
 
