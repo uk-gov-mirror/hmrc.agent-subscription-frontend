@@ -158,6 +158,15 @@
     font-size: 24px;
 }
 
+#amls-form-hint {
+        margin-bottom: 15px;
+
+}
+
+#form-date {
+    margin-bottom: 30px;
+}
+
 .form-field--error .error-notification {
     font-weight: bold;
     font-size: 19px;
@@ -469,3 +478,4 @@ input[type="text"].autocomplete__input {
     padding: 0;
     border: 0;
 }
+
