@@ -23,7 +23,7 @@
 @(businessTypeRadioForm: Form[BusinessType])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 @headerTitle = {
-    <h1 class="heading-large @if(businessTypeRadioForm.hasErrors){push--top}">
+    <h1 class="heading-xlarge @if(businessTypeRadioForm.hasErrors){push--top}">
         @Messages("businessType.title")
     </h1>
 }
@@ -41,11 +41,10 @@
         @input_radio_group(
             businessTypeRadioForm("businessType"),
             Seq(
-                "sole_trader" -> Messages("businessType.option.sole-trader"),
                 "limited_company" -> Messages("businessType.option.limited-company"),
+                "sole_trader" -> Messages("businessType.option.sole-trader"),
                 "partnership" -> Messages("businessType.option.partnership"),
-                "llp" -> Messages("businessType.option.partnership-llp"),
-                "invalid" -> Messages("businessType.option.invalid")
+                "llp" -> Messages("businessType.option.partnership-llp")
             ),
             '_legend -> headerTitle,
             '_groupDivClass -> "soft--ends",

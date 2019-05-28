@@ -29,8 +29,6 @@ POST        /registered-for-vat                   uk.gov.hmrc.agentsubscriptionf
 GET         /vat-registration-details             uk.gov.hmrc.agentsubscriptionfrontend.controllers.VatDetailsController.showVatDetailsForm
 POST        /vat-registration-details             uk.gov.hmrc.agentsubscriptionfrontend.controllers.VatDetailsController.submitVatDetailsForm
 
-GET         /invalid-business-type                uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessTypeController.showInvalidBusinessType
-
 GET         /no-match                             uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showNoMatchFound
 
 GET         /confirm-business                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showConfirmBusinessForm

@@ -38,38 +38,31 @@ object BusinessType {
     override val key: String = "llp"
   }
 
-  case object Invalid extends BusinessType {
-    override val key: String = "inValid"
-  }
-
   def apply(convertToType: String): BusinessType = convertToType match {
-    case "sole_trader"     => SoleTrader
     case "limited_company" => LimitedCompany
+    case "sole_trader"     => SoleTrader
     case "partnership"     => Partnership
     case "llp"             => Llp
-    case _                 => Invalid
   }
 
   implicit val format: Format[BusinessType] = new Format[BusinessType] {
 
     override def reads(json: JsValue): JsResult[BusinessType] = {
       json.as[String] match {
-        case "sole_trader"     => JsSuccess(SoleTrader)
         case "limited_company" => JsSuccess(LimitedCompany)
+        case "sole_trader"     => JsSuccess(SoleTrader)
         case "partnership"     => JsSuccess(Partnership)
         case "llp"             => JsSuccess(Llp)
-        case e                 => JsError(s"invalid value for BusinessType: $e")
       }
       JsSuccess(BusinessType.apply(json.as[String]))
     }
 
     override def writes(o: BusinessType): JsValue =
       o match {
-        case SoleTrader     => JsString("sole_trader")
         case LimitedCompany => JsString("limited_company")
+        case SoleTrader     => JsString("sole_trader")
         case Partnership    => JsString("partnership")
         case Llp            => JsString("llp")
-        case e              => throw new RuntimeException(s"invalid BusinessType: $e")
       }
   }
 }
