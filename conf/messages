@@ -132,7 +132,7 @@ businessType.option.invalid=None of these types of business
 businessType.progressive.title=My business type is not listed here
 businessType.progressive.content.p1=You can only get an agent services account if your business is a sole trader, limited company, partnership or limited liability partnership.
 businessType.progressive.content.link=Finish and sign out
-businessType.error.no-radio-selected = Select your business type
+businessType.error.invalid-choice = Select your business type
 
 #UTR details page
 utr.title=What is the Unique Taxpayer Reference (UTR) of your company?

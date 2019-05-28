@@ -77,11 +77,11 @@ class BusinessTypeControllerISpec extends BaseISpec with SessionDataMissingSpec 
       }
     }
 
-    "choice is missing" should {
-      "return 200 and redisplay the /business-type page with an error message for missing choice" in {
-        implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+    "choice is invalid" should {
+      "return 200 and redisplay the /business-type page with an error message for invalid choice - the user manipulated the submit value" in {
+        implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("businessType" -> "invalid")
         val result = await(controller.submitBusinessTypeForm(request))
-        result should containMessages("businessType.error.no-radio-selected")
+        result should containMessages("businessType.error.invalid-choice")
       }
     }
   }

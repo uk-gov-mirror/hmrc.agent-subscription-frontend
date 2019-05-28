@@ -31,10 +31,20 @@ import scala.util.{Success, Try}
 package object controllers {
   object BusinessIdentificationForms {
 
+    private val businessTypes = List(
+      BusinessType.LimitedCompany.key,
+      BusinessType.Llp.key,
+      BusinessType.Partnership.key,
+      BusinessType.SoleTrader.key)
+
     val businessTypeForm: Form[BusinessType] =
       Form[BusinessType](
-        mapping("businessType" -> optional(text).verifying(radioInputSelected("businessType.error.no-radio-selected")))(
-          input => BusinessType(input.get))(bType => Some(Some(bType.key)))
+        mapping(
+          "businessType" -> nonEmptyText
+            .verifying(
+              "businessType.error.invalid-choice",
+              value => businessTypes.contains(value)
+            ))(input => BusinessType(input))(bType => Some(bType.key))
       )
 
     def utrForm(businessType: String): Form[Utr] =
