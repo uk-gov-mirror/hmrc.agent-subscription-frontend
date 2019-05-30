@@ -138,6 +138,8 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       val arn = "AARN0000001"
       AuthStub.authenticatedAgent(arn)
       implicit val request = FakeRequest()
+      sessionStoreService.currentSession.agentSession = agentSession
+
     }
     def resultOf(request: Request[AnyContent]) = await(controller.showSubscriptionComplete(request))
 
@@ -152,7 +154,10 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
     }
 
     "display the static page content" in new RequestWithSessionDetails {
-      resultOf(request) should containMessages(
+
+      val result = resultOf(request)
+
+      result should containMessages(
         "subscriptionComplete.title",
         "subscriptionComplete.h1",
         "subscriptionComplete.accountName",
@@ -160,24 +165,9 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         "subscriptionComplete.bullet-list.1",
         "subscriptionComplete.bullet-list.2"
       )
-
-      bodyOf(resultOf(request)) should include(hasMessage("subscriptionComplete.p1", "AARN-000-0001"))
-      bodyOf(resultOf(request)) should include(hasMessage("subscriptionComplete.p2", "https://www.gov.uk/guidance/get-an-hmrc-agent-services-account"))
-    }
-
-    "contain a button to continue journey" when {
-      "a continue URL exists in the session, show a generic 'Continue' button using that URL" in new RequestWithSessionDetails {
-        val continueUrl = ContinueUrl("/test-continue-url")
-        sessionStoreService.currentSession.continueUrl = Some(continueUrl)
-
-        resultOf(request) should containSubstrings(s">${htmlEscapedMessage("subscriptionComplete.button.continueJourney")}</a>", continueUrl.url)
-      }
-
-      "no continue URL exists in the session, show a button with a link in AS services" in new RequestWithSessionDetails {
-        sessionStoreService.currentSession.continueUrl = None
-
-        resultOf(request) should containSubstrings(s">${htmlEscapedMessage("subscriptionComplete.button.continueToASAccount")}</a>", redirectUrl)
-      }
+      bodyOf(result) should include(hasMessage("subscriptionComplete.p1", "AARN-000-0001"))
+      bodyOf(result) should include(hasMessage("subscriptionComplete.p2", "test@gmail.com"))
+      bodyOf(result) should include(hasMessage("subscriptionComplete.p3", "https://www.gov.uk/guidance/get-an-hmrc-agent-services-account"))
     }
   }
 

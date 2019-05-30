@@ -257,12 +257,14 @@ linkClients.error.no-radio-selected= Select yes if you want to link your clients
 #Subscription complete
 subscriptionComplete.title=Agent services account created
 subscriptionComplete.h1=Agent services account created
-subscriptionComplete.accountName=Your account reference number
+subscriptionComplete.accountName=You created an account for
 subscriptionComplete.h2=What you can do next
 subscriptionComplete.p1=Make a note of your account reference number <strong class="bold">{0}</strong>. You will need this if you are not able to access your agent services account.
-subscriptionComplete.p2=<a href="{0}">Check the guidance</a> to find out how to:
+subscriptionComplete.p2=We have sent an email to {0} confirming these details.
+subscriptionComplete.p3=<a href="{0}">Check the guidance</a> to find out how to:
 subscriptionComplete.bullet-list.1=sign in to your agent services account
 subscriptionComplete.bullet-list.2=use new HMRC services on behalf of your clients
+subscriptionComplete.button=Go to your agent services account
 
 subscriptionComplete.button.continueToASAccount=Go to your agent services account
 subscriptionComplete.button.continueJourney=Continue

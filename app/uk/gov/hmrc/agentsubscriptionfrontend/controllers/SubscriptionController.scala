@@ -253,16 +253,28 @@ class SubscriptionController @Inject()(
     }
 
     withSubscribedAgent { arn =>
-      for {
-        continueUrlOpt           <- sessionStoreService.fetchContinueUrl.recover(recoverSessionStoreWithNone)
-        wasEligibleForMappingOpt <- sessionStoreService.fetchMappingEligible.recover(recoverSessionStoreWithNone)
-        _                        <- sessionStoreService.remove()
-      } yield {
-        val continueUrl = continueUrlOpt.map(_.url).getOrElse(appConfig.agentServicesAccountUrl)
-        val isUrlToASAccount = continueUrlOpt.isEmpty
-        val wasEligibleForMapping = wasEligibleForMappingOpt.contains(true)
-        val prettifiedArn = TaxIdentifierFormatters.prettify(arn)
-        Ok(html.subscription_complete(continueUrl, isUrlToASAccount, wasEligibleForMapping, prettifiedArn))
+      withValidSession { (_, existingSession) =>
+        existingSession.registration match {
+          case Some(registration) => {
+            val agencyName = registration.taxpayerName.getOrElse(
+              throw new RuntimeException("agency name is missing from registration"))
+            val agencyEmail = registration.emailAddress.getOrElse(
+              throw new RuntimeException("agency email is missing from registration"))
+            for {
+              continueUrlOpt <- sessionStoreService.fetchContinueUrl.recover(recoverSessionStoreWithNone)
+              _              <- sessionStoreService.remove()
+            } yield {
+              val continueUrl = continueUrlOpt.map(_.url).getOrElse(appConfig.agentServicesAccountUrl)
+              val isUrlToASAccount = continueUrlOpt.isEmpty
+              val prettifiedArn = TaxIdentifierFormatters.prettify(arn)
+              Ok(html.subscription_complete(continueUrl, isUrlToASAccount, prettifiedArn, agencyName, agencyEmail))
+            }
+          }
+          case _ => {
+            Logger.warn("no registration details found in agent session")
+            Redirect(routes.BusinessIdentificationController.showNoMatchFound())
+          }
+        }
       }
     }
   }
