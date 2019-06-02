@@ -28,7 +28,7 @@ import play.api.test.Helpers._
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{AMLSDetails, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AddressLookupFrontendStubs._
-import uk.gov.hmrc.agentsubscriptionfrontend.stubs.{AgentSubscriptionStub, AuthStub, MappingStubs}
+import uk.gov.hmrc.agentsubscriptionfrontend.stubs.{AgentServicesAccountStub, AgentSubscriptionStub, AuthStub, MappingStubs}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TaxIdentifierFormatters}
@@ -141,6 +141,8 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       sessionStoreService.currentSession.agentSession = agentSession
 
     }
+    AgentServicesAccountStub.givenGetEmailStub
+
     def resultOf(request: Request[AnyContent]) = await(controller.showSubscriptionComplete(request))
 
     behave like agentRequiresAuthorisation(resultOf)
@@ -515,6 +517,7 @@ class SubscriptionControllerWithAutoMappingOn extends SubscriptionControllerISpe
     "send subscription request and redirect to subscription complete" when {
       "all fields are supplied and was not eligible for mapping" in {
         AgentSubscriptionStub.subscriptionWillSucceed(validUtr, subscriptionRequestWithNoEdit(), arn = "TARN00023")
+        AgentServicesAccountStub.givenGetEmailStub
 
         implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
         sessionStoreService.currentSession.agentSession = agentSession
@@ -530,6 +533,7 @@ class SubscriptionControllerWithAutoMappingOn extends SubscriptionControllerISpe
 
       "all fields are supplied and was eligible for mapping" in {
         AgentSubscriptionStub.subscriptionWillSucceed(validUtr, subscriptionRequestWithNoEdit())
+        AgentServicesAccountStub.givenGetEmailStub
 
         implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
         sessionStoreService.currentSession.agentSession = agentSession
@@ -545,6 +549,7 @@ class SubscriptionControllerWithAutoMappingOn extends SubscriptionControllerISpe
       "amlsDetails are passed in" in {
         val amlsDetails = Some(AMLSDetails("supervisory", "123", LocalDate.now()))
         AgentSubscriptionStub.subscriptionWillSucceed(validUtr, subscriptionRequestWithNoEdit())
+        AgentServicesAccountStub.givenGetEmailStub
 
         implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
         sessionStoreService.currentSession.agentSession = agentSession

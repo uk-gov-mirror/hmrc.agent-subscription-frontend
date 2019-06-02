@@ -70,6 +70,7 @@ class FrontendModule(val environment: Environment, val configuration: Configurat
     bindBaseUrl("auth")
     bindBaseUrl("authentication.government-gateway.sign-in")
     bindBaseUrl("agent-services-account-frontend")
+    bindBaseUrl("agent-services-account")
   }
 
   private def bindBaseUrl(serviceName: String) =

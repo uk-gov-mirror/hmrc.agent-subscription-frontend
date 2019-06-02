@@ -23,7 +23,7 @@ import play.api.i18n.MessagesApi
 import play.api.mvc.{AnyContent, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.connectors.{AddressLookupFrontendConnector, MappingConnector}
+import uk.gov.hmrc.agentsubscriptionfrontend.connectors.{AddressLookupFrontendConnector, AgentServicesAccountConnector, MappingConnector}
 import uk.gov.hmrc.agentsubscriptionfrontend.form.DesAddressForm
 import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
@@ -42,6 +42,7 @@ class SubscriptionController @Inject()(
   override val authConnector: AuthConnector,
   subscriptionService: SubscriptionService,
   override val sessionStoreService: SessionStoreService,
+  agentServicesAccountConnector: AgentServicesAccountConnector,
   addressLookUpConnector: AddressLookupFrontendConnector,
   mappingConnector: MappingConnector,
   continueUrlActions: ContinueUrlActions)(
@@ -258,15 +259,16 @@ class SubscriptionController @Inject()(
           case Some(registration) => {
             val agencyName = registration.taxpayerName.getOrElse(
               throw new RuntimeException("agency name is missing from registration"))
-            val agencyEmail = registration.emailAddress.getOrElse(
-              throw new RuntimeException("agency email is missing from registration"))
             for {
+              agencyEmailOpt <- agentServicesAccountConnector.getAgencyEmail()
               continueUrlOpt <- sessionStoreService.fetchContinueUrl.recover(recoverSessionStoreWithNone)
               _              <- sessionStoreService.remove()
             } yield {
               val continueUrl = continueUrlOpt.map(_.url).getOrElse(appConfig.agentServicesAccountUrl)
               val isUrlToASAccount = continueUrlOpt.isEmpty
               val prettifiedArn = TaxIdentifierFormatters.prettify(arn)
+              val agencyEmail =
+                agencyEmailOpt.getOrElse(throw new RuntimeException("agency email is missing from account"))
               Ok(html.subscription_complete(continueUrl, isUrlToASAccount, prettifiedArn, agencyName, agencyEmail))
             }
           }
