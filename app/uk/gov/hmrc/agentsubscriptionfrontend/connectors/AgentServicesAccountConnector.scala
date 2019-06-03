@@ -38,7 +38,7 @@ import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Named, Singleton}
 import play.api.libs.json.{JsObject, JsPath, Reads}
 import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
-import uk.gov.hmrc.http.{HeaderCarrier, HttpGet, NotFoundException}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpGet, HttpResponse, NotFoundException}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -62,7 +62,12 @@ class AgentServicesAccountConnector @Inject()(
 
   def getAgencyEmail()(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[String]] =
     monitor("ConsumerAPI-Get-AgencyEmail-GET") {
-      http.GET[AgencyEmail](new URL(baseUrl, "/agent-services-account/agent/agency-email").toString).map(_.email)
+      http.GET[HttpResponse](new URL(baseUrl, "/agent-services-account/agent/agency-email").toString).map { result =>
+        result.status match {
+          case 200 => result.json.as[AgencyEmail].email
+          case 204 => None
+        }
+      }
     } recoverWith {
       case _: NotFoundException => Future failed AgencyEmailNotFound()
     }

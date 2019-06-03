@@ -19,6 +19,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 import java.time.LocalDate
 
 import com.github.tomakehurst.wiremock.client.WireMock._
+import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import org.jsoup.Jsoup
 import org.scalatest.concurrent.ScalaFutures
 import play.api.inject.guice.GuiceApplicationBuilder
@@ -26,6 +27,7 @@ import play.api.mvc.{AnyContent, Request}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
+import uk.gov.hmrc.agentsubscriptionfrontend.connectors.{AgencyEmail, AgencyEmailNotFound}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{AMLSDetails, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AddressLookupFrontendStubs._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.{AgentServicesAccountStub, AgentSubscriptionStub, AuthStub, MappingStubs}
@@ -136,12 +138,12 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
   "showSubscriptionComplete" should {
     trait RequestWithSessionDetails {
       val arn = "AARN0000001"
+      val agentServicesAccountStub: StubMapping = AgentServicesAccountStub.givenGetEmailStub
       AuthStub.authenticatedAgent(arn)
       implicit val request = FakeRequest()
       sessionStoreService.currentSession.agentSession = agentSession
 
     }
-    AgentServicesAccountStub.givenGetEmailStub
 
     def resultOf(request: Request[AnyContent]) = await(controller.showSubscriptionComplete(request))
 
@@ -170,6 +172,22 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       bodyOf(result) should include(hasMessage("subscriptionComplete.p1", "AARN-000-0001"))
       bodyOf(result) should include(hasMessage("subscriptionComplete.p2", "test@gmail.com"))
       bodyOf(result) should include(hasMessage("subscriptionComplete.p3", "https://www.gov.uk/guidance/get-an-hmrc-agent-services-account"))
+    }
+
+    "throw RuntimeException no email found in record" in new RequestWithSessionDetails {
+      override val agentServicesAccountStub: StubMapping = AgentServicesAccountStub.givenNoEmailStub
+
+      intercept[RuntimeException] {
+        resultOf(request)
+      }
+    }
+
+    "throw AgencyEmailNotFound Exception" in new RequestWithSessionDetails {
+      override val agentServicesAccountStub: StubMapping = AgentServicesAccountStub.givenNotFoundEmailStub
+
+      intercept[AgencyEmailNotFound] {
+        resultOf(request)
+      }
     }
   }
 
@@ -517,7 +535,6 @@ class SubscriptionControllerWithAutoMappingOn extends SubscriptionControllerISpe
     "send subscription request and redirect to subscription complete" when {
       "all fields are supplied and was not eligible for mapping" in {
         AgentSubscriptionStub.subscriptionWillSucceed(validUtr, subscriptionRequestWithNoEdit(), arn = "TARN00023")
-        AgentServicesAccountStub.givenGetEmailStub
 
         implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
         sessionStoreService.currentSession.agentSession = agentSession
@@ -533,7 +550,6 @@ class SubscriptionControllerWithAutoMappingOn extends SubscriptionControllerISpe
 
       "all fields are supplied and was eligible for mapping" in {
         AgentSubscriptionStub.subscriptionWillSucceed(validUtr, subscriptionRequestWithNoEdit())
-        AgentServicesAccountStub.givenGetEmailStub
 
         implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
         sessionStoreService.currentSession.agentSession = agentSession
@@ -549,7 +565,6 @@ class SubscriptionControllerWithAutoMappingOn extends SubscriptionControllerISpe
       "amlsDetails are passed in" in {
         val amlsDetails = Some(AMLSDetails("supervisory", "123", LocalDate.now()))
         AgentSubscriptionStub.subscriptionWillSucceed(validUtr, subscriptionRequestWithNoEdit())
-        AgentServicesAccountStub.givenGetEmailStub
 
         implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
         sessionStoreService.currentSession.agentSession = agentSession

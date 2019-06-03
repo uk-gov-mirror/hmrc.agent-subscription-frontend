@@ -31,7 +31,7 @@ class AgentServicesAccountSpec extends BaseISpec with MetricTestSupport {
       await(method) shouldBe Some("test@gmail.com")
     }
 
-    s"return no email despite a record found " in {
+    s"return no email despite a record found" in {
       givenNoEmailStub
       await(method) shouldBe None
     }
