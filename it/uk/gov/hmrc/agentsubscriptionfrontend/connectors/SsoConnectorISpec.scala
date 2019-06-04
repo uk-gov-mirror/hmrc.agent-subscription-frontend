@@ -6,12 +6,14 @@ import uk.gov.hmrc.agentsubscriptionfrontend.stubs.SsoStub
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, MetricTestSupport}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpGet}
 import com.kenshoo.play.metrics.Metrics
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class SsoConnectorISpec extends BaseISpec with MetricTestSupport {
 
   private lazy val connector = new SsoConnector(
-    app.injector.instanceOf[HttpGet],
+    app.injector.instanceOf[HttpClient],
     new URL(s"http://localhost:$wireMockPort"),
     app.injector.instanceOf[Metrics])
   private implicit val hc = HeaderCarrier()

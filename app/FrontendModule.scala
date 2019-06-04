@@ -32,6 +32,7 @@ import uk.gov.hmrc.http._
 import uk.gov.hmrc.http.cache.client.SessionCache
 import uk.gov.hmrc.play.audit.http.HttpAuditing
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
+import uk.gov.hmrc.play.bootstrap.http.{DefaultHttpClient, HttpClient}
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.http.ws.WSHttp
 
@@ -52,10 +53,8 @@ class FrontendModule(val environment: Environment, val configuration: Configurat
 
     bindProperty("appName")
 
-    bind(classOf[HttpGet]).to(classOf[HttpVerbs])
-    bind(classOf[HttpPost]).to(classOf[HttpVerbs])
     bind(classOf[AuthConnector]).to(classOf[FrontendAuthConnector])
-    bind(classOf[HttpGet]).to(classOf[HttpVerbs])
+    bind(classOf[HttpClient]).to(classOf[DefaultHttpClient])
     bind(classOf[SessionStoreService])
     bind(classOf[LoggerLike]).toInstance(Logger)
     bind(classOf[SessionCache]).to(classOf[AgentSubscriptionSessionCache])
@@ -101,7 +100,7 @@ class FrontendModule(val environment: Environment, val configuration: Configurat
 
 @Singleton
 class AgentSubscriptionSessionCache @Inject()(
-  val http: HttpGet with HttpPut with HttpDelete,
+  val http: HttpClient,
   @Named("appName") val appName: String,
   @Named("cachable.session-cache-baseUrl") val baseUrl: URL,
   appConfig: AppConfig)

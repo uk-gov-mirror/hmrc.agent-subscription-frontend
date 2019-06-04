@@ -27,7 +27,8 @@ import play.api.mvc.Call
 import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.models.AddressLookupFrontendAddress
-import uk.gov.hmrc.http.{HeaderCarrier, HttpGet, HttpPost, HttpResponse}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NoStackTrace
@@ -35,7 +36,7 @@ import scala.util.control.NoStackTrace
 @Singleton
 class AddressLookupFrontendConnector @Inject()(
   @Named("address-lookup-frontend-baseUrl") baseUrl: URL,
-  http: HttpGet with HttpPost,
+  http: HttpClient,
   metrics: Metrics,
   appConfig: AppConfig)
     extends HttpAPIMonitor {

@@ -10,6 +10,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, MetricTestSuppo
 import uk.gov.hmrc.http._
 import com.kenshoo.play.metrics.Metrics
 import uk.gov.hmrc.domain.Nino
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 import scala.concurrent.ExecutionContext.Implicits.global
 class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {
@@ -19,7 +20,7 @@ class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {
   private lazy val connector: AgentSubscriptionConnector =
     new AgentSubscriptionConnector(
       new URL(s"http://localhost:$wireMockPort"),
-      app.injector.instanceOf[HttpGet with HttpPost with HttpPut],
+      app.injector.instanceOf[HttpClient],
       app.injector.instanceOf[Metrics])
 
   private val utr = Utr("0123456789")

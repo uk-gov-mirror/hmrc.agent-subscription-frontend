@@ -260,16 +260,15 @@ class SubscriptionController @Inject()(
             val agencyName = registration.taxpayerName.getOrElse(
               throw new RuntimeException("agency name is missing from registration"))
             for {
-              agencyEmailOpt <- agentServicesAccountConnector.getAgencyEmail()
+              agencyEmail    <- agentServicesAccountConnector.getAgencyEmail()
               continueUrlOpt <- sessionStoreService.fetchContinueUrl.recover(recoverSessionStoreWithNone)
               _              <- sessionStoreService.remove()
             } yield {
               val continueUrl = continueUrlOpt.map(_.url).getOrElse(appConfig.agentServicesAccountUrl)
               val isUrlToASAccount = continueUrlOpt.isEmpty
               val prettifiedArn = TaxIdentifierFormatters.prettify(arn)
-              val agencyEmail =
-                agencyEmailOpt.getOrElse(throw new RuntimeException("agency email is missing from account"))
-              Ok(html.subscription_complete(continueUrl, isUrlToASAccount, prettifiedArn, agencyName, agencyEmail))
+              Ok(
+                html.subscription_complete(continueUrl, isUrlToASAccount, prettifiedArn, agencyName, agencyEmail.email))
             }
           }
           case _ => {

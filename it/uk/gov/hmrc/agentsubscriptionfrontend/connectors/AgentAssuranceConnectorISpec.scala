@@ -8,6 +8,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, MetricTestSupport}
 import uk.gov.hmrc.domain.{Nino, SaAgentReference}
 import uk.gov.hmrc.http._
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -19,7 +20,7 @@ class AgentAssuranceConnectorISpec extends BaseISpec with MetricTestSupport {
   private lazy val connector =
     new AgentAssuranceConnector(
       new URL(s"http://localhost:$wireMockPort"),
-      app.injector.instanceOf[HttpGet],
+      app.injector.instanceOf[HttpClient],
       app.injector.instanceOf[Metrics])
 
   "getRegistration PAYE" should {

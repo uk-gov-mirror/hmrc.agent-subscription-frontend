@@ -25,12 +25,15 @@ import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.domain.{SaAgentReference, TaxIdentifier}
 import uk.gov.hmrc.http._
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class AgentAssuranceConnector @Inject()(@Named("agent-assurance-baseUrl") baseUrl: URL, http: HttpGet, metrics: Metrics)(
-  implicit ec: ExecutionContext)
+class AgentAssuranceConnector @Inject()(
+  @Named("agent-assurance-baseUrl") baseUrl: URL,
+  http: HttpClient,
+  metrics: Metrics)(implicit ec: ExecutionContext)
     extends HttpAPIMonitor {
   override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
 

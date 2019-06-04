@@ -28,4 +28,10 @@ object AgentServicesAccountStub {
         .withStatus(404)))
   }
 
+  def givenUpstream5xxEmailStub: StubMapping = {
+    stubFor(get(urlEqualTo(agentServicesAccountUrl))
+      .willReturn(aResponse()
+        .withStatus(502)))
+  }
+
 }

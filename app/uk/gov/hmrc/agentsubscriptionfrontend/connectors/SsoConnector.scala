@@ -24,12 +24,13 @@ import com.google.inject.name.Named
 import com.kenshoo.play.metrics.Metrics
 import play.api.Logger
 import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
-import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpGet}
+import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier}
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class SsoConnector @Inject()(http: HttpGet, @Named("sso-baseUrl") baseUrl: URL, metrics: Metrics)(
+class SsoConnector @Inject()(http: HttpClient, @Named("sso-baseUrl") baseUrl: URL, metrics: Metrics)(
   implicit val ec: ExecutionContext)
     extends HttpAPIMonitor {
   override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry

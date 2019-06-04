@@ -27,6 +27,7 @@ import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr, Vrn}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.http._
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import uk.gov.hmrc.play.encoding.UriPathEncoding.encodePathSegment
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -34,7 +35,7 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class AgentSubscriptionConnector @Inject()(
   @Named("agent-subscription-baseUrl") baseUrl: URL,
-  http: HttpGet with HttpPost with HttpPut,
+  http: HttpClient,
   metrics: Metrics)(implicit ec: ExecutionContext)
     extends HttpAPIMonitor {
   override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry

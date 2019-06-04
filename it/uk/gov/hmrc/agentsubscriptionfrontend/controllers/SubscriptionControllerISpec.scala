@@ -18,6 +18,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import java.time.LocalDate
 
+import com.fasterxml.jackson.databind.exc.MismatchedInputException
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import org.jsoup.Jsoup
@@ -27,15 +28,13 @@ import play.api.mvc.{AnyContent, Request}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
-import uk.gov.hmrc.agentsubscriptionfrontend.connectors.{AgencyEmail, AgencyEmailNotFound}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{AMLSDetails, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AddressLookupFrontendStubs._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.{AgentServicesAccountStub, AgentSubscriptionStub, AuthStub, MappingStubs}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TaxIdentifierFormatters}
-import uk.gov.hmrc.http.BadRequestException
-import uk.gov.hmrc.play.binders.ContinueUrl
+import uk.gov.hmrc.http.{BadRequestException, NotFoundException, Upstream5xxResponse}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -174,18 +173,26 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       bodyOf(result) should include(hasMessage("subscriptionComplete.p3", "https://www.gov.uk/guidance/get-an-hmrc-agent-services-account"))
     }
 
-    "throw RuntimeException no email found in record" in new RequestWithSessionDetails {
+    "throw MismatchedInputException when no email found in record" in new RequestWithSessionDetails {
       override val agentServicesAccountStub: StubMapping = AgentServicesAccountStub.givenNoEmailStub
 
-      intercept[RuntimeException] {
+      intercept[MismatchedInputException] {
         resultOf(request)
       }
     }
 
-    "throw AgencyEmailNotFound Exception" in new RequestWithSessionDetails {
+    "throw NotFoundException when no record is found" in new RequestWithSessionDetails {
       override val agentServicesAccountStub: StubMapping = AgentServicesAccountStub.givenNotFoundEmailStub
 
-      intercept[AgencyEmailNotFound] {
+      intercept[NotFoundException] {
+        resultOf(request)
+      }
+    }
+
+    "throw Upstream5xxResponse unable to communicate with upstream service" in new RequestWithSessionDetails {
+      override val agentServicesAccountStub: StubMapping = AgentServicesAccountStub.givenUpstream5xxEmailStub
+
+      intercept[Upstream5xxResponse] {
         resultOf(request)
       }
     }

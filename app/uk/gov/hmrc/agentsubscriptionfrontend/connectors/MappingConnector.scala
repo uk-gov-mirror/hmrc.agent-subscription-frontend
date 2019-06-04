@@ -21,19 +21,17 @@ import java.net.URL
 import com.codahale.metrics.MetricRegistry
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Named, Singleton}
-import play.api.libs.json.JsValue
 import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.models.MappingEligibility
 import uk.gov.hmrc.http._
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class MappingConnector @Inject()(
-  @Named("agent-mapping-baseUrl") baseUrl: URL,
-  http: HttpGet with HttpPost with HttpPut with HttpDelete,
-  metrics: Metrics)(implicit ec: ExecutionContext)
+class MappingConnector @Inject()(@Named("agent-mapping-baseUrl") baseUrl: URL, http: HttpClient, metrics: Metrics)(
+  implicit ec: ExecutionContext)
     extends HttpAPIMonitor {
   override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
 

@@ -8,6 +8,8 @@ import uk.gov.hmrc.agentsubscriptionfrontend.models.MappingEligibility.{IsEligib
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.MappingStubs
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, MetricTestSupport}
 import uk.gov.hmrc.http._
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class MappingConnectorISpec extends BaseISpec with MetricTestSupport {
@@ -17,7 +19,7 @@ class MappingConnectorISpec extends BaseISpec with MetricTestSupport {
   private lazy val connector: MappingConnector =
     new MappingConnector(
       new URL(s"http://localhost:$wireMockPort"),
-      app.injector.instanceOf[HttpGet with HttpPost with HttpPut with HttpDelete],
+      app.injector.instanceOf[HttpClient],
       app.injector.instanceOf[Metrics])
 
   "createPreSubscription" should {
