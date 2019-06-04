@@ -30,15 +30,6 @@ object TaxIdentifierFormatters {
     else None
   }
 
-  def prettify(arn: Arn): String = {
-    val unapplyPattern = """([A-Z]ARN)(\d{3})(\d{4})""".r
-
-    unapplyPattern
-      .unapplySeq(arn.value)
-      .map(_.mkString("-"))
-      .getOrElse(throw new Exception(s"The arn contains an invalid value ${arn.value}"))
-  }
-
   def prettify(utr: Utr): String =
     if (utr.value.trim.length == 10) {
       val (first, last) = utr.value.trim.splitAt(5)
