@@ -266,8 +266,7 @@ class SubscriptionController @Inject()(
             } yield {
               val continueUrl = continueUrlOpt.map(_.url).getOrElse(appConfig.agentServicesAccountUrl)
               val isUrlToASAccount = continueUrlOpt.isEmpty
-              val prettifiedArn = TaxIdentifierFormatters.prettify(arn)
-              Ok(html.subscription_complete(continueUrl, isUrlToASAccount, prettifiedArn, agencyName, agencyEmail))
+              Ok(html.subscription_complete(continueUrl, isUrlToASAccount, arn.value, agencyName, agencyEmail))
             }
           }
           case _ => {

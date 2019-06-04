@@ -147,10 +147,10 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
 
     behave like aPageWithFeedbackLinks(resultOf, new RequestWithSessionDetails {}.request)
 
-    "display the ARN in a prettified format" in new RequestWithSessionDetails {
-      val expectedPrettifiedArn = TaxIdentifierFormatters.prettify(Arn(arn))
-      expectedPrettifiedArn shouldBe "AARN-000-0001"
-      resultOf(request) should containSubstrings(expectedPrettifiedArn)
+    "display the ARN in a raw format (without dashes)" in new RequestWithSessionDetails {
+      val expectedArn = arn
+      expectedArn shouldBe "AARN0000001"
+      resultOf(request) should containSubstrings(expectedArn)
     }
 
     "display the static page content" in new RequestWithSessionDetails {
@@ -165,7 +165,7 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         "subscriptionComplete.bullet-list.1",
         "subscriptionComplete.bullet-list.2"
       )
-      bodyOf(result) should include(hasMessage("subscriptionComplete.p1", "AARN-000-0001"))
+      bodyOf(result) should include(hasMessage("subscriptionComplete.p1", "AARN0000001"))
       bodyOf(result) should include(hasMessage("subscriptionComplete.p2", "test@gmail.com"))
       bodyOf(result) should include(hasMessage("subscriptionComplete.p3", "https://www.gov.uk/guidance/get-an-hmrc-agent-services-account"))
     }
