@@ -32,6 +32,7 @@ import uk.gov.hmrc.http._
 import uk.gov.hmrc.http.cache.client.SessionCache
 import uk.gov.hmrc.play.audit.http.HttpAuditing
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
+import uk.gov.hmrc.play.bootstrap.http.{DefaultHttpClient, HttpClient}
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.http.ws.WSHttp
 
@@ -56,6 +57,7 @@ class FrontendModule(val environment: Environment, val configuration: Configurat
     bind(classOf[HttpPost]).to(classOf[HttpVerbs])
     bind(classOf[AuthConnector]).to(classOf[FrontendAuthConnector])
     bind(classOf[HttpGet]).to(classOf[HttpVerbs])
+    bind(classOf[HttpClient]).to(classOf[DefaultHttpClient])
     bind(classOf[SessionStoreService])
     bind(classOf[LoggerLike]).toInstance(Logger)
     bind(classOf[SessionCache]).to(classOf[AgentSubscriptionSessionCache])
@@ -70,6 +72,8 @@ class FrontendModule(val environment: Environment, val configuration: Configurat
     bindBaseUrl("auth")
     bindBaseUrl("authentication.government-gateway.sign-in")
     bindBaseUrl("agent-services-account-frontend")
+    bindBaseUrl("agent-services-account")
+
   }
 
   private def bindBaseUrl(serviceName: String) =

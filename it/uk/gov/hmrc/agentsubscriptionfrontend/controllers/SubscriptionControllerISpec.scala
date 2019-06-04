@@ -18,7 +18,9 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import java.time.LocalDate
 
+import com.fasterxml.jackson.databind.exc.MismatchedInputException
 import com.github.tomakehurst.wiremock.client.WireMock._
+import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import org.jsoup.Jsoup
 import org.scalatest.concurrent.ScalaFutures
 import play.api.inject.guice.GuiceApplicationBuilder
@@ -28,10 +30,10 @@ import play.api.test.Helpers._
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{AMLSDetails, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AddressLookupFrontendStubs._
-import uk.gov.hmrc.agentsubscriptionfrontend.stubs.{AgentSubscriptionStub, AuthStub, MappingStubs}
+import uk.gov.hmrc.agentsubscriptionfrontend.stubs.{AgentServicesAccountStub, AgentSubscriptionStub, AuthStub, MappingStubs}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TaxIdentifierFormatters}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser._
-import uk.gov.hmrc.http.BadRequestException
+import uk.gov.hmrc.http.{BadRequestException, NotFoundException, Upstream5xxResponse}
 import uk.gov.hmrc.play.binders.ContinueUrl
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -164,6 +166,7 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
   "showSubscriptionComplete" should {
     trait RequestWithSessionDetails {
       val arn = "AARN0000001"
+      val agentServicesAccountStub: StubMapping = AgentServicesAccountStub.givenGetEmailStub
       AuthStub.authenticatedAgent(arn)
       implicit val request = FakeRequest()
     }
@@ -180,7 +183,10 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
     }
 
     "display the static page content" in new RequestWithSessionDetails {
-      resultOf(request) should containMessages(
+
+      val result = resultOf(request)
+
+      result should containMessages(
         "subscriptionComplete.title",
         "subscriptionComplete.h1",
         "subscriptionComplete.accountName",
@@ -188,9 +194,33 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         "subscriptionComplete.bullet-list.1",
         "subscriptionComplete.bullet-list.2"
       )
+      bodyOf(result) should include(hasMessage("subscriptionComplete.p1", "AARN-000-0001"))
+      bodyOf(result) should include(hasMessage("subscriptionComplete.p2", "test@gmail.com"))
+      bodyOf(result) should include(hasMessage("subscriptionComplete.p3", "https://www.gov.uk/guidance/get-an-hmrc-agent-services-account"))
+    }
 
-      bodyOf(resultOf(request)) should include(hasMessage("subscriptionComplete.p1", "AARN-000-0001"))
-      bodyOf(resultOf(request)) should include(hasMessage("subscriptionComplete.p2", "https://www.gov.uk/guidance/get-an-hmrc-agent-services-account"))
+    "throw MismatchedInputException when no email found in record" in new RequestWithSessionDetails {
+      override val agentServicesAccountStub: StubMapping = AgentServicesAccountStub.givenNoEmailStub
+
+      intercept[MismatchedInputException] {
+        resultOf(request)
+      }
+    }
+
+    "throw NotFoundException when no record is found" in new RequestWithSessionDetails {
+      override val agentServicesAccountStub: StubMapping = AgentServicesAccountStub.givenNotFoundEmailStub
+
+      intercept[NotFoundException] {
+        resultOf(request)
+      }
+    }
+
+    "throw Upstream5xxResponse unable to communicate with upstream service" in new RequestWithSessionDetails {
+      override val agentServicesAccountStub: StubMapping = AgentServicesAccountStub.givenUpstream5xxEmailStub
+
+      intercept[Upstream5xxResponse] {
+        resultOf(request)
+      }
     }
 
     "contain a button to continue journey" when {

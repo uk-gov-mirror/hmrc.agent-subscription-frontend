@@ -24,7 +24,7 @@ import play.api.mvc.{AnyContent, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.connectors.{AddressLookupFrontendConnector, MappingConnector}
+import uk.gov.hmrc.agentsubscriptionfrontend.connectors.{AddressLookupFrontendConnector, AgentServicesAccountConnector, MappingConnector}
 import uk.gov.hmrc.agentsubscriptionfrontend.form.DesAddressForm
 import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
@@ -46,6 +46,7 @@ class SubscriptionController @Inject()(
   subscriptionService: SubscriptionService,
   override val sessionStoreService: SessionStoreService,
   addressLookUpConnector: AddressLookupFrontendConnector,
+  agentServicesAccountConnector: AgentServicesAccountConnector,
   mappingConnector: MappingConnector,
   commonRouting: CommonRouting,
   val continueUrlActions: ContinueUrlActions,
@@ -267,6 +268,7 @@ class SubscriptionController @Inject()(
 
     withSubscribedAgent { arn =>
       for {
+        agencyEmail              <- agentServicesAccountConnector.getAgencyEmail()
         continueUrlOpt           <- sessionStoreService.fetchContinueUrl.recover(recoverSessionStoreWithNone)
         wasEligibleForMappingOpt <- sessionStoreService.fetchMappingEligible.recover(recoverSessionStoreWithNone)
         _                        <- sessionStoreService.remove()
@@ -275,7 +277,14 @@ class SubscriptionController @Inject()(
         val isUrlToASAccount = continueUrlOpt.isEmpty
         val wasEligibleForMapping = wasEligibleForMappingOpt.contains(true)
         val prettifiedArn = TaxIdentifierFormatters.prettify(arn)
-        Ok(html.subscription_complete(continueUrl, isUrlToASAccount, wasEligibleForMapping, prettifiedArn))
+        Ok(
+          html.subscription_complete(
+            continueUrl,
+            isUrlToASAccount,
+            wasEligibleForMapping,
+            prettifiedArn,
+            agencyEmail.email))
+//    Ok(html.subscription_complete("Continue", true, true, "TARN000001", "agent@nowhere.going.worldwide"))
       }
     }
   }
