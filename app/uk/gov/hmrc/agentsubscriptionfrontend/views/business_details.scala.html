@@ -1,0 +1,77 @@
+@*
+ * Copyright 2019 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
+@import uk.gov.hmrc.play.views.html.helpers.{form, input, errorSummary}
+@import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
+@import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessDetails
+@import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType
+
+@(businessDetailsForm: Form[BusinessDetails], businessTypeIdentifier: BusinessType)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+
+@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = error_prefix(businessDetailsForm) + Messages("businessDetails.title"), bodyClasses = None) {
+<a href="@routes.BusinessTypeController.showBusinessTypeForm()" class="link-back">@Messages("button.back")</a>
+
+@if(businessDetailsForm.hasErrors) {
+@errorSummary(Messages("error.summary.heading"), businessDetailsForm, Seq.empty, Some("business-details"))
+}
+
+<h1 class="heading-large">@Messages("businessDetails.title")</h1>
+
+@if(businessTypeIdentifier == BusinessType.Llp || businessTypeIdentifier == BusinessType.Partnership) {
+<p>@Messages("businessDetails.p1")</p>
+}
+@form(
+action = routes.BusinessDetailsController.submitBusinessDetails,
+'class -> "form js-form") {
+
+<div class="form-group">
+    @input(
+    businessDetailsForm("utr"),
+    '_label -> Messages(s"businessDetails.label.utr.${businessTypeIdentifier.key}"),
+    '_inputHint -> Messages(s"businessDetails.label.utr.hint"),
+    '_inputClass -> "form-control",
+    '_labelClass -> "soft--ends"
+    )
+</div>
+
+<div class="form-group">
+    <details>
+        <summary>
+            <span class="summary">@Messages(s"businessDetails.details.heading.${businessTypeIdentifier.key}")</span>
+        </summary>
+        <div class="panel panel-border-narrow">
+            <p>@Html(Messages(s"businessDetails.details.content.${businessTypeIdentifier.key}"))</p>
+        </div>
+    </details>
+</div>
+
+<div class="form-group">
+    @input(
+    businessDetailsForm("postcode"),
+    '_label -> Messages("businessDetails.label.postcode"),
+    '_inputHint -> Messages(s"businessDetails.label.postcode.hint"),
+    '_inputClass -> "form-control",
+    '_labelClass -> "soft--ends",
+    '_dataAttributes -> Html("""data-uppercase="true"""")
+    )
+</div>
+
+<div class="form-group">
+    <button class="button" type="submit" id="continue">@Messages("button.continue")</button>
+</div>
+}
+}

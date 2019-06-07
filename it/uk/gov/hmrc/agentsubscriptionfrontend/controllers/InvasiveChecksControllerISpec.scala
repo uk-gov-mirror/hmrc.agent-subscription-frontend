@@ -126,7 +126,8 @@ class InvasiveChecksControllerISpec extends BaseISpec {
         val result = await(controller.submitClientDetailsForm(request))
 
         status(result) shouldBe 303
-        redirectLocation(result) shouldBe Some(routes.NationalInsuranceController.showNationalInsuranceNumberForm().url)
+        //redirectLocation(result) shouldBe Some(routes.NationalInsuranceController.showNationalInsuranceNumberForm().url)
+        redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showConfirmBusinessForm().url)
 
         verifyAgentAssuranceAuditRequestSentWithClientIdentifier(Nino("AA123456A"), true, "SA6012", true)
         metricShouldExistAndBeUpdated("Count-Subscription-InvasiveCheck-Success")
@@ -215,7 +216,8 @@ class InvasiveChecksControllerISpec extends BaseISpec {
       val result = await(controller.submitClientDetailsForm(request))
 
       status(result) shouldBe 303
-      redirectLocation(result) shouldBe Some(routes.NationalInsuranceController.showNationalInsuranceNumberForm().url)
+      //redirectLocation(result) shouldBe Some(routes.NationalInsuranceController.showNationalInsuranceNumberForm().url)
+      redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showConfirmBusinessForm().url)
 
       verifyAgentAssuranceAuditRequestSentWithClientIdentifier(Utr("4000000009"), true, "SA6012", true)
       metricShouldExistAndBeUpdated("Count-Subscription-InvasiveCheck-Success")
@@ -232,7 +234,8 @@ class InvasiveChecksControllerISpec extends BaseISpec {
       val result = await(controller.submitClientDetailsForm(request))
 
       status(result) shouldBe 303
-      redirectLocation(result) shouldBe Some(routes.NationalInsuranceController.showNationalInsuranceNumberForm().url)
+      //redirectLocation(result) shouldBe Some(routes.NationalInsuranceController.showNationalInsuranceNumberForm().url)
+      redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showConfirmBusinessForm().url)
 
       verifyAgentAssuranceAuditRequestSentWithClientIdentifier(Utr("4000000009"), true, "SA6012", true)
       metricShouldExistAndBeUpdated("Count-Subscription-InvasiveCheck-Success")

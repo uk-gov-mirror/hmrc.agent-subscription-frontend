@@ -66,7 +66,8 @@ class ConfirmBusinessISpec extends BaseISpec {
 
       val result = await(controller.showConfirmBusinessForm(request))
 
-      result should containSubstrings(routes.VatDetailsController.showRegisteredForVatForm().url)
+      //result should containSubstrings(routes.VatDetailsController.showRegisteredForVatForm().url)
+      result should containSubstrings(routes.BusinessDetailsController.showBusinessDetailsForm().url)
     }
 
     "show a back button correct when they are registered for vat and provided vat details" in {
@@ -78,7 +79,8 @@ class ConfirmBusinessISpec extends BaseISpec {
 
       val result = await(controller.showConfirmBusinessForm(request))
 
-      result should containSubstrings(routes.VatDetailsController.showVatDetailsForm().url)
+      //result should containSubstrings(routes.VatDetailsController.showVatDetailsForm().url)
+      result should containSubstrings(routes.BusinessDetailsController.showBusinessDetailsForm().url)
     }
   }
 
@@ -216,7 +218,8 @@ class ConfirmBusinessISpec extends BaseISpec {
 
         val result = await(controller.submitConfirmBusinessForm(request))
 
-        result.header.headers(LOCATION) shouldBe routes.UtrController.showUtrForm().url
+        //result.header.headers(LOCATION) shouldBe routes.UtrController.showUtrForm().url
+        result.header.headers(LOCATION) shouldBe routes.BusinessDetailsController.showBusinessDetailsForm().url
       }
     }
 

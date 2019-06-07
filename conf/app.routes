@@ -8,6 +8,9 @@ GET         /return-after-gg-creds-created        uk.gov.hmrc.agentsubscriptionf
 GET         /business-type                        uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessTypeController.showBusinessTypeForm
 POST        /business-type                        uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessTypeController.submitBusinessTypeForm
 
+GET         /business-details                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessDetailsController.showBusinessDetailsForm
+POST        /business-details                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessDetailsController.submitBusinessDetails
+
 GET         /unique-taxpayer-reference            uk.gov.hmrc.agentsubscriptionfrontend.controllers.UtrController.showUtrForm()
 POST        /unique-taxpayer-reference            uk.gov.hmrc.agentsubscriptionfrontend.controllers.UtrController.submitUtrForm()
 
