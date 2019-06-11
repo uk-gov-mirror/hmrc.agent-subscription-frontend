@@ -309,6 +309,12 @@ clientDetails.error.no-radio.selected=Select which details you want to enter
 # Check AMLS Page
 check-amls.title=Are you registered with a money laundering supervisory body?
 
+# AMLS not applied page
+amls-not-applied.title=You cannot create an agent services account
+amls-not-applied.p1=You must be registered with a money laundering supervisory body, or have applied to register with one, before you can create an agent services account.
+amls-not-applied.p2=To find details of supervisory bodies, see <a href="https://www.gov.uk/anti-money-laundering-registration">anti-money laundering registration (opens in a new window or tab).</a>
+amls-not-applied.finish=Finish and sign out
+
 # Money laundering compliance page
 moneyLaunderingCompliance.title=Money laundering compliance details
 moneyLaunderingCompliance.p1=You must be registered with a money laundering supervisory body before you can create an agent services account.

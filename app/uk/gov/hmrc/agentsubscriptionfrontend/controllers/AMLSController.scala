@@ -71,8 +71,8 @@ class AMLSController @Inject()(
               validForm => {
                 val nextPage = validForm match {
                   case Yes =>
-                    Redirect(routes.AMLSController.showMoneyLaunderingComplianceForm())
-                  case No => Redirect(routes.AMLSController.showCheckAmlsApplicationForm())
+                    Redirect(routes.AMLSController.showAmlsDetailsForm())
+                  case No => Redirect(routes.AMLSController.showCheckAmlsAlreadyAppliedForm())
                 }
 
                 sessionStoreService
@@ -85,7 +85,7 @@ class AMLSController @Inject()(
     }
   }
 
-  val showMoneyLaunderingComplianceForm: Action[AnyContent] = Action.async { implicit request =>
+  val showAmlsDetailsForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
       withValidSession { (_, existingSession) =>
         withManuallyAssuredAgent(existingSession) {
@@ -103,9 +103,9 @@ class AMLSController @Inject()(
                     "expiry.month"     -> amlsDetails.membershipExpiresOn.getMonthValue.toString,
                     "expiry.year"      -> amlsDetails.membershipExpiresOn.getYear.toString
                   )
-                Ok(html.money_laundering_compliance(amlsForm(amlsBodies.keySet).bind(form), amlsBodies, mayBeGoBackUrl))
+                Ok(html.amls.amls_details(amlsForm(amlsBodies.keySet).bind(form), amlsBodies, mayBeGoBackUrl))
 
-              case (None, _) => Ok(html.money_laundering_compliance(amlsForm(amlsBodies.keySet), amlsBodies))
+              case (None, _) => Ok(html.amls.amls_details(amlsForm(amlsBodies.keySet), amlsBodies))
             }
           }
         }
@@ -113,7 +113,7 @@ class AMLSController @Inject()(
     }
   }
 
-  def submitMoneyLaunderingComplianceForm: Action[AnyContent] = Action.async { implicit request =>
+  def submitAmlsDetailsForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
       withValidSession { (_, existingSession) =>
         withManuallyAssuredAgent(existingSession) {
@@ -122,7 +122,7 @@ class AMLSController @Inject()(
             .fold(
               formWithErrors => {
                 val form = AMLSForms.formWithRefinedErrors(formWithErrors)
-                Ok(html.money_laundering_compliance(form, amlsBodies))
+                Ok(html.amls.amls_details(form, amlsBodies))
               },
               validForm => {
                 val amlsDetails = AMLSDetails(
@@ -143,13 +143,19 @@ class AMLSController @Inject()(
     }
   }
 
-  def showCheckAmlsApplicationForm: Action[AnyContent] = Action.async { implicit request =>
+  def showCheckAmlsAlreadyAppliedForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
       withValidSession { (_, existingSession) =>
         withManuallyAssuredAgent(existingSession) {
           Ok("Success")
         }
       }
+    }
+  }
+
+  def showAmlsNotAppliedPage: Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { _ =>
+      Ok(html.amls.amls_not_applied())
     }
   }
 

@@ -19,7 +19,7 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
 @import uk.gov.hmrc.agentsubscriptionfrontend.models.AMLSForm
 @import uk.gov.hmrc.agentsubscriptionfrontend.views.html.helpers._
-
+@import uk.gov.hmrc.agentsubscriptionfrontend.views.html._
 
 @(amlsForm: Form[AMLSForm], amlsBodies: Map[String, String], mayBeGoBackUrl: Option[String] = None)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
@@ -60,7 +60,7 @@
 
     <p class="panel panel-border-wide">@Messages("moneyLaunderingCompliance.p1")</p>
 
-    @form(action = routes.AMLSController.submitMoneyLaunderingComplianceForm(), 'class -> "form js-form", 'id -> "dropForm") {
+    @form(action = routes.AMLSController.submitAmlsDetailsForm(), 'class -> "form js-form", 'id -> "dropForm") {
 
         <fieldset>
 

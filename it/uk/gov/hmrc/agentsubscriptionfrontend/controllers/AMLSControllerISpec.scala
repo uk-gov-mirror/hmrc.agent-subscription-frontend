@@ -71,14 +71,14 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
       val result = await(controller.submitCheckAmls(authenticatedRequest.withFormUrlEncodedBody("registeredAmls" -> "yes")))
 
       status(result) shouldBe 303
-      redirectLocation(result) shouldBe Some(routes.AMLSController.showMoneyLaunderingComplianceForm().url)
+      redirectLocation(result) shouldBe Some(routes.AMLSController.showAmlsDetailsForm().url)
     }
 
     "redirect to /check-money-laundering-application when user selects no" in new Setup {
       val result = await(controller.submitCheckAmls(authenticatedRequest.withFormUrlEncodedBody("registeredAmls" -> "no")))
 
       status(result) shouldBe 303
-      redirectLocation(result) shouldBe Some(routes.AMLSController.showCheckAmlsApplicationForm().url)
+      redirectLocation(result) shouldBe Some(routes.AMLSController.showCheckAmlsAlreadyAppliedForm().url)
     }
 
     "handle form with errors" in new Setup {
@@ -95,12 +95,12 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
     }
   }
 
-  "showMoneyLaunderingComplianceForm (GET /money-laundering-compliance)" should {
+  "showAmlsDetailsForm (GET /money-laundering-compliance)" should {
 
-    behave like anAgentAffinityGroupOnlyEndpoint(controller.showMoneyLaunderingComplianceForm(_))
+    behave like anAgentAffinityGroupOnlyEndpoint(controller.showAmlsDetailsForm(_))
 
     "contain page titles and header content" in new Setup {
-      val result = await(controller.showMoneyLaunderingComplianceForm(authenticatedRequest))
+      val result = await(controller.showAmlsDetailsForm(authenticatedRequest))
 
       result should containMessages(
         "moneyLaunderingCompliance.title",
@@ -109,7 +109,7 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
     }
 
     "ask for a money laundering supervisory body name from a list of acceptable values" in new Setup {
-      val result = await(controller.showMoneyLaunderingComplianceForm(authenticatedRequest))
+      val result = await(controller.showAmlsDetailsForm(authenticatedRequest))
       result should containMessages("moneyLaunderingCompliance.amls.title")
 
       val doc = Jsoup.parse(bodyOf(result))
@@ -131,14 +131,14 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
     }
 
     "ask for membership number" in new Setup {
-      val result = await(controller.showMoneyLaunderingComplianceForm(authenticatedRequest))
+      val result = await(controller.showAmlsDetailsForm(authenticatedRequest))
 
       result should containMessages("moneyLaunderingCompliance.membershipNumber.title")
       result should containInputElement("membershipNumber", "text")
     }
 
     "ask for membership expiry date" in new Setup {
-      val result = await(controller.showMoneyLaunderingComplianceForm(authenticatedRequest))
+      val result = await(controller.showAmlsDetailsForm(authenticatedRequest))
 
       result should containMessages(
         "moneyLaunderingCompliance.expiry.title",
@@ -153,7 +153,7 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
     }
 
     "contain a continue button" in new Setup {
-      val result = await(controller.showMoneyLaunderingComplianceForm(authenticatedRequest))
+      val result = await(controller.showAmlsDetailsForm(authenticatedRequest))
 
       result should containSubmitButton(
         expectedMessageKey = "moneyLaunderingCompliance.continue",
@@ -162,7 +162,7 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
     }
 
     "contain a form that would POST to /money-laundering-compliance" in new Setup {
-      val result = await(controller.showMoneyLaunderingComplianceForm(authenticatedRequest))
+      val result = await(controller.showAmlsDetailsForm(authenticatedRequest))
       val doc = Jsoup.parse(bodyOf(result))
 
       val elForm = doc.select("form")
@@ -176,7 +176,7 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
       sessionStoreService.currentSession.agentSession = Some(AgentSession(businessType = Some(SoleTrader), utr = Some(utr)))
       givenAgentIsManuallyAssured(utr.value)
 
-      val result = await(controller.showMoneyLaunderingComplianceForm(authenticatedRequest))
+      val result = await(controller.showAmlsDetailsForm(authenticatedRequest))
 
       status(result) shouldBe 303
       redirectLocation(result).get shouldBe routes.SubscriptionController.showCheckAnswers().url
@@ -185,7 +185,7 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
     "redirect to the /business-type page if there is no InitialDetails in session because the user has returned to a bookmark" in {
       implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
 
-      val result = await(controller.showMoneyLaunderingComplianceForm(request))
+      val result = await(controller.showAmlsDetailsForm(request))
 
       resultShouldBeSessionDataMissing(result)
     }
@@ -197,7 +197,7 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
       sessionStoreService.currentSession.agentSession = Some(AgentSession(businessType = Some(SoleTrader), utr = Some(utr), amlsDetails = Some(amlsDetails)))
       sessionStoreService.currentSession.goBackUrl = Some(routes.SubscriptionController.showCheckAnswers().url)
 
-      val result = await(controller.showMoneyLaunderingComplianceForm(authenticatedRequest))
+      val result = await(controller.showAmlsDetailsForm(authenticatedRequest))
 
       contentAsString(result) should (
         include ("""<a href="/agent-subscription/check-answers" class="link-back">Back</a>""")
@@ -207,8 +207,8 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
     }
   }
 
-  "submitMoneyLaunderingComplianceForm (POST /money-laundering-compliance)" should {
-    behave like anAgentAffinityGroupOnlyEndpoint(controller.submitMoneyLaunderingComplianceForm(_))
+  "submitAmlsDetailsForm (POST /money-laundering-compliance)" should {
+    behave like anAgentAffinityGroupOnlyEndpoint(controller.submitAmlsDetailsForm(_))
 
     val expiryDate = LocalDate.now().plusDays(2)
     val expiryDay = expiryDate.getDayOfMonth.toString
@@ -219,7 +219,7 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
       implicit val requst = authenticatedRequest.withFormUrlEncodedBody("amlsCode" -> "AAT",
         "membershipNumber" -> "12345", "expiry.day" -> expiryDay, "expiry.month" -> expiryMonth,  "expiry.year" -> expiryYear)
 
-      val result = await(controller.submitMoneyLaunderingComplianceForm(requst))
+      val result = await(controller.submitAmlsDetailsForm(requst))
       status(result) shouldBe 303
       redirectLocation(result).get shouldBe routes.SubscriptionController.showCheckAnswers().url
 
@@ -232,7 +232,7 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
       implicit val requst = authenticatedRequest.withFormUrlEncodedBody("amlsCode" -> "",
         "membershipNumber" -> "12345", "expiry.day" -> expiryDay, "expiry.month" -> expiryMonth,  "expiry.year" -> expiryYear)
 
-      val result = await(controller.submitMoneyLaunderingComplianceForm(requst))
+      val result = await(controller.submitAmlsDetailsForm(requst))
       status(result) shouldBe 200
       result should containMessages("moneyLaunderingCompliance.amls.title", "error.moneyLaunderingCompliance.amlscode.empty")
 
@@ -243,7 +243,7 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
       implicit val requst = authenticatedRequest.withFormUrlEncodedBody("amlsCode" -> "Invalid Text",
         "membershipNumber" -> "12345", "expiry.day" -> expiryDay, "expiry.month" -> expiryMonth,  "expiry.year" -> expiryYear)
 
-      val result = await(controller.submitMoneyLaunderingComplianceForm(requst))
+      val result = await(controller.submitAmlsDetailsForm(requst))
       status(result) shouldBe 200
       result should containMessages("moneyLaunderingCompliance.amls.title", "error.moneyLaunderingCompliance.amlscode.invalid")
 
@@ -254,7 +254,7 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
       implicit val requst = authenticatedRequest.withFormUrlEncodedBody("amlsCode" -> "AAT",
         "membershipNumber" -> "", "expiry.day" -> expiryDay, "expiry.month" -> expiryMonth,  "expiry.year" -> expiryYear)
 
-      val result = await(controller.submitMoneyLaunderingComplianceForm(requst))
+      val result = await(controller.submitAmlsDetailsForm(requst))
       status(result) shouldBe 200
       result should containMessages("moneyLaunderingCompliance.membershipNumber.title", "error.moneyLaunderingCompliance.membershipNumber.empty")
 
@@ -265,7 +265,7 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
       implicit val request = authenticatedRequest.withFormUrlEncodedBody("amlsCode" -> "AAT",
         "membershipNumber" -> "12345", "expiry.day" -> "123", "expiry.month" -> expiryMonth,  "expiry.year" -> expiryYear)
 
-      val result = await(controller.submitMoneyLaunderingComplianceForm(request))
+      val result = await(controller.submitAmlsDetailsForm(request))
       status(result) shouldBe 200
       result should containMessages("moneyLaunderingCompliance.expiry.title", "error.moneyLaunderingCompliance.date.invalid")
 
@@ -276,7 +276,7 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
       implicit val request = authenticatedRequest.withFormUrlEncodedBody("amlsCode" -> "AAT",
         "membershipNumber" -> "12345", "expiry.day" -> "", "expiry.month" -> expiryMonth,  "expiry.year" -> expiryYear)
 
-      val result = await(controller.submitMoneyLaunderingComplianceForm(request))
+      val result = await(controller.submitAmlsDetailsForm(request))
       status(result) shouldBe 200
       result should containMessages("moneyLaunderingCompliance.expiry.title", "error.moneyLaunderingCompliance.day.empty")
 
@@ -287,7 +287,7 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
       implicit val request = authenticatedRequest.withFormUrlEncodedBody("amlsCode" -> "AAT",
         "membershipNumber" -> "12345", "expiry.day" -> expiryDay, "expiry.month" -> "",  "expiry.year" -> expiryYear)
 
-      val result = await(controller.submitMoneyLaunderingComplianceForm(request))
+      val result = await(controller.submitAmlsDetailsForm(request))
       status(result) shouldBe 200
       result should containMessages("moneyLaunderingCompliance.expiry.title", "error.moneyLaunderingCompliance.month.empty")
 
@@ -298,7 +298,7 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
       implicit val request = authenticatedRequest.withFormUrlEncodedBody("amlsCode" -> "AAT",
         "membershipNumber" -> "12345", "expiry.day" -> expiryDay, "expiry.month" -> expiryMonth,  "expiry.year" -> "")
 
-      val result = await(controller.submitMoneyLaunderingComplianceForm(request))
+      val result = await(controller.submitAmlsDetailsForm(request))
       status(result) shouldBe 200
       result should containMessages("moneyLaunderingCompliance.expiry.title", "error.moneyLaunderingCompliance.year.empty")
 
@@ -309,7 +309,7 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
       implicit val request = authenticatedRequest.withFormUrlEncodedBody("amlsCode" -> "AAT",
         "membershipNumber" -> "12345", "expiry.day" -> "", "expiry.month" -> "",  "expiry.year" -> expiryYear)
 
-      val result = await(controller.submitMoneyLaunderingComplianceForm(request))
+      val result = await(controller.submitAmlsDetailsForm(request))
       status(result) shouldBe 200
       result should containMessages("moneyLaunderingCompliance.expiry.title", "error.moneyLaunderingCompliance.day.month.empty")
       result shouldNot containMessages("error.moneyLaunderingCompliance.day.empty", "error.moneyLaunderingCompliance.month.empty")
@@ -320,7 +320,7 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
       implicit val request = authenticatedRequest.withFormUrlEncodedBody("amlsCode" -> "AAT",
         "membershipNumber" -> "12345", "expiry.day" -> "", "expiry.month" -> expiryMonth,  "expiry.year" -> "")
 
-      val result = await(controller.submitMoneyLaunderingComplianceForm(request))
+      val result = await(controller.submitAmlsDetailsForm(request))
       status(result) shouldBe 200
       result should containMessages("moneyLaunderingCompliance.expiry.title", "error.moneyLaunderingCompliance.day.year.empty")
       result shouldNot containMessages("error.moneyLaunderingCompliance.day.empty", "error.moneyLaunderingCompliance.year.empty")
@@ -331,7 +331,7 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
       implicit val request = authenticatedRequest.withFormUrlEncodedBody("amlsCode" -> "AAT",
         "membershipNumber" -> "12345", "expiry.day" -> expiryDay, "expiry.month" -> "",  "expiry.year" -> "")
 
-      val result = await(controller.submitMoneyLaunderingComplianceForm(request))
+      val result = await(controller.submitAmlsDetailsForm(request))
       status(result) shouldBe 200
       result should containMessages("moneyLaunderingCompliance.expiry.title", "error.moneyLaunderingCompliance.month.year.empty")
       result shouldNot containMessages("error.moneyLaunderingCompliance.month.empty", "error.moneyLaunderingCompliance.year.empty")
@@ -343,7 +343,7 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
       sessionStoreService.currentSession.agentSession = Some(AgentSession(businessType = Some(SoleTrader), utr = Some(utr)))
       givenAgentIsManuallyAssured(utr.value)
 
-      val result = await(controller.submitMoneyLaunderingComplianceForm(authenticatedRequest))
+      val result = await(controller.submitAmlsDetailsForm(authenticatedRequest))
 
       status(result) shouldBe 303
       redirectLocation(result).get shouldBe routes.SubscriptionController.showCheckAnswers().url
@@ -352,9 +352,27 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
     "redirect to the /business-type page if there is no InitialDetails in session because the user has returned to a bookmark" in {
       implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
 
-      val result = await(controller.submitMoneyLaunderingComplianceForm(request))
+      val result = await(controller.submitAmlsDetailsForm(request))
 
       resultShouldBeSessionDataMissing(result)
+    }
+  }
+
+  "GET /money-laundering-compliance-incomplete" should {
+
+    "display page with correct content" in new Setup {
+
+      val result = await(controller.showAmlsNotAppliedPage(authenticatedRequest))
+
+      result should containMessages(
+        "amls-not-applied.title",
+        "amls-not-applied.p1",
+        "amls-not-applied.finish"
+      )
+
+      result should containSubstrings("To find details of supervisory bodies, see",
+        "anti-money laundering registration (opens in a new window or tab)."
+      )
     }
   }
 }
