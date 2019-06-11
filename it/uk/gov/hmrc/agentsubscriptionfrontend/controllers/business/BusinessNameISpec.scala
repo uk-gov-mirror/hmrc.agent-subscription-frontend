@@ -68,7 +68,7 @@ class BusinessNameISpec extends BaseISpec {
 
       val result = await(controller.submitBusinessNameForm(request))
       status(result) shouldBe 303
-      redirectLocation(result).head shouldBe routes.AMLSController.showMoneyLaunderingComplianceForm().url
+      redirectLocation(result).head shouldBe routes.AMLSController.showCheckAmlsPage().url
 
       await(sessionStoreService.currentSession).agentSession.get.registration.get.taxpayerName shouldBe Some("new Agent name")
     }

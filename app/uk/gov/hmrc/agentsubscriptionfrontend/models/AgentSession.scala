@@ -30,6 +30,7 @@ case class AgentSession(
   registeredForVat: Option[String] = None,
   vatDetails: Option[VatDetails] = None,
   registration: Option[Registration] = None,
+  checkAmls: Option[String] = None,
   amlsDetails: Option[AMLSDetails] = None)
 
 object AgentSession {

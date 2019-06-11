@@ -69,7 +69,7 @@ class BusinessEmailISpec extends BaseISpec {
 
       val result = await(controller.submitBusinessEmailForm(request))
       status(result) shouldBe 303
-      redirectLocation(result).head shouldBe routes.AMLSController.showMoneyLaunderingComplianceForm().url
+      redirectLocation(result).head shouldBe routes.AMLSController.showCheckAmlsPage().url
 
       await(sessionStoreService.fetchAgentSession).get.registration.get.emailAddress shouldBe Some("newagent@example.com")
     }

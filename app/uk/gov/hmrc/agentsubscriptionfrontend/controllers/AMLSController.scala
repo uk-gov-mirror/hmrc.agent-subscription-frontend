@@ -23,7 +23,8 @@ import play.api.mvc.{AnyContent, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.config.amls.AMLSLoader
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentAssuranceConnector
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{AMLSDetails, AgentSession}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AMLSDetails, AgentSession, RadioInputAnswer}
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
@@ -48,6 +49,41 @@ class AMLSController @Inject()(
   import AMLSForms._
 
   private val amlsBodies: Map[String, String] = AMLSLoader.load("/amls.csv")
+
+  def showCheckAmlsPage: Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { _ =>
+      withValidSession { (_, existingSession) =>
+        withManuallyAssuredAgent(existingSession) {
+          Ok(html.amls.check_amls(checkAmlsForm))
+        }
+      }
+    }
+  }
+
+  def submitCheckAmls: Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { _ =>
+      withValidSession { (_, existingSession) =>
+        withManuallyAssuredAgent(existingSession) {
+          checkAmlsForm
+            .bindFromRequest()
+            .fold(
+              formWithErrors => Ok(html.amls.check_amls(formWithErrors)),
+              validForm => {
+                val nextPage = validForm match {
+                  case Yes =>
+                    Redirect(routes.AMLSController.showMoneyLaunderingComplianceForm())
+                  case No => Redirect(routes.AMLSController.showCheckAmlsApplicationForm())
+                }
+
+                sessionStoreService
+                  .cacheAgentSession(existingSession.copy(checkAmls = RadioInputAnswer.unapply(validForm)))
+                  .map(_ => nextPage)
+              }
+            )
+        }
+      }
+    }
+  }
 
   val showMoneyLaunderingComplianceForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
@@ -102,6 +138,16 @@ class AMLSController @Inject()(
                   }
               }
             )
+        }
+      }
+    }
+  }
+
+  def showCheckAmlsApplicationForm: Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { _ =>
+      withValidSession { (_, existingSession) =>
+        withManuallyAssuredAgent(existingSession) {
+          Ok("Success")
         }
       }
     }

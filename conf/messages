@@ -96,6 +96,8 @@ error.moneyLaunderingCompliance.date.invalid=Enter a real date
 error.moneyLaunderingCompliance.date.past=The date your membership expires must be in the future
 error.moneyLaunderingCompliance.date.before=The date your membership expires must be within 1 year of today
 
+error.check-amls-value.invalid=Select yes if you are registered with a money laundering supervisory body
+
 ##Modifying address
 address.form.with-errors.error.summary = Please check the following:
 address.form.with-errors.heading = Enter address
@@ -303,6 +305,9 @@ invasive.expandable.p1.open=Your Self Assessment agent code will be on the lette
 error.no-radio-selected=You must choose an option
 invasive.error.no-radio.selected=Select yes if you have a Self Assessment agent code
 clientDetails.error.no-radio.selected=Select which details you want to enter
+
+# Check AMLS Page
+check-amls.title=Are you registered with a money laundering supervisory body?
 
 # Money laundering compliance page
 moneyLaunderingCompliance.title=Money laundering compliance details

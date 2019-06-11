@@ -108,7 +108,7 @@ class ConfirmBusinessISpec extends BaseISpec {
 
         val result = await(controller.submitConfirmBusinessForm(request))
 
-        result.header.headers(LOCATION) shouldBe routes.AMLSController.showMoneyLaunderingComplianceForm().url
+        result.header.headers(LOCATION) shouldBe routes.AMLSController.showCheckAmlsPage().url
       }
 
       "redirect to showBusinessEmailForm if the user has clean creds and isSubscribedToAgentServices=false and ETMP record contains empty email" in {

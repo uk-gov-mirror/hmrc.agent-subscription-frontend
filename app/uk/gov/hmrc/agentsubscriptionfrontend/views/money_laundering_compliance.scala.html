@@ -51,7 +51,7 @@
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title =  error_prefix(amlsForm) + Messages("moneyLaunderingCompliance.title"), bodyClasses = None) {
 
 
-<a href="@mayBeGoBackUrl.getOrElse(routes.BusinessIdentificationController.showConfirmBusinessForm())" class="link-back">@Messages("button.back")</a>
+<a href="@mayBeGoBackUrl.getOrElse(routes.AMLSController.showCheckAmlsPage)" class="link-back">@Messages("button.back")</a>
 
     @if(amlsForm.hasErrors) {
         @errorSummary(Messages("error.summary.heading"), amlsForm, Seq.empty, Some("money-laundering-compliance"))

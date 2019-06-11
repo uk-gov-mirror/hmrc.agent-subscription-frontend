@@ -50,6 +50,51 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
     givenAgentIsNotManuallyAssured(utr.value)
   }
 
+  "GET /check-money-laundering-compliance" should {
+    behave like anAgentAffinityGroupOnlyEndpoint(controller.showCheckAmlsPage(_))
+
+    "contain page with expected content" in new Setup {
+      val result = await(controller.showCheckAmlsPage(authenticatedRequest))
+
+      result should containMessages(
+        "check-amls.title",
+        "button.yes",
+        "button.no"
+      )
+    }
+  }
+
+  "POST /check-money-laundering-compliance" should {
+    behave like anAgentAffinityGroupOnlyEndpoint(controller.submitCheckAmls(_))
+
+    "redirect to /money-laundering-compliance when user selects yes" in new Setup {
+      val result = await(controller.submitCheckAmls(authenticatedRequest.withFormUrlEncodedBody("registeredAmls" -> "yes")))
+
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.AMLSController.showMoneyLaunderingComplianceForm().url)
+    }
+
+    "redirect to /check-money-laundering-application when user selects no" in new Setup {
+      val result = await(controller.submitCheckAmls(authenticatedRequest.withFormUrlEncodedBody("registeredAmls" -> "no")))
+
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.AMLSController.showCheckAmlsApplicationForm().url)
+    }
+
+    "handle form with errors" in new Setup {
+      val result = await(controller.submitCheckAmls(authenticatedRequest.withFormUrlEncodedBody("registeredAmls" -> "blah")))
+
+      status(result) shouldBe 200
+
+      result should containMessages(
+        "check-amls.title",
+        "button.yes",
+        "button.no",
+        "error.check-amls-value.invalid"
+      )
+    }
+  }
+
   "showMoneyLaunderingComplianceForm (GET /money-laundering-compliance)" should {
 
     behave like anAgentAffinityGroupOnlyEndpoint(controller.showMoneyLaunderingComplianceForm(_))
