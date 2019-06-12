@@ -168,6 +168,8 @@ class AMLSController @Inject()(
             toFuture(Redirect(routes.SubscriptionController.showCheckAnswers()))
           } else body
         }
-      case None => Redirect(routes.UtrController.showUtrForm())
+      case None =>
+        Redirect(routes.BusinessDetailsController.showBusinessDetailsForm())
+      //Redirect(routes.UtrController.showUtrForm())
     }
 }
