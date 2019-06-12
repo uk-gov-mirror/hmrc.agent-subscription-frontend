@@ -77,8 +77,13 @@
                 </dt>
                 <dd class="app-check-your-answers__answer" id="amls">
                     @amlsDetails.supervisoryBody<br />
-                    @amlsDetails.membershipNumber<br />
-                    @amlsDetails.membershipExpiresOn.format(DateTimeFormatter.ofPattern("dd MM yyyy"))
+
+                    @amlsDetails.details.fold(pendingDetails => pendingDetails.appliedOn.format(DateTimeFormatter.ofPattern("dd MM yyyy")),
+                                              registeredDetails => {
+                                                    registeredDetails.membershipNumber
+                                                    registeredDetails.membershipExpiresOn.format(DateTimeFormatter.ofPattern("dd MM yyyy"))
+                                              }
+                                             )
                 </dd>
                 <dd class="app-check-your-answers__change">
                     <a href="@routes.AMLSController.showAmlsDetailsForm()">@Messages("checkAnswers.change.button")<span class="visuallyhidden"> @Messages("checkAnswers.amlsDetails.label")</span></a>

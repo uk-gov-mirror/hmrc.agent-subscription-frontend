@@ -193,7 +193,7 @@ class SignOutControllerWithAutoMappingOn extends SignOutControllerISpec {
   override def featureFlagAutoMapping: Boolean = true
 
   "redirectToSos" should {
-    val amlsDetails = AMLSDetails("supervisory", "123456789", LocalDate.now())
+    val amlsDetails = AMLSDetails("supervisory", Right(RegisteredDetails("123456789", LocalDate.now())))
     "save the ChainedSessionDetails in the DB" when {
       "was eligible for mapping" in {
         implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)

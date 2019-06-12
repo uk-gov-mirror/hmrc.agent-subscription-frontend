@@ -23,8 +23,9 @@ import play.api.mvc.{AnyContent, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.config.amls.AMLSLoader
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentAssuranceConnector
+import uk.gov.hmrc.agentsubscriptionfrontend.models
 import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{AMLSDetails, AgentSession, RadioInputAnswer}
+import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
@@ -95,14 +96,20 @@ class AMLSController @Inject()(
           } yield {
             (cachedAmlsDetails, cachedGoBackUrl) match {
               case (Some(amlsDetails), mayBeGoBackUrl) =>
-                val form: Map[String, String] =
-                  Map(
-                    "amlsCode"         -> amlsBodies.find(_._2 == amlsDetails.supervisoryBody).map(_._1).getOrElse(""),
-                    "membershipNumber" -> amlsDetails.membershipNumber,
-                    "expiry.day"       -> amlsDetails.membershipExpiresOn.getDayOfMonth.toString,
-                    "expiry.month"     -> amlsDetails.membershipExpiresOn.getMonthValue.toString,
-                    "expiry.year"      -> amlsDetails.membershipExpiresOn.getYear.toString
-                  )
+                val form: Map[String, String] = amlsDetails.details match {
+                  case Right(registeredDetails) =>
+                    Map(
+                      "amlsCode"         -> amlsBodies.find(_._2 == amlsDetails.supervisoryBody).map(_._1).getOrElse(""),
+                      "membershipNumber" -> registeredDetails.membershipNumber,
+                      "expiry.day"       -> registeredDetails.membershipExpiresOn.getDayOfMonth.toString,
+                      "expiry.month"     -> registeredDetails.membershipExpiresOn.getMonthValue.toString,
+                      "expiry.year"      -> registeredDetails.membershipExpiresOn.getYear.toString
+                    )
+
+                  case Left(_) =>
+                    Map.empty
+                }
+
                 Ok(html.amls.amls_details(amlsForm(amlsBodies.keySet).bind(form), amlsBodies, mayBeGoBackUrl))
 
               case (None, _) => Ok(html.amls.amls_details(amlsForm(amlsBodies.keySet), amlsBodies))
@@ -127,9 +134,7 @@ class AMLSController @Inject()(
               validForm => {
                 val amlsDetails = AMLSDetails(
                   amlsBodies.getOrElse(validForm.amlsCode, throw new Exception("Invalid AMLS code")),
-                  validForm.membershipNumber,
-                  validForm.expiry
-                )
+                  Right(RegisteredDetails(validForm.membershipNumber, validForm.expiry)))
 
                 sessionStoreService
                   .cacheAgentSession(existingSession.copy(amlsDetails = Some(amlsDetails)))
@@ -156,6 +161,69 @@ class AMLSController @Inject()(
   def showAmlsNotAppliedPage: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
       Ok(html.amls.amls_not_applied())
+    }
+  }
+
+  def showPendingAmlsDetailsPage: Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { _ =>
+      withValidSession { (_, existingSession) =>
+        withManuallyAssuredAgent(existingSession) {
+          for {
+            cachedAmlsDetails <- existingSession.map(_.amlsDetails)
+            cachedGoBackUrl   <- sessionStoreService.fetchGoBackUrl
+          } yield {
+            (cachedAmlsDetails, cachedGoBackUrl) match {
+              case (Some(amlsDetails), mayBeGoBackUrl) =>
+                val form: Map[String, String] = amlsDetails.details match {
+                  case Left(pendingDetails) =>
+                    Map(
+                      "amlsCode"        -> amlsBodies.find(_._2 == amlsDetails.supervisoryBody).map(_._1).getOrElse(""),
+                      "appliedOn.day"   -> pendingDetails.appliedOn.getDayOfMonth.toString,
+                      "appliedOn.month" -> pendingDetails.appliedOn.getMonthValue.toString,
+                      "appliedOn.year"  -> pendingDetails.appliedOn.getYear.toString
+                    )
+
+                  case Right(_) =>
+                    Map.empty
+                }
+
+                Ok(
+                  html.amls
+                    .amls_pending_details(amlsPendingForm(amlsBodies.keySet).bind(form), amlsBodies, mayBeGoBackUrl))
+
+              case (None, _) => Ok(html.amls.amls_pending_details(amlsPendingForm(amlsBodies.keySet), amlsBodies))
+            }
+          }
+        }
+      }
+    }
+  }
+
+  def submitPendingAmlsDetails: Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { _ =>
+      withValidSession { (_, existingSession) =>
+        withManuallyAssuredAgent(existingSession) {
+          amlsPendingForm(amlsBodies.keys.toSet)
+            .bindFromRequest()
+            .fold(
+              formWithErrors => {
+                val form = AMLSForms.amlsPendingDetailsFormWithRefinedErrors(formWithErrors)
+                Ok(html.amls.amls_pending_details(form, amlsBodies))
+              },
+              validForm => {
+                val amlsDetails = AMLSDetails(
+                  amlsBodies.getOrElse(validForm.amlsCode, throw new Exception("Invalid AMLS code")),
+                  Left(PendingDetails(validForm.appliedOn)))
+
+                sessionStoreService
+                  .cacheAgentSession(existingSession.copy(amlsDetails = Some(amlsDetails)))
+                  .map { _ =>
+                    Redirect(routes.SubscriptionController.showCheckAnswers())
+                  }
+              }
+            )
+        }
+      }
     }
   }
 

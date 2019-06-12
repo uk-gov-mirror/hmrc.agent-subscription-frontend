@@ -51,7 +51,7 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
 
   protected lazy val redirectUrl = "https://www.gov.uk/"
 
-  val amlsSDetails = AMLSDetails("supervisory", "123456789", LocalDate.now().plusDays(10))
+  val amlsSDetails = AMLSDetails("supervisory", Right(RegisteredDetails("123456789", LocalDate.now().plusDays(10))))
 
   val agentSession = Some(
     AgentSession(Some(BusinessType.SoleTrader), utr = Some(validUtr), postcode = Some(Postcode("AA1 2AA")), registration = Some(registration), amlsDetails = Some(amlsSDetails)))
@@ -542,7 +542,7 @@ class SubscriptionControllerWithAutoMappingOn extends SubscriptionControllerISpe
       }
 
       "amlsDetails are passed in" in {
-        val amlsDetails = Some(AMLSDetails("supervisory", "123", LocalDate.now()))
+        val amlsDetails = Some(AMLSDetails("supervisory", Right(RegisteredDetails("123", LocalDate.now()))))
         AgentSubscriptionStub.subscriptionWillSucceed(validUtr, subscriptionRequestWithNoEdit())
 
         implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)

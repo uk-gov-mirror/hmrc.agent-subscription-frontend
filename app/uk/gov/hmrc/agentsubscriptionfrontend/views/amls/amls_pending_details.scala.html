@@ -1,0 +1,95 @@
+@*
+ * Copyright 2019 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
+@import uk.gov.hmrc.play.views.html.helpers.{form, input, errorSummary, dateFieldsFreeInlineLegend}
+@import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
+@import uk.gov.hmrc.agentsubscriptionfrontend.models.AmlsPendingForm
+@import uk.gov.hmrc.agentsubscriptionfrontend.views.html.helpers._
+@import uk.gov.hmrc.agentsubscriptionfrontend.views.html._
+
+@(amlsPendingForm: Form[AmlsPendingForm], amlsBodies: Map[String, String], mayBeGoBackUrl: Option[String] = None)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+
+
+@DayFieldError = @{
+    if(amlsPendingForm("appliedOn.day").hasErrors)
+        "day-field-error"
+    }
+
+@MonthFieldError = @{
+    if(amlsPendingForm("appliedOn.month").hasErrors)
+        "month-field-error"
+}
+
+@YearFieldError = @{
+    if(amlsPendingForm("appliedOn.year").hasErrors)
+        "year-field-error"
+}
+
+@DateFieldErrorsAll = @{
+    if(amlsPendingForm("expiry").hasErrors && !amlsPendingForm("expiry.day").hasErrors && !amlsPendingForm("expiry.month").hasErrors && !amlsPendingForm("expiry.year").hasErrors)
+        "date-field-errors-all"
+}
+    @dateFormWithRefinedErrors = @{
+        amlsPendingForm.copy(errors = amlsPendingForm.errors.filterNot(error => error.message == "" || !error.key.contains("expiry")))
+    }
+
+
+@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title =  error_prefix(amlsPendingForm) + Messages("moneyLaunderingCompliance.title"), bodyClasses = None) {
+
+
+<a href="@mayBeGoBackUrl.getOrElse(routes.AMLSController.showCheckAmlsAlreadyAppliedForm)" class="link-back">@Messages("button.back")</a>
+
+    @if(amlsPendingForm.hasErrors) {
+        @errorSummary(Messages("error.summary.heading"), amlsPendingForm, Seq.empty, Some("amls-pending-details"))
+    }
+    <h1 class="heading-xlarge margin-bottom-20">@Messages("moneyLaunderingCompliance.title")</h1>
+
+    @form(action = routes.AMLSController.submitPendingAmlsDetails(), 'class -> "form js-form", 'id -> "amlsPendingForm") {
+
+        <fieldset>
+
+            <div class="form-group">
+                @amls_dropdown(
+                amlsPendingForm("amlsCode"),
+                amlsBodies.toSeq,
+                true,
+                '_errorsAboveInput -> true,
+                '_label -> Messages("amls.pending.supervisoryBody.text"),
+                '_inputClass -> "form-control input--cleared",
+                '_labelClass -> "form-element-bold soft--ends",
+                '_selectWrapper -> Html("""class="autocomplete-wrapper"""")
+                )
+            </div>
+
+            <div class="@DayFieldError @MonthFieldError @YearFieldError @DateFieldErrorsAll">
+                @dateFieldsFreeInlineLegend(
+                dateFormWithRefinedErrors,
+                "appliedOn",
+                '_legend -> Messages("amls.pending.appliedOn.title"),
+                '_inputHint -> Messages("moneyLaunderingCompliance.expiry.hint"),
+                '_legendSpanClass -> "form-element-bold",
+                '_legendClass -> "flush--ends"
+                )
+            </div>
+
+        </fieldset>
+
+        <div class="form-group">
+            <button class="button" type="submit" id="continue">@Messages("moneyLaunderingCompliance.continue")</button>
+        </div>
+    }
+}

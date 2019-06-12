@@ -98,6 +98,16 @@ error.moneyLaunderingCompliance.date.before=The date your membership expires mus
 
 error.check-amls-value.invalid=Select yes if you are registered with a money laundering supervisory body
 
+error.amls.pending.appliedOn.date.empty=Enter the date you applied for your membership
+error.amls.pending.appliedOn.day.empty=The date your application must include a day
+error.amls.pending.appliedOn.day.month.empty=The date your application must include a day and a month
+error.amls.pending.appliedOn.day.year.empty=The date your application must include a day and a year
+error.amls.pending.appliedOn.month.year.empty=The date your application must include a month and a year
+error.amls.pending.appliedOn.month.empty=The date your application must include a month
+error.amls.pending.appliedOn.year.empty=The date your application must include a year
+error.amls.pending.appliedOn.date.invalid=Enter a real date
+error.amls.pending.appliedOn.date.too-old=The date your application can not be older than 6 months from now
+
 ##Modifying address
 address.form.with-errors.error.summary = Please check the following:
 address.form.with-errors.heading = Enter address
@@ -327,6 +337,10 @@ moneyLaunderingCompliance.expiry.day.title=Day
 moneyLaunderingCompliance.expiry.month.title=Month
 moneyLaunderingCompliance.expiry.year.title=Year
 moneyLaunderingCompliance.continue=Continue
+
+# Pending AMLS Details page
+amls.pending.supervisoryBody.text=Name of money laundering supervisory body you have applied to
+amls.pending.appliedOn.title=When did you apply to this body?
 
 checkAnswers.title=Check your details before creating your account
 checkAnswers.description.p1=These are the business details we will use for your agent services account.

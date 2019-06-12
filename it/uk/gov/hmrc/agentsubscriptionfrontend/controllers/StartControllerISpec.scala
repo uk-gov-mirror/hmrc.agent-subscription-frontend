@@ -31,7 +31,7 @@ trait StartControllerISpec extends BaseISpec {
 
   object FixturesForReturnAfterGGCredsCreated {
 
-    val amlsSDetails = AMLSDetails("supervisory", "123456789", LocalDate.now())
+    val amlsSDetails = AMLSDetails("supervisory", Right(RegisteredDetails("123456789", LocalDate.now())))
 
     val agentSession =
       AgentSession(Some(BusinessType.SoleTrader), utr = Some(validUtr), postcode = Some(Postcode(postcode)), registration = Some(registration), amlsDetails = Some(amlsSDetails))
