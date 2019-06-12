@@ -17,9 +17,8 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.validators
 
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 
-import play.api.data.Forms.{of, optional, text, tuple}
+import play.api.data.Forms.{of, text}
 import play.api.data.format.Formatter
 import play.api.data.validation._
 import play.api.data.{FormError, Mapping}
@@ -32,7 +31,9 @@ import scala.util.{Failure, Success, Try}
 object CommonValidators {
   private val DesPostcodeRegex = "^[A-Z]{1,2}[0-9][0-9A-Z]?\\s?[0-9][A-Z]{2}$|BFPO\\s?[0-9]{1,5}$"
   private val PostcodeSpecialCharsRegex = """^[A-Za-z0-9 ]*$"""
-  private val EmailSpecialCharsRegex = """^[a-zA-Z 0-9\.\@\_\-]*$"""
+  private val EmailLocalPartRegex = """^[a-zA-Z0-9\.!#$%&'*+\/=?^_`{|}~-]+(?<!\.)$"""
+  private val EmailDomainRegex =
+    """[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"""
   private val DesTextRegex = "^[A-Za-z0-9 \\-,.&'\\/]*$"
 
   private type UtrErrors = (String, String)
@@ -84,7 +85,7 @@ object CommonValidators {
 
   def emailAddress: Mapping[String] =
     text
-      .verifying(nonEmptyEmailAddress)
+      .verifying(validEmailAddress)
 
   def businessName: Mapping[String] =
     text
@@ -162,18 +163,20 @@ object CommonValidators {
     def unbind(key: String, value: String) = Map(key -> value)
   }
 
-  private def nonEmptyEmailAddress = Constraint { fieldValue: String =>
+  private def validEmailAddress = Constraint { fieldValue: String =>
     nonEmptyWithMessage("error.business-email.empty")(fieldValue) match {
-      case i: Invalid =>
-        i
-      case Valid =>
-        fieldValue match {
-          case value if value.length > EmailMaxLength =>
-            Invalid(ValidationError("error.email.maxlength"))
-          case value if !value.matches(EmailSpecialCharsRegex) =>
+      case i: Invalid => i
+      case Valid => {
+        if (fieldValue.size > EmailMaxLength) {
+          Invalid(ValidationError("error.email.maxlength"))
+        } else if (fieldValue.contains('@')) {
+          val email = fieldValue.split('@')
+          if (!email(0).matches(EmailLocalPartRegex) || !email(1).matches(EmailDomainRegex)) {
             Invalid(ValidationError("error.email.invalidchars"))
-          case _ => Constraints.emailAddress(fieldValue)
-        }
+          } else Constraints.emailAddress(fieldValue)
+        } else
+          Invalid(ValidationError("error.email.invalidchars"))
+      }
     }
   }
 

@@ -281,7 +281,9 @@ class CommonValidatorsSpec extends UnitSpec with EitherValues {
     def bind(fieldValue: String) = emailAddress.bind(Map("testKey" -> fieldValue))
 
     def shouldRejectFieldValueAsInvalid(fieldValue: String): Unit =
-      bind(fieldValue) should matchPattern { case Left(List(FormError("testKey", List("error.email"), _))) => }
+      bind(fieldValue) should matchPattern {
+        case Left(List(FormError("testKey", List("error.email.invalidchars"), _))) =>
+      }
 
     def shouldRejectFieldValueAsInvalidChars(fieldValue: String): Unit =
       bind(fieldValue) should matchPattern {
@@ -315,10 +317,9 @@ class CommonValidatorsSpec extends UnitSpec with EitherValues {
       }
 
       "it contains invalid chars" in {
-        shouldRejectFieldValueAsInvalidChars("bad+email@example.com")
-        shouldRejectFieldValueAsInvalidChars("bad*email@example.com")
-        shouldRejectFieldValueAsInvalidChars("bad?email@example.com")
-        shouldRejectFieldValueAsInvalidChars("bad&^%email@example.com")
+        shouldRejectFieldValueAsInvalidChars("bad email@example.com")
+        shouldRejectFieldValueAsInvalidChars("bad£email@example.com")
+        shouldRejectFieldValueAsInvalidChars("bademail.@example.com")
       }
     }
 
