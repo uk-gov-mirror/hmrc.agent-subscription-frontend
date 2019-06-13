@@ -96,6 +96,17 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
 
       resultShouldBeSessionDataMissing(result)
     }
+
+    "redirect to the amls /check-money-laundering-compliance page if amls details are missing in the session" in {
+      implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+      sessionStoreService.currentSession.agentSession = agentSession.map(session => session.copy(amlsDetails = None))
+
+      val result = await(controller.showCheckAnswers(request))
+
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.AMLSController.showCheckAmlsPage().url)
+
+    }
   }
 
   "submitCheckAnswers" should {
@@ -440,7 +451,8 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
           postcode = postcode,
           countryCode = countryCode),
         email = "agency@example.com"
-      )
+      ),
+      amlsDetails = AMLSDetails("supervisory", Right(RegisteredDetails("123456789", LocalDate.now())))
     )
 
   protected def subscriptionRequestWithNoEdit() =
@@ -459,7 +471,7 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         ),
         email = registration.emailAddress.get
       ),
-      amlsDetails = Some(amlsSDetails)
+      amlsDetails = amlsSDetails
     )
 
   private def subscriptionDetailsRequest2(keyToRemove: String = "", additionalParameters: Seq[(String, String)] = Seq()) =
@@ -481,7 +493,8 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
           postcode = postcode,
           countryCode = "GB"),
         email = "agency2@example.com"
-      )
+      ),
+      amlsDetails = AMLSDetails("supervisory", Right(RegisteredDetails("123456789", LocalDate.now())))
     )
 
   private def stubAddressLookupReturnedAddress(addressId: String, subscriptionRequest: SubscriptionRequest, unsupportedAddressLines: Seq[String] = Seq.empty) =

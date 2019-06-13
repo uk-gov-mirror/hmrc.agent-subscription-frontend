@@ -62,22 +62,23 @@ class SubscriptionController @Inject()(
     withSubscribingAgent { agent =>
       withCleanCreds(agent) {
         withValidSession { (_, existingSession) =>
-          existingSession.registration match {
-            case Some(registration) =>
+          (existingSession.registration, existingSession.amlsDetails) match {
+            case (Some(registration), Some(amlsDetails)) =>
               sessionStoreService
                 .cacheGoBackUrl(routes.SubscriptionController.showCheckAnswers().url)
                 .map { _ =>
-                  Ok(html.check_answers(
-                    registrationName = registration.taxpayerName.getOrElse(""),
-                    address = registration.address,
-                    emailAddress = registration.emailAddress,
-                    mayBeAmlsDetails = existingSession.amlsDetails
-                  ))
+                  Ok(
+                    html.check_answers(
+                      registrationName = registration.taxpayerName.getOrElse(""),
+                      address = registration.address,
+                      emailAddress = registration.emailAddress,
+                      amlsDetails = amlsDetails
+                    ))
                 }
 
-            case None =>
-              Logger(getClass).warn(s"Missing data in session or keystore, redirecting back to /business-type")
-              Redirect(routes.BusinessTypeController.showBusinessTypeForm())
+            case (None, _) => Redirect(routes.BusinessDetailsController.showBusinessDetailsForm())
+
+            case (_, None) => Redirect(routes.AMLSController.showCheckAmlsPage())
           }
         }
       }
@@ -88,10 +89,10 @@ class SubscriptionController @Inject()(
     withSubscribingAgent { agent =>
       withCleanCreds(agent) {
         withValidSession { (_, existingSession) =>
-          (existingSession.utr, existingSession.postcode, existingSession.registration) match {
-            case (Some(utr), Some(postcode), Some(registration)) =>
+          (existingSession.utr, existingSession.postcode, existingSession.registration, existingSession.amlsDetails) match {
+            case (Some(utr), Some(postcode), Some(registration), Some(amlsDetails)) =>
               subscriptionService
-                .subscribe(utr, postcode, registration, existingSession.amlsDetails)
+                .subscribe(utr, postcode, registration, amlsDetails)
                 .flatMap(redirectSubscriptionResponse(_, utr))
 
             case _ =>
@@ -185,7 +186,7 @@ class SubscriptionController @Inject()(
     appConfig.autoMapAgentEnrolments match {
       case true =>
         withSubscribingAgent { _ =>
-          withValidSession { (_, existingSession) =>
+          withValidSession { (_, _) =>
             toFuture(Ok(html.link_clients(linkClientsForm)))
           }
         }

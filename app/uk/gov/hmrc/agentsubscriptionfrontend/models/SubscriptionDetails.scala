@@ -24,7 +24,7 @@ case class SubscriptionDetails(
   name: String,
   email: String,
   address: DesAddress,
-  amlsDetails: Option[AMLSDetails])
+  amlsDetails: AMLSDetails)
 
 object SubscriptionDetails {
   implicit val formatDesAddress: Format[DesAddress] = Json.format[DesAddress]
@@ -34,7 +34,7 @@ object SubscriptionDetails {
     utr: Utr,
     postcode: Postcode,
     registration: Registration,
-    amlsDetails: Option[AMLSDetails]): SubscriptionDetails = {
+    amlsDetails: AMLSDetails): SubscriptionDetails = {
     val desAddress = DesAddress(
       registration.address.addressLine1,
       registration.address.addressLine2,

@@ -21,7 +21,7 @@
 @import uk.gov.hmrc.play.views.html.helpers.{form, input, errorSummary}
 @import java.time.format.DateTimeFormatter
 
-@(registrationName: String, address: BusinessAddress, emailAddress: Option[String], mayBeAmlsDetails: Option[AMLSDetails])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+@(registrationName: String, address: BusinessAddress, emailAddress: Option[String], amlsDetails: AMLSDetails)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = Messages("checkAnswers.title"), bodyClasses = None) {
 
@@ -70,26 +70,22 @@
                 <a href="@routes.BusinessIdentificationController.changeBusinessEmail()">@Messages("checkAnswers.change.button")<span class="visuallyhidden"> @Messages("checkAnswers.businessEmailAddress.label")</span></a>
             </dd>
         </div>
-        @mayBeAmlsDetails.map { amlsDetails =>
-            <div class="app-check-your-answers__contents">
-                <dt class="app-check-your-answers__question">
-                    @Messages("checkAnswers.amlsDetails.label")
-                </dt>
-                <dd class="app-check-your-answers__answer" id="amls">
-                    @amlsDetails.supervisoryBody<br />
 
-                    @amlsDetails.details.fold(pendingDetails => pendingDetails.appliedOn.format(DateTimeFormatter.ofPattern("dd MM yyyy")),
-                                              registeredDetails => {
-                                                    registeredDetails.membershipNumber
-                                                    registeredDetails.membershipExpiresOn.format(DateTimeFormatter.ofPattern("dd MM yyyy"))
-                                              }
-                                             )
-                </dd>
-                <dd class="app-check-your-answers__change">
-                    <a href="@amlsDetails.details.fold(pendingDetails => routes.AMLSController.showPendingAmlsDetailsPage, registeredDetails => routes.AMLSController.showAmlsDetailsForm())">@Messages("checkAnswers.change.button")<span class="visuallyhidden"> @Messages("checkAnswers.amlsDetails.label")</span></a>
-                </dd>
-            </div>
-        }
+        <div class="app-check-your-answers__contents">
+            <dt class="app-check-your-answers__question">
+                @Messages("checkAnswers.amlsDetails.label")
+            </dt>
+            <dd class="app-check-your-answers__answer" id="amls">
+                @amlsDetails.supervisoryBody<br/>
+
+                @amlsDetails.details.fold(pendingDetails => pendingDetails.appliedOn.format(DateTimeFormatter.ofPattern("dd MM yyyy")),
+                                          registeredDetails => Html(registeredDetails.membershipNumber + "<br/>" + registeredDetails.membershipExpiresOn.format(DateTimeFormatter.ofPattern("dd MM yyyy")) )
+                                         )
+            </dd>
+            <dd class="app-check-your-answers__change">
+                <a href="@routes.AMLSController.showCheckAmlsPage()">@Messages("checkAnswers.change.button")<span class="visuallyhidden"> @Messages("checkAnswers.amlsDetails.label")</span></a>
+            </dd>
+        </div>
     </dl>
 
     <br />
