@@ -31,6 +31,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html.amls._
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.HeaderCarrier
+import views.html.helper.form
 
 import scala.collection.immutable.Map
 import scala.concurrent.{ExecutionContext, Future}
@@ -55,7 +56,7 @@ class AMLSController @Inject()(
     withSubscribingAgent { _ =>
       withValidSession { (_, existingSession) =>
         withManuallyAssuredAgent(existingSession) {
-          existingSession.amlsAppliedFor.fold(Ok(check_amls(checkAmlsForm)))(amls =>
+          existingSession.checkAmls.fold(Ok(check_amls(checkAmlsForm)))(amls =>
             Ok(check_amls(checkAmlsForm.bind(Map("registeredAmls" -> amls.toString)))))
         }
       }
@@ -129,9 +130,9 @@ class AMLSController @Inject()(
           } yield {
             (cachedAmlsDetails, cachedGoBackUrl) match {
               case (Some(amlsDetails), mayBeGoBackUrl) =>
-                val form: Map[String, String] = amlsDetails.details match {
+                amlsDetails.details match {
                   case Right(registeredDetails) =>
-                    Map(
+                    val form: Map[String, String] = Map(
                       "amlsCode"         -> amlsBodies.find(_._2 == amlsDetails.supervisoryBody).map(_._1).getOrElse(""),
                       "membershipNumber" -> registeredDetails.membershipNumber,
                       "expiry.day"       -> registeredDetails.membershipExpiresOn.getDayOfMonth.toString,
@@ -139,11 +140,11 @@ class AMLSController @Inject()(
                       "expiry.year"      -> registeredDetails.membershipExpiresOn.getYear.toString
                     )
 
-                  case Left(_) =>
-                    Map.empty
-                }
+                    Ok(html.amls.amls_details(amlsForm(amlsBodies.keySet).bind(form), amlsBodies, mayBeGoBackUrl))
 
-                Ok(html.amls.amls_details(amlsForm(amlsBodies.keySet).bind(form), amlsBodies, mayBeGoBackUrl))
+                  case Left(_) =>
+                    Ok(html.amls.amls_details(amlsForm(amlsBodies.keySet), amlsBodies, mayBeGoBackUrl))
+                }
 
               case (None, _) => Ok(html.amls.amls_details(amlsForm(amlsBodies.keySet), amlsBodies))
             }
@@ -197,22 +198,23 @@ class AMLSController @Inject()(
           } yield {
             (cachedAmlsDetails, cachedGoBackUrl) match {
               case (Some(amlsDetails), mayBeGoBackUrl) =>
-                val form: Map[String, String] = amlsDetails.details match {
+                amlsDetails.details match {
                   case Left(pendingDetails) =>
-                    Map(
+                    val form: Map[String, String] = Map(
                       "amlsCode"        -> amlsBodies.find(_._2 == amlsDetails.supervisoryBody).map(_._1).getOrElse(""),
                       "appliedOn.day"   -> pendingDetails.appliedOn.getDayOfMonth.toString,
                       "appliedOn.month" -> pendingDetails.appliedOn.getMonthValue.toString,
                       "appliedOn.year"  -> pendingDetails.appliedOn.getYear.toString
                     )
 
-                  case Right(_) =>
-                    Map.empty
-                }
+                    Ok(html.amls
+                      .amls_pending_details(amlsPendingForm(amlsBodies.keySet).bind(form), amlsBodies, mayBeGoBackUrl))
 
-                Ok(
-                  html.amls
-                    .amls_pending_details(amlsPendingForm(amlsBodies.keySet).bind(form), amlsBodies, mayBeGoBackUrl))
+                  case Right(_) =>
+                    Ok(
+                      html.amls
+                        .amls_pending_details(amlsPendingForm(amlsBodies.keySet), amlsBodies, mayBeGoBackUrl))
+                }
 
               case (None, _) => Ok(html.amls.amls_pending_details(amlsPendingForm(amlsBodies.keySet), amlsBodies))
             }
