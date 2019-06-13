@@ -120,7 +120,8 @@ object CommonValidators {
       "year"  -> text.verifying("year", y => !y.trim.isEmpty || y.matches("^[0-9]{1,4}$")),
       "month" -> text.verifying("month", y => !y.trim.isEmpty || y.matches("^[0-9]{1,2}$")),
       "day"   -> text.verifying("day", d => !d.trim.isEmpty || d.matches("^[0-9]{1,2}$"))
-    ).verifying(checkOneAtATime(Seq(invalidDateConstraint, within6MonthsPastDateConstraint)))
+    ).verifying(
+        checkOneAtATime(Seq(invalidDateConstraint, within6MonthsPastDateConstraint, futureApplicationConstraint)))
       .transform(
         { case (y, m, d) => LocalDate.of(y.trim.toInt, m.trim.toInt, d.trim.toInt) },
         (date: LocalDate) => (date.getYear.toString, date.getMonthValue.toString, date.getDayOfMonth.toString)
@@ -356,4 +357,14 @@ object CommonValidators {
 
   private def validateAMLSBodies(amlsCode: String, bodies: Set[String]): Boolean =
     bodies.contains(amlsCode)
+
+  private val futureApplicationConstraint: Constraint[(String, String, String)] = Constraint[(String, String, String)] {
+    data: (String, String, String) =>
+      val (year, month, day) = data
+
+      if (LocalDate.of(year.toInt, month.toInt, day.toInt).isAfter(LocalDate.now()))
+        Invalid(ValidationError("error.amls.pending.appliedOn.date.cannot-be-in-future"))
+      else
+        Valid
+  }
 }

@@ -108,6 +108,7 @@ error.amls.pending.appliedOn.month.empty=The date your application must include 
 error.amls.pending.appliedOn.year.empty=The date your application must include a year
 error.amls.pending.appliedOn.date.invalid=Enter a real date
 error.amls.pending.appliedOn.date.too-old=The date your application can not be older than 6 months from now
+error.amls.pending.appliedOn.date.cannot-be-in-future=The date your application can not be in future
 
 ##Modifying address
 address.form.with-errors.error.summary = Please check the following:
