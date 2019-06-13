@@ -137,9 +137,15 @@ package object controllers {
 
     def checkAmlsForm: Form[RadioInputAnswer] =
       Form[RadioInputAnswer](
-        mapping("registeredAmls" -> nonEmptyText
-          .verifying("error.check-amls-value.invalid", value => value == "yes" || value == "no"))(
-          RadioInputAnswer.apply)(RadioInputAnswer.unapply))
+        mapping("registeredAmls" -> optional(text)
+          .verifying("error.check-amls-value.invalid", a => a.contains("yes") || a.contains("no")))(a =>
+          RadioInputAnswer.apply(a.getOrElse("")))(a => Some(RadioInputAnswer.unapply(a))))
+
+    def appliedForAmlsForm: Form[RadioInputAnswer] =
+      Form[RadioInputAnswer](
+        mapping("amlsAppliedFor" -> optional(text)
+          .verifying("error.check-amlsAppliedFor-value.invalid", a => a.contains("yes") || a.contains("no")))(a =>
+          RadioInputAnswer.apply(a.getOrElse("")))(a => Some(RadioInputAnswer.unapply(a))))
 
     def amlsForm(bodies: Set[String]): Form[AMLSForm] =
       Form[AMLSForm](

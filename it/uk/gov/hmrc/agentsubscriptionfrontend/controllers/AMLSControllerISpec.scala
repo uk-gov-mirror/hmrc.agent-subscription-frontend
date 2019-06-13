@@ -81,7 +81,20 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
       redirectLocation(result) shouldBe Some(routes.AMLSController.showCheckAmlsAlreadyAppliedForm().url)
     }
 
-    "handle form with errors" in new Setup {
+    "handle form with errors - user does not make a choice and tries to continue" in new Setup {
+      val result = await(controller.submitCheckAmls(authenticatedRequest.withFormUrlEncodedBody("registeredAmls" -> "")))
+
+      status(result) shouldBe 200
+
+      result should containMessages(
+        "check-amls.title",
+        "button.yes",
+        "button.no",
+        "error.check-amls-value.invalid"
+      )
+    }
+
+    "handle form with errors - user manipulates the value and tries to continue" in new Setup {
       val result = await(controller.submitCheckAmls(authenticatedRequest.withFormUrlEncodedBody("registeredAmls" -> "blah")))
 
       status(result) shouldBe 200
@@ -91,6 +104,65 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
         "button.yes",
         "button.no",
         "error.check-amls-value.invalid"
+      )
+    }
+  }
+
+
+  "GET /check-money-laundering-application" should {
+    behave like anAgentAffinityGroupOnlyEndpoint(controller.showCheckAmlsAlreadyAppliedForm(_))
+
+    "contain page with expected content" in new Setup {
+      val result = await(controller.showCheckAmlsAlreadyAppliedForm(authenticatedRequest))
+
+      result should containMessages(
+        "amlsAppliedFor.title",
+        "button.yes",
+        "button.no"
+      )
+    }
+  }
+
+  "POST /check-money-laundering-application" should {
+    behave like anAgentAffinityGroupOnlyEndpoint(controller.submitCheckAmlsAlreadyAppliedForm(_))
+
+    "redirect to /money-laundering-application-details when user selects yes" in new Setup {
+      val result = await(controller.submitCheckAmlsAlreadyAppliedForm(authenticatedRequest.withFormUrlEncodedBody("amlsAppliedFor" -> "yes")))
+
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.AMLSController.showPendingAmlsDetailsPage().url)
+    }
+
+    "redirect to /money-laundering-compliance-incomplete when user selects no" in new Setup {
+      val result = await(controller.submitCheckAmlsAlreadyAppliedForm(authenticatedRequest.withFormUrlEncodedBody("amlsAppliedFor" -> "no")))
+
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.AMLSController.showAmlsNotAppliedPage().url)
+    }
+
+    "handle form with errors - user does not make a choice and tries to continue" in new Setup {
+      val result = await(controller.submitCheckAmlsAlreadyAppliedForm(authenticatedRequest.withFormUrlEncodedBody("amlsAppliedFor" -> "")))
+
+      status(result) shouldBe 200
+
+      result should containMessages(
+        "amlsAppliedFor.title",
+        "button.yes",
+        "button.no",
+        "error.check-amlsAppliedFor-value.invalid"
+      )
+    }
+
+    "handle form with errors - user manipulates the value and tries to continue" in new Setup {
+      val result = await(controller.submitCheckAmlsAlreadyAppliedForm(authenticatedRequest.withFormUrlEncodedBody("amlsAppliedFor" -> "blah")))
+
+      status(result) shouldBe 200
+
+      result should containMessages(
+        "amlsAppliedFor.title",
+        "button.yes",
+        "button.no",
+        "error.check-amlsAppliedFor-value.invalid"
       )
     }
   }

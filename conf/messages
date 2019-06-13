@@ -97,6 +97,7 @@ error.moneyLaunderingCompliance.date.past=The date your membership expires must 
 error.moneyLaunderingCompliance.date.before=The date your membership expires must be within 1 year of today
 
 error.check-amls-value.invalid=Select yes if you are registered with a money laundering supervisory body
+error.check-amlsAppliedFor-value.invalid=Select yes if you have applied to an anti money laundering supervisory body
 
 error.amls.pending.appliedOn.date.empty=Enter the date you applied for your membership
 error.amls.pending.appliedOn.day.empty=The date your application must include a day
@@ -324,6 +325,11 @@ amls-not-applied.title=You cannot create an agent services account
 amls-not-applied.p1=You must be registered with a money laundering supervisory body, or have applied to register with one, before you can create an agent services account.
 amls-not-applied.p2=To find details of supervisory bodies, see <a href="https://www.gov.uk/anti-money-laundering-registration" target="_blank" rel="noopener noreferrer">anti-money laundering registration (opens in a new window or tab).</a>
 amls-not-applied.finish=Finish and sign out
+
+# AMLS applied for
+
+amlsAppliedFor.title=Have you applied to register with a money laundering supervisory body?
+
 
 # Money laundering compliance page
 moneyLaunderingCompliance.title=Money laundering compliance details

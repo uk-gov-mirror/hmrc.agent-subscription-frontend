@@ -23,12 +23,12 @@ import play.api.mvc.{AnyContent, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.config.amls.AMLSLoader
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentAssuranceConnector
-import uk.gov.hmrc.agentsubscriptionfrontend.models
 import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
+import uk.gov.hmrc.agentsubscriptionfrontend.views.html.amls._
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -55,7 +55,8 @@ class AMLSController @Inject()(
     withSubscribingAgent { _ =>
       withValidSession { (_, existingSession) =>
         withManuallyAssuredAgent(existingSession) {
-          Ok(html.amls.check_amls(checkAmlsForm))
+          existingSession.amlsAppliedFor.fold(Ok(check_amls(checkAmlsForm)))(amls =>
+            Ok(check_amls(checkAmlsForm.bind(Map("registeredAmls" -> amls.toString)))))
         }
       }
     }
@@ -75,12 +76,44 @@ class AMLSController @Inject()(
                     Redirect(routes.AMLSController.showAmlsDetailsForm())
                   case No => Redirect(routes.AMLSController.showCheckAmlsAlreadyAppliedForm())
                 }
-
                 sessionStoreService
                   .cacheAgentSession(existingSession.copy(checkAmls = RadioInputAnswer.unapply(validForm)))
                   .map(_ => nextPage)
               }
             )
+        }
+      }
+    }
+  }
+
+  def showCheckAmlsAlreadyAppliedForm: Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { _ =>
+      withValidSession { (_, existingSession) =>
+        withManuallyAssuredAgent(existingSession) {
+          existingSession.amlsAppliedFor.fold(Ok(amls_applied_for(appliedForAmlsForm)))(amls =>
+            Ok(amls_applied_for(appliedForAmlsForm.bind(Map("amlsAppliedFor" -> amls.toString)))))
+        }
+      }
+    }
+  }
+
+  def submitCheckAmlsAlreadyAppliedForm: Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { _ =>
+      withValidSession { (_, existingSession) =>
+        withManuallyAssuredAgent(existingSession) {
+          appliedForAmlsForm.bindFromRequest.fold(
+            formWithErrors => Ok(amls_applied_for(formWithErrors)),
+            validForm => {
+              val nextPage = validForm match {
+                case Yes => Redirect(routes.AMLSController.showPendingAmlsDetailsPage())
+                case No  => Redirect(routes.AMLSController.showAmlsNotAppliedPage())
+              }
+
+              sessionStoreService
+                .cacheAgentSession(existingSession.copy(amlsAppliedFor = RadioInputAnswer.unapply(validForm)))
+                .map(_ => nextPage)
+            }
+          )
         }
       }
     }
@@ -143,16 +176,6 @@ class AMLSController @Inject()(
                   }
               }
             )
-        }
-      }
-    }
-  }
-
-  def showCheckAmlsAlreadyAppliedForm: Action[AnyContent] = Action.async { implicit request =>
-    withSubscribingAgent { _ =>
-      withValidSession { (_, existingSession) =>
-        withManuallyAssuredAgent(existingSession) {
-          Ok("Success")
         }
       }
     }
