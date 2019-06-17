@@ -18,6 +18,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend
 
 import play.api.data.Form
 import play.api.data.Forms.{mapping, _}
+import play.api.i18n.Messages
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{BusinessDetails, RadioInputAnswer, _}
@@ -155,7 +156,7 @@ package object controllers {
           "expiry"           -> expiryDate
         )(AMLSForm.apply)(AMLSForm.unapply))
 
-    def amlsPendingForm: Form[AmlsPendingForm] =
+    def amlsPendingForm(implicit messages: Messages): Form[AmlsPendingForm] =
       Form[AmlsPendingForm](
         mapping(
           "amlsCode"  -> nonEmptyText,

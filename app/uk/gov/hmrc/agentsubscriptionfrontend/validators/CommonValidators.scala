@@ -15,13 +15,14 @@
  */
 
 package uk.gov.hmrc.agentsubscriptionfrontend.validators
-
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 import play.api.data.Forms.{of, text}
 import play.api.data.format.Formatter
 import play.api.data.validation._
 import play.api.data.{FormError, Mapping}
+import play.api.i18n.Messages
 import uk.gov.hmrc.agentsubscriptionfrontend.config.blacklistedpostcodes.PostcodesLoader
 import uk.gov.hmrc.domain.Nino
 
@@ -115,7 +116,7 @@ object CommonValidators {
         (date: LocalDate) => (date.getYear.toString, date.getMonthValue.toString, date.getDayOfMonth.toString)
       )
 
-  def appliedOnDate: Mapping[LocalDate] =
+  def appliedOnDate(implicit messages: Messages): Mapping[LocalDate] =
     tuple(
       "year"  -> text.verifying("year", y => !y.trim.isEmpty || y.matches("^[0-9]{1,4}$")),
       "month" -> text.verifying("month", y => !y.trim.isEmpty || y.matches("^[0-9]{1,2}$")),
@@ -343,16 +344,21 @@ object CommonValidators {
         Invalid(ValidationError("error.moneyLaunderingCompliance.date.before"))
     }
 
-  private val within6MonthsPastDateConstraint: Constraint[(String, String, String)] =
+  private def within6MonthsPastDateConstraint(implicit messages: Messages): Constraint[(String, String, String)] =
     Constraint[(String, String, String)] { data: (String, String, String) =>
       val (year, month, day) = data
 
-      val sixMonthsEarlier = LocalDate.now().minusMonths(6)
+//      Needs to include todays date, 6 months ago
+      val sixMonthsEarlier = LocalDate.now().minusMonths(6).minusDays(1)
 
       if (LocalDate.of(year.toInt, month.toInt, day.toInt).isAfter(sixMonthsEarlier))
         Valid
       else
-        Invalid(ValidationError("error.amls.pending.appliedOn.date.too-old"))
+        Invalid(
+          ValidationError(
+            Messages(
+              "error.amls.pending.appliedOn.date.too-old",
+              sixMonthsEarlier.format(DateTimeFormatter.ofPattern("dd MMMM yyyy")))))
     }
 
   private def validateAMLSBodies(amlsCode: String, bodies: Set[String]): Boolean =

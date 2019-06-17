@@ -78,7 +78,7 @@
                                          )
             </dt>
             <dd class="app-check-your-answers__answer" id="amls">
-                @amlsDetails.details.fold(pendingDetails => pendingDetails.appliedOn.format(DateTimeFormatter.ofPattern("dd MM yyyy")),
+                @amlsDetails.details.fold(pendingDetails => pendingDetails.appliedOn.format(DateTimeFormatter.ofPattern("dd MMMM yyyy")),
                                           registeredDetails => Html(amlsDetails.supervisoryBody + "<br/>" + registeredDetails.membershipNumber + "<br/>" + registeredDetails.membershipExpiresOn.format(DateTimeFormatter.ofPattern("dd MM yyyy")) )
                                          )
             </dd>
