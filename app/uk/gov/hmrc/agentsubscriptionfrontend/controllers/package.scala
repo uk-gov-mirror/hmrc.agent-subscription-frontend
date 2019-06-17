@@ -155,10 +155,10 @@ package object controllers {
           "expiry"           -> expiryDate
         )(AMLSForm.apply)(AMLSForm.unapply))
 
-    def amlsPendingForm(bodies: Set[String]): Form[AmlsPendingForm] =
+    def amlsPendingForm: Form[AmlsPendingForm] =
       Form[AmlsPendingForm](
         mapping(
-          "amlsCode"  -> amlsCode(bodies),
+          "amlsCode"  -> nonEmptyText,
           "appliedOn" -> appliedOnDate
         )(AmlsPendingForm.apply)(AmlsPendingForm.unapply))
 

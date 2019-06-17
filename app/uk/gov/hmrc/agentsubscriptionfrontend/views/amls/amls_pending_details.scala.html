@@ -21,7 +21,7 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.views.html.helpers._
 @import uk.gov.hmrc.agentsubscriptionfrontend.views.html._
 
-@(amlsPendingForm: Form[AmlsPendingForm], amlsBodies: Map[String, String], mayBeGoBackUrl: Option[String] = None)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+@(amlsPendingForm: Form[AmlsPendingForm], mayBeGoBackUrl: Option[String] = None)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 
 @DayFieldError = @{
@@ -40,7 +40,7 @@
 }
 
 @DateFieldErrorsAll = @{
-    if(amlsPendingForm("expiry").hasErrors && !amlsPendingForm("expiry.day").hasErrors && !amlsPendingForm("expiry.month").hasErrors && !amlsPendingForm("expiry.year").hasErrors)
+    if(amlsPendingForm("expiry").hasErrors && !amlsPendingForm("appliedOn.day").hasErrors && !amlsPendingForm("appliedOn.month").hasErrors && !amlsPendingForm("appliedOn.year").hasErrors)
         "date-field-errors-all"
 }
     @dateFormWithRefinedErrors = @{
@@ -48,38 +48,25 @@
     }
 
 
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title =  error_prefix(amlsPendingForm) + Messages("moneyLaunderingCompliance.title"), bodyClasses = None) {
-
+@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title =  error_prefix(amlsPendingForm) + Messages("amls.pending.appliedOn.title"), bodyClasses = None) {
 
 <a href="@mayBeGoBackUrl.getOrElse(routes.AMLSController.showCheckAmlsAlreadyAppliedForm)" class="link-back">@Messages("button.back")</a>
 
     @if(amlsPendingForm.hasErrors) {
         @errorSummary(Messages("error.summary.heading"), amlsPendingForm, Seq.empty, Some("amls-pending-details"))
     }
-    <h1 class="heading-xlarge margin-bottom-20">@Messages("moneyLaunderingCompliance.title")</h1>
+    <h1 class="heading-xlarge margin-bottom-30">@Messages("amls.pending.appliedOn.title")</h1>
 
-    @form(action = routes.AMLSController.submitPendingAmlsDetails(), 'class -> "form js-form", 'id -> "amlsPendingForm") {
+    @form(action = routes.AMLSController.submitAmlsApplicationDatePage(), 'class -> "form js-form", 'id -> "amlsPendingForm") {
 
         <fieldset>
 
-            <div class="form-group">
-                @amls_dropdown(
-                amlsPendingForm("amlsCode"),
-                amlsBodies.toSeq,
-                true,
-                '_errorsAboveInput -> true,
-                '_label -> Messages("amls.pending.supervisoryBody.text"),
-                '_inputClass -> "form-control input--cleared",
-                '_labelClass -> "form-element-bold soft--ends",
-                '_selectWrapper -> Html("""class="autocomplete-wrapper"""")
-                )
-            </div>
+            <input type="hidden" name="amlsCode" id="amlsCode" value="HMRC" >
 
             <div class="@DayFieldError @MonthFieldError @YearFieldError @DateFieldErrorsAll">
                 @dateFieldsFreeInlineLegend(
                 dateFormWithRefinedErrors,
                 "appliedOn",
-                '_legend -> Messages("amls.pending.appliedOn.title"),
                 '_inputHint -> Messages("moneyLaunderingCompliance.expiry.hint"),
                 '_legendSpanClass -> "form-element-bold",
                 '_legendClass -> "flush--ends"

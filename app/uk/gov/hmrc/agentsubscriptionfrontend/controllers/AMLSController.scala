@@ -106,7 +106,7 @@ class AMLSController @Inject()(
             formWithErrors => Ok(amls_applied_for(formWithErrors)),
             validForm => {
               val nextPage = validForm match {
-                case Yes => Redirect(routes.AMLSController.showPendingAmlsDetailsPage())
+                case Yes => Redirect(routes.AMLSController.showAmlsApplicationDatePage())
                 case No  => Redirect(routes.AMLSController.showAmlsNotAppliedPage())
               }
 
@@ -188,7 +188,7 @@ class AMLSController @Inject()(
     }
   }
 
-  def showPendingAmlsDetailsPage: Action[AnyContent] = Action.async { implicit request =>
+  def showAmlsApplicationDatePage: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
       withValidSession { (_, existingSession) =>
         withManuallyAssuredAgent(existingSession) {
@@ -201,22 +201,23 @@ class AMLSController @Inject()(
                 amlsDetails.details match {
                   case Left(pendingDetails) =>
                     val form: Map[String, String] = Map(
-                      "amlsCode"        -> amlsBodies.find(_._2 == amlsDetails.supervisoryBody).map(_._1).getOrElse(""),
+                      "amlsCode"        -> "HMRC",
                       "appliedOn.day"   -> pendingDetails.appliedOn.getDayOfMonth.toString,
                       "appliedOn.month" -> pendingDetails.appliedOn.getMonthValue.toString,
                       "appliedOn.year"  -> pendingDetails.appliedOn.getYear.toString
                     )
 
-                    Ok(html.amls
-                      .amls_pending_details(amlsPendingForm(amlsBodies.keySet).bind(form), amlsBodies, mayBeGoBackUrl))
+                    Ok(
+                      html.amls
+                        .amls_pending_details(amlsPendingForm.bind(form), mayBeGoBackUrl))
 
                   case Right(_) =>
                     Ok(
                       html.amls
-                        .amls_pending_details(amlsPendingForm(amlsBodies.keySet), amlsBodies, mayBeGoBackUrl))
+                        .amls_pending_details(amlsPendingForm, mayBeGoBackUrl))
                 }
 
-              case (None, _) => Ok(html.amls.amls_pending_details(amlsPendingForm(amlsBodies.keySet), amlsBodies))
+              case (None, _) => Ok(html.amls.amls_pending_details(amlsPendingForm))
             }
           }
         }
@@ -224,16 +225,16 @@ class AMLSController @Inject()(
     }
   }
 
-  def submitPendingAmlsDetails: Action[AnyContent] = Action.async { implicit request =>
+  def submitAmlsApplicationDatePage: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
       withValidSession { (_, existingSession) =>
         withManuallyAssuredAgent(existingSession) {
-          amlsPendingForm(amlsBodies.keys.toSet)
+          amlsPendingForm
             .bindFromRequest()
             .fold(
               formWithErrors => {
                 val form = AMLSForms.amlsPendingDetailsFormWithRefinedErrors(formWithErrors)
-                Ok(html.amls.amls_pending_details(form, amlsBodies))
+                Ok(html.amls.amls_pending_details(form))
               },
               validForm => {
                 val amlsDetails = AMLSDetails(
