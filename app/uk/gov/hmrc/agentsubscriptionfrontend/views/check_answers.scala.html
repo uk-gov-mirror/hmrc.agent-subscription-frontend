@@ -73,13 +73,13 @@
 
         <div class="app-check-your-answers__contents">
             <dt class="app-check-your-answers__question">
-                @Messages("checkAnswers.amlsDetails.label")
+                @amlsDetails.details.fold(pendingDetails => Messages("checkAnswers.amlsDetails.pending.label"),
+                                          registeredDetails => Messages("checkAnswers.amlsDetails.label")
+                                         )
             </dt>
             <dd class="app-check-your-answers__answer" id="amls">
-                @amlsDetails.supervisoryBody<br/>
-
                 @amlsDetails.details.fold(pendingDetails => pendingDetails.appliedOn.format(DateTimeFormatter.ofPattern("dd MM yyyy")),
-                                          registeredDetails => Html(registeredDetails.membershipNumber + "<br/>" + registeredDetails.membershipExpiresOn.format(DateTimeFormatter.ofPattern("dd MM yyyy")) )
+                                          registeredDetails => Html(amlsDetails.supervisoryBody + "<br/>" + registeredDetails.membershipNumber + "<br/>" + registeredDetails.membershipExpiresOn.format(DateTimeFormatter.ofPattern("dd MM yyyy")) )
                                          )
             </dd>
             <dd class="app-check-your-answers__change">
