@@ -24,16 +24,17 @@ import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.audit.AuditService
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationForms.{businessDetailsForm, businessTypeForm}
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, Postcode, Registration}
+import uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationForms.businessDetailsForm
 import uk.gov.hmrc.agentsubscriptionfrontend.models.AssuranceResults.{CheckedInvisibleAssuranceAndFailed, CheckedInvisibleAssuranceAndPassed, ManuallyAssured, RefuseToDealWith}
-import uk.gov.hmrc.agentsubscriptionfrontend.service.{AssuranceService, SessionStoreService, SubscriptionProcess, SubscriptionService, SubscriptionState}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, Postcode, Registration}
+import uk.gov.hmrc.agentsubscriptionfrontend.service._
+import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 
 import scala.concurrent.{ExecutionContext, Future}
+
 @Singleton
 class BusinessDetailsController @Inject()(
   override val continueUrlActions: ContinueUrlActions,
@@ -51,16 +52,9 @@ class BusinessDetailsController @Inject()(
   def showBusinessDetailsForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { implicit agent =>
       continueUrlActions.withMaybeContinueUrlCached {
-        sessionStoreService.fetchAgentSession.map {
-          case Some(agentSession) =>
-            agentSession.businessType match {
-              case Some(businessType) =>
-                mark("Count-Subscription-BusinessDetails-Start")
-                Ok(html.business_details(businessDetailsForm(businessType.key), businessType))
-              case None => Ok(html.business_type(businessTypeForm))
-            }
-
-          case None => Ok(html.business_type(businessTypeForm))
+        withValidSession { (businessType, _) =>
+          mark("Count-Subscription-BusinessDetails-Start")
+          Ok(html.business_details(businessDetailsForm(businessType.key), businessType))
         }
       }
     }
@@ -68,36 +62,27 @@ class BusinessDetailsController @Inject()(
 
   def submitBusinessDetails: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { implicit agent =>
-      sessionStoreService.fetchAgentSession.flatMap {
-        case Some(agentSession) =>
-          agentSession.businessType match {
-            case Some(businessType) =>
-              businessDetailsForm(businessType.key)
-                .bindFromRequest()
-                .fold(
-                  formWithErrors => Ok(html.business_details(formWithErrors, businessType)),
-                  businessDetails =>
-                    if (Utr.isValid(businessDetails.utr.value)) {
-                      checkSubscriptionStatusAndUpdateSession(
-                        businessDetails.utr,
-                        Postcode(businessDetails.postcode),
-                        agentSession).map { resultWithSession =>
-                        val sessionData = (request.session.data ++ resultWithSession.session.data.toSeq) + ("businessType" -> businessType.key)
-                        resultWithSession.withSession(sessionData.toSeq: _*)
-                      }
-                    } else {
-                      mark("Count-Subscription-NoAgencyFound")
-                      Redirect(routes.BusinessIdentificationController.showNoMatchFound())
-                  }
-                )
-            case None => Ok(html.business_type(businessTypeForm))
-          }
-
-        case None => Ok(html.business_type(businessTypeForm))
-
+      withValidSession { (businessType, agentSession) =>
+        businessDetailsForm(businessType.key)
+          .bindFromRequest()
+          .fold(
+            formWithErrors => Ok(html.business_details(formWithErrors, businessType)),
+            businessDetails =>
+              if (Utr.isValid(businessDetails.utr.value)) {
+                checkSubscriptionStatusAndUpdateSession(
+                  businessDetails.utr,
+                  Postcode(businessDetails.postcode),
+                  agentSession).map { resultWithSession =>
+                  val sessionData = (request.session.data ++ resultWithSession.session.data.toSeq) + ("businessType" -> businessType.key)
+                  resultWithSession.withSession(sessionData.toSeq: _*)
+                }
+              } else {
+                mark("Count-Subscription-NoAgencyFound")
+                Redirect(routes.BusinessIdentificationController.showNoMatchFound())
+            }
+          )
       }
     }
-
   }
 
   private def checkSubscriptionStatusAndUpdateSession(utr: Utr, postcode: Postcode, agentSession: AgentSession)(
@@ -138,18 +123,16 @@ class BusinessDetailsController @Inject()(
     agentSession: AgentSession)(
     implicit hc: HeaderCarrier,
     request: Request[AnyContent],
-    agent: Agent): Future[Result] =
-    assuranceService.assureIsAgent(utr).flatMap {
+    agent: Agent): Future[Result] = {
+    val redirectTo = assuranceService.assureIsAgent(utr).flatMap {
       case RefuseToDealWith(_) =>
-        Redirect(routes.StartController.showCannotCreateAccount())
+        routes.StartController.showCannotCreateAccount()
       case CheckedInvisibleAssuranceAndFailed(assuranceResults) =>
         auditService
           .sendAgentAssuranceAuditEvent(utr, postcode, assuranceResults)
           .flatMap { _ =>
             mark("Count-Subscription-InvasiveCheck-Start")
-            updateSessionAndRedirect(
-              agentSession.copy(postcode = Some(postcode), utr = Some(utr), registration = Some(registration)))(
-              routes.InvasiveChecksController.invasiveCheckStart())
+            routes.InvasiveChecksController.invasiveCheckStart()
           }
       case maybeAssured @ (None | ManuallyAssured(_) | CheckedInvisibleAssuranceAndPassed(_)) =>
         maybeAssured match {
@@ -157,15 +140,17 @@ class BusinessDetailsController @Inject()(
             auditService
               .sendAgentAssuranceAuditEvent(utr, postcode, assuranceResults)
               .flatMap { _ =>
-                updateSessionAndRedirect(
-                  agentSession.copy(postcode = Some(postcode), utr = Some(utr), registration = Some(registration)))(
-                  routes.BusinessIdentificationController.showConfirmBusinessForm())
+                routes.BusinessIdentificationController.showConfirmBusinessForm()
               }
           case None =>
-            updateSessionAndRedirect(
-              agentSession.copy(postcode = Some(postcode), utr = Some(utr), registration = Some(registration)))(
-              routes.BusinessIdentificationController.showConfirmBusinessForm())
+            routes.BusinessIdentificationController.showConfirmBusinessForm()
         }
     }
+
+    redirectTo.flatMap(
+      call =>
+        updateSessionAndRedirect(
+          agentSession.copy(postcode = Some(postcode), utr = Some(utr), registration = Some(registration)))(call))
+  }
 
 }

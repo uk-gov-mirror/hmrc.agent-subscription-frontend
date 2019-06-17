@@ -18,17 +18,13 @@ package uk.gov.hmrc.agentsubscriptionfrontend
 
 import play.api.data.Form
 import play.api.data.Forms.{mapping, _}
-import play.api.data.validation.{Invalid, Valid, ValidationError}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{BusinessDetails, _}
-import uk.gov.hmrc.agentsubscriptionfrontend.support.TaxIdentifierFormatters
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{BusinessDetails, RadioInputAnswer, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TaxIdentifierFormatters.normalizeUtr
 import uk.gov.hmrc.agentsubscriptionfrontend.validators.CommonValidators._
 import uk.gov.hmrc.domain.Nino
 import uk.gov.voa.play.form.ConditionalMappings.{mandatoryIfEqual, mandatoryIfTrue}
-
-import scala.util.{Success, Try}
 
 package object controllers {
   object BusinessIdentificationForms {
@@ -139,6 +135,18 @@ package object controllers {
 
   object AMLSForms {
 
+    def checkAmlsForm: Form[RadioInputAnswer] =
+      Form[RadioInputAnswer](
+        mapping("registeredAmls" -> optional(text)
+          .verifying("error.check-amls-value.invalid", a => a.contains("yes") || a.contains("no")))(a =>
+          RadioInputAnswer.apply(a.getOrElse("")))(a => Some(RadioInputAnswer.unapply(a))))
+
+    def appliedForAmlsForm: Form[RadioInputAnswer] =
+      Form[RadioInputAnswer](
+        mapping("amlsAppliedFor" -> optional(text)
+          .verifying("error.check-amlsAppliedFor-value.invalid", a => a.contains("yes") || a.contains("no")))(a =>
+          RadioInputAnswer.apply(a.getOrElse("")))(a => Some(RadioInputAnswer.unapply(a))))
+
     def amlsForm(bodies: Set[String]): Form[AMLSForm] =
       Form[AMLSForm](
         mapping(
@@ -147,9 +155,33 @@ package object controllers {
           "expiry"           -> expiryDate
         )(AMLSForm.apply)(AMLSForm.unapply))
 
+    def amlsPendingForm(bodies: Set[String]): Form[AmlsPendingForm] =
+      Form[AmlsPendingForm](
+        mapping(
+          "amlsCode"  -> amlsCode(bodies),
+          "appliedOn" -> appliedOnDate
+        )(AmlsPendingForm.apply)(AmlsPendingForm.unapply))
+
     import play.api.data.{Form, FormError}
 
     def formWithRefinedErrors(form: Form[AMLSForm]): Form[AMLSForm] = {
+
+      val expiry = "expiry"
+      val dateFields =
+        (error: FormError) =>
+          error.key == s"$expiry.day" || error.key == s"$expiry.month" || error.key == s"$expiry.year"
+
+      def refineErrors(dateFieldErrors: Seq[FormError]): Option[String] =
+        dateFieldErrors.map(_.key).map(k => "expiry.".r.replaceFirstIn(k, "")).sorted match {
+          case List("day", "month", "year") => Some("error.moneyLaunderingCompliance.date.empty")
+          case List("day", "month")         => Some("error.moneyLaunderingCompliance.day.month.empty")
+          case List("day", "year")          => Some("error.moneyLaunderingCompliance.day.year.empty")
+          case List("day")                  => Some("error.moneyLaunderingCompliance.day.empty")
+          case List("month", "year")        => Some("error.moneyLaunderingCompliance.month.year.empty")
+          case List("month")                => Some("error.moneyLaunderingCompliance.month.empty")
+          case List("year")                 => Some("error.moneyLaunderingCompliance.year.empty")
+          case _                            => None
+        }
 
       val dateFieldErrors: Seq[FormError] = form.errors.filter(dateFields)
 
@@ -166,20 +198,39 @@ package object controllers {
       }
     }
 
-    private val expiry = "expiry"
-    private val dateFields =
-      (error: FormError) => error.key == s"$expiry.day" || error.key == s"$expiry.month" || error.key == s"$expiry.year"
+    def amlsPendingDetailsFormWithRefinedErrors(form: Form[AmlsPendingForm]): Form[AmlsPendingForm] = {
 
-    private def refineErrors(dateFieldErrors: Seq[FormError]): Option[String] =
-      dateFieldErrors.map(_.key).map(k => "expiry.".r.replaceFirstIn(k, "")).sorted match {
-        case List("day", "month", "year") => Some("error.moneyLaunderingCompliance.date.empty")
-        case List("day", "month")         => Some("error.moneyLaunderingCompliance.day.month.empty")
-        case List("day", "year")          => Some("error.moneyLaunderingCompliance.day.year.empty")
-        case List("day")                  => Some("error.moneyLaunderingCompliance.day.empty")
-        case List("month", "year")        => Some("error.moneyLaunderingCompliance.month.year.empty")
-        case List("month")                => Some("error.moneyLaunderingCompliance.month.empty")
-        case List("year")                 => Some("error.moneyLaunderingCompliance.year.empty")
-        case _                            => None
+      val appliedOn = "appliedOn"
+      val dateFields =
+        (error: FormError) =>
+          error.key == s"$appliedOn.day" || error.key == s"$appliedOn.month" || error.key == s"$appliedOn.year"
+
+      def refineErrors(dateFieldErrors: Seq[FormError]): Option[String] =
+        dateFieldErrors.map(_.key).map(k => s"$appliedOn.".r.replaceFirstIn(k, "")).sorted match {
+          case List("day", "month", "year") => Some("error.amls.pending.appliedOn.date.empty")
+          case List("day", "month")         => Some("error.amls.pending.appliedOn.day.month.empty")
+          case List("day", "year")          => Some("error.amls.pending.appliedOn.day.year.empty")
+          case List("day")                  => Some("error.amls.pending.appliedOn.day.empty")
+          case List("month", "year")        => Some("error.amls.pending.appliedOn.month.year.empty")
+          case List("month")                => Some("error.amls.pending.appliedOn.month.empty")
+          case List("year")                 => Some("error.amls.pending.appliedOn.year.empty")
+          case _                            => None
+        }
+
+      val dateFieldErrors: Seq[FormError] = form.errors.filter(dateFields)
+
+      val refinedMessage = refineErrors(dateFieldErrors).getOrElse("")
+
+      dateFieldErrors match {
+        case Nil => form
+        case _ =>
+          form.copy(errors = form.errors.map { error =>
+            if (error.key.contains(appliedOn)) {
+              FormError(error.key, "", error.args)
+            } else error
+          }.toList :+ FormError(key = appliedOn, message = refinedMessage, args = Seq()))
       }
+    }
   }
+
 }

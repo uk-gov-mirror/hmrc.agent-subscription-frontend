@@ -39,8 +39,19 @@ POST        /confirm-business                     uk.gov.hmrc.agentsubscriptionf
 
 GET         /already-subscribed                   uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showAlreadySubscribed
 
-GET         /money-laundering-compliance          uk.gov.hmrc.agentsubscriptionfrontend.controllers.AMLSController.showMoneyLaunderingComplianceForm
-POST        /money-laundering-compliance          uk.gov.hmrc.agentsubscriptionfrontend.controllers.AMLSController.submitMoneyLaunderingComplianceForm
+GET         /check-money-laundering-compliance    uk.gov.hmrc.agentsubscriptionfrontend.controllers.AMLSController.showCheckAmlsPage
+POST        /check-money-laundering-compliance    uk.gov.hmrc.agentsubscriptionfrontend.controllers.AMLSController.submitCheckAmls
+
+GET         /money-laundering-compliance          uk.gov.hmrc.agentsubscriptionfrontend.controllers.AMLSController.showAmlsDetailsForm
+POST        /money-laundering-compliance          uk.gov.hmrc.agentsubscriptionfrontend.controllers.AMLSController.submitAmlsDetailsForm
+
+GET         /money-laundering-application-details uk.gov.hmrc.agentsubscriptionfrontend.controllers.AMLSController.showPendingAmlsDetailsPage
+POST        /money-laundering-application-details uk.gov.hmrc.agentsubscriptionfrontend.controllers.AMLSController.submitPendingAmlsDetails
+
+GET         /money-laundering-compliance-incomplete uk.gov.hmrc.agentsubscriptionfrontend.controllers.AMLSController.showAmlsNotAppliedPage
+
+GET         /check-money-laundering-application   uk.gov.hmrc.agentsubscriptionfrontend.controllers.AMLSController.showCheckAmlsAlreadyAppliedForm
+POST        /check-money-laundering-application   uk.gov.hmrc.agentsubscriptionfrontend.controllers.AMLSController.submitCheckAmlsAlreadyAppliedForm
 
 GET         /create-new-account                   uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showCreateNewAccount
 

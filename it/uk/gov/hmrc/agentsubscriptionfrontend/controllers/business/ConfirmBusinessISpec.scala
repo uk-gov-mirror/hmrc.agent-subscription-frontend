@@ -100,7 +100,7 @@ class ConfirmBusinessISpec extends BaseISpec {
         metricShouldExistAndBeUpdated("Count-Subscription-AlreadySubscribed-RegisteredInETMP")
       }
 
-      "redirect to showMoneyLaunderingComplianceForm if the user has clean creds and isSubscribedToAgentServices=false" in {
+      "redirect to showAmlsDetailsForm if the user has clean creds and isSubscribedToAgentServices=false" in {
         implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
           .withFormUrlEncodedBody("confirmBusiness" -> "yes")
         sessionStoreService.currentSession.agentSession =
@@ -108,7 +108,7 @@ class ConfirmBusinessISpec extends BaseISpec {
 
         val result = await(controller.submitConfirmBusinessForm(request))
 
-        result.header.headers(LOCATION) shouldBe routes.AMLSController.showMoneyLaunderingComplianceForm().url
+        result.header.headers(LOCATION) shouldBe routes.AMLSController.showCheckAmlsPage().url
       }
 
       "redirect to showBusinessEmailForm if the user has clean creds and isSubscribedToAgentServices=false and ETMP record contains empty email" in {

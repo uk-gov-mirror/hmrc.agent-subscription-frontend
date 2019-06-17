@@ -155,7 +155,7 @@ class BusinessIdentificationController @Inject()(
       case Failure(responses) if responses.contains(InvalidEmail) =>
         routes.BusinessIdentificationController.showBusinessEmailForm()
       case _ =>
-        routes.AMLSController.showMoneyLaunderingComplianceForm()
+        routes.AMLSController.showCheckAmlsPage()
     }
 
   val showBusinessEmailForm: Action[AnyContent] = Action.async { implicit request =>

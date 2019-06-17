@@ -25,3 +25,9 @@ case class AMLSForm(amlsCode: String, membershipNumber: String, expiry: LocalDat
 object AMLSForm {
   implicit val formatAMLSForm = Json.format[AMLSForm]
 }
+
+case class AmlsPendingForm(amlsCode: String, appliedOn: LocalDate)
+
+object AmlsPendingForm {
+  implicit val format = Json.format[AmlsPendingForm]
+}

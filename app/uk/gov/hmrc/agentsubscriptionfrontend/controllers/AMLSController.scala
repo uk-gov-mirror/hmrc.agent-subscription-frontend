@@ -23,12 +23,15 @@ import play.api.mvc.{AnyContent, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.config.amls.AMLSLoader
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentAssuranceConnector
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{AMLSDetails, AgentSession}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
+import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
+import uk.gov.hmrc.agentsubscriptionfrontend.views.html.amls._
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.HeaderCarrier
+import views.html.helper.form
 
 import scala.collection.immutable.Map
 import scala.concurrent.{ExecutionContext, Future}
@@ -49,7 +52,75 @@ class AMLSController @Inject()(
 
   private val amlsBodies: Map[String, String] = AMLSLoader.load("/amls.csv")
 
-  val showMoneyLaunderingComplianceForm: Action[AnyContent] = Action.async { implicit request =>
+  def showCheckAmlsPage: Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { _ =>
+      withValidSession { (_, existingSession) =>
+        withManuallyAssuredAgent(existingSession) {
+          existingSession.checkAmls.fold(Ok(check_amls(checkAmlsForm)))(amls =>
+            Ok(check_amls(checkAmlsForm.bind(Map("registeredAmls" -> amls.toString)))))
+        }
+      }
+    }
+  }
+
+  def submitCheckAmls: Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { _ =>
+      withValidSession { (_, existingSession) =>
+        withManuallyAssuredAgent(existingSession) {
+          checkAmlsForm
+            .bindFromRequest()
+            .fold(
+              formWithErrors => Ok(html.amls.check_amls(formWithErrors)),
+              validForm => {
+                val nextPage = validForm match {
+                  case Yes =>
+                    Redirect(routes.AMLSController.showAmlsDetailsForm())
+                  case No => Redirect(routes.AMLSController.showCheckAmlsAlreadyAppliedForm())
+                }
+                sessionStoreService
+                  .cacheAgentSession(existingSession.copy(checkAmls = RadioInputAnswer.unapply(validForm)))
+                  .map(_ => nextPage)
+              }
+            )
+        }
+      }
+    }
+  }
+
+  def showCheckAmlsAlreadyAppliedForm: Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { _ =>
+      withValidSession { (_, existingSession) =>
+        withManuallyAssuredAgent(existingSession) {
+          existingSession.amlsAppliedFor.fold(Ok(amls_applied_for(appliedForAmlsForm)))(amls =>
+            Ok(amls_applied_for(appliedForAmlsForm.bind(Map("amlsAppliedFor" -> amls.toString)))))
+        }
+      }
+    }
+  }
+
+  def submitCheckAmlsAlreadyAppliedForm: Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { _ =>
+      withValidSession { (_, existingSession) =>
+        withManuallyAssuredAgent(existingSession) {
+          appliedForAmlsForm.bindFromRequest.fold(
+            formWithErrors => Ok(amls_applied_for(formWithErrors)),
+            validForm => {
+              val nextPage = validForm match {
+                case Yes => Redirect(routes.AMLSController.showPendingAmlsDetailsPage())
+                case No  => Redirect(routes.AMLSController.showAmlsNotAppliedPage())
+              }
+
+              sessionStoreService
+                .cacheAgentSession(existingSession.copy(amlsAppliedFor = RadioInputAnswer.unapply(validForm)))
+                .map(_ => nextPage)
+            }
+          )
+        }
+      }
+    }
+  }
+
+  val showAmlsDetailsForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
       withValidSession { (_, existingSession) =>
         withManuallyAssuredAgent(existingSession) {
@@ -59,17 +130,23 @@ class AMLSController @Inject()(
           } yield {
             (cachedAmlsDetails, cachedGoBackUrl) match {
               case (Some(amlsDetails), mayBeGoBackUrl) =>
-                val form: Map[String, String] =
-                  Map(
-                    "amlsCode"         -> amlsBodies.find(_._2 == amlsDetails.supervisoryBody).map(_._1).getOrElse(""),
-                    "membershipNumber" -> amlsDetails.membershipNumber,
-                    "expiry.day"       -> amlsDetails.membershipExpiresOn.getDayOfMonth.toString,
-                    "expiry.month"     -> amlsDetails.membershipExpiresOn.getMonthValue.toString,
-                    "expiry.year"      -> amlsDetails.membershipExpiresOn.getYear.toString
-                  )
-                Ok(html.money_laundering_compliance(amlsForm(amlsBodies.keySet).bind(form), amlsBodies, mayBeGoBackUrl))
+                amlsDetails.details match {
+                  case Right(registeredDetails) =>
+                    val form: Map[String, String] = Map(
+                      "amlsCode"         -> amlsBodies.find(_._2 == amlsDetails.supervisoryBody).map(_._1).getOrElse(""),
+                      "membershipNumber" -> registeredDetails.membershipNumber,
+                      "expiry.day"       -> registeredDetails.membershipExpiresOn.getDayOfMonth.toString,
+                      "expiry.month"     -> registeredDetails.membershipExpiresOn.getMonthValue.toString,
+                      "expiry.year"      -> registeredDetails.membershipExpiresOn.getYear.toString
+                    )
 
-              case (None, _) => Ok(html.money_laundering_compliance(amlsForm(amlsBodies.keySet), amlsBodies))
+                    Ok(html.amls.amls_details(amlsForm(amlsBodies.keySet).bind(form), amlsBodies, mayBeGoBackUrl))
+
+                  case Left(_) =>
+                    Ok(html.amls.amls_details(amlsForm(amlsBodies.keySet), amlsBodies, mayBeGoBackUrl))
+                }
+
+              case (None, _) => Ok(html.amls.amls_details(amlsForm(amlsBodies.keySet), amlsBodies))
             }
           }
         }
@@ -77,7 +154,7 @@ class AMLSController @Inject()(
     }
   }
 
-  def submitMoneyLaunderingComplianceForm: Action[AnyContent] = Action.async { implicit request =>
+  def submitAmlsDetailsForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
       withValidSession { (_, existingSession) =>
         withManuallyAssuredAgent(existingSession) {
@@ -86,14 +163,82 @@ class AMLSController @Inject()(
             .fold(
               formWithErrors => {
                 val form = AMLSForms.formWithRefinedErrors(formWithErrors)
-                Ok(html.money_laundering_compliance(form, amlsBodies))
+                Ok(html.amls.amls_details(form, amlsBodies))
               },
               validForm => {
                 val amlsDetails = AMLSDetails(
                   amlsBodies.getOrElse(validForm.amlsCode, throw new Exception("Invalid AMLS code")),
-                  validForm.membershipNumber,
-                  validForm.expiry
-                )
+                  Right(RegisteredDetails(validForm.membershipNumber, validForm.expiry)))
+
+                sessionStoreService
+                  .cacheAgentSession(existingSession.copy(amlsDetails = Some(amlsDetails)))
+                  .map { _ =>
+                    Redirect(routes.SubscriptionController.showCheckAnswers())
+                  }
+              }
+            )
+        }
+      }
+    }
+  }
+
+  def showAmlsNotAppliedPage: Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { _ =>
+      Ok(html.amls.amls_not_applied())
+    }
+  }
+
+  def showPendingAmlsDetailsPage: Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { _ =>
+      withValidSession { (_, existingSession) =>
+        withManuallyAssuredAgent(existingSession) {
+          for {
+            cachedAmlsDetails <- existingSession.map(_.amlsDetails)
+            cachedGoBackUrl   <- sessionStoreService.fetchGoBackUrl
+          } yield {
+            (cachedAmlsDetails, cachedGoBackUrl) match {
+              case (Some(amlsDetails), mayBeGoBackUrl) =>
+                amlsDetails.details match {
+                  case Left(pendingDetails) =>
+                    val form: Map[String, String] = Map(
+                      "amlsCode"        -> amlsBodies.find(_._2 == amlsDetails.supervisoryBody).map(_._1).getOrElse(""),
+                      "appliedOn.day"   -> pendingDetails.appliedOn.getDayOfMonth.toString,
+                      "appliedOn.month" -> pendingDetails.appliedOn.getMonthValue.toString,
+                      "appliedOn.year"  -> pendingDetails.appliedOn.getYear.toString
+                    )
+
+                    Ok(html.amls
+                      .amls_pending_details(amlsPendingForm(amlsBodies.keySet).bind(form), amlsBodies, mayBeGoBackUrl))
+
+                  case Right(_) =>
+                    Ok(
+                      html.amls
+                        .amls_pending_details(amlsPendingForm(amlsBodies.keySet), amlsBodies, mayBeGoBackUrl))
+                }
+
+              case (None, _) => Ok(html.amls.amls_pending_details(amlsPendingForm(amlsBodies.keySet), amlsBodies))
+            }
+          }
+        }
+      }
+    }
+  }
+
+  def submitPendingAmlsDetails: Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { _ =>
+      withValidSession { (_, existingSession) =>
+        withManuallyAssuredAgent(existingSession) {
+          amlsPendingForm(amlsBodies.keys.toSet)
+            .bindFromRequest()
+            .fold(
+              formWithErrors => {
+                val form = AMLSForms.amlsPendingDetailsFormWithRefinedErrors(formWithErrors)
+                Ok(html.amls.amls_pending_details(form, amlsBodies))
+              },
+              validForm => {
+                val amlsDetails = AMLSDetails(
+                  amlsBodies.getOrElse(validForm.amlsCode, throw new Exception("Invalid AMLS code")),
+                  Left(PendingDetails(validForm.appliedOn)))
 
                 sessionStoreService
                   .cacheAgentSession(existingSession.copy(amlsDetails = Some(amlsDetails)))
@@ -116,6 +261,8 @@ class AMLSController @Inject()(
             toFuture(Redirect(routes.SubscriptionController.showCheckAnswers()))
           } else body
         }
-      case None => Redirect(routes.UtrController.showUtrForm())
+      case None =>
+        Redirect(routes.BusinessDetailsController.showBusinessDetailsForm())
+      //Redirect(routes.UtrController.showUtrForm())
     }
 }

@@ -17,81 +17,69 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 @import uk.gov.hmrc.play.views.html.helpers.{form, input, errorSummary, dateFieldsFreeInlineLegend}
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
-@import uk.gov.hmrc.agentsubscriptionfrontend.models.AMLSForm
+@import uk.gov.hmrc.agentsubscriptionfrontend.models.AmlsPendingForm
 @import uk.gov.hmrc.agentsubscriptionfrontend.views.html.helpers._
+@import uk.gov.hmrc.agentsubscriptionfrontend.views.html._
 
-
-@(amlsForm: Form[AMLSForm], amlsBodies: Map[String, String], mayBeGoBackUrl: Option[String] = None)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+@(amlsPendingForm: Form[AmlsPendingForm], amlsBodies: Map[String, String], mayBeGoBackUrl: Option[String] = None)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 
 @DayFieldError = @{
-    if(amlsForm("expiry.day").hasErrors)
+    if(amlsPendingForm("appliedOn.day").hasErrors)
         "day-field-error"
     }
 
 @MonthFieldError = @{
-    if(amlsForm("expiry.month").hasErrors)
+    if(amlsPendingForm("appliedOn.month").hasErrors)
         "month-field-error"
 }
 
 @YearFieldError = @{
-    if(amlsForm("expiry.year").hasErrors)
+    if(amlsPendingForm("appliedOn.year").hasErrors)
         "year-field-error"
 }
 
 @DateFieldErrorsAll = @{
-    if(amlsForm("expiry").hasErrors && !amlsForm("expiry.day").hasErrors && !amlsForm("expiry.month").hasErrors && !amlsForm("expiry.year").hasErrors)
+    if(amlsPendingForm("expiry").hasErrors && !amlsPendingForm("expiry.day").hasErrors && !amlsPendingForm("expiry.month").hasErrors && !amlsPendingForm("expiry.year").hasErrors)
         "date-field-errors-all"
 }
     @dateFormWithRefinedErrors = @{
-        amlsForm.copy(errors = amlsForm.errors.filterNot(error => error.message == "" || !error.key.contains("expiry")))
+        amlsPendingForm.copy(errors = amlsPendingForm.errors.filterNot(error => error.message == "" || !error.key.contains("expiry")))
     }
 
 
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title =  error_prefix(amlsForm) + Messages("moneyLaunderingCompliance.title"), bodyClasses = None) {
+@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title =  error_prefix(amlsPendingForm) + Messages("moneyLaunderingCompliance.title"), bodyClasses = None) {
 
 
-<a href="@mayBeGoBackUrl.getOrElse(routes.BusinessIdentificationController.showConfirmBusinessForm())" class="link-back">@Messages("button.back")</a>
+<a href="@mayBeGoBackUrl.getOrElse(routes.AMLSController.showCheckAmlsAlreadyAppliedForm)" class="link-back">@Messages("button.back")</a>
 
-    @if(amlsForm.hasErrors) {
-        @errorSummary(Messages("error.summary.heading"), amlsForm, Seq.empty, Some("money-laundering-compliance"))
+    @if(amlsPendingForm.hasErrors) {
+        @errorSummary(Messages("error.summary.heading"), amlsPendingForm, Seq.empty, Some("amls-pending-details"))
     }
-    <h1 class="heading-xlarge">@Messages("moneyLaunderingCompliance.title")</h1>
+    <h1 class="heading-xlarge margin-bottom-20">@Messages("moneyLaunderingCompliance.title")</h1>
 
-    <p class="panel panel-border-wide">@Messages("moneyLaunderingCompliance.p1")</p>
-
-    @form(action = routes.AMLSController.submitMoneyLaunderingComplianceForm(), 'class -> "form js-form", 'id -> "dropForm") {
+    @form(action = routes.AMLSController.submitPendingAmlsDetails(), 'class -> "form js-form", 'id -> "amlsPendingForm") {
 
         <fieldset>
 
             <div class="form-group">
                 @amls_dropdown(
-                amlsForm("amlsCode"),
+                amlsPendingForm("amlsCode"),
                 amlsBodies.toSeq,
                 true,
                 '_errorsAboveInput -> true,
-                '_label -> Messages("moneyLaunderingCompliance.amls.title"),
+                '_label -> Messages("amls.pending.supervisoryBody.text"),
                 '_inputClass -> "form-control input--cleared",
                 '_labelClass -> "form-element-bold soft--ends",
                 '_selectWrapper -> Html("""class="autocomplete-wrapper"""")
                 )
             </div>
 
-            <div class="form-group">
-                @input(
-                amlsForm("membershipNumber"),
-                '_label -> Messages("moneyLaunderingCompliance.membershipNumber.title"),
-                '_inputClass -> "form-control input--cleared",
-                '_labelClass -> "form-element-bold soft--ends",
-                '_dataAttributes -> Html("""data-uppercase="true"""")
-                )
-            </div>
-
             <div class="@DayFieldError @MonthFieldError @YearFieldError @DateFieldErrorsAll">
                 @dateFieldsFreeInlineLegend(
                 dateFormWithRefinedErrors,
-                "expiry",
-                '_legend -> Messages("moneyLaunderingCompliance.expiry.title"),
+                "appliedOn",
+                '_legend -> Messages("amls.pending.appliedOn.title"),
                 '_inputHint -> Messages("moneyLaunderingCompliance.expiry.hint"),
                 '_legendSpanClass -> "form-element-bold",
                 '_legendClass -> "flush--ends"

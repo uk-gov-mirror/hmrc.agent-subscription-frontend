@@ -257,13 +257,20 @@ object AgentSubscriptionStub {
                                       |    },
                                       |    "email": "${agency.email}"
                                       |  }
-                                      |  ${request.amlsDetails.map{ad =>
-                                      s""","amlsDetails" : {
-                                      |     "supervisoryBody" : "${ad.supervisoryBody}",
-                                      |     "membershipNumber" : "${ad.membershipNumber}",
-                                      |     "membershipExpiresOn" : "${ad.membershipExpiresOn}"
-                                      |   }"""
-                                          }.getOrElse("")}
+                                      |  ${request.amlsDetails.details match {
+                                            case Right(registeredDetails) =>
+                                              s""","amlsDetails" : {
+                                                 |     "supervisoryBody" : "${request.amlsDetails.supervisoryBody}",
+                                                 |     "membershipNumber" : "${registeredDetails.membershipNumber}",
+                                                 |     "membershipExpiresOn" : "${registeredDetails.membershipExpiresOn}"
+                                                 |   }"""
+                                            case Left(pendingDetails) =>
+                                              s""","amlsDetails" : {
+                                                 |     "supervisoryBody" : "${request.amlsDetails.supervisoryBody}",
+                                                 |     "appliedOn" : "${pendingDetails.appliedOn}"
+                                                 |   }"""
+                                          }
+                                          }
                                       |}""".stripMargin))
   }
 

@@ -73,7 +73,7 @@ class BusinessAddressISpec extends BaseISpec {
 
       val result = await(controller.submitUpdateBusinessAddressForm(request))
       status(result) shouldBe 303
-      redirectLocation(result).head shouldBe routes.AMLSController.showMoneyLaunderingComplianceForm().url
+      redirectLocation(result).head shouldBe routes.AMLSController.showCheckAmlsPage().url
 
       val updatedBusinessAddress = await(sessionStoreService.fetchAgentSession).get.registration.get.address
 
