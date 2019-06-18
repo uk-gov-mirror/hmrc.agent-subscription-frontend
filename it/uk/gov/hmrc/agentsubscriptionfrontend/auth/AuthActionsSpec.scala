@@ -6,7 +6,7 @@ import org.scalatest.mockito.MockitoSugar
 import play.api.mvc.Result
 import play.api.mvc.Results._
 import play.api.test.FakeRequest
-import play.api.test.Helpers.LOCATION
+import play.api.test.Helpers._
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.ContinueUrlActions
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub._
@@ -72,6 +72,14 @@ class AuthActionsSpec extends BaseISpec with MockitoSugar with BeforeAndAfterEac
       an[InsufficientEnrolments] shouldBe thrownBy {
         TestController.withSubscribedAgent
       }
+    }
+
+    "UnsupportedAuthProvider error should redirect user to start page" in {
+      userLoggedInViaUnsupportedAuthProvider()
+      val result = TestController.withSubscribedAgent
+
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some("/agent-subscription/finish-sign-out")
     }
   }
 }

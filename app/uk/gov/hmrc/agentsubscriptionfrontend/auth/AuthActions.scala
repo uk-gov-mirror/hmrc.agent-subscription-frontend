@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.auth
 
-import play.api.Mode
+import play.api.Logger
 import play.api.mvc.Results._
 import play.api.mvc.{Request, Result}
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
@@ -37,8 +37,8 @@ class Agent(private val enrolments: Set[Enrolment], private val creds: Credentia
   def hasIRPAYEAGENT: Option[Enrolment] = enrolments.find(e => e.key == "IR-PAYE-AGENT" && e.isActivated)
   def hasIRSAAGENT: Option[Enrolment] = enrolments.find(e => e.key == "IR-SA-AGENT" && e.isActivated)
 
-  def authProviderId = creds.providerId
-  def authProviderType = creds.providerType
+  def authProviderId: String = creds.providerId
+  def authProviderType: String = creds.providerType
 }
 
 object Agent {
@@ -74,6 +74,9 @@ trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring
               .map(Arn(_))
               .getOrElse(throw new InsufficientEnrolments("could not find the HMRC-AS-AGENT enrolment to continue")))
       }
+      .recover {
+        handleException
+      }
 
   def withSubscribingAgent[A](body: Agent => Future[Result])(
     implicit request: Request[A],
@@ -96,30 +99,21 @@ trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring
           }
       }
       .recover {
-        case _: UnsupportedAffinityGroup =>
-          mark("Count-Subscription-NonAgent")
-          Redirect(routes.StartController.showNotAgent())
-        case _: NoActiveSession =>
-          toGGLogin(if (appConfig.isDevMode) s"http://${request.host}${request.uri}" else s"${request.uri}")
+        handleException
       }
 
   def withAuthenticatedAgent[A](
     body: => Future[Result])(implicit request: Request[A], hc: HeaderCarrier, ec: ExecutionContext): Future[Result] =
     authorised(AuthProviders(GovernmentGateway) and AffinityGroup.Agent)(body)
       .recover {
-        case _: UnsupportedAffinityGroup =>
-          mark("Count-Subscription-NonAgent")
-          Redirect(routes.StartController.showNotAgent())
-        case _: NoActiveSession =>
-          toGGLogin(if (appConfig.isDevMode) s"http://${request.host}${request.uri}" else s"${request.uri}")
+        handleException
       }
 
   def withAuthenticatedUser[A](
     body: => Future[Result])(implicit request: Request[A], hc: HeaderCarrier, ec: ExecutionContext): Future[Result] =
     authorised(AuthProviders(GovernmentGateway))(body)
       .recover {
-        case _: NoActiveSession =>
-          toGGLogin(if (appConfig.isDevMode) s"http://${request.host}${request.uri}" else s"${request.uri}")
+        handleException
       }
 
   private def isEnrolledForHmrcAsAgent(enrolments: Enrolments): Boolean =
@@ -130,4 +124,18 @@ trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring
       enrolment  <- enrolments.getEnrolment(serviceName)
       identifier <- enrolment.getIdentifier(identifierKey)
     } yield identifier.value
+
+  private def handleException(implicit ec: ExecutionContext, request: Request[_]): PartialFunction[Throwable, Result] = {
+
+    case _: UnsupportedAffinityGroup =>
+      mark("Count-Subscription-NonAgent")
+      Redirect(routes.StartController.showNotAgent())
+
+    case _: NoActiveSession =>
+      toGGLogin(if (appConfig.isDevMode) s"http://${request.host}${request.uri}" else s"${request.uri}")
+
+    case _: UnsupportedAuthProvider =>
+      Logger.warn("User is not logged in via  GovernmentGateway, signing out and redirecting")
+      Redirect(routes.SignedOutController.signOut())
+  }
 }
