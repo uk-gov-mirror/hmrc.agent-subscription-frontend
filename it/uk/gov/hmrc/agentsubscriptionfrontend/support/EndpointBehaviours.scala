@@ -49,24 +49,6 @@ trait EndpointBehaviours {
     }
   }
 
-
-  protected def agentRequiresAuthorisation(doRequest: PlayRequest): Unit = {
-
-    "ErrorHandler will redirect to the company-auth-frontend sign-in when SessionRecordNotFound Exception occurs" in {
-      AuthStub.userIsNotAuthenticated()
-
-      an[SessionRecordNotFound] shouldBe thrownBy(await(doRequest(FakeRequest())))
-    }
-
-    "ErrorHandler will throw Insufficient Enrolments when no HMRC-AS-AGENT" in {
-      val sessionKeys = AuthStub.userHasInsufficientEnrolments
-
-      an[InsufficientEnrolments] shouldBe thrownBy(await(doRequest(FakeRequest())))
-    }
-  }
-
-
-
   protected def aPageWithFeedbackLinks(action: PlayRequest, request: => Request[AnyContent] = FakeRequest("GET", "url")): Unit = {
 
     "have a 'get help with this page' link" in {
