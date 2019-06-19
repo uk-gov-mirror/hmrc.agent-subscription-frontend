@@ -122,7 +122,7 @@ object CommonValidators {
       "month" -> text.verifying("month", y => !y.trim.isEmpty || y.matches("^[0-9]{1,2}$")),
       "day"   -> text.verifying("day", d => !d.trim.isEmpty || d.matches("^[0-9]{1,2}$"))
     ).verifying(
-        checkOneAtATime(Seq(invalidDateConstraint, within6MonthsPastDateConstraint, futureApplicationConstraint)))
+        checkOneAtATime(Seq(invalidDateConstraint, within13MonthsPastDateConstraint, futureApplicationConstraint)))
       .transform(
         { case (y, m, d) => LocalDate.of(y.trim.toInt, m.trim.toInt, d.trim.toInt) },
         (date: LocalDate) => (date.getYear.toString, date.getMonthValue.toString, date.getDayOfMonth.toString)
@@ -344,21 +344,21 @@ object CommonValidators {
         Invalid(ValidationError("error.moneyLaunderingCompliance.date.before"))
     }
 
-  private def within6MonthsPastDateConstraint(implicit messages: Messages): Constraint[(String, String, String)] =
+  private def within13MonthsPastDateConstraint(implicit messages: Messages): Constraint[(String, String, String)] =
     Constraint[(String, String, String)] { data: (String, String, String) =>
       val (year, month, day) = data
 
-//      Needs to include todays date, 6 months ago
-      val sixMonthsEarlier = LocalDate.now().minusMonths(6).minusDays(1)
+//      Needs to include todays date, 13 months ago
+      val thirteenMonthsEarlier = LocalDate.now().minusMonths(13).minusDays(1)
 
-      if (LocalDate.of(year.toInt, month.toInt, day.toInt).isAfter(sixMonthsEarlier))
+      if (LocalDate.of(year.toInt, month.toInt, day.toInt).isAfter(thirteenMonthsEarlier))
         Valid
       else
         Invalid(
           ValidationError(
             Messages(
               "error.amls.pending.appliedOn.date.too-old",
-              sixMonthsEarlier.format(DateTimeFormatter.ofPattern("dd MMMM yyyy")))))
+              thirteenMonthsEarlier.format(DateTimeFormatter.ofPattern("dd MMMM yyyy")))))
     }
 
   private def validateAMLSBodies(amlsCode: String, bodies: Set[String]): Boolean =
