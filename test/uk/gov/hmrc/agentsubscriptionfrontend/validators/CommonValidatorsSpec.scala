@@ -703,7 +703,7 @@ class CommonValidatorsSpec extends UnitSpec with EitherValues {
           "error.moneyLaunderingCompliance.date.past")
       }
 
-      "Membership expiry date is not less than 365 days from today" in {
+      "Membership expiry date is not less than 13 months from today" in {
         bind(futureDate.getYear.toString, futureDate.getMonthValue.toString, futureDate.getDayOfMonth.toString).left.value should contain only FormError(
           "",
           "error.moneyLaunderingCompliance.date.before")

@@ -110,7 +110,8 @@ object CommonValidators {
       "year"  -> text.verifying("year", y => !y.trim.isEmpty || y.matches("^[0-9]{1,4}$")),
       "month" -> text.verifying("month", y => !y.trim.isEmpty || y.matches("^[0-9]{1,2}$")),
       "day"   -> text.verifying("day", d => !d.trim.isEmpty || d.matches("^[0-9]{1,2}$"))
-    ).verifying(checkOneAtATime(Seq(invalidDateConstraint, pastExpiryDateConstraint, withinYearExpiryDateConstraint)))
+    ).verifying(
+        checkOneAtATime(Seq(invalidDateConstraint, pastExpiryDateConstraint, within13MonthsExpiryDateConstraint)))
       .transform(
         { case (y, m, d) => LocalDate.of(y.trim.toInt, m.trim.toInt, d.trim.toInt) },
         (date: LocalDate) => (date.getYear.toString, date.getMonthValue.toString, date.getDayOfMonth.toString)
@@ -122,7 +123,7 @@ object CommonValidators {
       "month" -> text.verifying("month", y => !y.trim.isEmpty || y.matches("^[0-9]{1,2}$")),
       "day"   -> text.verifying("day", d => !d.trim.isEmpty || d.matches("^[0-9]{1,2}$"))
     ).verifying(
-        checkOneAtATime(Seq(invalidDateConstraint, within13MonthsPastDateConstraint, futureApplicationConstraint)))
+        checkOneAtATime(Seq(invalidDateConstraint, within6MonthsPastDateConstraint, futureApplicationConstraint)))
       .transform(
         { case (y, m, d) => LocalDate.of(y.trim.toInt, m.trim.toInt, d.trim.toInt) },
         (date: LocalDate) => (date.getYear.toString, date.getMonthValue.toString, date.getDayOfMonth.toString)
@@ -332,11 +333,11 @@ object CommonValidators {
         Invalid(ValidationError("error.moneyLaunderingCompliance.date.past"))
   }
 
-  private val withinYearExpiryDateConstraint: Constraint[(String, String, String)] =
+  private val within13MonthsExpiryDateConstraint: Constraint[(String, String, String)] =
     Constraint[(String, String, String)] { data: (String, String, String) =>
       val (year, month, day) = data
 
-      val futureDate = LocalDate.now().plusDays(365)
+      val futureDate = LocalDate.now().plusMonths(13)
 
       if (LocalDate.of(year.toInt, month.toInt, day.toInt).isBefore(futureDate))
         Valid
@@ -344,21 +345,21 @@ object CommonValidators {
         Invalid(ValidationError("error.moneyLaunderingCompliance.date.before"))
     }
 
-  private def within13MonthsPastDateConstraint(implicit messages: Messages): Constraint[(String, String, String)] =
+  private def within6MonthsPastDateConstraint(implicit messages: Messages): Constraint[(String, String, String)] =
     Constraint[(String, String, String)] { data: (String, String, String) =>
       val (year, month, day) = data
 
-//      Needs to include todays date, 13 months ago
-      val thirteenMonthsEarlier = LocalDate.now().minusMonths(13).minusDays(1)
+//      Needs to include todays date, 6 months ago
+      val sixMonthsEarlier = LocalDate.now().minusMonths(6).minusDays(1)
 
-      if (LocalDate.of(year.toInt, month.toInt, day.toInt).isAfter(thirteenMonthsEarlier))
+      if (LocalDate.of(year.toInt, month.toInt, day.toInt).isAfter(sixMonthsEarlier))
         Valid
       else
         Invalid(
           ValidationError(
             Messages(
               "error.amls.pending.appliedOn.date.too-old",
-              thirteenMonthsEarlier.format(DateTimeFormatter.ofPattern("dd MMMM yyyy")))))
+              sixMonthsEarlier.format(DateTimeFormatter.ofPattern("dd MMMM yyyy")))))
     }
 
   private def validateAMLSBodies(amlsCode: String, bodies: Set[String]): Boolean =

@@ -94,7 +94,7 @@ error.moneyLaunderingCompliance.month.empty=The date your membership expires mus
 error.moneyLaunderingCompliance.year.empty=The date your membership expires must include a year
 error.moneyLaunderingCompliance.date.invalid=Enter a real date
 error.moneyLaunderingCompliance.date.past=The date your membership expires must be in the future
-error.moneyLaunderingCompliance.date.before=The date your membership expires must be within 1 year of today
+error.moneyLaunderingCompliance.date.before=The date your membership expires must be within 13 months of today
 
 error.check-amls-value.invalid=Select yes if you are registered with a money laundering supervisory body
 error.check-amlsAppliedFor-value.invalid=Select yes if you are applied to register for money laundering supervision with HMRC
