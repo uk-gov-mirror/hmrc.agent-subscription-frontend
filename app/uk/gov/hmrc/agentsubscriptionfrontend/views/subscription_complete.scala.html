@@ -20,28 +20,29 @@
 
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = Messages("subscriptionComplete.title"), bodyClasses = None) {
 
-    <div class="transaction-banner--complete">
-        <h1 class="transaction-banner__heading">@Messages("subscriptionComplete.h1")</h1>
-        <div class="govuk-panel__body">
-            <p class="margin-bottom-0">@Messages("subscriptionComplete.accountName")
+<div class="transaction-banner--complete">
+    <h1 class="transaction-banner__heading">@Messages("subscriptionComplete.h1")</h1>
+    <div class="govuk-panel__body">
+        <p class="margin-bottom-0">@Messages("subscriptionComplete.accountName")
             <br>
             <strong class="bold">@agencyName</strong>
-            </p>
-        </div>
+        </p>
     </div>
+</div>
 
-    <p>@Html(Messages("subscriptionComplete.p1", s"$arn"))</p>
-    <h2 class="heading-medium">@Messages("subscriptionComplete.h2")</h2>
+<p>@Html(Messages("subscriptionComplete.p1", s"$arn"))</p>
+<p>@Html(Messages("subscriptionComplete.p2", s"$agencyEmail"))</p>
+<h2 class="heading-medium">@Messages("subscriptionComplete.h2")</h2>
+<p>@Html(Messages("subscriptionComplete.p3", "https://www.gov.uk/guidance/get-an-hmrc-agent-services-account"))</p>
 
-    <p>@Html(Messages("subscriptionComplete.p2", "https://www.gov.uk/guidance/get-an-hmrc-agent-services-account"))</p>
 
+<ul class="list list-bullet">
+    <li>@Messages("subscriptionComplete.bullet-list.1")</li>
+    <li>@Messages("subscriptionComplete.bullet-list.2")</li>
+</ul>
 
-    <ul class="list list-bullet">
-        <li>@Messages("subscriptionComplete.bullet-list.1")</li>
-        <li>@Messages("subscriptionComplete.bullet-list.2")</li>
-    </ul>
-
-    @defining(if(isUrlToASAccount) "continueToASAccount" else "continueJourney") { continueMsg =>
-        <a href="@continueUrl" class="button" id="continue" role="button">@Messages(s"subscriptionComplete.button.$continueMsg")</a>
-    }
+@defining(if(isUrlToASAccount) "continueToASAccount" else "continueJourney") { continueMsg =>
+<a href="@continueUrl" class="button" id="continue"
+   role="button">@Messages(s"subscriptionComplete.button.$continueMsg")</a>
+}
 }
