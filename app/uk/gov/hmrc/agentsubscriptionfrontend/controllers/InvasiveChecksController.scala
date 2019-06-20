@@ -37,7 +37,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class InvasiveChecksController @Inject()(
+class AssuranceChecksController @Inject()(
   assuranceService: AssuranceService,
   override val authConnector: AuthConnector,
   override val sessionStoreService: SessionStoreService,
@@ -72,7 +72,7 @@ class InvasiveChecksController @Inject()(
                     val saAgentCode = correctForm.saAgentCode
                       .getOrElse(throw new IllegalStateException(
                         "Form validation should enforce saAgentCode is always defined if hasSaAgentCode is true"))
-                    Redirect(routes.InvasiveChecksController.showClientDetailsForm())
+                    Redirect(routes.AssuranceChecksController.showClientDetailsForm())
                       .withSession(request.session + ("saAgentReferenceToCheck" -> saAgentCode))
 
                   case false =>
@@ -146,7 +146,7 @@ class InvasiveChecksController @Inject()(
               mark("Count-Subscription-InvasiveCheck-Failed")
               Redirect(routes.StartController.showCannotCreateAccount())
           }
-      case None => Redirect(routes.InvasiveChecksController.invasiveCheckStart())
+      case None => Redirect(routes.AssuranceChecksController.invasiveCheckStart())
     }
 
   private def getNextPageAfterInvasiveChecks(businessType: BusinessType) =

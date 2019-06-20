@@ -11,9 +11,9 @@ import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.subscribingClean
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData.{registration, validUtr, _}
 import uk.gov.hmrc.domain.Nino
 
-class InvasiveChecksControllerISpec extends BaseISpec {
+class AssuranceChecksControllerISpec extends BaseISpec {
 
-  lazy val controller: InvasiveChecksController = app.injector.instanceOf[InvasiveChecksController]
+  lazy val controller: AssuranceChecksController = app.injector.instanceOf[AssuranceChecksController]
 
   "post invasive check" should {
     "return 200 and redisplay the invasiveSaAgentCodePost page with an error message for missing radio choice" in {
@@ -37,7 +37,7 @@ class InvasiveChecksControllerISpec extends BaseISpec {
         val result = await(controller.invasiveSaAgentCodePost(request))
 
         status(result) shouldBe 303
-        redirectLocation(result) shouldBe Some(routes.InvasiveChecksController.showClientDetailsForm().url)
+        redirectLocation(result) shouldBe Some(routes.AssuranceChecksController.showClientDetailsForm().url)
         noMetricExpectedAtThisPoint()
       }
     }
@@ -145,7 +145,7 @@ class InvasiveChecksControllerISpec extends BaseISpec {
       val result = await(controller.submitClientDetailsForm(request))
 
       status(result) shouldBe 303
-      redirectLocation(result) shouldBe Some(routes.InvasiveChecksController.invasiveCheckStart().url)
+      redirectLocation(result) shouldBe Some(routes.AssuranceChecksController.invasiveCheckStart().url)
     }
 
     "redirect to /cannot-create account page when submitting valid nino with no relationship" in {

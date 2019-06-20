@@ -27,7 +27,7 @@
         @errorSummary(Messages("error.summary.heading"), radioResponseForm, Seq.empty, Some("enter-agent-code"))
     }
 
-    @form(action = routes.InvasiveChecksController.invasiveSaAgentCodePost(), 'class -> "form js-form") {
+    @form(action = routes.AssuranceChecksController.invasiveSaAgentCodePost(), 'class -> "form js-form") {
         <div class="form-group @if(radioResponseForm.error("hasSaAgentCode").isDefined){form-group-error}" id="hasSaAgentCode">
             <fieldset>
                 <legend>

@@ -88,7 +88,7 @@ class PostcodeControllerWithPayCheckISpec extends BaseISpec with SessionDataMiss
       val result = await(controller.submitPostcodeForm()(request))
 
       status(result) shouldBe 303
-      redirectLocation(result) shouldBe Some(routes.InvasiveChecksController.invasiveCheckStart().url)
+      redirectLocation(result) shouldBe Some(routes.AssuranceChecksController.invasiveCheckStart().url)
       verifyAgentAssuranceAuditRequestSent(
         passPayeAgentAssuranceCheck = None,
         passSaAgentAssuranceCheck = Some(false),

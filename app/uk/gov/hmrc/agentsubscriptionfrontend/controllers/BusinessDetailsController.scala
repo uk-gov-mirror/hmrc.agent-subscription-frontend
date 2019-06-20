@@ -132,7 +132,7 @@ class BusinessDetailsController @Inject()(
           .sendAgentAssuranceAuditEvent(utr, postcode, assuranceResults)
           .flatMap { _ =>
             mark("Count-Subscription-InvasiveCheck-Start")
-            routes.InvasiveChecksController.invasiveCheckStart()
+            routes.AssuranceChecksController.invasiveCheckStart()
           }
       case maybeAssured @ (None | ManuallyAssured(_) | CheckedInvisibleAssuranceAndPassed(_)) =>
         maybeAssured match {
