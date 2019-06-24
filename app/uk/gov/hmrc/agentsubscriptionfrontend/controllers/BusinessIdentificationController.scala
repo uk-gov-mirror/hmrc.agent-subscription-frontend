@@ -36,8 +36,9 @@ import uk.gov.hmrc.agentsubscriptionfrontend.validators.BusinessDetailsValidator
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.binders.ContinueUrl
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class BusinessIdentificationController @Inject()(
@@ -134,7 +135,9 @@ class BusinessIdentificationController @Inject()(
                     mark("Count-Subscription-AlreadySubscribed-RegisteredInETMP")
                     Redirect(routes.BusinessIdentificationController.showAlreadySubscribed())
                   } else {
-                    validatedBusinessDetailsAndRedirect(existingSession).map(Redirect)
+                    sessionStoreService.fetchContinueUrl.flatMap { continueUrl =>
+                      validatedBusinessDetailsAndRedirect(existingSession, continueUrl).map(Redirect)
+                    }
                   }
                 case No =>
                   //Redirect(routes.UtrController.showUtrForm())
@@ -146,7 +149,8 @@ class BusinessIdentificationController @Inject()(
     }
   }
 
-  private def validatedBusinessDetailsAndRedirect(existingSession: AgentSession)(implicit hc: HeaderCarrier): Call =
+  private def validatedBusinessDetailsAndRedirect(existingSession: AgentSession, continueUrl: Option[ContinueUrl])(
+    implicit hc: HeaderCarrier): Future[Call] =
     businessDetailsValidator.validate(existingSession.registration) match {
       case Failure(responses) if responses.contains(InvalidBusinessName) =>
         routes.BusinessIdentificationController.showBusinessNameForm()
@@ -154,8 +158,13 @@ class BusinessIdentificationController @Inject()(
         routes.BusinessIdentificationController.showUpdateBusinessAddressForm()
       case Failure(responses) if responses.contains(InvalidEmail) =>
         routes.BusinessIdentificationController.showBusinessEmailForm()
-      case _ =>
+      case _ if continueUrl.isDefined =>
+        //if service is trusts don't show task list
         routes.AMLSController.showCheckAmlsPage()
+      case _ =>
+        sessionStoreService
+          .cacheAgentSession(existingSession.copy(businessTaskComplete = true))
+          .flatMap(_ => routes.TaskListController.showTaskList())
     }
 
   val showBusinessEmailForm: Action[AnyContent] = Action.async { implicit request =>
@@ -255,7 +264,10 @@ class BusinessIdentificationController @Inject()(
         sessionStoreService
           .cacheIsChangingAnswers(false)
           .map(_ => Redirect(routes.SubscriptionController.showCheckAnswers()))
-      case _ => validatedBusinessDetailsAndRedirect(updatedSession).map(Redirect)
+      case _ =>
+        sessionStoreService.fetchContinueUrl.flatMap { continueUrl =>
+          validatedBusinessDetailsAndRedirect(updatedSession, continueUrl).map(Redirect)
+        }
     }
   }
 

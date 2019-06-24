@@ -7,6 +7,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, BusinessType}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.{subscribingAgentEnrolledForNonMTD, subscribingCleanAgentWithoutEnrolments}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData.{businessAddress, validUtr, _}
+import uk.gov.hmrc.play.binders.ContinueUrl
 
 class ConfirmBusinessISpec extends BaseISpec {
   lazy val controller: BusinessIdentificationController = app.injector.instanceOf[BusinessIdentificationController]
@@ -100,7 +101,19 @@ class ConfirmBusinessISpec extends BaseISpec {
         metricShouldExistAndBeUpdated("Count-Subscription-AlreadySubscribed-RegisteredInETMP")
       }
 
-      "redirect to showAmlsDetailsForm if the user has clean creds and isSubscribedToAgentServices=false" in {
+      "redirect to showAmlsDetailsForm if the user has clean creds and isSubscribedToAgentServices=false and there is a continueUrl" in {
+        implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+          .withFormUrlEncodedBody("confirmBusiness" -> "yes")
+        sessionStoreService.currentSession.agentSession =
+          Some(AgentSession(Some(BusinessType.SoleTrader), utr = Some(utr), registration = Some(registration.copy(isSubscribedToAgentServices = false))))
+        sessionStoreService.currentSession.continueUrl = Some(ContinueUrl("/continue/url"))
+
+        val result = await(controller.submitConfirmBusinessForm(request))
+
+        result.header.headers(LOCATION) shouldBe routes.AMLSController.showCheckAmlsPage().url
+      }
+
+      "redirect to task list if the user has clean creds and isSubscribedToAgentServices=false and there is no continueUrl" in {
         implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
           .withFormUrlEncodedBody("confirmBusiness" -> "yes")
         sessionStoreService.currentSession.agentSession =
@@ -108,7 +121,7 @@ class ConfirmBusinessISpec extends BaseISpec {
 
         val result = await(controller.submitConfirmBusinessForm(request))
 
-        result.header.headers(LOCATION) shouldBe routes.AMLSController.showCheckAmlsPage().url
+        result.header.headers(LOCATION) shouldBe routes.TaskListController.showTaskList().url
       }
 
       "redirect to showBusinessEmailForm if the user has clean creds and isSubscribedToAgentServices=false and ETMP record contains empty email" in {

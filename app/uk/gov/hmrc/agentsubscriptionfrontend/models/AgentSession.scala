@@ -32,7 +32,9 @@ case class AgentSession(
   registration: Option[Registration] = None,
   checkAmls: Option[String] = None,
   amlsAppliedFor: Option[String] = None,
-  amlsDetails: Option[AMLSDetails] = None)
+  amlsDetails: Option[AMLSDetails] = None,
+  businessTaskComplete: Boolean = false,
+  amlsTaskComplete: Boolean = false)
 
 object AgentSession {
   implicit val format: Format[AgentSession] = Json.format[AgentSession]

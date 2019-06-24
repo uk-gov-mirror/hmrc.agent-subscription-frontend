@@ -5,6 +5,8 @@ GET         /start                                uk.gov.hmrc.agentsubscriptionf
 GET         /not-agent                            uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.showNotAgent
 GET         /return-after-gg-creds-created        uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.returnAfterGGCredsCreated(id: Option[String] ?= None)
 
+GET         /task-list                            uk.gov.hmrc.agentsubscriptionfrontend.controllers.TaskListController.showTaskList
+
 GET         /business-type                        uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessTypeController.showBusinessTypeForm
 POST        /business-type                        uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessTypeController.submitBusinessTypeForm
 

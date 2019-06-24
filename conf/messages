@@ -136,6 +136,24 @@ noAgencyFound.p2=Check the details and try again.
 alreadySubscribed.title=Your business already has an agent services account
 alreadySubscribed.p1=Contact your administrator to get access to your business''s agent services account.
 
+#Task list
+task-list.header=Create an agent services account
+task-list.subheader=Complete each section in turn. You will not be able to save your progress so have all your information together before you start.
+task-list.1.number=1.
+task-list.1.header=Enter your business details
+task-list.1.identify-business=Identify your business
+task-list.1.amls=Enter your money laundering compliance details
+task-list.2.number=2.
+task-list.2.header=Create your new user ID
+task-list.2.create=Create your user ID for your agent services account
+task-list.3.number=3.
+task-list.3.header=Check your answers and create your account
+task-list.3.check=You can check your answers once you have completed the other sections.
+task-list.4.number=4.
+task-list.4.header=Copy across your existing client relationships
+task-list.4.copy=Copy across your existing Self Assessment and VAT clients to your new account.
+task-list.completed=COMPLETED
+
 #Check business type
 businessType.title=What type of business are you?
 businessType.option.sole-trader=Sole trader

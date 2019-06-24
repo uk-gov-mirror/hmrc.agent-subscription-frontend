@@ -7,6 +7,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, BusinessType}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.subscribingCleanAgentWithoutEnrolments
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData.{validUtr, _}
+import uk.gov.hmrc.play.binders.ContinueUrl
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -62,10 +63,11 @@ class BusinessEmailISpec extends BaseISpec {
   "submitBusinessEmailForm" should {
     behave like anAgentAffinityGroupOnlyEndpoint(request => controller.submitBusinessEmailForm(request))
 
-    "update business email after submission" in {
+    "update business email after submission, redirect to AMLS when there is a continue url" in {
       implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments).withFormUrlEncodedBody("email" -> "newagent@example.com")
       sessionStoreService.currentSession.agentSession =
         Some(AgentSession(Some(BusinessType.SoleTrader), utr = Some(validUtr), registration = Some(registration)))
+      sessionStoreService.currentSession.continueUrl = Some(ContinueUrl("/continue/url"))
 
       val result = await(controller.submitBusinessEmailForm(request))
       status(result) shouldBe 303
