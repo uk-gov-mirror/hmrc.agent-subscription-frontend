@@ -56,8 +56,12 @@ class AMLSController @Inject()(
     withSubscribingAgent { _ =>
       withValidSession { (_, existingSession) =>
         withManuallyAssuredAgent(existingSession) {
-          existingSession.checkAmls.fold(Ok(check_amls(checkAmlsForm)))(amls =>
-            Ok(check_amls(checkAmlsForm.bind(Map("registeredAmls" -> amls.toString)))))
+          existingSession.checkAmls.fold(Ok(check_amls(checkAmlsForm, existingSession.businessTaskComplete)))(
+            amls =>
+              Ok(
+                check_amls(
+                  checkAmlsForm.bind(Map("registeredAmls" -> amls.toString)),
+                  existingSession.businessTaskComplete)))
         }
       }
     }
@@ -70,7 +74,7 @@ class AMLSController @Inject()(
           checkAmlsForm
             .bindFromRequest()
             .fold(
-              formWithErrors => Ok(html.amls.check_amls(formWithErrors)),
+              formWithErrors => Ok(html.amls.check_amls(formWithErrors, existingSession.businessTaskComplete)),
               validForm => {
                 val nextPage = validForm match {
                   case Yes =>
@@ -109,7 +113,6 @@ class AMLSController @Inject()(
                 case Yes => Redirect(routes.AMLSController.showAmlsApplicationDatePage())
                 case No  => Redirect(routes.AMLSController.showAmlsNotAppliedPage())
               }
-
               sessionStoreService
                 .cacheAgentSession(existingSession.copy(amlsAppliedFor = RadioInputAnswer.unapply(validForm)))
                 .map(_ => nextPage)
@@ -171,9 +174,12 @@ class AMLSController @Inject()(
                   Right(RegisteredDetails(validForm.membershipNumber, validForm.expiry)))
 
                 sessionStoreService
-                  .cacheAgentSession(existingSession.copy(amlsDetails = Some(amlsDetails)))
-                  .map { _ =>
-                    Redirect(routes.SubscriptionController.showCheckAnswers())
+                  .cacheAgentSession(existingSession.copy(amlsDetails = Some(amlsDetails), amlsTaskComplete = true))
+                  .flatMap { _ =>
+                    sessionStoreService.fetchContinueUrl.map {
+                      case Some(_) => Redirect(routes.SubscriptionController.showCheckAnswers())
+                      case None    => Redirect(routes.TaskListController.showTaskList())
+                    }
                   }
               }
             )
@@ -242,9 +248,12 @@ class AMLSController @Inject()(
                   Left(PendingDetails(validForm.appliedOn)))
 
                 sessionStoreService
-                  .cacheAgentSession(existingSession.copy(amlsDetails = Some(amlsDetails)))
-                  .map { _ =>
-                    Redirect(routes.SubscriptionController.showCheckAnswers())
+                  .cacheAgentSession(existingSession.copy(amlsDetails = Some(amlsDetails), amlsTaskComplete = true))
+                  .flatMap { _ =>
+                    sessionStoreService.fetchContinueUrl.map {
+                      case Some(_) => Redirect(routes.SubscriptionController.showCheckAnswers())
+                      case None    => Redirect(routes.TaskListController.showTaskList())
+                    }
                   }
               }
             )
@@ -263,6 +272,7 @@ class AMLSController @Inject()(
           } else body
         }
       case None =>
+        //redirect to task list ??? What happens if agent is on MAA List?
         Redirect(routes.BusinessDetailsController.showBusinessDetailsForm())
       //Redirect(routes.UtrController.showUtrForm())
     }

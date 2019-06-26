@@ -24,6 +24,7 @@ import play.api.i18n.MessagesApi
 import play.api.mvc.{AnyContent, Request, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.audit.AuditService
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
+import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentAssuranceConnector
 import uk.gov.hmrc.agentsubscriptionfrontend.models
 import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidationResult.FailureReason._
@@ -44,6 +45,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class BusinessIdentificationController @Inject()(
   assuranceService: AssuranceService,
   override val authConnector: AuthConnector,
+  agentAssuranceConnector: AgentAssuranceConnector,
   val subscriptionService: SubscriptionService,
   override val sessionStoreService: SessionStoreService,
   continueUrlActions: ContinueUrlActions,
@@ -162,9 +164,14 @@ class BusinessIdentificationController @Inject()(
         //if service is trusts don't show task list
         routes.AMLSController.showCheckAmlsPage()
       case _ =>
-        sessionStoreService
-          .cacheAgentSession(existingSession.copy(businessTaskComplete = true))
-          .flatMap(_ => routes.TaskListController.showTaskList())
+        for {
+          isMAA <- agentAssuranceConnector.isManuallyAssuredAgent(existingSession.utr.get)
+          _ <- if (isMAA)
+                sessionStoreService.cacheAgentSession(
+                  existingSession.copy(businessTaskComplete = true, amlsTaskComplete = true))
+              else sessionStoreService.cacheAgentSession(existingSession.copy(businessTaskComplete = true))
+          result <- routes.TaskListController.showTaskList()
+        } yield result
     }
 
   val showBusinessEmailForm: Action[AnyContent] = Action.async { implicit request =>

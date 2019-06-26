@@ -20,11 +20,13 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.models._
 @import uk.gov.hmrc.agentsubscriptionfrontend.views.html.error_prefix
 
-@(checkAmlsForm: Form[RadioInputAnswer])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+@(checkAmlsForm: Form[RadioInputAnswer], backToTaskList: Boolean)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+
+@backLink = @{if(backToTaskList) routes.TaskListController.showTaskList() else routes.BusinessIdentificationController.showConfirmBusinessForm()}
 
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title =  error_prefix(checkAmlsForm) + Messages("check-amls.title"), bodyClasses = None) {
 
-<a href="@routes.BusinessIdentificationController.showConfirmBusinessForm" class="link-back">@Messages("button.back")</a>
+<a href=@backLink class="link-back">@Messages("button.back")</a>
 
 @if(checkAmlsForm.hasErrors) {
 @errorSummary(Messages("error.summary.heading"), checkAmlsForm, Seq.empty, Some("check-amls"))

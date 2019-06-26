@@ -5,6 +5,7 @@ import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.{BusinessIdentificationController, routes}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, BusinessType}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
+import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.{subscribingAgentEnrolledForNonMTD, subscribingCleanAgentWithoutEnrolments}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData.{businessAddress, validUtr, _}
 import uk.gov.hmrc.play.binders.ContinueUrl
@@ -114,6 +115,7 @@ class ConfirmBusinessISpec extends BaseISpec {
       }
 
       "redirect to task list if the user has clean creds and isSubscribedToAgentServices=false and there is no continueUrl" in {
+        givenAgentIsNotManuallyAssured(utr.value)
         implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
           .withFormUrlEncodedBody("confirmBusiness" -> "yes")
         sessionStoreService.currentSession.agentSession =
@@ -122,6 +124,19 @@ class ConfirmBusinessISpec extends BaseISpec {
         val result = await(controller.submitConfirmBusinessForm(request))
 
         result.header.headers(LOCATION) shouldBe routes.TaskListController.showTaskList().url
+      }
+
+      "redirect to task list if the user has clean creds and isSubscribedToAgentServices=false and there is no continueUrl and is a MAA" in {
+        givenAgentIsManuallyAssured(utr.value)
+        implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+          .withFormUrlEncodedBody("confirmBusiness" -> "yes")
+        sessionStoreService.currentSession.agentSession =
+          Some(AgentSession(Some(BusinessType.SoleTrader), utr = Some(utr), registration = Some(registration.copy(isSubscribedToAgentServices = false))))
+
+        val result = await(controller.submitConfirmBusinessForm(request))
+
+        result.header.headers(LOCATION) shouldBe routes.TaskListController.showTaskList().url
+        sessionStoreService.currentSession.agentSession.get.amlsTaskComplete shouldBe true
       }
 
       "redirect to showBusinessEmailForm if the user has clean creds and isSubscribedToAgentServices=false and ETMP record contains empty email" in {
