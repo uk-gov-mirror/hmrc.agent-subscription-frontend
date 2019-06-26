@@ -40,7 +40,7 @@ class TaskListControllerISpec extends BaseISpec {
 
       val result = await(controller.showTaskList(request))
       status(result) shouldBe 303
-      redirectLocation(result)(defaultTimeout) shouldBe Some(routes.StartController.start().url)
+      redirectLocation(result)(defaultTimeout) shouldBe Some(routes.BusinessTypeController.showBusinessTypeForm().url)
     }
   }
 }

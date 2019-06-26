@@ -24,7 +24,12 @@ following the ROSM (Register Once Subscribe Many) pattern.
     
 It should then be listening on port 9437
 
-    browse http://localhost:9437/agent-subscription/start    
+    browse http://localhost:9437/agent-subscription/start  
+    
+Alternatively use task list functionality:
+
+    browse http://localhost:9437/agent-subscription/task-list  
+  
     
 ## Continue URL
 

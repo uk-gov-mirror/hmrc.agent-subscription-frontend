@@ -40,7 +40,7 @@ class TaskListController @Inject()(
     withSubscribingAgent { implicit agent =>
       continueUrlActions.withMaybeContinueUrl { continueUrlOpt =>
         sessionStoreService.fetchAgentSession.map {
-          case _ if continueUrlOpt.isDefined => Redirect(routes.StartController.start())
+          case _ if continueUrlOpt.isDefined => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
           case Some(session)                 => Ok(html.task_list(session.businessTaskComplete))
           case None                          => Ok(html.task_list(identifyBusinessTaskComplete = false))
         }
