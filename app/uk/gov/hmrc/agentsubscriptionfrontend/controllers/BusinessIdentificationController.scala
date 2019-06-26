@@ -168,8 +168,11 @@ class BusinessIdentificationController @Inject()(
           isMAA <- agentAssuranceConnector.isManuallyAssuredAgent(existingSession.utr.get)
           _ <- if (isMAA)
                 sessionStoreService.cacheAgentSession(
-                  existingSession.copy(businessTaskComplete = true, amlsTaskComplete = true))
-              else sessionStoreService.cacheAgentSession(existingSession.copy(businessTaskComplete = true))
+                  existingSession.copy(taskListFlags =
+                    existingSession.taskListFlags.copy(businessTaskComplete = true, amlsTaskComplete = true)))
+              else
+                sessionStoreService.cacheAgentSession(
+                  existingSession.copy(taskListFlags = existingSession.taskListFlags.copy(businessTaskComplete = true)))
           result <- routes.TaskListController.showTaskList()
         } yield result
     }

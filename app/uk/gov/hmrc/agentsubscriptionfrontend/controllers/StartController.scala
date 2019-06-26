@@ -24,7 +24,7 @@ import play.api.mvc.{Action, AnyContent, Request, Result}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.models.MappingEligibility.IsEligible
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, MappingEligibility, Postcode}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, MappingEligibility, Postcode, TaskListFlags}
 import uk.gov.hmrc.agentsubscriptionfrontend.repository.ChainedSessionDetailsRepository
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionService, SubscriptionState}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
@@ -79,9 +79,9 @@ class StartController @Inject()(
                   chainedSessionDetails.wasEligibleForMapping)
               }
 
-            case None => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
+            case None => Redirect(routes.TaskListController.showTaskList())
           }
-        case None => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
+        case None => Redirect(routes.TaskListController.showTaskList())
       }
     }
   }
@@ -109,7 +109,10 @@ class StartController @Inject()(
                 handleAutoMapping(wasEligibleForMapping)
               }
             }
-          case _ => toFuture(Redirect(routes.BusinessTypeController.showBusinessTypeForm()))
+          case _ =>
+            sessionStoreService
+              .cacheAgentSession(agentSession.copy(taskListFlags = TaskListFlags()))
+              .flatMap(_ => toFuture(Redirect(routes.TaskListController.showTaskList())))
         }
       }
     }
@@ -117,6 +120,32 @@ class StartController @Inject()(
   def showCannotCreateAccount: Action[AnyContent] = Action { implicit request =>
     Ok(html.cannot_create_account())
   }
+
+  private def handleAutoMapping(
+    eligibleForMapping: Option[Boolean])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Result] =
+    withValidSession { (_, existingSession) =>
+      MappingEligibility.apply(eligibleForMapping) match {
+        case IsEligible if appConfig.autoMapAgentEnrolments =>
+          sessionStoreService
+            .cacheAgentSession(
+              existingSession
+                .copy(taskListFlags = existingSession.taskListFlags.copy(createTaskComplete = true)))
+            .flatMap(_ =>
+              sessionStoreService.fetchContinueUrl.flatMap {
+                case Some(_) => toFuture(Redirect(routes.SubscriptionController.showLinkClients()))
+                case None    => toFuture(Redirect(routes.TaskListController.showTaskList()))
+            })
+        case _ =>
+          sessionStoreService
+            .cacheAgentSession(existingSession
+              .copy(taskListFlags = existingSession.taskListFlags.copy(createTaskComplete = true, copyComplete = true)))
+            .flatMap(_ =>
+              sessionStoreService.fetchContinueUrl.flatMap {
+                case Some(_) => toFuture(Redirect(routes.SubscriptionController.showCheckAnswers()))
+                case None    => toFuture(Redirect(routes.TaskListController.showTaskList()))
+            })
+      }
+    }
 
   private def handlePartialSubscription(kfcUtr: Utr, kfcPostcode: String, eligibleForMapping: Option[Boolean])(
     implicit request: Request[_],
@@ -133,4 +162,5 @@ class StartController @Inject()(
             Redirect(routes.SubscriptionController.showSubscriptionComplete())
           }
     }
+
 }

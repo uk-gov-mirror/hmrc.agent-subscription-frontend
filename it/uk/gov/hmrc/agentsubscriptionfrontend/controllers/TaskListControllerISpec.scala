@@ -2,7 +2,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 import play.api.test.Helpers.redirectLocation
-import uk.gov.hmrc.agentsubscriptionfrontend.models.AgentSession
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, TaskListFlags}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub.userIsAuthenticated
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.subscribingAgentEnrolledForNonMTD
@@ -26,7 +26,7 @@ class TaskListControllerISpec extends BaseISpec {
     }
     "contain CONTINUE tag when a task has been completed" in {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
-      sessionStoreService.currentSession.agentSession = Some(AgentSession(businessTaskComplete = true))
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(taskListFlags = TaskListFlags(businessTaskComplete = true)))
 
       val result = await(controller.showTaskList(request))
       result should containMessages(

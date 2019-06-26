@@ -136,7 +136,8 @@ class ConfirmBusinessISpec extends BaseISpec {
         val result = await(controller.submitConfirmBusinessForm(request))
 
         result.header.headers(LOCATION) shouldBe routes.TaskListController.showTaskList().url
-        sessionStoreService.currentSession.agentSession.get.amlsTaskComplete shouldBe true
+
+        sessionStoreService.currentSession.agentSession.get.taskListFlags.amlsTaskComplete shouldBe true
       }
 
       "redirect to showBusinessEmailForm if the user has clean creds and isSubscribedToAgentServices=false and ETMP record contains empty email" in {

@@ -135,9 +135,9 @@ trait StartControllerISpec extends BaseISpec {
 
   "returnAfterGGCredsCreated" should {
     import FixturesForReturnAfterGGCredsCreated._
-    "redirect to the /check-answers page if given a valid StashedChainedSessionDetails ID" when {
-      "agent is unsubscribed" in new ValidKnownFactsCached with UnsubscribedAgentStub {
-        implicit val request = FakeRequest()
+    "given a valid StashedChainedSessionDetails ID" when {
+      "agent is unsubscribed and has a continue url redirect to the /check-answers page" in new ValidKnownFactsCached with UnsubscribedAgentStub {
+        implicit val request = FakeRequest("GET", "/agent-subscription/return-after-gg-creds-created?continue=/some/url")
         sessionStoreService.currentSession.agentSession = Some(agentSession)
 
         val result = await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(request))
@@ -146,11 +146,45 @@ trait StartControllerISpec extends BaseISpec {
         redirectLocation(result).head should include(routes.SubscriptionController.showCheckAnswers().url)
       }
 
-      "agent is already fully subscribed" in new ValidKnownFactsCached with SubscribedAgentStub {
-        val result = await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(FakeRequest()))
+      "agent is unsubscribed and has no continue url redirect to the /task-list page" in new ValidKnownFactsCached with UnsubscribedAgentStub {
+        implicit val request = FakeRequest()
+        sessionStoreService.currentSession.agentSession = Some(agentSession)
+
+        val result = await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(request))
+
+        status(result) shouldBe 303
+        redirectLocation(result).head should include(routes.TaskListController.showTaskList().url)
+        sessionStoreService.currentSession.agentSession.get.taskListFlags.createTaskComplete shouldBe true
+      }
+
+      "agent is already fully subscribed and has a continue url redirect to the /check-answers page" in new ValidKnownFactsCached with SubscribedAgentStub {
+        val result = await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(
+          FakeRequest("GET", "/agent-subscription/return-after-gg-creds-created?continue=/some/url")))
 
         status(result) shouldBe 303
         redirectLocation(result).head should include(routes.SubscriptionController.showCheckAnswers().url)
+      }
+
+      "agent is already fully subscribed and has no continue url redirect to the /task-list page" in new ValidKnownFactsCached with SubscribedAgentStub {
+        implicit val request = FakeRequest()
+        val result = await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(request))
+
+        status(result) shouldBe 303
+        redirectLocation(result).head should include(routes.TaskListController.showTaskList().url)
+        sessionStoreService.currentSession.agentSession.get.taskListFlags.createTaskComplete shouldBe true
+      }
+      "agent is already fully subscribed and has no utr redirect to the /task-list page with task list flags off" in {
+        val persistedId = await(repo.create(ChainedSessionDetails(Some(false), agentSession.copy(utr = None))))
+        implicit val request = FakeRequest()
+        sessionStoreService.currentSession.agentSession = Some(agentSession.copy(utr = None))
+
+        val result = await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(request))
+
+        status(result) shouldBe 303
+        redirectLocation(result).head should include(routes.TaskListController.showTaskList().url)
+        sessionStoreService.currentSession.agentSession.get.taskListFlags.businessTaskComplete shouldBe false
+        sessionStoreService.currentSession.agentSession.get.taskListFlags.amlsTaskComplete shouldBe false
+        sessionStoreService.currentSession.agentSession.get.taskListFlags.createTaskComplete shouldBe false
       }
     }
 
@@ -195,20 +229,20 @@ trait StartControllerISpec extends BaseISpec {
       an[Upstream5xxResponse] shouldBe thrownBy(await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(FakeRequest())))
     }
 
-    "redirect to the /business-type page if given an invalid ChainedSessionDetails ID" in new ValidKnownFactsCached {
+    "redirect to the /task-list if given an invalid ChainedSessionDetails ID" in new ValidKnownFactsCached {
       val invalidId = s"A$persistedId"
 
       val result = await(controller.returnAfterGGCredsCreated(id = Some(invalidId))(FakeRequest()))
 
       status(result) shouldBe 303
-      redirectLocation(result).head should include(routes.BusinessTypeController.showBusinessTypeForm().url)
+      redirectLocation(result).head should include(routes.TaskListController.showTaskList().url)
     }
 
-    "redirect to /business-type page if there is no valid ChainedSessionDetails ID" in {
+    "redirect to /task-list if there is no valid ChainedSessionDetails ID" in {
       val result = await(controller.returnAfterGGCredsCreated(id = None)(FakeRequest()))
 
       status(result) shouldBe 303
-      redirectLocation(result).head should include(routes.BusinessTypeController.showBusinessTypeForm().url)
+      redirectLocation(result).head should include(routes.TaskListController.showTaskList().url)
     }
 
     "delete the persisted ChainedSessionDetails if given a valid ChainedSessionDetails ID" in new ValidKnownFactsCached with UnsubscribedAgentStub {

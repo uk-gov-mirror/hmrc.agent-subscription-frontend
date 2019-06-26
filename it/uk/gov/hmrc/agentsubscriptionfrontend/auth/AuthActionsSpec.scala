@@ -2,7 +2,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.auth
 
 import com.kenshoo.play.metrics.Metrics
 import org.scalatest.BeforeAndAfterEach
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.mvc.Result
 import play.api.mvc.Results._
 import play.api.test.FakeRequest

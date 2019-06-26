@@ -56,12 +56,13 @@ class AMLSController @Inject()(
     withSubscribingAgent { _ =>
       withValidSession { (_, existingSession) =>
         withManuallyAssuredAgent(existingSession) {
-          existingSession.checkAmls.fold(Ok(check_amls(checkAmlsForm, existingSession.businessTaskComplete)))(
+          existingSession.checkAmls.fold(
+            Ok(check_amls(checkAmlsForm, existingSession.taskListFlags.businessTaskComplete)))(
             amls =>
               Ok(
                 check_amls(
                   checkAmlsForm.bind(Map("registeredAmls" -> amls.toString)),
-                  existingSession.businessTaskComplete)))
+                  existingSession.taskListFlags.businessTaskComplete)))
         }
       }
     }
@@ -74,7 +75,8 @@ class AMLSController @Inject()(
           checkAmlsForm
             .bindFromRequest()
             .fold(
-              formWithErrors => Ok(html.amls.check_amls(formWithErrors, existingSession.businessTaskComplete)),
+              formWithErrors =>
+                Ok(html.amls.check_amls(formWithErrors, existingSession.taskListFlags.businessTaskComplete)),
               validForm => {
                 val nextPage = validForm match {
                   case Yes =>
@@ -174,7 +176,11 @@ class AMLSController @Inject()(
                   Right(RegisteredDetails(validForm.membershipNumber, validForm.expiry)))
 
                 sessionStoreService
-                  .cacheAgentSession(existingSession.copy(amlsDetails = Some(amlsDetails), amlsTaskComplete = true))
+                  .cacheAgentSession(
+                    existingSession
+                      .copy(
+                        amlsDetails = Some(amlsDetails),
+                        taskListFlags = existingSession.taskListFlags.copy(amlsTaskComplete = true)))
                   .flatMap { _ =>
                     sessionStoreService.fetchContinueUrl.map {
                       case Some(_) => Redirect(routes.SubscriptionController.showCheckAnswers())
@@ -248,7 +254,11 @@ class AMLSController @Inject()(
                   Left(PendingDetails(validForm.appliedOn)))
 
                 sessionStoreService
-                  .cacheAgentSession(existingSession.copy(amlsDetails = Some(amlsDetails), amlsTaskComplete = true))
+                  .cacheAgentSession(
+                    existingSession
+                      .copy(
+                        amlsDetails = Some(amlsDetails),
+                        taskListFlags = existingSession.taskListFlags.copy(amlsTaskComplete = true)))
                   .flatMap { _ =>
                     sessionStoreService.fetchContinueUrl.map {
                       case Some(_) => Redirect(routes.SubscriptionController.showCheckAnswers())

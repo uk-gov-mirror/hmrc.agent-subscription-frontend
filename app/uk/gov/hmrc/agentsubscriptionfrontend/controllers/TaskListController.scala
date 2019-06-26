@@ -21,6 +21,7 @@ import play.api.i18n.MessagesApi
 import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentAssuranceConnector
+import uk.gov.hmrc.agentsubscriptionfrontend.models.TaskListFlags
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.auth.core.AuthConnector
@@ -43,8 +44,8 @@ class TaskListController @Inject()(
       continueUrlActions.withMaybeContinueUrl { continueUrlOpt =>
         sessionStoreService.fetchAgentSession.map {
           case _ if continueUrlOpt.isDefined => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
-          case Some(session)                 => Ok(html.task_list(session.businessTaskComplete, session.amlsTaskComplete))
-          case None                          => Ok(html.task_list(businessTaskComplete = false, amlsTaskComplete = false))
+          case Some(session)                 => Ok(html.task_list(session.taskListFlags))
+          case None                          => Ok(html.task_list(TaskListFlags()))
         }
       }
     }
