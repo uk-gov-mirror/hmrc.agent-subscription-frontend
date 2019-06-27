@@ -160,17 +160,6 @@ class VatDetailsControllerISpec extends BaseISpec with SessionDataMissingSpec {
 
     }
 
-    "handle forms with invalid vrn" in {
-      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("vrn" -> "123456789")
-      sessionStoreService.currentSession.agentSession = Some(agentSession.copy(dateOfBirth = Some(DateOfBirth(LocalDate.now())), registeredForVat = Some("Yes")))
-
-      val result = await(controller.submitVatDetailsForm()(request))
-      status(result) shouldBe 200
-
-      result should containMessages("vat-details.vrn.checksum-failure")
-
-    }
-
     "handle forms with missing vat registration date" in {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("regDate.day" -> "", "regDate.month" -> "", "regDate.year" -> "")
       sessionStoreService.currentSession.agentSession = Some(agentSession.copy(dateOfBirth = Some(DateOfBirth(LocalDate.now())), registeredForVat = Some("Yes")))

@@ -214,7 +214,6 @@ vat-details.reg-date.title=VAT registration date
 vat-details.reg-date.hint=For example, 31 3 1980
 vat-details.vrn.required=Enter your VAT registration number
 vat-details.vrn.regex-failure=VAT registration number must be 9 numbers
-vat-details.vrn.checksum-failure=Enter a valid VAT registration number
 vat-details.regDate.required=Enter your VAT registration date
 vat-details.regDate.invalid=Enter a real VAT registration date
 vat-details.regDate.day.invalid=VAT registration date must include a valid day

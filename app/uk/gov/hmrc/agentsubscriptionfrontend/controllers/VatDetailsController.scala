@@ -166,10 +166,8 @@ object VatDetailsController {
     nonEmpty("vat-details.vrn.required")(fieldValue) match {
       case i: Invalid => i
       case Valid =>
-        if (!fieldValue.matches("[0-9]{9}"))
+        if (!Vrn.isValid(fieldValue))
           Invalid(ValidationError("vat-details.vrn.regex-failure"))
-        else if (!Vrn.isValid(fieldValue.trim.toUpperCase))
-          Invalid(ValidationError("vat-details.vrn.checksum-failure"))
         else
           Valid
     }
