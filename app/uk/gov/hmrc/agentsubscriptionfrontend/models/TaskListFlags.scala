@@ -20,6 +20,7 @@ import play.api.libs.json.Json
 case class TaskListFlags(
   businessTaskComplete: Boolean = false,
   amlsTaskComplete: Boolean = false,
+  isMAA: Boolean = false,
   createTaskComplete: Boolean = false,
   checkAnswersComplete: Boolean = false,
   copyComplete: Boolean = false)

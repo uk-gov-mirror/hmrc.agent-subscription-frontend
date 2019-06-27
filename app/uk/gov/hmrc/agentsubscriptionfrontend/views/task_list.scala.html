@@ -40,7 +40,8 @@
                     }
                 </li>
                 <li class="app-task-list__item">@if(taskListFlags.businessTaskComplete) {
-                    <a href=@routes.AMLSController.showCheckAmlsPage()>@Messages("task-list.1.amls")</a>
+                  @if(taskListFlags.isMAA){ @Messages("task-list.1.amls")
+                  }else {<a href=@routes.AMLSController.showCheckAmlsPage()>@Messages("task-list.1.amls")</a>}
                     @if(taskListFlags.amlsTaskComplete) {
                         <strong class="govuk-tag app-task-list__task-completed">@Messages("task-list.completed")</strong>
                     }

@@ -26,7 +26,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.auth.core.AuthConnector
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 class TaskListController @Inject()(
   override val authConnector: AuthConnector,
@@ -41,13 +41,13 @@ class TaskListController @Inject()(
 
   def showTaskList: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { implicit agent =>
-      continueUrlActions.withMaybeContinueUrl { continueUrlOpt =>
+      continueUrlActions.withMaybeContinueUrlCached(
         sessionStoreService.fetchAgentSession.map {
-          case _ if continueUrlOpt.isDefined => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
-          case Some(session)                 => Ok(html.task_list(session.taskListFlags))
-          case None                          => Ok(html.task_list(TaskListFlags()))
-        }
-      }
+          case Some(session) => Ok(html.task_list(session.taskListFlags))
+          case None          => Ok(html.task_list(TaskListFlags()))
+        },
+        Future successful Redirect(routes.BusinessTypeController.showBusinessTypeForm())
+      )
     }
   }
 }

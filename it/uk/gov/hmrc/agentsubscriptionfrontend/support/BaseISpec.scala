@@ -95,6 +95,18 @@ abstract class BaseISpec
     contentType(result) shouldBe Some("text/html")
   }
 
+  protected def checkHtmlResultWithBodyText(result: Result, expectedSubstrings: String*): Unit = {
+    contentType(result) shouldBe Some("text/html")
+    charset(result) shouldBe Some("utf-8")
+    expectedSubstrings.foreach(s => bodyOf(result) should include(s))
+  }
+
+  protected def checkHtmlResultWithNotBodyText(result: Result, expectedSubstrings: String*): Unit = {
+    contentType(result) shouldBe Some("text/html")
+    charset(result) shouldBe Some("utf-8")
+    expectedSubstrings.foreach(s => bodyOf(result) should not include s)
+  }
+
   protected def containSubstrings(expectedSubstrings: String*): Matcher[Result] = {
     new Matcher[Result] {
       override def apply(result: Result): MatchResult = {
