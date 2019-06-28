@@ -20,6 +20,8 @@ import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
 import play.api.i18n.MessagesApi
 import play.api.mvc.{AnyContent, _}
+import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent
+import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent.hasNonEmptyEnrolments
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.config.amls.AMLSLoader
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentAssuranceConnector
@@ -31,7 +33,6 @@ import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html.amls._
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.HeaderCarrier
-import views.html.helper.form
 
 import scala.collection.immutable.Map
 import scala.concurrent.{ExecutionContext, Future}
@@ -160,7 +161,7 @@ class AMLSController @Inject()(
   }
 
   def submitAmlsDetailsForm: Action[AnyContent] = Action.async { implicit request =>
-    withSubscribingAgent { _ =>
+    withSubscribingAgent { agent =>
       withValidSession { (_, existingSession) =>
         withManuallyAssuredAgent(existingSession) {
           amlsForm(amlsBodies.keys.toSet)
@@ -174,13 +175,7 @@ class AMLSController @Inject()(
                 val amlsDetails = AMLSDetails(
                   amlsBodies.getOrElse(validForm.amlsCode, throw new Exception("Invalid AMLS code")),
                   Right(RegisteredDetails(validForm.membershipNumber, validForm.expiry)))
-
-                sessionStoreService
-                  .cacheAgentSession(
-                    existingSession
-                      .copy(
-                        amlsDetails = Some(amlsDetails),
-                        taskListFlags = existingSession.taskListFlags.copy(amlsTaskComplete = true)))
+                updateSession(existingSession, amlsDetails, agent)
                   .flatMap { _ =>
                     sessionStoreService.fetchContinueUrl.map {
                       case Some(_) => Redirect(routes.SubscriptionController.showCheckAnswers())
@@ -238,7 +233,7 @@ class AMLSController @Inject()(
   }
 
   def submitAmlsApplicationDatePage: Action[AnyContent] = Action.async { implicit request =>
-    withSubscribingAgent { _ =>
+    withSubscribingAgent { agent =>
       withValidSession { (_, existingSession) =>
         withManuallyAssuredAgent(existingSession) {
           amlsPendingForm
@@ -253,12 +248,7 @@ class AMLSController @Inject()(
                   amlsBodies.getOrElse(validForm.amlsCode, throw new Exception("Invalid AMLS code")),
                   Left(PendingDetails(validForm.appliedOn)))
 
-                sessionStoreService
-                  .cacheAgentSession(
-                    existingSession
-                      .copy(
-                        amlsDetails = Some(amlsDetails),
-                        taskListFlags = existingSession.taskListFlags.copy(amlsTaskComplete = true)))
+                updateSession(existingSession, amlsDetails, agent)
                   .flatMap { _ =>
                     sessionStoreService.fetchContinueUrl.map {
                       case Some(_) => Redirect(routes.SubscriptionController.showCheckAnswers())
@@ -286,4 +276,21 @@ class AMLSController @Inject()(
         Redirect(routes.BusinessDetailsController.showBusinessDetailsForm())
       //Redirect(routes.UtrController.showUtrForm())
     }
+
+  def updateSession(existingSession: AgentSession, amlsDetails: AMLSDetails, agent: Agent)(
+    implicit hc: HeaderCarrier) = {
+    val newSession = agent match {
+      case hasNonEmptyEnrolments(_) =>
+        existingSession
+          .copy(
+            amlsDetails = Some(amlsDetails),
+            taskListFlags = existingSession.taskListFlags.copy(amlsTaskComplete = true))
+      case _ =>
+        existingSession
+          .copy(
+            amlsDetails = Some(amlsDetails),
+            taskListFlags = existingSession.taskListFlags.copy(amlsTaskComplete = true, createTaskComplete = true))
+    }
+    sessionStoreService.cacheAgentSession(newSession)
+  }
 }

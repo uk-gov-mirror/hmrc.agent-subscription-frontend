@@ -26,7 +26,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.SoleTrader
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub.{givenAgentIsManuallyAssured, givenAgentIsNotManuallyAssured}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
-import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.subscribingCleanAgentWithoutEnrolments
+import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.{subscribingCleanAgentWithoutEnrolments, subscribingAgentEnrolledForNonMTD}
 import uk.gov.hmrc.play.binders.ContinueUrl
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -50,6 +50,14 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
     sessionStoreService.currentSession.agentSession = Some(AgentSession(businessType = Some(SoleTrader), utr = Some(utr)))
     givenAgentIsNotManuallyAssured(utr.value)
   }
+
+  trait SetupUnclean {
+    implicit val authenticatedRequest = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+    sessionStoreService.currentSession.agentSession = Some(AgentSession(businessType = Some(SoleTrader), utr = Some(utr)))
+    givenAgentIsNotManuallyAssured(utr.value)
+  }
+
+
 
   "GET /check-money-laundering-compliance" should {
     behave like anAgentAffinityGroupOnlyEndpoint(controller.showCheckAmlsPage(_))
@@ -311,15 +319,29 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
       redirectLocation(result).get shouldBe routes.TaskListController.showTaskList().url
 
       val amlsDetails = await(sessionStoreService.fetchAgentSession).get.amlsDetails.get
+      val taskListFlags = await(sessionStoreService.fetchAgentSession).get.taskListFlags
 
       amlsDetails shouldBe AMLSDetails("Association of AccountingTechnicians (AAT)", Right(RegisteredDetails("12345", expiryDate)))
+      taskListFlags.createTaskComplete shouldBe true
+    }
+
+    "createTaskComplete flag should be false when user has unclean creds" in new SetupUnclean {
+      implicit val request = authenticatedRequest.withFormUrlEncodedBody("amlsCode" -> "AAT",
+        "membershipNumber" -> "12345", "expiry.day" -> expiryDay, "expiry.month" -> expiryMonth,  "expiry.year" -> expiryYear)
+
+      val result = await(controller.submitAmlsDetailsForm(request))
+      status(result) shouldBe 303
+      redirectLocation(result).get shouldBe routes.TaskListController.showTaskList().url
+
+      val taskListFlags = await(sessionStoreService.fetchAgentSession).get.taskListFlags
+      taskListFlags.createTaskComplete shouldBe false
     }
 
     "show validation error when the form is submitted with empty amlsCode" in new Setup {
-      implicit val requst = authenticatedRequest.withFormUrlEncodedBody("amlsCode" -> "",
+      implicit val request = authenticatedRequest.withFormUrlEncodedBody("amlsCode" -> "",
         "membershipNumber" -> "12345", "expiry.day" -> expiryDay, "expiry.month" -> expiryMonth,  "expiry.year" -> expiryYear)
 
-      val result = await(controller.submitAmlsDetailsForm(requst))
+      val result = await(controller.submitAmlsDetailsForm(request))
       status(result) shouldBe 200
       result should containMessages("moneyLaunderingCompliance.amls.title", "error.moneyLaunderingCompliance.amlscode.empty")
 
@@ -327,10 +349,10 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
     }
 
     "show validation error when the form is submitted with invalid amlsCode" in new Setup {
-      implicit val requst = authenticatedRequest.withFormUrlEncodedBody("amlsCode" -> "Invalid Text",
+      implicit val request = authenticatedRequest.withFormUrlEncodedBody("amlsCode" -> "Invalid Text",
         "membershipNumber" -> "12345", "expiry.day" -> expiryDay, "expiry.month" -> expiryMonth,  "expiry.year" -> expiryYear)
 
-      val result = await(controller.submitAmlsDetailsForm(requst))
+      val result = await(controller.submitAmlsDetailsForm(request))
       status(result) shouldBe 200
       result should containMessages("moneyLaunderingCompliance.amls.title", "error.moneyLaunderingCompliance.amlscode.invalid")
 
@@ -338,10 +360,10 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
     }
 
     "show validation error when the form is submitted with empty membership number" in new Setup {
-      implicit val requst = authenticatedRequest.withFormUrlEncodedBody("amlsCode" -> "AAT",
+      implicit val request = authenticatedRequest.withFormUrlEncodedBody("amlsCode" -> "AAT",
         "membershipNumber" -> "", "expiry.day" -> expiryDay, "expiry.month" -> expiryMonth,  "expiry.year" -> expiryYear)
 
-      val result = await(controller.submitAmlsDetailsForm(requst))
+      val result = await(controller.submitAmlsDetailsForm(request))
       status(result) shouldBe 200
       result should containMessages("moneyLaunderingCompliance.membershipNumber.title", "error.moneyLaunderingCompliance.membershipNumber.empty")
 
