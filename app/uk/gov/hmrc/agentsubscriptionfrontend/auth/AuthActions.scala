@@ -22,6 +22,7 @@ import play.api.mvc.{Request, Result}
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.{ContinueUrlActions, routes}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.AgentSession
 import uk.gov.hmrc.agentsubscriptionfrontend.support.Monitoring
 import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
 import uk.gov.hmrc.auth.core._
@@ -96,6 +97,30 @@ trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring
             }
           } else {
             body(new Agent(enrolments.enrolments, creds))
+          }
+      }
+      .recover {
+        handleException
+      }
+
+  def withSubscribingOrSubscribedAgent[A](unsubscribedBody: Agent => Future[Result])(subscribedBody: Future[Result])(
+    implicit request: Request[A],
+    hc: HeaderCarrier,
+    ec: ExecutionContext): Future[Result] =
+    authorised(AuthProviders(GovernmentGateway) and AffinityGroup.Agent)
+      .retrieve(allEnrolments and credentials) {
+        case enrolments ~ creds =>
+          if (isEnrolledForHmrcAsAgent(enrolments)) {
+            continueUrlActions.extractContinueUrl.flatMap {
+              case Some(continueUrl) =>
+                mark("Count-Subscription-AlreadySubscribed-HasEnrolment-ContinueUrl")
+                Future successful Redirect(continueUrl.url)
+              case None =>
+                mark("Count-Subscription-AlreadySubscribed-HasEnrolment-AgentServicesAccount")
+                subscribedBody
+            }
+          } else {
+            unsubscribedBody(new Agent(enrolments.enrolments, creds))
           }
       }
       .recover {

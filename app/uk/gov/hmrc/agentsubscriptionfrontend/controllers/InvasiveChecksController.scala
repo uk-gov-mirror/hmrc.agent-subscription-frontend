@@ -40,7 +40,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class AssuranceChecksController @Inject()(
   assuranceService: AssuranceService,
   override val authConnector: AuthConnector,
-  override val sessionStoreService: SessionStoreService,
+  val sessionStoreService: SessionStoreService,
   continueUrlActions: ContinueUrlActions)(
   implicit messagesApi: MessagesApi,
   override val appConfig: AppConfig,

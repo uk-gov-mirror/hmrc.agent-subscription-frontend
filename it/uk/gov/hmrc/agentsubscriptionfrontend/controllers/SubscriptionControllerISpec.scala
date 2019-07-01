@@ -28,11 +28,13 @@ import play.api.test.Helpers._
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{AMLSDetails, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AddressLookupFrontendStubs._
+import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.{AgentSubscriptionStub, AuthStub, MappingStubs}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData._
 import uk.gov.hmrc.http.BadRequestException
+import uk.gov.hmrc.play.binders.ContinueUrl
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -86,6 +88,25 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       result should containSubstrings(registrationName, registration.emailAddress.get, registration.address.addressLine1, registration.address.postalCode.get)
 
       sessionStoreService.fetchGoBackUrl.futureValue shouldBe Some(routes.SubscriptionController.showCheckAnswers().url)
+    }
+    "show subscription answers page without AMLS section if the agent is on the manually assured list" in {
+      givenAgentIsManuallyAssured(validUtr.value)
+      implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+      sessionStoreService.currentSession.agentSession = agentSession.map(session => session.copy(amlsDetails = None,
+        taskListFlags = TaskListFlags(isMAA = true)))
+
+      val result = await(controller.showCheckAnswers(request))
+      result should containMessages(
+        "checkAnswers.title",
+        "checkAnswers.description.p1",
+        "checkAnswers.description.p2",
+        "checkAnswers.change.button",
+        "checkAnswers.confirm.button",
+        "checkAnswers.businessName.label",
+        "checkAnswers.businessEmailAddress.label",
+        "checkAnswers.businessAddress.label"
+      )
+      result should not(containMessages("checkAnswers.amlsDetails.pending.label"))
     }
 
     "redirect to the /business-type page if there is no InitialDetails in session because the user has returned to a bookmark" in {
@@ -522,13 +543,14 @@ class SubscriptionControllerWithAutoMappingOn extends SubscriptionControllerISpe
   override protected def featureFlagAutoMapping: Boolean = true
 
   "submitCheckAnswers" should {
-    "send subscription request and redirect to subscription complete" when {
+    "send subscription request and redirect to subscription complete when there is a continue url" when {
       "all fields are supplied and was not eligible for mapping" in {
         AgentSubscriptionStub.subscriptionWillSucceed(validUtr, subscriptionRequestWithNoEdit(), arn = "TARN00023")
 
         implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
         sessionStoreService.currentSession.agentSession = agentSession
         sessionStoreService.currentSession.wasEligibleForMapping = Some(false)
+        sessionStoreService.currentSession.continueUrl = Some(ContinueUrl("/some/url"))
 
         val result = await(controller.submitCheckAnswers(request))
         status(result) shouldBe 303
@@ -543,6 +565,7 @@ class SubscriptionControllerWithAutoMappingOn extends SubscriptionControllerISpe
 
         implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
         sessionStoreService.currentSession.agentSession = agentSession
+        sessionStoreService.currentSession.continueUrl = Some(ContinueUrl("/some/url"))
 
         val result = await(controller.submitCheckAnswers(request))
         status(result) shouldBe 303
@@ -558,6 +581,7 @@ class SubscriptionControllerWithAutoMappingOn extends SubscriptionControllerISpe
 
         implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
         sessionStoreService.currentSession.agentSession = agentSession
+        sessionStoreService.currentSession.continueUrl = Some(ContinueUrl("/some/url"))
         val result = await(controller.submitCheckAnswers(request))
         status(result) shouldBe 303
         redirectLocation(result).head shouldBe routes.SubscriptionController.showSubscriptionComplete().url
@@ -683,7 +707,22 @@ class SubscriptionControllerWithAutoMappingOff extends SubscriptionControllerISp
   override protected def featureFlagAutoMapping: Boolean = false
 
   "submitCheckAnswers" should {
-    "send subscription request and redirect to subscription complete when all fields are supplied and was not eligible for mapping" in {
+    "send subscription request and redirect to subscription complete when all fields are supplied and was not eligible for mapping and has a continue url" in {
+      AgentSubscriptionStub.subscriptionWillSucceed(utr, subscriptionRequestWithNoEdit(), arn = "TARN00023")
+
+      implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+      sessionStoreService.currentSession.agentSession = agentSession
+      sessionStoreService.currentSession.wasEligibleForMapping = None
+      sessionStoreService.currentSession.continueUrl = Some(ContinueUrl("/continue/url"))
+
+      val result = await(controller.submitCheckAnswers(request))
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.SubscriptionController.showSubscriptionComplete().url)
+
+      verifySubscriptionRequestSent(subscriptionRequestWithNoEdit())
+      metricShouldExistAndBeUpdated("Count-Subscription-Complete")
+    }
+    "send subscription request and redirect to task-list when all fields are supplied and was not eligible for mapping and does not have a continue url" in {
       AgentSubscriptionStub.subscriptionWillSucceed(utr, subscriptionRequestWithNoEdit(), arn = "TARN00023")
 
       implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
@@ -692,7 +731,7 @@ class SubscriptionControllerWithAutoMappingOff extends SubscriptionControllerISp
 
       val result = await(controller.submitCheckAnswers(request))
       status(result) shouldBe 303
-      redirectLocation(result) shouldBe Some(routes.SubscriptionController.showSubscriptionComplete().url)
+      redirectLocation(result) shouldBe Some(routes.TaskListController.showTaskList().url)
 
       verifySubscriptionRequestSent(subscriptionRequestWithNoEdit())
       metricShouldExistAndBeUpdated("Count-Subscription-Complete")

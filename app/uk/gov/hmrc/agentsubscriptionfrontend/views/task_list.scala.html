@@ -73,12 +73,12 @@
             </h2>
             <ul class="app-task-list__items">
                 <li class="app-task-list__item">@if(taskListFlags.createTaskComplete) {
-                    <a href="#">@Messages("task-list.3.check")</a>
+                    <a href=@routes.SubscriptionController.showCheckAnswers()>@Messages("task-list.3.header")</a>
                     @if(taskListFlags.checkAnswersComplete) {
                         <strong class="govuk-tag app-task-list__task-completed">@Messages("task-list.completed")</strong>
                     }
                 } else {
-                    @Messages("task-list.3.check")
+                    @Messages("task-list.3.header")
                 }
                 </li>
             </ul>

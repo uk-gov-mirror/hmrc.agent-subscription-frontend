@@ -9,14 +9,18 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.ContinueUrlActions
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, TaskListFlags}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
+import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.{subscribingAgentEnrolledForHMRCASAGENT, subscribingCleanAgentWithoutEnrolments}
 import uk.gov.hmrc.auth.core.{AuthConnector, InsufficientEnrolments}
 import uk.gov.hmrc.http.{HeaderCarrier, SessionKeys}
 
 import scala.concurrent.Future
 
 class AuthActionsSpec extends BaseISpec with MockitoSugar with BeforeAndAfterEach {
+
+  val appConfig: AppConfig = app.injector.instanceOf[AppConfig]
 
   object TestController extends AuthActions {
 
@@ -31,6 +35,12 @@ class AuthActionsSpec extends BaseISpec with MockitoSugar with BeforeAndAfterEac
 
     def withSubscribedAgent[A]: Result =
       await(super.withSubscribedAgent { arn => Future.successful(Ok(arn.value)) })
+
+    def withSubscribingOrSubscribedAgent[A]: Result = await(TestController.withSubscribingOrSubscribedAgent(
+      _ => Future successful Ok("unsubscribed"))(Future successful Ok("subscribed")))
+
+    def storeCheckAnswersComplete =
+      sessionStoreService.cacheAgentSession(AgentSession(taskListFlags = TaskListFlags(checkAnswersComplete = true)))
 
   }
 
@@ -80,6 +90,24 @@ class AuthActionsSpec extends BaseISpec with MockitoSugar with BeforeAndAfterEac
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some("/agent-subscription/finish-sign-out")
+    }
+  }
+
+  "withSubscribingOrSubscribedAgent" should {
+    "call body with a valid unsubscribed agent" in {
+      authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+      val result = TestController.withSubscribingOrSubscribedAgent
+
+      status(result) shouldBe 200
+      bodyOf(result) shouldBe "unsubscribed"
+    }
+    "return the taskListSubscribed result when there is a check answers complete true flag in the session" in {
+      authenticatedAs(subscribingAgentEnrolledForHMRCASAGENT)
+      TestController.storeCheckAnswersComplete
+      val result = TestController.withSubscribingOrSubscribedAgent
+
+      status(result) shouldBe 200
+      bodyOf(result) shouldBe "subscribed"
     }
   }
 }

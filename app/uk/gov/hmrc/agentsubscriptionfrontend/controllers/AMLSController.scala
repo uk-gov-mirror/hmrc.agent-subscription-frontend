@@ -42,7 +42,7 @@ class AMLSController @Inject()(
   override val authConnector: AuthConnector,
   val agentAssuranceConnector: AgentAssuranceConnector,
   override val continueUrlActions: ContinueUrlActions,
-  override val sessionStoreService: SessionStoreService)(
+  val sessionStoreService: SessionStoreService)(
   implicit messagesApi: MessagesApi,
   override val appConfig: AppConfig,
   override val metrics: Metrics,

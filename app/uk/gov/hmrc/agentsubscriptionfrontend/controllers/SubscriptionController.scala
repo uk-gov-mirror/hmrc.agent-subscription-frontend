@@ -41,7 +41,7 @@ import scala.util.control.NonFatal
 class SubscriptionController @Inject()(
   override val authConnector: AuthConnector,
   subscriptionService: SubscriptionService,
-  override val sessionStoreService: SessionStoreService,
+  val sessionStoreService: SessionStoreService,
   addressLookUpConnector: AddressLookupFrontendConnector,
   mappingConnector: MappingConnector,
   continueUrlActions: ContinueUrlActions)(
@@ -67,16 +67,24 @@ class SubscriptionController @Inject()(
               sessionStoreService
                 .cacheGoBackUrl(routes.SubscriptionController.showCheckAnswers().url)
                 .map { _ =>
-                  Ok(
-                    html.check_answers(
-                      registrationName = registration.taxpayerName.getOrElse(""),
-                      address = registration.address,
-                      emailAddress = registration.emailAddress,
-                      amlsDetails = amlsDetails
-                    ))
+                  Ok(html.check_answers(
+                    registrationName = registration.taxpayerName.getOrElse(""),
+                    address = registration.address,
+                    emailAddress = registration.emailAddress,
+                    amlsDetails = Some(amlsDetails)
+                  ))
                 }
 
             case (None, _) => Redirect(routes.BusinessDetailsController.showBusinessDetailsForm())
+
+            case (Some(registration), None) if existingSession.taskListFlags.isMAA =>
+              Ok(
+                html.check_answers(
+                  registrationName = registration.taxpayerName.getOrElse(""),
+                  address = registration.address,
+                  emailAddress = registration.emailAddress,
+                  amlsDetails = None
+                ))
 
             case (_, None) => Redirect(routes.AMLSController.showCheckAmlsPage())
           }
@@ -93,7 +101,7 @@ class SubscriptionController @Inject()(
             case (Some(utr), Some(postcode), Some(registration), Some(amlsDetails)) =>
               subscriptionService
                 .subscribe(utr, postcode, registration, amlsDetails)
-                .flatMap(redirectSubscriptionResponse(_, utr))
+                .flatMap(redirectSubscriptionResponse(_, utr, existingSession))
 
             case _ =>
               Logger(getClass).warn(s"Missing data in session, redirecting back to /business-type")
@@ -115,12 +123,23 @@ class SubscriptionController @Inject()(
     }
   }
 
-  private def redirectSubscriptionResponse(either: Either[SubscriptionReturnedHttpError, (Arn, String)], utr: Utr)(
-    implicit request: Request[AnyContent]): Future[Result] =
+  private def redirectSubscriptionResponse(
+    either: Either[SubscriptionReturnedHttpError, (Arn, String)],
+    utr: Utr,
+    existingSession: AgentSession)(implicit request: Request[AnyContent]): Future[Result] =
     either match {
       case Right((arn, nameFromDetails)) =>
         mark("Count-Subscription-Complete")
-        completeMappingWhenAvailable(utr, completedPartialSub = false)
+        sessionStoreService
+          .cacheAgentSession(
+            existingSession
+              .copy(taskListFlags = existingSession.taskListFlags.copy(checkAnswersComplete = true)))
+          .flatMap { _ =>
+            sessionStoreService.fetchContinueUrl.flatMap {
+              case Some(_) => completeMappingWhenAvailable(utr)
+              case None    => Future successful Redirect(routes.TaskListController.showTaskList())
+            }
+          }
 
       case Left(SubscriptionReturnedHttpError(CONFLICT)) =>
         mark("Count-Subscription-AlreadySubscribed-APIResponse")

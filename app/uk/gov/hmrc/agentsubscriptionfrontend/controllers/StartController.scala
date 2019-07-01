@@ -137,8 +137,9 @@ class StartController @Inject()(
             })
         case _ =>
           sessionStoreService
-            .cacheAgentSession(existingSession
-              .copy(taskListFlags = existingSession.taskListFlags.copy(createTaskComplete = true, copyComplete = true)))
+            .cacheAgentSession(
+              existingSession
+                .copy(taskListFlags = existingSession.taskListFlags.copy(createTaskComplete = true)))
             .flatMap(_ =>
               sessionStoreService.fetchContinueUrl.flatMap {
                 case Some(_) => toFuture(Redirect(routes.SubscriptionController.showCheckAnswers()))

@@ -47,7 +47,7 @@ class BusinessIdentificationController @Inject()(
   override val authConnector: AuthConnector,
   agentAssuranceConnector: AgentAssuranceConnector,
   val subscriptionService: SubscriptionService,
-  override val sessionStoreService: SessionStoreService,
+  val sessionStoreService: SessionStoreService,
   continueUrlActions: ContinueUrlActions,
   val businessDetailsValidator: BusinessDetailsValidator,
   auditService: AuditService)(

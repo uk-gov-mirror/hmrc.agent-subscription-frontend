@@ -40,7 +40,7 @@ class TaskListController @Inject()(
     extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig) with SessionBehaviour {
 
   def showTaskList: Action[AnyContent] = Action.async { implicit request =>
-    withSubscribingAgent { implicit agent =>
+    withSubscribingOrSubscribedAgent { implicit agent =>
       continueUrlActions.withMaybeContinueUrlCached(
         sessionStoreService.fetchAgentSession.map {
           case Some(session) => Ok(html.task_list(session.taskListFlags))
@@ -48,6 +48,10 @@ class TaskListController @Inject()(
         },
         Future successful Redirect(routes.BusinessTypeController.showBusinessTypeForm())
       )
-    }
+    }(sessionStoreService.fetchAgentSession.flatMap {
+      case Some(session) if session.taskListFlags.checkAnswersComplete =>
+        Future successful Ok(html.task_list(session.taskListFlags))
+      case None => Future successful Redirect(appConfig.agentServicesAccountUrl)
+    })
   }
 }
