@@ -137,7 +137,7 @@ class SubscriptionController @Inject()(
           .flatMap { _ =>
             sessionStoreService.fetchContinueUrl.flatMap {
               case Some(_) => completeMappingWhenAvailable(utr)
-              case None    => Future successful Redirect(routes.TaskListController.showTaskList())
+              case None    => Future successful Redirect(routes.SubscriptionController.showSubscriptionComplete())
             }
           }
 
@@ -282,10 +282,12 @@ class SubscriptionController @Inject()(
               throw new RuntimeException("agency email is missing from registration"))
             for {
               continueUrlOpt <- sessionStoreService.fetchContinueUrl.recover(recoverSessionStoreWithNone)
-              _              <- sessionStoreService.remove()
+              _              <- if (!existingSession.taskListFlags.createTaskComplete) sessionStoreService.remove()
             } yield {
-              val continueUrl = continueUrlOpt.map(_.url).getOrElse(appConfig.agentServicesAccountUrl)
-              val isUrlToASAccount = continueUrlOpt.isEmpty
+              val continueUrl =
+                if (existingSession.taskListFlags.createTaskComplete) routes.TaskListController.showTaskList().url
+                else continueUrlOpt.map(_.url).getOrElse(appConfig.agentServicesAccountUrl)
+              val isUrlToASAccount = if(existingSession.taskListFlags.createTaskComplete) false else continueUrlOpt.isEmpty
               Ok(html.subscription_complete(continueUrl, isUrlToASAccount, arn.value, agencyName, agencyEmail))
             }
           }

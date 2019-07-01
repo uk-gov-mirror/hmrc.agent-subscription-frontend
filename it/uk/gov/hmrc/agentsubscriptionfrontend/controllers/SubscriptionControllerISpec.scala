@@ -198,6 +198,14 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       bodyOf(result) should include(hasMessage("subscriptionComplete.p2", "test@gmail.com"))
       bodyOf(result) should include(hasMessage("subscriptionComplete.p3", "https://www.gov.uk/guidance/get-an-hmrc-agent-services-account"))
     }
+    "continue button redirects to task list if the create task flag is true" in new RequestWithSessionDetails  {
+      sessionStoreService.currentSession.agentSession = Some(agentSession.get.copy(taskListFlags = TaskListFlags(createTaskComplete = true)))
+      val result = resultOf(request)
+      result should containMessages(
+        "subscriptionComplete.button.continueJourney"
+      )
+      checkHtmlResultWithBodyText(result, "agent-subscription/task-list")
+    }
   }
 
   "returnFromAddressLookup" should {
@@ -718,20 +726,6 @@ class SubscriptionControllerWithAutoMappingOff extends SubscriptionControllerISp
       val result = await(controller.submitCheckAnswers(request))
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.SubscriptionController.showSubscriptionComplete().url)
-
-      verifySubscriptionRequestSent(subscriptionRequestWithNoEdit())
-      metricShouldExistAndBeUpdated("Count-Subscription-Complete")
-    }
-    "send subscription request and redirect to task-list when all fields are supplied and was not eligible for mapping and does not have a continue url" in {
-      AgentSubscriptionStub.subscriptionWillSucceed(utr, subscriptionRequestWithNoEdit(), arn = "TARN00023")
-
-      implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
-      sessionStoreService.currentSession.agentSession = agentSession
-      sessionStoreService.currentSession.wasEligibleForMapping = None
-
-      val result = await(controller.submitCheckAnswers(request))
-      status(result) shouldBe 303
-      redirectLocation(result) shouldBe Some(routes.TaskListController.showTaskList().url)
 
       verifySubscriptionRequestSent(subscriptionRequestWithNoEdit())
       metricShouldExistAndBeUpdated("Count-Subscription-Complete")
