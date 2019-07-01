@@ -49,6 +49,7 @@ trait AppConfig {
   val companyAuthSignInUrl: String
   val chainedSessionDetailsTtl: Int
   val cacheableSessionDomain: String
+  val agentMappingFrontendStartUrl: String
 }
 
 @Singleton
@@ -88,6 +89,8 @@ class FrontendAppConfig @Inject()(val environment: Environment, val configuratio
   override val companyAuthSignInUrl: String = getConfStringOrFail(s"$env.companyAuthSignInUrl")
   override val chainedSessionDetailsTtl: Int = getConfIntOrFail(s"$env.mongodb.chainedsessiondetails.ttl")
   override val cacheableSessionDomain: String = getServicesConfStringOrFail("cachable.session-cache.domain")
+  override val agentMappingFrontendStartUrl: String =
+    s"${getServicesConfStringOrFail("agent-mapping-frontend.external-url")}${getServicesConfStringOrFail("agent-mapping-frontend.start.path")}"
 
   def getServicesConfStringOrFail(key: String): String =
     getConfString(key, throw new Exception(s"Property not found $key"))

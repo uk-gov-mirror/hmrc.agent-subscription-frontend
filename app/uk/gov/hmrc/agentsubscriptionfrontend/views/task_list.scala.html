@@ -89,10 +89,7 @@
             </h2>
             <ul class="app-task-list__items">
                 <li class="app-task-list__item">@if(taskListFlags.checkAnswersComplete) {
-                    <a href="#">@Messages("task-list.4.copy")</a>
-                    @if(taskListFlags.copyComplete) {
-                        <strong class="govuk-tag app-task-list__task-completed">@Messages("task-list.completed")</strong>
-                    }
+                    <a href=@appConfig.agentMappingFrontendStartUrl>@Messages("task-list.4.copy")</a>
                 } else {
                     @Messages("task-list.4.copy")
                 }

@@ -22,8 +22,7 @@ case class TaskListFlags(
   amlsTaskComplete: Boolean = false,
   isMAA: Boolean = false,
   createTaskComplete: Boolean = false,
-  checkAnswersComplete: Boolean = false,
-  copyComplete: Boolean = false)
+  checkAnswersComplete: Boolean = false)
 
 object TaskListFlags {
   implicit val formats = Json.format[TaskListFlags]

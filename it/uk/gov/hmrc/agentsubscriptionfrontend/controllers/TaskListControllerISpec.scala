@@ -69,7 +69,16 @@ class TaskListControllerISpec extends BaseISpec {
 
       checkHtmlResultWithNotBodyText(result,
         "<a href=/agent-subscription/check-money-laundering-compliance>Enter your money laundering compliance details</a>")
+    }
+    "contain a url to the mapping journey when user has completed all other tasks" in {
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(taskListFlags =
+        TaskListFlags(businessTaskComplete = true, amlsTaskComplete = true, createTaskComplete = true, checkAnswersComplete = true)))
 
+      val result = await(controller.showTaskList(request))
+      status(result) shouldBe 200
+
+      checkHtmlResultWithBodyText(result, appConfig.agentMappingFrontendStartUrl)
     }
     "redirect to start if there is a continue url in the request" in {
       val sessionKeys = userIsAuthenticated(subscribingAgentEnrolledForNonMTD)
