@@ -130,20 +130,11 @@ class SubscriptionController @Inject()(
     either match {
       case Right((arn, nameFromDetails)) =>
         mark("Count-Subscription-Complete")
-        sessionStoreService
-          .cacheAgentSession(
-            existingSession
-              .copy(taskListFlags = existingSession.taskListFlags.copy(checkAnswersComplete = true)))
-          .flatMap { _ =>
-            sessionStoreService.fetchContinueUrl.flatMap {
-              case Some(_) => completeMappingWhenAvailable(utr)
-              case None    => Future successful Redirect(routes.SubscriptionController.showSubscriptionComplete())
-            }
-          }
+        completeMappingWhenAvailable(utr)
 
       case Left(SubscriptionReturnedHttpError(CONFLICT)) =>
         mark("Count-Subscription-AlreadySubscribed-APIResponse")
-        Redirect(routes.BusinessIdentificationController.showAlreadySubscribed())
+        Future successful Redirect(routes.BusinessIdentificationController.showAlreadySubscribed())
 
       case Left(SubscriptionReturnedHttpError(status)) =>
         mark("Count-Subscription-Failed")
@@ -282,13 +273,25 @@ class SubscriptionController @Inject()(
               throw new RuntimeException("agency email is missing from registration"))
             for {
               continueUrlOpt <- sessionStoreService.fetchContinueUrl.recover(recoverSessionStoreWithNone)
-              _              <- if (!existingSession.taskListFlags.createTaskComplete) sessionStoreService.remove()
+              _ <- if (existingSession.taskListFlags.createTaskComplete) {
+                    sessionStoreService
+                      .cacheAgentSession(
+                        existingSession.copy(
+                          taskListFlags = existingSession.taskListFlags.copy(checkAnswersComplete = true)))
+                  } else sessionStoreService.remove()
             } yield {
-              val continueUrl =
-                if (existingSession.taskListFlags.createTaskComplete) routes.TaskListController.showTaskList().url
-                else continueUrlOpt.map(_.url).getOrElse(appConfig.agentServicesAccountUrl)
-              val isUrlToASAccount = if(existingSession.taskListFlags.createTaskComplete) false else continueUrlOpt.isEmpty
-              Ok(html.subscription_complete(continueUrl, isUrlToASAccount, arn.value, agencyName, agencyEmail))
+              continueUrlOpt match {
+                case Some(continueUrl) =>
+                  Ok(html.subscription_complete(continueUrl.url, false, arn.value, agencyName, agencyEmail))
+                case None =>
+                  Ok(
+                    html.subscription_complete(
+                      routes.TaskListController.showTaskList().url,
+                      false,
+                      arn.value,
+                      agencyName,
+                      agencyEmail))
+              }
             }
           }
           case _ => {
