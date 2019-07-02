@@ -60,15 +60,16 @@ class TaskListControllerISpec extends BaseISpec {
       checkHtmlResultWithBodyText(result,
         "<a href=/agent-subscription/check-money-laundering-compliance>Enter your money laundering compliance details</a>")
     }
-    "block link to complete amls task when user is manually assured" in {
+    "block link to complete amls and create new user id tasks when user is manually assured" in {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
       sessionStoreService.currentSession.agentSession = Some(AgentSession(taskListFlags =
-        TaskListFlags(businessTaskComplete = true, amlsTaskComplete = true, isMAA = true)))
+        TaskListFlags(businessTaskComplete = true, amlsTaskComplete = true, createTaskComplete = true, isMAA = true)))
 
       val result = await(controller.showTaskList(request))
 
       checkHtmlResultWithNotBodyText(result,
-        "<a href=/agent-subscription/check-money-laundering-compliance>Enter your money laundering compliance details</a>")
+        "<a href=/agent-subscription/check-money-laundering-compliance>Enter your money laundering compliance details</a>",
+      "<a href=/agent-subscription/create-new-account>Create your user ID for your agent services account</a>")
     }
     "contain a url to the mapping journey when user has completed all other tasks" in {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)

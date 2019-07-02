@@ -57,7 +57,9 @@
             </h2>
             <ul class="app-task-list__items">
                 <li class="app-task-list__item">@if(taskListFlags.amlsTaskComplete) {
-                    <a href=@routes.BusinessIdentificationController.showCreateNewAccount()>@Messages("task-list.2.create")</a>
+                    @if(taskListFlags.isMAA){
+                        @Messages("task-list.2.create")
+                    }else {<a href=@routes.BusinessIdentificationController.showCreateNewAccount()>@Messages("task-list.2.create")</a>}
                     @if(taskListFlags.createTaskComplete) {
                         <strong class="govuk-tag app-task-list__task-completed">@Messages("task-list.completed")</strong>
                     }
