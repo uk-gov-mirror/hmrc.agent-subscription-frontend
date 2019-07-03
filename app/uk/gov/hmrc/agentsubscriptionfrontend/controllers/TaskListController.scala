@@ -49,9 +49,9 @@ class TaskListController @Inject()(
         Future successful Redirect(routes.BusinessTypeController.showBusinessTypeForm())
       )
     }(sessionStoreService.fetchAgentSession.flatMap {
-      case Some(session) if session.taskListFlags.checkAnswersComplete =>
+      case Some(session) if session.taskListFlags.businessTaskComplete =>
         Future successful Ok(html.task_list(session.taskListFlags))
-      case None => Future successful Redirect(appConfig.agentServicesAccountUrl)
+      case _ => Future successful Redirect(appConfig.agentServicesAccountUrl)
     })
   }
 }

@@ -28,7 +28,7 @@ class TaskListControllerISpec extends BaseISpec {
     }
     "contain page titles and header content when the user is subscribed" in {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForHMRCASAGENT)
-      sessionStoreService.currentSession.agentSession = Some(AgentSession(taskListFlags = TaskListFlags(checkAnswersComplete = true)))
+      sessionStoreService.currentSession.agentSession = Some(AgentSession(taskListFlags = TaskListFlags(businessTaskComplete = true)))
 
       val result = await(controller.showTaskList(request))
 

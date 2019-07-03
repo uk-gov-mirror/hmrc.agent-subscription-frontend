@@ -3,11 +3,13 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers.business
 import play.api.test.Helpers.{redirectLocation, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.{BusinessIdentificationController, routes}
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, BusinessType}
+import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub._
+import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub
+import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.{subscribingAgentEnrolledForNonMTD, subscribingCleanAgentWithoutEnrolments}
-import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData.{businessAddress, validUtr, _}
+import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData.{businessAddress, postcode, utr, validUtr, _}
 import uk.gov.hmrc.play.binders.ContinueUrl
 
 class ConfirmBusinessISpec extends BaseISpec {
@@ -28,7 +30,11 @@ class ConfirmBusinessISpec extends BaseISpec {
 
       val result = await(controller.showConfirmBusinessForm(request))
 
-      result should containMessages("confirmBusiness.title", "button.back", "confirmBusiness.option.yes", "confirmBusiness.option.no")
+      result should containMessages(
+        "confirmBusiness.title",
+        "button.back",
+        "confirmBusiness.option.yes",
+        "confirmBusiness.option.no")
 
       result should containSubstrings(
         s"$postcode",
@@ -47,7 +53,8 @@ class ConfirmBusinessISpec extends BaseISpec {
       val registrationName = "My Agency"
 
       implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
-      sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(BusinessType.SoleTrader), utr = Some(utr), registration = Some(registration)))
+      sessionStoreService.currentSession.agentSession =
+        Some(AgentSession(Some(BusinessType.SoleTrader), utr = Some(utr), registration = Some(registration)))
 
       val result = await(controller.showConfirmBusinessForm(request))
 
@@ -56,15 +63,21 @@ class ConfirmBusinessISpec extends BaseISpec {
 
     "redirect to GET /business-type when no businessType in session" in {
       implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
-      redirectLocation(await(controller.showConfirmBusinessForm(request))).get shouldBe routes.BusinessTypeController.showBusinessTypeForm().url
+      redirectLocation(await(controller.showConfirmBusinessForm(request))).get shouldBe routes.BusinessTypeController
+        .showBusinessTypeForm()
+        .url
     }
 
     "show a back button correct when they are NOT registered for vat" in {
       implicit val request =
         authenticatedAs(subscribingAgentEnrolledForNonMTD)
 
-      sessionStoreService.currentSession.agentSession =
-        Some(AgentSession(Some(BusinessType.SoleTrader), utr = Some(utr), registeredForVat = Some("No"), registration = Some(registration)))
+      sessionStoreService.currentSession.agentSession = Some(
+        AgentSession(
+          Some(BusinessType.SoleTrader),
+          utr = Some(utr),
+          registeredForVat = Some("No"),
+          registration = Some(registration)))
 
       val result = await(controller.showConfirmBusinessForm(request))
 
@@ -76,8 +89,12 @@ class ConfirmBusinessISpec extends BaseISpec {
       implicit val request =
         authenticatedAs(subscribingAgentEnrolledForNonMTD)
 
-      sessionStoreService.currentSession.agentSession =
-        Some(AgentSession(Some(BusinessType.SoleTrader), utr = Some(utr), registeredForVat = Some("Yes"), registration = Some(registration)))
+      sessionStoreService.currentSession.agentSession = Some(
+        AgentSession(
+          Some(BusinessType.SoleTrader),
+          utr = Some(utr),
+          registeredForVat = Some("Yes"),
+          registration = Some(registration)))
 
       val result = await(controller.showConfirmBusinessForm(request))
 
@@ -94,7 +111,11 @@ class ConfirmBusinessISpec extends BaseISpec {
       "redirect to showAlreadySubscribed if the user is already subscribed and isSubscribedToAgentServices=true" in {
         implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
           .withFormUrlEncodedBody("confirmBusiness" -> "yes")
-        sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(BusinessType.SoleTrader), utr = Some(utr), registration = Some(registration.copy(isSubscribedToAgentServices = true))))
+        sessionStoreService.currentSession.agentSession = Some(
+          AgentSession(
+            Some(BusinessType.SoleTrader),
+            utr = Some(utr),
+            registration = Some(registration.copy(isSubscribedToAgentServices = true))))
 
         val result = await(controller.submitConfirmBusinessForm(request))
 
@@ -105,8 +126,11 @@ class ConfirmBusinessISpec extends BaseISpec {
       "redirect to showAmlsDetailsForm if the user has clean creds and isSubscribedToAgentServices=false and there is a continueUrl" in {
         implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
           .withFormUrlEncodedBody("confirmBusiness" -> "yes")
-        sessionStoreService.currentSession.agentSession =
-          Some(AgentSession(Some(BusinessType.SoleTrader), utr = Some(utr), registration = Some(registration.copy(isSubscribedToAgentServices = false))))
+        sessionStoreService.currentSession.agentSession = Some(
+          AgentSession(
+            Some(BusinessType.SoleTrader),
+            utr = Some(utr),
+            registration = Some(registration.copy(isSubscribedToAgentServices = false))))
         sessionStoreService.currentSession.continueUrl = Some(ContinueUrl("/continue/url"))
 
         val result = await(controller.submitConfirmBusinessForm(request))
@@ -118,8 +142,11 @@ class ConfirmBusinessISpec extends BaseISpec {
         givenAgentIsNotManuallyAssured(utr.value)
         implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
           .withFormUrlEncodedBody("confirmBusiness" -> "yes")
-        sessionStoreService.currentSession.agentSession =
-          Some(AgentSession(Some(BusinessType.SoleTrader), utr = Some(utr), registration = Some(registration.copy(isSubscribedToAgentServices = false))))
+        sessionStoreService.currentSession.agentSession = Some(
+          AgentSession(
+            Some(BusinessType.SoleTrader),
+            utr = Some(utr),
+            registration = Some(registration.copy(isSubscribedToAgentServices = false))))
 
         val result = await(controller.submitConfirmBusinessForm(request))
 
@@ -130,13 +157,61 @@ class ConfirmBusinessISpec extends BaseISpec {
         givenAgentIsManuallyAssured(utr.value)
         implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
           .withFormUrlEncodedBody("confirmBusiness" -> "yes")
-        sessionStoreService.currentSession.agentSession =
-          Some(AgentSession(Some(BusinessType.SoleTrader), utr = Some(utr), registration = Some(registration.copy(isSubscribedToAgentServices = false))))
+        sessionStoreService.currentSession.agentSession = Some(
+          AgentSession(
+            Some(BusinessType.SoleTrader),
+            utr = Some(utr),
+            registration = Some(registration.copy(isSubscribedToAgentServices = false))))
 
         val result = await(controller.submitConfirmBusinessForm(request))
 
         result.header.headers(LOCATION) shouldBe routes.TaskListController.showTaskList().url
 
+        sessionStoreService.currentSession.agentSession.get.taskListFlags.amlsTaskComplete shouldBe true
+      }
+      "redirect to subscription complete if user is partially subscribed with clean creds and there is no continue url" in {
+        givenAgentIsNotManuallyAssured(utr.value)
+        withPartiallySubscribedAgent(utr, postcode)
+        AgentSubscriptionStub.partialSubscriptionWillSucceed(CompletePartialSubscriptionBody(
+          utr = utr,
+          knownFacts = SubscriptionRequestKnownFacts(postcode)))
+
+        implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+          .withFormUrlEncodedBody("confirmBusiness" -> "yes")
+        sessionStoreService.currentSession.agentSession = Some(
+          AgentSession(
+            Some(BusinessType.SoleTrader),
+            utr = Some(utr),
+            registration = Some(registration.copy(isSubscribedToETMP = true)),
+            postcode = Some(Postcode(postcode))))
+
+        val result = await(controller.submitConfirmBusinessForm(request))
+
+        result.header.headers(LOCATION) shouldBe routes.SubscriptionController.showSubscriptionComplete().url
+
+        sessionStoreService.currentSession.agentSession.get.taskListFlags.businessTaskComplete shouldBe true
+        sessionStoreService.currentSession.agentSession.get.taskListFlags.amlsTaskComplete shouldBe true
+        sessionStoreService.currentSession.agentSession.get.taskListFlags.createTaskComplete shouldBe true
+      }
+
+      "redirect to task list if the user is partially subscribed with unclean creds and there is no continue url" in {
+        givenAgentIsNotManuallyAssured(utr.value)
+        withPartiallySubscribedAgent(utr, postcode)
+
+        implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+          .withFormUrlEncodedBody("confirmBusiness" -> "yes")
+        sessionStoreService.currentSession.agentSession = Some(
+          AgentSession(
+            Some(BusinessType.SoleTrader),
+            utr = Some(utr),
+            registration = Some(registration.copy(isSubscribedToETMP = true)),
+            postcode = Some(Postcode(postcode))))
+
+        val result = await(controller.submitConfirmBusinessForm(request))
+
+        result.header.headers(LOCATION) shouldBe routes.TaskListController.showTaskList().url
+
+        sessionStoreService.currentSession.agentSession.get.taskListFlags.businessTaskComplete shouldBe true
         sessionStoreService.currentSession.agentSession.get.taskListFlags.amlsTaskComplete shouldBe true
       }
 
@@ -157,8 +232,10 @@ class ConfirmBusinessISpec extends BaseISpec {
       "redirect to showBusinessNameForm if the user has clean creds and isSubscribedToAgentServices=false and ETMP record contains invalid name" in {
         implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
           .withFormUrlEncodedBody("confirmBusiness" -> "yes")
-        sessionStoreService.currentSession.agentSession =
-          Some(AgentSession(Some(BusinessType.SoleTrader), registration = Some(registration.copy(isSubscribedToAgentServices = false, taxpayerName = None))))
+        sessionStoreService.currentSession.agentSession = Some(
+          AgentSession(
+            Some(BusinessType.SoleTrader),
+            registration = Some(registration.copy(isSubscribedToAgentServices = false, taxpayerName = None))))
 
         val result = await(controller.submitConfirmBusinessForm(request))
 
@@ -172,7 +249,10 @@ class ConfirmBusinessISpec extends BaseISpec {
         sessionStoreService.currentSession.agentSession = Some(
           AgentSession(
             Some(BusinessType.SoleTrader),
-            registration = Some(registration.copy(isSubscribedToAgentServices = false, address = businessAddress.copy(addressLine1 = "invalid address *")))
+            registration = Some(
+              registration.copy(
+                isSubscribedToAgentServices = false,
+                address = businessAddress.copy(addressLine1 = "invalid address *")))
           ))
 
         val result = await(controller.submitConfirmBusinessForm(request))
@@ -189,8 +269,10 @@ class ConfirmBusinessISpec extends BaseISpec {
           sessionStoreService.currentSession.agentSession = Some(
             AgentSession(
               Some(BusinessType.SoleTrader),
-              registration =
-                Some(registration.copy(isSubscribedToAgentServices = false, address = businessAddress.copy(postalCode = Some(blacklistedPostcode))))
+              registration = Some(
+                registration.copy(
+                  isSubscribedToAgentServices = false,
+                  address = businessAddress.copy(postalCode = Some(blacklistedPostcode))))
             ))
 
           val result = await(controller.submitConfirmBusinessForm(request))
@@ -206,7 +288,10 @@ class ConfirmBusinessISpec extends BaseISpec {
           sessionStoreService.currentSession.agentSession = Some(
             AgentSession(
               Some(BusinessType.SoleTrader),
-              registration = Some(registration.copy(isSubscribedToAgentServices = false, address = businessAddress.copy(postalCode = Some("BF1 1XX"))))
+              registration = Some(
+                registration.copy(
+                  isSubscribedToAgentServices = false,
+                  address = businessAddress.copy(postalCode = Some("BF1 1XX"))))
             ))
 
           val result = await(controller.submitConfirmBusinessForm(request))
@@ -222,7 +307,8 @@ class ConfirmBusinessISpec extends BaseISpec {
           sessionStoreService.currentSession.agentSession = Some(
             AgentSession(
               Some(BusinessType.SoleTrader),
-              registration = Some(registration.copy(isSubscribedToAgentServices = false, address = businessAddress.copy(postalCode = Some("BFPO15"))))
+              registration = Some(registration
+                .copy(isSubscribedToAgentServices = false, address = businessAddress.copy(postalCode = Some("BFPO15"))))
             ))
 
           val result = await(controller.submitConfirmBusinessForm(request))
@@ -242,7 +328,8 @@ class ConfirmBusinessISpec extends BaseISpec {
         sessionStoreService.currentSession.agentSession = Some(
           AgentSession(
             Some(BusinessType.SoleTrader),
-            registration = Some(registration.copy(isSubscribedToAgentServices = false, address = businessAddress.copy(postalCode = Some("BFPO15"))))
+            registration = Some(registration
+              .copy(isSubscribedToAgentServices = false, address = businessAddress.copy(postalCode = Some("BFPO15"))))
           ))
 
         val result = await(controller.submitConfirmBusinessForm(request))

@@ -293,6 +293,7 @@ class StartControllerWithAutoMappingOn extends StartControllerISpec {
 
       implicit val request = FakeRequest()
       sessionStoreService.currentSession.agentSession = Some(agentSession)
+      sessionStoreService.currentSession.continueUrl = Some(ContinueUrl("/some/url"))
       val result = await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(request))
 
       status(result) shouldBe 303

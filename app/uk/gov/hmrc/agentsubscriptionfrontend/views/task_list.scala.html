@@ -34,13 +34,15 @@
                 <span class="app-task-list__section-number">@Messages("task-list.1.number")</span>@Messages("task-list.1.header")
             </h2>
             <ul class="app-task-list__items">
-                <li class="app-task-list__item"><a href=@routes.BusinessTypeController.showBusinessTypeForm()>@Messages("task-list.1.identify-business")</a>
+                <li class="app-task-list__item">
+                    @if(taskListFlags.checkAnswersComplete){ @Messages("task-list.1.identify-business")
+                    }else{<a href=@routes.BusinessTypeController.showBusinessTypeForm()>@Messages("task-list.1.identify-business")</a>}
                     @if(taskListFlags.businessTaskComplete) {
                         <strong class="govuk-tag app-task-list__task-completed">@Messages("task-list.completed")</strong>
                     }
                 </li>
                 <li class="app-task-list__item">@if(taskListFlags.businessTaskComplete) {
-                  @if(taskListFlags.isMAA){ @Messages("task-list.1.amls")
+                  @if(taskListFlags.isMAA | taskListFlags.checkAnswersComplete){ @Messages("task-list.1.amls")
                   }else {<a href=@routes.AMLSController.showCheckAmlsPage()>@Messages("task-list.1.amls")</a>}
                     @if(taskListFlags.amlsTaskComplete) {
                         <strong class="govuk-tag app-task-list__task-completed">@Messages("task-list.completed")</strong>
@@ -57,9 +59,8 @@
             </h2>
             <ul class="app-task-list__items">
                 <li class="app-task-list__item">@if(taskListFlags.amlsTaskComplete) {
-                    @if(taskListFlags.isMAA){
-                        @Messages("task-list.2.create")
-                    }else {<a href=@routes.BusinessIdentificationController.showCreateNewAccount()>@Messages("task-list.2.create")</a>}
+                  @if(taskListFlags.checkAnswersComplete | taskListFlags.isMAA){ @Messages("task-list.2.create")
+                  }else{<a href=@routes.BusinessIdentificationController.showCreateNewAccount()>@Messages("task-list.2.create")</a>}
                     @if(taskListFlags.createTaskComplete) {
                         <strong class="govuk-tag app-task-list__task-completed">@Messages("task-list.completed")</strong>
                     }
@@ -75,7 +76,8 @@
             </h2>
             <ul class="app-task-list__items">
                 <li class="app-task-list__item">@if(taskListFlags.createTaskComplete) {
-                    <a href=@routes.SubscriptionController.showCheckAnswers()>@Messages("task-list.3.header")</a>
+                    @if(taskListFlags.checkAnswersComplete){ @Messages("task-list.3.header")
+                    }else{<a href=@routes.SubscriptionController.showCheckAnswers()>@Messages("task-list.3.header")</a>}
                     @if(taskListFlags.checkAnswersComplete) {
                         <strong class="govuk-tag app-task-list__task-completed">@Messages("task-list.completed")</strong>
                     }

@@ -67,6 +67,9 @@ object AgentSubscriptionStub {
   def withNoOrganisationName(utr: Utr, postcode: String,isSubscribedToAgentServices: Boolean = false, isSubscribedToETMP: Boolean = false): Unit =
     withMatchingUtrAndPostcodeAndBody(utr, postcode, noOrganisationNameResponse(isSubscribedToAgentServices, isSubscribedToETMP))
 
+  def withPartiallySubscribedAgent(utr: Utr, postcode: String, isSubscribedToAgentServices: Boolean = false, isSubscribedToETMP: Boolean = true): Unit =
+    withMatchingUtrAndPostcodeAndBody(utr, postcode, response(isSubscribedToAgentServices, isSubscribedToETMP))
+
   private def withMatchingUtrAndPostcodeAndBody(utr: Utr, postcode: String, responseBody: String): Unit =
     stubFor(
       get(urlEqualTo(

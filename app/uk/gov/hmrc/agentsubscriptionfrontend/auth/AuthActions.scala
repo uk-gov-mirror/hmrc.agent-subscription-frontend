@@ -120,6 +120,7 @@ trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring
                 subscribedBody
             }
           } else {
+
             unsubscribedBody(new Agent(enrolments.enrolments, creds))
           }
       }

@@ -151,11 +151,22 @@ class StartController @Inject()(
   private def handlePartialSubscription(kfcUtr: Utr, kfcPostcode: String, eligibleForMapping: Option[Boolean])(
     implicit request: Request[_],
     hc: HeaderCarrier): Future[Result] =
-    MappingEligibility.apply(eligibleForMapping) match {
-      case IsEligible =>
-        Redirect(routes.SubscriptionController.showLinkClients())
-          .withSession(request.session + ("isPartiallySubscribed" -> "true"))
-      case _ =>
+    sessionStoreService.fetchContinueUrl.flatMap {
+      case Some(_) =>
+        MappingEligibility.apply(eligibleForMapping) match {
+          case IsEligible =>
+            Redirect(routes.SubscriptionController.showLinkClients())
+              .withSession(request.session + ("isPartiallySubscribed" -> "true"))
+
+          case _ =>
+            subscriptionService
+              .completePartialSubscription(kfcUtr, Postcode(kfcPostcode))
+              .map { _ =>
+                mark("Count-Subscription-PartialSubscriptionCompleted")
+                Redirect(routes.SubscriptionController.showSubscriptionComplete())
+              }
+        }
+      case None =>
         subscriptionService
           .completePartialSubscription(kfcUtr, Postcode(kfcPostcode))
           .map { _ =>
