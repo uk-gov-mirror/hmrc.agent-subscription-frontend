@@ -104,7 +104,7 @@ class StartController @Inject()(
           case (Some(utr), Some(postcode)) =>
             subscriptionService.getSubscriptionStatus(utr, postcode).flatMap { subscriptionProcess =>
               if (subscriptionProcess.state == SubscriptionState.SubscribedButNotEnrolled) {
-                handlePartialSubscription(utr, postcode.value, wasEligibleForMapping)
+                handlePartialSubscription(utr, postcode.value, wasEligibleForMapping, agentSession)
               } else {
                 handleAutoMapping(wasEligibleForMapping)
               }
@@ -148,9 +148,11 @@ class StartController @Inject()(
       }
     }
 
-  private def handlePartialSubscription(kfcUtr: Utr, kfcPostcode: String, eligibleForMapping: Option[Boolean])(
-    implicit request: Request[_],
-    hc: HeaderCarrier): Future[Result] =
+  private def handlePartialSubscription(
+    kfcUtr: Utr,
+    kfcPostcode: String,
+    eligibleForMapping: Option[Boolean],
+    agentSession: AgentSession)(implicit request: Request[_], hc: HeaderCarrier): Future[Result] =
     sessionStoreService.fetchContinueUrl.flatMap {
       case Some(_) =>
         MappingEligibility.apply(eligibleForMapping) match {
@@ -169,9 +171,12 @@ class StartController @Inject()(
       case None =>
         subscriptionService
           .completePartialSubscription(kfcUtr, Postcode(kfcPostcode))
-          .map { _ =>
+          .flatMap { _ =>
             mark("Count-Subscription-PartialSubscriptionCompleted")
-            Redirect(routes.SubscriptionController.showSubscriptionComplete())
+            sessionStoreService
+              .cacheAgentSession(
+                agentSession.copy(taskListFlags = agentSession.taskListFlags.copy(createTaskComplete = true)))
+              .map(_ => Redirect(routes.SubscriptionController.showSubscriptionComplete()))
           }
     }
 
