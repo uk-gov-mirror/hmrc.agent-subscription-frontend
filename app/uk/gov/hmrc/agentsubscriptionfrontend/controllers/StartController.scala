@@ -18,13 +18,11 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
-import play.api.Logger
 import play.api.i18n.MessagesApi
 import play.api.mvc.{Action, AnyContent, Request, Result}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.models.MappingEligibility.IsEligible
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, MappingEligibility, Postcode, TaskListFlags}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, Postcode, TaskListFlags}
 import uk.gov.hmrc.agentsubscriptionfrontend.repository.ChainedSessionDetailsRepository
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionService, SubscriptionState}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
@@ -74,9 +72,7 @@ class StartController @Inject()(
           chainedSessionDetailsRepository.findChainedSessionDetails(value).flatMap {
             case Some(chainedSessionDetails) =>
               chainedSessionDetailsRepository.delete(value).flatMap { _ =>
-                storeAgentSessionAndRedirect(
-                  chainedSessionDetails.agentSession,
-                  chainedSessionDetails.wasEligibleForMapping)
+                storeAgentSessionAndRedirect(chainedSessionDetails.agentSession)
               }
 
             case None => Redirect(routes.TaskListController.showTaskList())
@@ -86,34 +82,22 @@ class StartController @Inject()(
     }
   }
 
-  private def storeAgentSessionAndRedirect(agentSession: AgentSession, wasEligibleForMapping: Option[Boolean])(
-    implicit hc: HeaderCarrier,
-    request: Request[_]): Future[Result] =
+  private def storeAgentSessionAndRedirect(
+    agentSession: AgentSession)(implicit hc: HeaderCarrier, request: Request[_]): Future[Result] =
     sessionStoreService.cacheAgentSession(agentSession).flatMap { _ =>
-      val result = if (appConfig.autoMapAgentEnrolments) {
-        sessionStoreService.cacheMappingEligible(
-          wasEligibleForMapping.getOrElse {
-            Logger.warn("chainedSessionDetails did not cache wasEligibleForMapping")
-            false
-          }
-        )
-      } else toFuture(())
-
-      result.flatMap { _ =>
-        (agentSession.utr, agentSession.postcode) match {
-          case (Some(utr), Some(postcode)) =>
-            subscriptionService.getSubscriptionStatus(utr, postcode).flatMap { subscriptionProcess =>
-              if (subscriptionProcess.state == SubscriptionState.SubscribedButNotEnrolled) {
-                handlePartialSubscription(utr, postcode.value, wasEligibleForMapping, agentSession)
-              } else {
-                handleAutoMapping(wasEligibleForMapping)
-              }
+      (agentSession.utr, agentSession.postcode) match {
+        case (Some(utr), Some(postcode)) =>
+          subscriptionService.getSubscriptionStatus(utr, postcode).flatMap { subscriptionProcess =>
+            if (subscriptionProcess.state == SubscriptionState.SubscribedButNotEnrolled) {
+              handlePartialSubscription(utr, postcode.value, agentSession)
+            } else {
+              updateTaskListAndContinue
             }
-          case _ =>
-            sessionStoreService
-              .cacheAgentSession(agentSession.copy(taskListFlags = TaskListFlags()))
-              .flatMap(_ => toFuture(Redirect(routes.TaskListController.showTaskList())))
-        }
+          }
+        case _ =>
+          sessionStoreService
+            .cacheAgentSession(agentSession.copy(taskListFlags = TaskListFlags()))
+            .flatMap(_ => toFuture(Redirect(routes.TaskListController.showTaskList())))
       }
     }
 
@@ -121,53 +105,37 @@ class StartController @Inject()(
     Ok(html.cannot_create_account())
   }
 
-  private def handleAutoMapping(
-    eligibleForMapping: Option[Boolean])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Result] =
+  private def updateTaskListAndContinue(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Result] =
     withValidSession { (_, existingSession) =>
-      MappingEligibility.apply(eligibleForMapping) match {
-        case IsEligible if appConfig.autoMapAgentEnrolments =>
-          sessionStoreService
-            .cacheAgentSession(
-              existingSession
-                .copy(taskListFlags = existingSession.taskListFlags.copy(createTaskComplete = true)))
-            .flatMap(_ =>
-              sessionStoreService.fetchContinueUrl.flatMap {
-                case Some(_) => toFuture(Redirect(routes.SubscriptionController.showLinkClients()))
-                case None    => toFuture(Redirect(routes.TaskListController.showTaskList()))
-            })
-        case _ =>
-          sessionStoreService
-            .cacheAgentSession(
-              existingSession
-                .copy(taskListFlags = existingSession.taskListFlags.copy(createTaskComplete = true)))
-            .flatMap(_ =>
-              sessionStoreService.fetchContinueUrl.flatMap {
-                case Some(_) => toFuture(Redirect(routes.SubscriptionController.showCheckAnswers()))
-                case None    => toFuture(Redirect(routes.TaskListController.showTaskList()))
-            })
-      }
+      sessionStoreService
+        .cacheAgentSession(
+          existingSession
+            .copy(taskListFlags = existingSession.taskListFlags.copy(createTaskComplete = true)))
+        .flatMap(_ =>
+          sessionStoreService.fetchContinueUrl.flatMap {
+            case Some(_) => toFuture(Redirect(routes.SubscriptionController.showCheckAnswers()))
+            case None    => toFuture(Redirect(routes.TaskListController.showTaskList()))
+        })
+
     }
 
-  private def handlePartialSubscription(
-    kfcUtr: Utr,
-    kfcPostcode: String,
-    eligibleForMapping: Option[Boolean],
-    agentSession: AgentSession)(implicit request: Request[_], hc: HeaderCarrier): Future[Result] =
+  private def handlePartialSubscription(kfcUtr: Utr, kfcPostcode: String, agentSession: AgentSession)(
+    implicit request: Request[_],
+    hc: HeaderCarrier): Future[Result] = {
+    subscriptionService
+      .completePartialSubscription(kfcUtr, Postcode(kfcPostcode))
+      .map { _ =>
+        mark("Count-Subscription-PartialSubscriptionCompleted")
+        Redirect(routes.SubscriptionController.showSubscriptionComplete())
+      }
     sessionStoreService.fetchContinueUrl.flatMap {
-      case Some(_) =>
-        MappingEligibility.apply(eligibleForMapping) match {
-          case IsEligible =>
-            Redirect(routes.SubscriptionController.showLinkClients())
-              .withSession(request.session + ("isPartiallySubscribed" -> "true"))
-
-          case _ =>
-            subscriptionService
-              .completePartialSubscription(kfcUtr, Postcode(kfcPostcode))
-              .map { _ =>
-                mark("Count-Subscription-PartialSubscriptionCompleted")
-                Redirect(routes.SubscriptionController.showSubscriptionComplete())
-              }
-        }
+      case Some(continueUrl) =>
+        subscriptionService
+          .completePartialSubscription(kfcUtr, Postcode(kfcPostcode))
+          .map { _ =>
+            mark("Count-Subscription-PartialSubscriptionCompleted")
+            Redirect(routes.SubscriptionController.showSubscriptionComplete())
+          }
       case None =>
         subscriptionService
           .completePartialSubscription(kfcUtr, Postcode(kfcPostcode))
@@ -179,5 +147,5 @@ class StartController @Inject()(
               .map(_ => Redirect(routes.SubscriptionController.showSubscriptionComplete()))
           }
     }
-
+  }
 }

@@ -33,7 +33,7 @@ class ChainedSessionDetailsRepositoryISpec extends UnitSpec with OneAppPerSuite 
   val agentSession =
     AgentSession(Some(BusinessType.SoleTrader), utr = Some(validUtr), registration = Some(registration), amlsDetails = Some(amlsDetails))
 
-  private val chainedSessionDetails = ChainedSessionDetails(Some(true), agentSession)
+  private val chainedSessionDetails = ChainedSessionDetails(agentSession)
 
   override def beforeEach() {
     super.beforeEach()

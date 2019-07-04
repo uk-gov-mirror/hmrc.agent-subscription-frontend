@@ -17,7 +17,7 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.models
 import play.api.libs.json.{Format, Json}
 
-case class ChainedSessionDetails(wasEligibleForMapping: Option[Boolean], agentSession: AgentSession)
+case class ChainedSessionDetails(agentSession: AgentSession)
 
 object ChainedSessionDetails {
   implicit val format: Format[ChainedSessionDetails] = Json.format[ChainedSessionDetails]

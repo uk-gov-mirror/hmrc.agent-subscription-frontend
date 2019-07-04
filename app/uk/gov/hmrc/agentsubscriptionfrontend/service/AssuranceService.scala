@@ -58,10 +58,8 @@ class AssuranceService @Inject()(
                            } else {
 
                              for {
-                               hasAcceptableNumberOfPayeClientsOpt <- if (appConfig.agentAssurancePayeCheck)
-                                                                       assuranceConnector.hasAcceptableNumberOfPayeClients
-                                                                         .map(Some(_))
-                                                                     else Future.successful(None)
+                               hasAcceptableNumberOfPayeClientsOpt <- assuranceConnector.hasAcceptableNumberOfPayeClients
+                                                                       .map(Some(_))
                                hasAcceptableNumberOfSAClientsOpt <- assuranceConnector.hasAcceptableNumberOfSAClients
                                                                      .map(Some(_))
                                hasAcceptableNumberOfVatDecOrgClientsOpt <- assuranceConnector.hasAcceptableNumberOfVatDecOrgClients
@@ -112,8 +110,7 @@ class AssuranceService @Inject()(
                         assuranceResults = AssuranceResults(
                           isOnRefusalToDealWithList = false,
                           isManuallyAssured = false,
-                          hasAcceptableNumberOfPayeClients =
-                            if (appConfig.agentAssurancePayeCheck) Some(false) else None,
+                          hasAcceptableNumberOfPayeClients = Some(false),
                           hasAcceptableNumberOfSAClients = Some(false),
                           hasAcceptableNumberOfVatDecOrgClients = Some(false),
                           hasAcceptableNumberOfIRCTClients = Some(false)

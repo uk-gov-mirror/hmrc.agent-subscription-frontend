@@ -23,10 +23,10 @@ import javax.inject.{Inject, Singleton}
 import play.api.i18n.MessagesApi
 import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{ChainedSessionDetails, MappingEligibility}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.ChainedSessionDetails
 import uk.gov.hmrc.agentsubscriptionfrontend.repository.ChainedSessionDetailsRepository
 import uk.gov.hmrc.agentsubscriptionfrontend.repository.StashedChainedSessionDetails.StashedChainnedSessionId
-import uk.gov.hmrc.agentsubscriptionfrontend.service.{MappingService, SessionStoreService}
+import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.agentsubscriptionfrontend.support.CallOps.addParamsToUrl
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.HeaderCarrier
@@ -36,7 +36,6 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class SignedOutController @Inject()(
   chainedSessionRepository: ChainedSessionDetailsRepository,
-  mappingService: MappingService,
   val sessionStoreService: SessionStoreService,
   continueUrlActions: ContinueUrlActions,
   override val authConnector: AuthConnector)(
@@ -48,8 +47,7 @@ class SignedOutController @Inject()(
 
   def redirectToSos = Action.async { implicit request =>
     for {
-      mappingEligibility     <- mappingService.captureTempMappingsPreSubscription
-      chainedSessionIdOpt    <- prepareChainedSession(mappingEligibility)
+      chainedSessionIdOpt    <- prepareChainedSession()
       agentSubContinueUrlOpt <- sessionStoreService.fetchContinueUrl
     } yield {
       val continueUrl =
@@ -61,13 +59,12 @@ class SignedOutController @Inject()(
     }
   }
 
-  private def prepareChainedSession(mappingEligibility: MappingEligibility)(
-    implicit hc: HeaderCarrier): Future[Option[StashedChainnedSessionId]] =
+  private def prepareChainedSession()(implicit hc: HeaderCarrier): Future[Option[StashedChainnedSessionId]] =
     (for {
       agentSession <- OptionT(sessionStoreService.fetchAgentSession)
       id <- OptionT(
              chainedSessionRepository
-               .create(ChainedSessionDetails(mappingEligibility.isEligible, agentSession))
+               .create(ChainedSessionDetails(agentSession))
                .map(id => Option(id)))
     } yield id).value
 

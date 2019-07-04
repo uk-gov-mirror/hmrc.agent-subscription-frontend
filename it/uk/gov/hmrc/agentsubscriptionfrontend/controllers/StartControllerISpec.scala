@@ -19,7 +19,6 @@ import uk.gov.hmrc.play.binders.ContinueUrl
 import scala.concurrent.ExecutionContext.Implicits.global
 
 trait StartControllerISpec extends BaseISpec {
-  protected def featureFlagAutoMapping: Boolean
 
   protected lazy val controller: StartController = app.injector.instanceOf[StartController]
   protected lazy val configuredGovernmentGatewayUrl = "http://configured-government-gateway.gov.uk/"
@@ -27,7 +26,6 @@ trait StartControllerISpec extends BaseISpec {
 
   override protected def appBuilder: GuiceApplicationBuilder =
     super.appBuilder
-      .configure("government-gateway.url" -> configuredGovernmentGatewayUrl, "features.auto-map-agent-enrolments" -> featureFlagAutoMapping)
 
   object FixturesForReturnAfterGGCredsCreated {
 
@@ -37,7 +35,7 @@ trait StartControllerISpec extends BaseISpec {
       AgentSession(Some(BusinessType.SoleTrader), utr = Some(validUtr), postcode = Some(Postcode(postcode)), registration = Some(registration), amlsDetails = Some(amlsSDetails))
 
     class ValidKnownFactsCached(val wasEligibleForMapping: Option[Boolean] = Some(false), includeInitialDetails: Boolean = true) {
-      def persistedId: StashedChainnedSessionId = await(repo.create(ChainedSessionDetails(wasEligibleForMapping, agentSession)))
+      def persistedId: StashedChainnedSessionId = await(repo.create(ChainedSessionDetails(agentSession)))
     }
 
     trait UnsubscribedAgentStub {
@@ -174,7 +172,7 @@ trait StartControllerISpec extends BaseISpec {
         sessionStoreService.currentSession.agentSession.get.taskListFlags.createTaskComplete shouldBe true
       }
       "agent is already fully subscribed and has no utr redirect to the /task-list page with task list flags off" in {
-        val persistedId = await(repo.create(ChainedSessionDetails(Some(false), agentSession.copy(utr = None))))
+        val persistedId = await(repo.create(ChainedSessionDetails(agentSession.copy(utr = None))))
         implicit val request = FakeRequest()
         sessionStoreService.currentSession.agentSession = Some(agentSession.copy(utr = None))
 
@@ -269,37 +267,11 @@ trait StartControllerISpec extends BaseISpec {
   }
 }
 
-class StartControllerWithAutoMappingOn extends StartControllerISpec {
+class StartControllerTests extends StartControllerISpec {
   import FixturesForReturnAfterGGCredsCreated._
-  override def featureFlagAutoMapping: Boolean = true
 
   "returnAfterGGCredsCreated" should {
     import FixturesForReturnAfterGGCredsCreated.{PartiallySubscribedAgentStub, UnsubscribedAgentStub, ValidKnownFactsCached}
-
-    "given normal flow" when {
-      "not session store wasEligibleForMapping as flag is false" in new ValidKnownFactsCached(wasEligibleForMapping = None) {
-        implicit val request = FakeRequest()
-
-        val result = await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(FakeRequest()))
-        sessionStoreService.currentSession.wasEligibleForMapping shouldBe Some(false)
-      }
-    }
-
-    "agent was eligible for mapping, should redirect to /link-clients" in new ValidKnownFactsCached(
-      wasEligibleForMapping = Some(true),
-      includeInitialDetails = false) with PartiallySubscribedAgentStub {
-      AgentSubscriptionStub.partialSubscriptionWillSucceed(
-        CompletePartialSubscriptionBody(utr = validUtr, knownFacts = SubscriptionRequestKnownFacts(postcode)))
-
-      implicit val request = FakeRequest()
-      sessionStoreService.currentSession.agentSession = Some(agentSession)
-      sessionStoreService.currentSession.continueUrl = Some(ContinueUrl("/some/url"))
-      val result = await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(request))
-
-      status(result) shouldBe 303
-      redirectLocation(result).head should include(routes.SubscriptionController.showLinkClients().url)
-      result.session.get("isPartiallySubscribed").contains("true") shouldBe true
-    }
 
     "agent NOT Eligible for mapping, should redirect to /link-clients" in new ValidKnownFactsCached(
       wasEligibleForMapping = Some(false),
@@ -312,36 +284,6 @@ class StartControllerWithAutoMappingOn extends StartControllerISpec {
 
       status(result) shouldBe 303
       redirectLocation(result).head should include(routes.SubscriptionController.showSubscriptionComplete().url)
-    }
-
-    "place the mapping eligibility back in session store, if given a valid ChainedSessionDetails ID" in new ValidKnownFactsCached with UnsubscribedAgentStub {
-      implicit val request = FakeRequest()
-
-      await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(request))
-
-      sessionStoreService.currentSession.wasEligibleForMapping shouldBe wasEligibleForMapping
-    }
-  }
-}
-
-class StartControllerWithAutoMappingOff extends StartControllerISpec {
-  override def featureFlagAutoMapping: Boolean = false
-
-  "returnAfterGGCredsCreated" should {
-    import FixturesForReturnAfterGGCredsCreated._
-
-    "do not store wasEligibleForMapping in sessionStore" in new ValidKnownFactsCached(wasEligibleForMapping = None) {
-      implicit val request = FakeRequest()
-
-      await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(FakeRequest()))
-      sessionStoreService.currentSession.wasEligibleForMapping shouldBe None
-    }
-
-    "do not store wasEligibleForMapping in sessionStore even if wasEligibleForMapping exists" in new ValidKnownFactsCached(wasEligibleForMapping = Some(true)) {
-      implicit val request = FakeRequest()
-
-      await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(FakeRequest()))
-      sessionStoreService.currentSession.wasEligibleForMapping shouldBe None
     }
   }
 }

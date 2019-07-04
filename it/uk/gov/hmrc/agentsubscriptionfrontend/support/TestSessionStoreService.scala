@@ -28,7 +28,6 @@ class TestSessionStoreService extends SessionStoreService(null) {
 
   class Session(
     var continueUrl: Option[ContinueUrl] = None,
-    var wasEligibleForMapping: Option[Boolean] = None,
     var goBackUrl: Option[String] = None,
     var changingAnswers: Option[Boolean] = None,
     var agentSession: Option[AgentSession] = None)
@@ -54,12 +53,6 @@ class TestSessionStoreService extends SessionStoreService(null) {
 
   override def cacheContinueUrl(url: ContinueUrl)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
     Future.successful(currentSession.continueUrl = Some(url))
-
-  override def fetchMappingEligible(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[Boolean]] =
-    Future successful currentSession.wasEligibleForMapping
-
-  override def cacheMappingEligible(wasEligibleForMapping: Boolean)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
-    Future.successful(currentSession.wasEligibleForMapping = Some(wasEligibleForMapping))
 
   override def cacheGoBackUrl(url: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
     toFuture(currentSession.goBackUrl =  Some(url))

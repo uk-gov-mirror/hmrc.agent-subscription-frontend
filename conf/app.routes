@@ -88,8 +88,6 @@ GET         /business-address                     uk.gov.hmrc.agentsubscriptionf
 
 GET         /return-from-address-lookup           uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.returnFromAddressLookup(id: String ?= "")
 POST        /submit-modified-address              uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.submitModifiedAddress
-GET         /link-clients                         uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showLinkClients
-POST        /link-clients                         uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.submitLinkClients
 GET         /complete                             uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showSubscriptionComplete
 
 GET         /redirect-to-sos                      uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.redirectToSos
