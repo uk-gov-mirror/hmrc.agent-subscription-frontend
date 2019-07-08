@@ -268,7 +268,9 @@ class AMLSController @Inject()(
       case Some(utr) =>
         agentAssuranceConnector.isManuallyAssuredAgent(utr).flatMap { response =>
           if (response) {
-            toFuture(Redirect(routes.SubscriptionController.showCheckAnswers()))
+            sessionStoreService
+              .cacheAgentSession(agentSession.copy(taskListFlags = agentSession.taskListFlags.copy(isMAA = true)))
+              .flatMap(_ => toFuture(Redirect(routes.SubscriptionController.showCheckAnswers())))
           } else body
         }
       case None =>

@@ -50,8 +50,6 @@ class SubscriptionController @Inject()(
   override val ec: ExecutionContext)
     extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig) with SessionBehaviour {
 
-  import SubscriptionControllerForms._
-
   private val JourneyName: String = appConfig.journeyName
   private val blacklistedPostCodes: Set[String] = appConfig.blacklistedPostcodes
 
@@ -97,7 +95,7 @@ class SubscriptionController @Inject()(
       withCleanCreds(agent) {
         withValidSession { (_, existingSession) =>
           (existingSession.utr, existingSession.postcode, existingSession.registration, existingSession.amlsDetails) match {
-            case (Some(utr), Some(postcode), Some(registration), Some(amlsDetails)) =>
+            case (Some(utr), Some(postcode), Some(registration), amlsDetails) =>
               subscriptionService
                 .subscribe(utr, postcode, registration, amlsDetails)
                 .flatMap(redirectSubscriptionResponse(_, utr, existingSession))

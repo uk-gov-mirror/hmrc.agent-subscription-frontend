@@ -470,8 +470,8 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
           countryCode = countryCode),
         email = "agency@example.com"
       ),
-      amlsDetails = AMLSDetails("supervisory", Right(RegisteredDetails("123456789", LocalDate.now())))
-    )
+      amlsDetails = Some(AMLSDetails("supervisory", Right(RegisteredDetails("123456789", LocalDate.now())))))
+
 
   protected def subscriptionRequestWithNoEdit() =
     SubscriptionRequest(
@@ -489,7 +489,7 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         ),
         email = registration.emailAddress.get
       ),
-      amlsDetails = amlsSDetails
+      amlsDetails = Some(amlsSDetails)
     )
 
   private def subscriptionDetailsRequest2(keyToRemove: String = "", additionalParameters: Seq[(String, String)] = Seq()) =
@@ -512,7 +512,7 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
           countryCode = "GB"),
         email = "agency2@example.com"
       ),
-      amlsDetails = AMLSDetails("supervisory", Right(RegisteredDetails("123456789", LocalDate.now())))
+      amlsDetails = Some(AMLSDetails("supervisory", Right(RegisteredDetails("123456789", LocalDate.now()))))
     )
 
   private def stubAddressLookupReturnedAddress(addressId: String, subscriptionRequest: SubscriptionRequest, unsupportedAddressLines: Seq[String] = Seq.empty) =

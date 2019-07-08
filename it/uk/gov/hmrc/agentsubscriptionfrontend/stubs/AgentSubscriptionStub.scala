@@ -260,16 +260,16 @@ object AgentSubscriptionStub {
                                       |    },
                                       |    "email": "${agency.email}"
                                       |  }
-                                      |  ${request.amlsDetails.details match {
+                                      |  ${request.amlsDetails.get.details match {
                                             case Right(registeredDetails) =>
                                               s""","amlsDetails" : {
-                                                 |     "supervisoryBody" : "${request.amlsDetails.supervisoryBody}",
+                                                 |     "supervisoryBody" : "${request.amlsDetails.get.supervisoryBody}",
                                                  |     "membershipNumber" : "${registeredDetails.membershipNumber}",
                                                  |     "membershipExpiresOn" : "${registeredDetails.membershipExpiresOn}"
                                                  |   }"""
                                             case Left(pendingDetails) =>
                                               s""","amlsDetails" : {
-                                                 |     "supervisoryBody" : "${request.amlsDetails.supervisoryBody}",
+                                                 |     "supervisoryBody" : "${request.amlsDetails.get.supervisoryBody}",
                                                  |     "appliedOn" : "${pendingDetails.appliedOn}"
                                                  |   }"""
                                           }

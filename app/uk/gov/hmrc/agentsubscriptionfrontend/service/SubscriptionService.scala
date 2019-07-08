@@ -45,7 +45,7 @@ class SubscriptionService @Inject()(
 
   import SubscriptionDetails._
 
-  def subscribe(utr: Utr, postcode: Postcode, registration: Registration, amlsDetails: AMLSDetails)(
+  def subscribe(utr: Utr, postcode: Postcode, registration: Registration, amlsDetails: Option[AMLSDetails])(
     implicit hc: HeaderCarrier,
     ec: ExecutionContext): Future[Either[SubscriptionReturnedHttpError, (Arn, String)]] = {
     val subscriptionDetails = mapper(utr, postcode, registration, amlsDetails)

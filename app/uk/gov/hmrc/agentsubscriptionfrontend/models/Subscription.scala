@@ -37,7 +37,7 @@ case class SubscriptionRequest(
   utr: Utr,
   knownFacts: SubscriptionRequestKnownFacts,
   agency: Agency,
-  amlsDetails: AMLSDetails)
+  amlsDetails: Option[AMLSDetails])
 
 object SubscriptionRequest {
   implicit val format: Format[SubscriptionRequest] = Json.format[SubscriptionRequest]
