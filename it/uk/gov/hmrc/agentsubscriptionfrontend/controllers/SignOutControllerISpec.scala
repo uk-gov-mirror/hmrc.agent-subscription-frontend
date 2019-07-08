@@ -1,10 +1,8 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import java.net.URLEncoder
-import java.time.LocalDate
 
 import org.scalatest.BeforeAndAfterEach
-import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{redirectLocation, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
@@ -13,7 +11,6 @@ import uk.gov.hmrc.agentsubscriptionfrontend.repository.{ChainedSessionDetailsRe
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData._
-import uk.gov.hmrc.http.Upstream5xxResponse
 import uk.gov.hmrc.play.HeaderCarrierConverter
 import uk.gov.hmrc.play.binders.ContinueUrl
 
@@ -24,8 +21,6 @@ trait SignOutControllerISpec extends BaseISpec with BeforeAndAfterEach {
   protected lazy val sosRedirectUrl = "/government-gateway-registration-frontend?accountType=agent"
   protected lazy val controller: SignedOutController = app.injector.instanceOf[SignedOutController]
   protected lazy val repo = app.injector.instanceOf[ChainedSessionDetailsRepository]
-
-
 
   private val fakeRequest = FakeRequest()
 
