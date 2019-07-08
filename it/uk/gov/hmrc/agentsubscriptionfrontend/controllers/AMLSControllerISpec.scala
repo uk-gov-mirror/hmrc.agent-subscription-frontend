@@ -485,7 +485,7 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
     }
   }
 
-  "GET  /money-laundering-application-date" should {
+  "GET  /money-laundering-application-details" should {
 
     behave like anAgentAffinityGroupOnlyEndpoint(controller.showAmlsApplicationDatePage(_))
 
@@ -501,7 +501,7 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
     }
   }
 
-  "POST /money-laundering-application-date" should {
+  "POST /money-laundering-application-details" should {
 
     val appliedOnDate = LocalDate.now().minusMonths(1)
     val day = appliedOnDate.getDayOfMonth.toString
