@@ -24,21 +24,21 @@ import org.scalatest.{BeforeAndAfterEach, Suite}
 trait MockedMetrics extends ResettingMockitoSugar with BeforeAndAfterEach {
   this: Suite =>
 
-  protected val mockMetrics = resettingMock[Metrics]
-  protected val mockMetricsRegistry = resettingMock[MetricRegistry]
+  protected val mockMetrics: Metrics = resettingMock[Metrics]
+  protected val mockMetricsRegistry: MetricRegistry = resettingMock[MetricRegistry]
   protected val meters = new java.util.TreeMap[String, Meter]()
 
-  override protected def beforeEach = {
+  override protected def beforeEach(): Unit = {
     super.beforeEach()
     when(mockMetrics.defaultRegistry).thenReturn(mockMetricsRegistry)
     when(mockMetricsRegistry.getMeters).thenReturn(meters)
+    ()
   }
 
-  protected def mockMetrics(metricName: String): Unit =
-    addMeter(metricName)
+  protected def mockMetrics(metricName: String): Meter = addMeter(metricName)
 
-  protected def verifyMetricCalled(metricName: String, count: Int = 1) =
-    verify(getMeter(metricName), times(count)).mark
+  protected def verifyMetricCalled(metricName: String, count: Int = 1): Unit =
+    verify(getMeter(metricName), times(count)).mark()
 
   private def getMeter(metricName: String) = meters.get(metricName)
   private def addMeter(metricName: String): Meter = {

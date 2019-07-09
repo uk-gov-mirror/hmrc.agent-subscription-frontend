@@ -50,10 +50,10 @@ object SampleUser {
       AffinityGroup.Agent
     )
 
-  def subscribingCleanAgentWithoutEnrolments(implicit wireMockBaseUrl: WireMockBaseUrl) =
+  def subscribingCleanAgentWithoutEnrolments(implicit wireMockBaseUrl: WireMockBaseUrl): SampleUser =
     SampleUser("12345-credId", Seq(), AffinityGroup.Agent)
 
-  def subscribing2ndCleanAgentWithoutEnrolments(implicit wireMockBaseUrl: WireMockBaseUrl) =
+  def subscribing2ndCleanAgentWithoutEnrolments(implicit wireMockBaseUrl: WireMockBaseUrl): SampleUser =
     SampleUser("54321-credId", Seq(), AffinityGroup.Agent)
 
   def individual(implicit wireMockBaseUrl: WireMockBaseUrl) =

@@ -4,6 +4,7 @@ import org.scalatest.concurrent.Eventually
 import org.scalatest.time.{Millis, Seconds, Span}
 import play.api.libs.json.Json
 import com.github.tomakehurst.wiremock.client.WireMock._
+import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.audit.AgentSubscriptionFrontendEvent
 import uk.gov.hmrc.agentsubscriptionfrontend.audit.AgentSubscriptionFrontendEvent.AgentSubscriptionFrontendEvent
@@ -14,7 +15,7 @@ import uk.gov.hmrc.domain.{Nino, TaxIdentifier}
 trait DataStreamStubs extends Eventually {
   me: WireMockSupport =>
 
-  override implicit val patienceConfig = PatienceConfig(scaled(Span(5, Seconds)), scaled(Span(500, Millis)))
+  override implicit val patienceConfig: PatienceConfig = PatienceConfig(scaled(Span(5, Seconds)), scaled(Span(500, Millis)))
 
   def verifyAuditRequestSent(
     count: Int,
@@ -46,7 +47,7 @@ trait DataStreamStubs extends Eventually {
       )
     }
 
-  def givenAuditConnector(): Unit = {
+  def givenAuditConnector(): StubMapping = {
     stubFor(post(urlPathEqualTo(auditUrl + "/merged")).willReturn(aResponse().withStatus(204)))
     stubFor(post(urlPathEqualTo(auditUrl)).willReturn(aResponse().withStatus(204)))
   }
@@ -62,8 +63,8 @@ trait DataStreamStubs extends Eventually {
                                                                 aAssurancePayeCheck: Boolean): Unit = {
 
     val clientIdentifier = identifier match {
-      case nino@Nino(_) => ("userEnteredNino" -> nino.value)
-      case utr@Utr(_) => ("userEnteredUtr" -> utr.value)
+      case nino@Nino(_) => "userEnteredNino" -> nino.value
+      case utr@Utr(_) => "userEnteredUtr" -> utr.value
     }
     val payeAudit = if (aAssurancePayeCheck) Seq("passPayeAgentAssuranceCheck" -> "false") else Seq.empty
 
@@ -77,7 +78,7 @@ trait DataStreamStubs extends Eventually {
         "passSaAgentAssuranceCheck" -> "false",
         "isEnrolledPAYEAgent" -> "false",
         "passCESAAgentAssuranceCheck" -> passCESAAgentAssuranceCheck.toString,
-        "authProviderId" -> "12345-credId",
+        //"authProviderId" -> "12345-credId",
         "authProviderType" -> "GovernmentGateway",
         "userEnteredSaAgentRef" -> saAgentRef
       ) + clientIdentifier ++ payeAudit,
@@ -107,7 +108,7 @@ trait DataStreamStubs extends Eventually {
         //TODO "refuseToDealWith" -> ?,
         "isEnrolledPAYEAgent" -> "true",
         "payeAgentRef" -> "HZ1234",
-        "authProviderId" -> "12345-credId",
+        //"authProviderId" -> "12345-credId",
         "authProviderType" -> "GovernmentGateway"
       ) ++ optional,
       tags = Map("transactionName" -> "agent-assurance", "path" -> "/")

@@ -1,10 +1,9 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.auth
 
 import com.kenshoo.play.metrics.Metrics
-import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
-import play.api.mvc.Result
 import play.api.mvc.Results._
+import play.api.mvc.{AnyContentAsEmpty, Result}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
@@ -18,14 +17,14 @@ import uk.gov.hmrc.http.{HeaderCarrier, SessionKeys}
 
 import scala.concurrent.Future
 
-class AuthActionsSpec extends BaseISpec with MockitoSugar with BeforeAndAfterEach {
+class AuthActionsSpec extends BaseISpec with MockitoSugar {
 
   val appConfig: AppConfig = app.injector.instanceOf[AppConfig]
 
   object TestController extends AuthActions {
 
-    implicit val hc = HeaderCarrier()
-    implicit val request = FakeRequest().withSession(SessionKeys.authToken -> "Bearer XYZ")
+    implicit val hc: HeaderCarrier = HeaderCarrier()
+    implicit val request: FakeRequest[AnyContentAsEmpty.type] = FakeRequest().withSession(SessionKeys.authToken -> "Bearer XYZ")
     import scala.concurrent.ExecutionContext.Implicits.global
 
     override def authConnector: AuthConnector = app.injector.instanceOf[AuthConnector]
@@ -39,7 +38,7 @@ class AuthActionsSpec extends BaseISpec with MockitoSugar with BeforeAndAfterEac
     def withSubscribingOrSubscribedAgent[A]: Result = await(TestController.withSubscribingOrSubscribedAgent(
       _ => Future successful Ok("unsubscribed"))(Future successful Ok("subscribed")))
 
-    def storeCheckAnswersComplete =
+    def storeCheckAnswersComplete: Future[Unit] =
       sessionStoreService.cacheAgentSession(AgentSession(taskListFlags = TaskListFlags(checkAnswersComplete = true)))
 
   }

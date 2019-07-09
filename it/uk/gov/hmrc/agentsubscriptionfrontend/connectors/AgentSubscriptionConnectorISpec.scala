@@ -9,12 +9,13 @@ import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, MetricTestSupport}
 import uk.gov.hmrc.http._
 import com.kenshoo.play.metrics.Metrics
+import org.scalatest.Assertion
 import uk.gov.hmrc.domain.Nino
 
 import scala.concurrent.ExecutionContext.Implicits.global
 class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {
 
-  private implicit val hc = HeaderCarrier()
+  private implicit val hc: HeaderCarrier = HeaderCarrier()
 
   private lazy val connector: AgentSubscriptionConnector =
     new AgentSubscriptionConnector(
@@ -45,7 +46,7 @@ class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {
 
     "return a not subscribed Registration when agent-subscription returns a 200 response (for a matching UTR and postcode)" in {
       withMetricsTimerUpdate("ConsumedAPI-Agent-Subscription-hasAcceptableNumberOfClients-GET") {
-        AgentSubscriptionStub.withMatchingUtrAndPostcode(utr, "AA1 1AA", isSubscribedToAgentServices = false)
+        AgentSubscriptionStub.withMatchingUtrAndPostcode(utr, "AA1 1AA")
 
         val result: Option[Registration] = await(connector.getRegistration(utr, "AA1 1AA"))
         result.isDefined shouldBe true
@@ -59,7 +60,7 @@ class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {
     "return a not subscribed with record in ETMP Registration when partially subscribed" in {
       withMetricsTimerUpdate("ConsumedAPI-Agent-Subscription-hasAcceptableNumberOfClients-GET") {
         AgentSubscriptionStub
-          .withMatchingUtrAndPostcode(utr, "AA1 1AA", isSubscribedToETMP = true, isSubscribedToAgentServices = false)
+          .withMatchingUtrAndPostcode(utr, "AA1 1AA", isSubscribedToETMP = true)
 
         val result: Option[Registration] = await(connector.getRegistration(utr, "AA1 1AA"))
         result.isDefined shouldBe true
@@ -99,7 +100,7 @@ class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {
       }
     }
 
-    def testBusinessAddress(registration: Registration): Unit = {
+    def testBusinessAddress(registration: Registration): Assertion = {
       registration.address.addressLine1 shouldBe "AddressLine1 A"
       registration.address.addressLine2 shouldBe Some("AddressLine2 A")
       registration.address.addressLine3 shouldBe Some("AddressLine3 A")

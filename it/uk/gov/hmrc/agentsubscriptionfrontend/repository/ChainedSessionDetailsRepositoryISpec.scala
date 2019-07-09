@@ -15,6 +15,7 @@ import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
+import scala.language.postfixOps
 
 class ChainedSessionDetailsRepositoryISpec extends UnitSpec with OneAppPerSuite with Eventually with BeforeAndAfterEach {
 
@@ -38,6 +39,7 @@ class ChainedSessionDetailsRepositoryISpec extends UnitSpec with OneAppPerSuite 
   override def beforeEach() {
     super.beforeEach()
     await(repo.drop)
+    ()
   }
 
   "ChainedSessionDetailsRepository" should {

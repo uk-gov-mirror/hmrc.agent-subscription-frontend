@@ -16,30 +16,29 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.auth
 
-import play.api.Logger
+import play.api.{Configuration, Environment, Logger}
 import play.api.mvc.Results._
 import play.api.mvc.{Request, Result}
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.{ContinueUrlActions, routes}
-import uk.gov.hmrc.agentsubscriptionfrontend.models.AgentSession
 import uk.gov.hmrc.agentsubscriptionfrontend.support.Monitoring
 import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.auth.core.retrieve.Retrievals.{allEnrolments, authorisedEnrolments, credentials}
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{allEnrolments, authorisedEnrolments, credentials}
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, ~}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.config.AuthRedirects
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class Agent(private val enrolments: Set[Enrolment], private val creds: Credentials) {
+class Agent(private val enrolments: Set[Enrolment], private val maybeCredentials: Option[Credentials]) {
 
   def hasIRPAYEAGENT: Option[Enrolment] = enrolments.find(e => e.key == "IR-PAYE-AGENT" && e.isActivated)
   def hasIRSAAGENT: Option[Enrolment] = enrolments.find(e => e.key == "IR-SA-AGENT" && e.isActivated)
 
-  def authProviderId: String = creds.providerId
-  def authProviderType: String = creds.providerType
+  def authProviderId: String = maybeCredentials.fold("unknown")(_.providerId)
+  def authProviderType: String = "GovernmentGateway"
 }
 
 object Agent {
@@ -60,20 +59,19 @@ trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring
   def continueUrlActions: ContinueUrlActions
   def appConfig: AppConfig
 
-  def env = appConfig.environment
-  def config = appConfig.configuration
+  def env: Environment = appConfig.environment
+  def config: Configuration = appConfig.configuration
 
   def withSubscribedAgent[A](body: Arn => Future[Result])(
     implicit request: Request[A],
     hc: HeaderCarrier,
     ec: ExecutionContext): Future[Result] =
     authorised(Enrolment("HMRC-AS-AGENT") and AuthProviders(GovernmentGateway))
-      .retrieve(authorisedEnrolments) {
-        case enrolments =>
-          body(
-            getEnrolmentValue(enrolments, "HMRC-AS-AGENT", "AgentReferenceNumber")
-              .map(Arn(_))
-              .getOrElse(throw new InsufficientEnrolments("could not find the HMRC-AS-AGENT enrolment to continue")))
+      .retrieve(authorisedEnrolments) { enrolments =>
+        body(
+          getEnrolmentValue(enrolments, "HMRC-AS-AGENT", "AgentReferenceNumber")
+            .map(Arn(_))
+            .getOrElse(throw InsufficientEnrolments("could not find the HMRC-AS-AGENT enrolment to continue")))
       }
       .recover {
         handleException
@@ -109,7 +107,7 @@ trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring
     ec: ExecutionContext): Future[Result] =
     authorised(AuthProviders(GovernmentGateway) and AffinityGroup.Agent)
       .retrieve(allEnrolments and credentials) {
-        case enrolments ~ creds =>
+        case enrolments ~ maybeCredentials =>
           if (isEnrolledForHmrcAsAgent(enrolments)) {
             continueUrlActions.extractContinueUrl.flatMap {
               case Some(continueUrl) =>
@@ -120,8 +118,7 @@ trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring
                 subscribedBody
             }
           } else {
-
-            unsubscribedBody(new Agent(enrolments.enrolments, creds))
+            unsubscribedBody(new Agent(enrolments.enrolments, maybeCredentials))
           }
       }
       .recover {

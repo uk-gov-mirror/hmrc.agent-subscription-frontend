@@ -9,7 +9,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 class AddressLookupFrontendConnectorSpec extends BaseISpec with MetricTestSupport {
 
-  implicit val hc = HeaderCarrier()
+  implicit val hc: HeaderCarrier = HeaderCarrier()
 
   "getAddressDetails" should {
     "convert the JSON returned by address-lookup-frontend into an object" in {

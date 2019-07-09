@@ -2,7 +2,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.support
 
 import com.codahale.metrics.MetricRegistry
 import com.kenshoo.play.metrics.Metrics
-import org.scalatest.Matchers
+import org.scalatest.{Assertion, Matchers}
 import org.scalatestplus.play.OneAppPerSuite
 
 import scala.collection.JavaConversions
@@ -20,7 +20,7 @@ trait MetricTestSupport {
     metricsRegistry = registry
   }
 
-  def timerShouldExistAndBeUpdated(metricName: String): Unit = {
+  def timerShouldExistAndBeUpdated(metricName: String): Assertion = {
     val timers = metricsRegistry.getTimers
     val metric = timers.get(s"Timer-$metricName")
     if (metric == null) throw new Exception(s"Metric [$metricName] not found, try one of ${timers.keySet()}")
@@ -36,7 +36,7 @@ trait MetricTestSupport {
     }
   }
 
-  def noMetricExpectedAtThisPoint(): Unit = {
+  def noMetricExpectedAtThisPoint(): Assertion = {
     val meters = metricsRegistry.getMeters
     meters.size() shouldBe 0
   }

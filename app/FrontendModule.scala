@@ -23,6 +23,7 @@ import com.google.inject.name.Names.named
 import com.typesafe.config.Config
 import javax.inject.{Inject, Named, Provider, Singleton}
 import org.slf4j.MDC
+import play.api.Mode.Mode
 import play.api.{Configuration, Environment, Logger, LoggerLike}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.{AppConfig, FrontendAppConfig}
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.FrontendAuthConnector
@@ -39,7 +40,7 @@ class FrontendModule(val environment: Environment, val configuration: Configurat
     extends AbstractModule with ServicesConfig {
 
   override val runModeConfiguration: Configuration = configuration
-  override protected def mode = environment.mode
+  override protected def mode: Mode = environment.mode
 
   def configure(): Unit = {
 
@@ -70,6 +71,8 @@ class FrontendModule(val environment: Environment, val configuration: Configurat
     bindBaseUrl("auth")
     bindBaseUrl("authentication.government-gateway.sign-in")
     bindBaseUrl("agent-services-account-frontend")
+
+    ()
   }
 
   private def bindBaseUrl(serviceName: String) =
@@ -83,7 +86,7 @@ class FrontendModule(val environment: Environment, val configuration: Configurat
     bind(classOf[String]).annotatedWith(Names.named(propertyName)).toProvider(new PropertyProvider(propertyName))
 
   private class PropertyProvider(confKey: String) extends Provider[String] {
-    override lazy val get = configuration
+    override lazy val get: String = configuration
       .getString(confKey)
       .getOrElse(throw new IllegalStateException(s"No value found for configuration property $confKey"))
   }
@@ -92,7 +95,7 @@ class FrontendModule(val environment: Environment, val configuration: Configurat
     bind(classOf[String]).annotatedWith(named(propertyName)).toProvider(new BaseServicePropertyProvider(propertyName))
 
   private class BaseServicePropertyProvider(propertyName: String) extends Provider[String] {
-    override lazy val get = getConfString(propertyName, {
+    override lazy val get: String = getConfString(propertyName, {
       throw new Exception(s"Config property for service not found $propertyName")
     })
   }
@@ -105,9 +108,9 @@ class AgentSubscriptionSessionCache @Inject()(
   @Named("cachable.session-cache-baseUrl") val baseUrl: URL,
   appConfig: AppConfig)
     extends SessionCache {
-  override lazy val defaultSource = appName
+  override lazy val defaultSource: String = appName
   lazy val domain: String = appConfig.cacheableSessionDomain
-  override lazy val baseUri = baseUrl.toExternalForm
+  override lazy val baseUri: String = baseUrl.toExternalForm
 }
 
 @Singleton
@@ -117,6 +120,6 @@ class HttpVerbs @Inject()(
   val config: Configuration,
   val actorSystem: ActorSystem)
     extends HttpGet with HttpPost with HttpPut with HttpPatch with HttpDelete with WSHttp with HttpAuditing {
-  override val hooks = Seq(AuditingHook)
+  override val hooks: Seq[AuditingHook.type] = Seq(AuditingHook)
   override protected def configuration: Option[Config] = Some(config.underlying)
 }
