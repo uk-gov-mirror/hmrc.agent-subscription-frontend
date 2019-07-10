@@ -31,6 +31,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
 
+//noinspection ScalaStyle
 @Singleton
 class AssuranceService @Inject()(
   appConfig: AppConfig,

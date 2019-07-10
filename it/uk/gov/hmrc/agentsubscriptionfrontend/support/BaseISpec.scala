@@ -4,6 +4,7 @@ import com.codahale.metrics.MetricRegistry
 import com.google.inject.AbstractModule
 import com.kenshoo.play.metrics.Metrics
 import org.jsoup.Jsoup
+import org.scalatest.Assertion
 import org.scalatest.matchers.{MatchResult, Matcher}
 import org.scalatestplus.play.OneAppPerSuite
 import play.api.Application
@@ -20,6 +21,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.stubs.DataStreamStubs
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.HeaderCarrierConverter
 import uk.gov.hmrc.play.test.UnitSpec
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -83,13 +85,13 @@ abstract class BaseISpec
     FakeRequest().withSession(sessionKeys: _*)
   }
 
-  protected def checkMessageIsDefined(messageKey: String) = {
+  protected def checkMessageIsDefined(messageKey: String): Assertion = {
     withClue(s"Message key ($messageKey) should be defined: ") {
       Messages.isDefinedAt(messageKey) shouldBe true
     }
   }
 
-  protected def checkIsHtml200(result: Result) = {
+  protected def checkIsHtml200(result: Result): Assertion = {
     status(result) shouldBe OK
     charset(result) shouldBe Some("utf-8")
     contentType(result) shouldBe Some("text/html")
@@ -170,7 +172,11 @@ abstract class BaseISpec
     }
   }
 
-  protected def containSubmitButton(expectedMessageKey: String, expectedElementId: String, expectedTagName: String = "button", expectedType: String = "submit"): Matcher[Result] = {
+  protected def containSubmitButton(
+                                     expectedMessageKey: String,
+                                     expectedElementId: String,
+                                     expectedTagName: String = "button",
+                                     expectedType: String = "submit"): Matcher[Result] = {
     new Matcher[Result] {
       override def apply(result: Result): MatchResult = {
         val doc = Jsoup.parse(bodyOf(result))
@@ -210,7 +216,7 @@ abstract class BaseISpec
     }
   }
 
-  protected def withMetricsTimerUpdate(expectedMetricName: String)(testCode: => Unit): Unit = {
+  protected def withMetricsTimerUpdate[A](expectedMetricName: String)(testCode: => A): Assertion = {
     givenCleanMetricRegistry()
     testCode
     timerShouldExistAndBeUpdated(expectedMetricName)

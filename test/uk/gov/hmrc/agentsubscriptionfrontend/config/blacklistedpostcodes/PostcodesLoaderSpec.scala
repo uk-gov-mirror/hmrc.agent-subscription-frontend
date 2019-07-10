@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.config.blacklistedpostcodes
 
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import uk.gov.hmrc.agentsubscriptionfrontend.config.blacklistedpostcodes.PostcodesLoader.PostcodeLoaderException
 import uk.gov.hmrc.play.test.UnitSpec
 

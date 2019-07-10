@@ -14,7 +14,7 @@ import scala.concurrent.Future
 
 class AgentAssuranceConnectorISpec extends BaseISpec with MetricTestSupport {
 
-  private implicit val hc = HeaderCarrier()
+  private implicit val hc: HeaderCarrier = HeaderCarrier()
 
   private lazy val connector =
     new AgentAssuranceConnector(

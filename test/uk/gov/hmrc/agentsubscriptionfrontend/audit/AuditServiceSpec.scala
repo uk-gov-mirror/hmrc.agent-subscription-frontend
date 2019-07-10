@@ -20,28 +20,27 @@ import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.verify
 import org.scalatest.concurrent.Eventually
-import org.scalatest.mockito.MockitoSugar
 import org.scalatest.time.{Millis, Span}
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.test.FakeRequest
-import uk.gov.hmrc.auth.core.AuthConnector
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.logging.{Authorization, RequestId, SessionId}
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.DataEvent
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.ExecutionContext
-import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.logging.{Authorization, RequestId, SessionId}
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
 
-  implicit val patience = PatienceConfig(timeout = scaled(Span(500, Millis)), interval = scaled(Span(200, Millis)))
+  implicit val patience: PatienceConfig =
+    PatienceConfig(timeout = scaled(Span(500, Millis)), interval = scaled(Span(200, Millis)))
 
   "AuditService" should {
 
     "send an AgentAssurance event with the correct fields" in {
       val mockConnector = mock[AuditConnector]
-      val authConnector = mock[AuthConnector]
       val service = new AuditService(mockConnector)
 
       val hc = HeaderCarrier(

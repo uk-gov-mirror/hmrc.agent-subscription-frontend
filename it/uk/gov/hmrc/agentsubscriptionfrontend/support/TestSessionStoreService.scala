@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.support
 
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{AMLSDetails, AgentSession}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.AgentSession
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.agentsubscriptionfrontend.util._
 import uk.gov.hmrc.http.HeaderCarrier
@@ -72,8 +72,10 @@ class TestSessionStoreService extends SessionStoreService(null) {
   override def fetchAgentSession(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[AgentSession]] =
     toFuture(currentSession.agentSession)
 
-  override def remove()(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
-    Future {
-      sessions.remove(sessionKey)
-    }
+  override def remove()(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] = {
+    sessions.remove(sessionKey)
+    toFuture(())
+  }
+
+
 }

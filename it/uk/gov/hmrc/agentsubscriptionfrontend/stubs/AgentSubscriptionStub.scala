@@ -18,7 +18,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.stubs
 
 import java.time.LocalDate
 
-import com.github.tomakehurst.wiremock.client.WireMock.{request, _}
+import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import play.api.http.Status
 import uk.gov.hmrc.agentmtdidentifiers.model.{Utr, Vrn}
@@ -61,16 +61,16 @@ object AgentSubscriptionStub {
       |
       |}""".stripMargin
 
-  def withMatchingUtrAndPostcode(utr: Utr, postcode: String, isSubscribedToAgentServices: Boolean = false, isSubscribedToETMP: Boolean = false): Unit =
+  def withMatchingUtrAndPostcode(utr: Utr, postcode: String, isSubscribedToAgentServices: Boolean = false, isSubscribedToETMP: Boolean = false): StubMapping =
     withMatchingUtrAndPostcodeAndBody(utr, postcode, response(isSubscribedToAgentServices, isSubscribedToETMP))
 
-  def withNoOrganisationName(utr: Utr, postcode: String,isSubscribedToAgentServices: Boolean = false, isSubscribedToETMP: Boolean = false): Unit =
+  def withNoOrganisationName(utr: Utr, postcode: String,isSubscribedToAgentServices: Boolean = false, isSubscribedToETMP: Boolean = false): StubMapping =
     withMatchingUtrAndPostcodeAndBody(utr, postcode, noOrganisationNameResponse(isSubscribedToAgentServices, isSubscribedToETMP))
 
-  def withPartiallySubscribedAgent(utr: Utr, postcode: String, isSubscribedToAgentServices: Boolean = false, isSubscribedToETMP: Boolean = true): Unit =
+  def withPartiallySubscribedAgent(utr: Utr, postcode: String, isSubscribedToAgentServices: Boolean = false, isSubscribedToETMP: Boolean = true): StubMapping =
     withMatchingUtrAndPostcodeAndBody(utr, postcode, response(isSubscribedToAgentServices, isSubscribedToETMP))
 
-  private def withMatchingUtrAndPostcodeAndBody(utr: Utr, postcode: String, responseBody: String): Unit =
+  private def withMatchingUtrAndPostcodeAndBody(utr: Utr, postcode: String, responseBody: String): StubMapping =
     stubFor(
       get(urlEqualTo(
         s"/agent-subscription/registration/${encodePathSegment(utr.value)}/postcode/${encodePathSegment(postcode)}"))
@@ -79,63 +79,63 @@ object AgentSubscriptionStub {
             .withStatus(Status.OK)
             .withBody(responseBody)))
 
-  def withNonMatchingUtrAndPostcode(utr: Utr, postcode: String): Unit =
+  def withNonMatchingUtrAndPostcode(utr: Utr, postcode: String): StubMapping =
     stubFor(
       get(urlEqualTo(
         s"/agent-subscription/registration/${encodePathSegment(utr.value)}/postcode/${encodePathSegment(postcode)}"))
         .willReturn(aResponse()
           .withStatus(Status.NOT_FOUND)))
 
-  def withErrorForUtrAndPostcode(utr: Utr, postcode: String): Unit =
+  def withErrorForUtrAndPostcode(utr: Utr, postcode: String): StubMapping =
     stubFor(
       get(urlEqualTo(
         s"/agent-subscription/registration/${encodePathSegment(utr.value)}/postcode/${encodePathSegment(postcode)}"))
         .willReturn(aResponse()
           .withStatus(Status.INTERNAL_SERVER_ERROR)))
 
-  def withMatchingCtUtrAndCrn(ctUtr: Utr, crn: CompanyRegistrationNumber): Unit =
+  def withMatchingCtUtrAndCrn(ctUtr: Utr, crn: CompanyRegistrationNumber): StubMapping =
     stubFor(
       get(urlEqualTo(
         s"/agent-subscription/corporation-tax-utr/${encodePathSegment(ctUtr.value)}/crn/${encodePathSegment(crn.value)}"))
         .willReturn(aResponse()
           .withStatus(Status.OK)))
 
-  def withNonMatchingCtUtrAndCrn(ctUtr: Utr, crn: CompanyRegistrationNumber): Unit =
+  def withNonMatchingCtUtrAndCrn(ctUtr: Utr, crn: CompanyRegistrationNumber): StubMapping =
     stubFor(
       get(urlEqualTo(
         s"/agent-subscription/corporation-tax-utr/${encodePathSegment(ctUtr.value)}/crn/${encodePathSegment(crn.value)}"))
         .willReturn(aResponse()
           .withStatus(Status.NOT_FOUND)))
 
-  def withErrorForCtUtrAndCrn(ctUtr: Utr, crn: CompanyRegistrationNumber): Unit =
+  def withErrorForCtUtrAndCrn(ctUtr: Utr, crn: CompanyRegistrationNumber): StubMapping =
     stubFor(
       get(urlEqualTo(
         s"/agent-subscription/corporation-tax-utr/${encodePathSegment(ctUtr.value)}/crn/${encodePathSegment(crn.value)}"))
         .willReturn(aResponse()
           .withStatus(Status.INTERNAL_SERVER_ERROR)))
 
-  def withMatchingVrnAndDateOfReg(vrn: Vrn, dateOfReg: LocalDate): Unit =
+  def withMatchingVrnAndDateOfReg(vrn: Vrn, dateOfReg: LocalDate): StubMapping =
     stubFor(
       get(urlEqualTo(
         s"/agent-subscription/vat-known-facts/vrn/${encodePathSegment(vrn.value)}/dateOfRegistration/${encodePathSegment(dateOfReg.toString)}"))
         .willReturn(aResponse()
           .withStatus(Status.OK)))
 
-  def withNonMatchingVrnAndDateOfReg(vrn: Vrn, dateOfReg: LocalDate): Unit =
+  def withNonMatchingVrnAndDateOfReg(vrn: Vrn, dateOfReg: LocalDate): StubMapping =
     stubFor(
       get(urlEqualTo(
         s"/agent-subscription/vat-known-facts/vrn/${encodePathSegment(vrn.value)}/dateOfRegistration/${encodePathSegment(dateOfReg.toString)}"))
         .willReturn(aResponse()
           .withStatus(Status.NOT_FOUND)))
 
-  def withErrorForVrnAndDateOfReg(vrn: Vrn, dateOfReg: LocalDate): Unit =
+  def withErrorForVrnAndDateOfReg(vrn: Vrn, dateOfReg: LocalDate): StubMapping =
     stubFor(
       get(urlEqualTo(
         s"/agent-subscription/vat-known-facts/vrn/${encodePathSegment(vrn.value)}/dateOfRegistration/${encodePathSegment(dateOfReg.toString)}"))
         .willReturn(aResponse()
           .withStatus(Status.INTERNAL_SERVER_ERROR)))
 
-  def partialSubscriptionWillSucceed(request: CompletePartialSubscriptionBody, arn: String = "ARN00001"): Unit =
+  def partialSubscriptionWillSucceed(request: CompletePartialSubscriptionBody, arn: String = "ARN00001"): StubMapping =
     stubFor(
       partialSubscriptionFixRequestFor(request)
         .willReturn(
@@ -147,14 +147,14 @@ object AgentSubscriptionStub {
                          |}
                      """.stripMargin)))
 
-  def partialSubscriptionWillReturnStatus(request: CompletePartialSubscriptionBody, responseCode: Int): Unit =
+  def partialSubscriptionWillReturnStatus(request: CompletePartialSubscriptionBody, responseCode: Int): StubMapping =
     stubFor(
       partialSubscriptionFixRequestFor(request)
         .willReturn(
           aResponse()
             .withStatus(responseCode)))
 
-  def subscriptionWillSucceed(utr: Utr, request: SubscriptionRequest, arn: String = "ARN00001"): Unit =
+  def subscriptionWillSucceed(utr: Utr, request: SubscriptionRequest, arn: String = "ARN00001"): StubMapping =
     stubFor(
       subscriptionRequestFor(utr, request)
         .willReturn(
@@ -166,25 +166,25 @@ object AgentSubscriptionStub {
                          |}
                      """.stripMargin)))
 
-  def subscriptionWillConflict(utr: Utr, request: SubscriptionRequest): Unit =
+  def subscriptionWillConflict(utr: Utr, request: SubscriptionRequest): StubMapping =
     stubFor(
       subscriptionRequestFor(utr, request)
         .willReturn(aResponse()
           .withStatus(409)))
 
-  def subscriptionWillBeForbidden(utr: Utr, request: SubscriptionRequest): Unit =
+  def subscriptionWillBeForbidden(utr: Utr, request: SubscriptionRequest): StubMapping =
     stubFor(
       subscriptionRequestFor(utr, request)
         .willReturn(aResponse()
           .withStatus(403)))
 
-  def subscriptionAttemptWillReturnHttpCode(utr: Utr, request: SubscriptionRequest, code: Int): Unit =
+  def subscriptionAttemptWillReturnHttpCode(utr: Utr, request: SubscriptionRequest, code: Int): StubMapping =
     stubFor(
       subscriptionRequestFor(utr, request)
         .willReturn(aResponse()
           .withStatus(code)))
 
-  def subscriptionAttemptWillFail(utr: Utr, request: SubscriptionRequest): Unit =
+  def subscriptionAttemptWillFail(utr: Utr, request: SubscriptionRequest): StubMapping =
     stubFor(
       subscriptionRequestFor(utr, request)
         .willReturn(aResponse()

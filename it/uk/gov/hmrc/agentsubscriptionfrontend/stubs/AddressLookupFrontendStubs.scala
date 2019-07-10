@@ -17,13 +17,12 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.stubs
 
 import com.github.tomakehurst.wiremock.client.WireMock._
+import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import play.api.http.HeaderNames
-import play.api.libs.json.Json
-import uk.gov.hmrc.agentsubscriptionfrontend.models.AddressLookupFrontendAddress
 
 object AddressLookupFrontendStubs {
 
-  def givenAddressLookupInit(journeyId: String, callbackUrl: String): Unit =
+  def givenAddressLookupInit(journeyId: String, callbackUrl: String): StubMapping =
     stubFor(
       post(urlEqualTo(s"/api/init/$journeyId"))
         .willReturn(
@@ -31,7 +30,7 @@ object AddressLookupFrontendStubs {
             .withStatus(202)
             .withHeader(HeaderNames.LOCATION, callbackUrl)))
 
-  def givenAddressLookupJourneySucceeded(addressId: String): Unit =
+  def givenAddressLookupJourneySucceeded(addressId: String): StubMapping =
     stubFor(
       get(urlEqualTo("/api/dummy/start-journey"))
         .willReturn(
@@ -47,7 +46,7 @@ object AddressLookupFrontendStubs {
     town: String = "Sometown",
     postcode: String = "AA1 1AA",
     countryCode: String = "GB",
-    unsupportedAddressLines: Seq[String] = Seq.empty): Unit =
+    unsupportedAddressLines: Seq[String] = Seq.empty): StubMapping =
     stubFor(
       get(urlEqualTo(s"/api/confirmed?id=$addressId"))
         .willReturn(

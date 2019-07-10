@@ -15,13 +15,13 @@
  */
 
 import javax.inject.{Inject, Singleton}
-
 import com.google.inject.name.Named
 import play.api.http.Status.FORBIDDEN
 import play.api.i18n.{Messages, MessagesApi}
 import play.api.mvc.Results._
 import play.api.mvc.{Request, RequestHeader, Result}
 import play.api.{Configuration, Environment, Mode}
+import play.twirl.api.HtmlFormat
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html.error_template
 import uk.gov.hmrc.auth.core.{InsufficientEnrolments, NoActiveSession}
@@ -53,7 +53,7 @@ class ErrorHandler @Inject()(
       super.onClientError(request, statusCode, message)
   }
 
-  override def resolveError(request: RequestHeader, exception: Throwable) = {
+  override def resolveError(request: RequestHeader, exception: Throwable): Result = {
     auditServerError(request, exception)
 
     exception match {
@@ -68,7 +68,7 @@ class ErrorHandler @Inject()(
   }
 
   override def standardErrorTemplate(pageTitle: String, heading: String, message: String)(
-    implicit request: Request[_]) =
+    implicit request: Request[_]): HtmlFormat.Appendable =
     error_template(Messages(pageTitle), Messages(heading), Messages(message))
 
   private implicit def rhToRequest(rh: RequestHeader): Request[_] = Request(rh, "")
@@ -106,6 +106,7 @@ trait ErrorAuditing extends HttpAuditEvent {
     auditConnector.sendEvent(
       dataEvent(eventType, transactionName, request, Map(TransactionFailureReason -> ex.getMessage))(
         HeaderCarrierConverter.fromHeadersAndSession(request.headers, Some(request.session))))
+    ()
   }
 
   def auditClientError(request: RequestHeader, statusCode: Int, message: String)(
@@ -122,5 +123,6 @@ trait ErrorAuditing extends HttpAuditEvent {
             HeaderCarrierConverter.fromHeadersAndSession(request.headers, Some(request.session))))
       case _ =>
     }
+    ()
   }
 }

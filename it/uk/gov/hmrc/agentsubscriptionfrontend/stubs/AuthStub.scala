@@ -17,18 +17,18 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.stubs
 
 import com.github.tomakehurst.wiremock.client.WireMock._
-import play.api.test.FakeRequest
+import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{SampleUser, SessionKeysForTesting}
 import uk.gov.hmrc.http.SessionKeys
 
 object AuthStub {
-  def authIsDown(): Unit =
+  def authIsDown(): StubMapping =
     stubFor(
       post(urlEqualTo("/auth/authorise"))
         .willReturn(aResponse()
           .withStatus(500)))
 
-  def userIsNotAuthenticated(): Unit =
+  def userIsNotAuthenticated(): StubMapping =
     stubFor(
       post(urlEqualTo("/auth/authorise"))
         .willReturn(
@@ -36,7 +36,7 @@ object AuthStub {
             .withStatus(401)
             .withHeader("WWW-Authenticate", "MDTP detail=\"SessionRecordNotFound\"")))
 
-  def userHasInsufficientEnrolments(): Unit =
+  def userHasInsufficientEnrolments(): StubMapping =
     stubFor(
       post(urlEqualTo("/auth/authorise"))
         .willReturn(
@@ -44,7 +44,7 @@ object AuthStub {
             .withStatus(401)
             .withHeader("WWW-Authenticate", "MDTP detail=\"InsufficientEnrolments\"")))
 
-  def userLoggedInViaUnsupportedAuthProvider(): Unit =
+  def userLoggedInViaUnsupportedAuthProvider(): StubMapping =
     stubFor(
       post(urlEqualTo("/auth/authorise"))
         .willReturn(
@@ -64,7 +64,7 @@ object AuthStub {
 
   def userIsAuthenticated(user: SampleUser): Seq[(String, String)] = {
     val response =
-      s"""{${user.allEnrolments},${user.affinityGroup},"credentials": {"providerId": "${user.userId}", "providerType": "GovernmentGateway"}}"""
+      s"""{${user.allEnrolments},${user.affinityGroup},"optionalCredentials": {"providerId": "${user.userId}", "providerType": "Go vernmentGateway"}}"""
     stubFor(
       post(urlEqualTo("/auth/authorise"))
         .willReturn(
@@ -75,7 +75,7 @@ object AuthStub {
     sessionKeysForMockAuth(user)
   }
 
-  def authenticatedAgent(arn: String) = {
+  def authenticatedAgent(arn: String): StubMapping = {
     givenAuthorisedFor(
       s"""
          |{
@@ -97,7 +97,7 @@ object AuthStub {
     )
   }
 
-  def givenAuthorisedFor(payload: String, responseBody: String): Unit =
+  def givenAuthorisedFor(payload: String, responseBody: String): StubMapping =
     stubFor(
       post(urlEqualTo("/auth/authorise"))
         .withRequestBody(equalToJson(payload, true, true))
@@ -108,7 +108,7 @@ object AuthStub {
             .withBody(responseBody)))
 
 
-  private def sessionKeysForMockAuth(user: SampleUser): Seq[(String, String)] =
+  def sessionKeysForMockAuth(user: SampleUser): Seq[(String, String)] =
     Seq(SessionKeys.userId -> user.userId, SessionKeysForTesting.token -> "fakeToken")
 
 }

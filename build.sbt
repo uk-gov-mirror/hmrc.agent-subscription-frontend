@@ -30,6 +30,11 @@ lazy val compileDeps = Seq(
   "org.typelevel" %% "cats" % "0.9.0"
 )
 
+def tmpMacWorkaround(): Seq[ModuleID] =
+  if (sys.props.get("os.name").fold(false)(_.toLowerCase.contains("mac")))
+    Seq("org.reactivemongo" % "reactivemongo-shaded-native" % "0.16.1-osx-x86-64" % "runtime,test,it")
+  else Seq()
+
 def testDeps(scope: String) = Seq(
   "uk.gov.hmrc" %% "hmrctest" % "3.8.0-play-25" % scope,
   "org.scalatest" %% "scalatest" % "3.0.7" % scope,
@@ -45,6 +50,16 @@ lazy val root = Project("agent-subscription-frontend", file("."))
     name := "agent-subscription-frontend",
     organization := "uk.gov.hmrc",
     scalaVersion := "2.11.11",
+    scalacOptions ++= Seq(
+      "-Xfatal-warnings",
+      "-Xlint:-missing-interpolator,_",
+      "-Yno-adapted-args",
+      "-Ywarn-value-discard",
+      "-Ywarn-dead-code",
+      "-deprecation",
+      "-feature",
+      "-unchecked",
+      "-language:implicitConversions"),
     PlayKeys.playDefaultPort := 9437,
     resolvers := Seq(
       Resolver.bintrayRepo("hmrc", "releases"),
@@ -52,7 +67,7 @@ lazy val root = Project("agent-subscription-frontend", file("."))
       Resolver.typesafeRepo("releases"),
       Resolver.jcenterRepo
     ),
-    libraryDependencies ++= compileDeps ++ testDeps("test") ++ testDeps("it"),
+    libraryDependencies ++= tmpMacWorkaround ++ compileDeps ++ testDeps("test") ++ testDeps("it"),
     publishingSettings,
     scoverageSettings,
     unmanagedResourceDirectories in Compile += baseDirectory.value / "resources",
