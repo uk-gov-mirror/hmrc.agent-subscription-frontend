@@ -78,7 +78,7 @@ trait DataStreamStubs extends Eventually {
         "passSaAgentAssuranceCheck" -> "false",
         "isEnrolledPAYEAgent" -> "false",
         "passCESAAgentAssuranceCheck" -> passCESAAgentAssuranceCheck.toString,
-        //"authProviderId" -> "12345-credId",
+        "authProviderId" -> "12345-credId",
         "authProviderType" -> "GovernmentGateway",
         "userEnteredSaAgentRef" -> saAgentRef
       ) + clientIdentifier ++ payeAudit,
@@ -108,7 +108,7 @@ trait DataStreamStubs extends Eventually {
         //TODO "refuseToDealWith" -> ?,
         "isEnrolledPAYEAgent" -> "true",
         "payeAgentRef" -> "HZ1234",
-        //"authProviderId" -> "12345-credId",
+        "authProviderId" -> "12345-credId",
         "authProviderType" -> "GovernmentGateway"
       ) ++ optional,
       tags = Map("transactionName" -> "agent-assurance", "path" -> "/")
