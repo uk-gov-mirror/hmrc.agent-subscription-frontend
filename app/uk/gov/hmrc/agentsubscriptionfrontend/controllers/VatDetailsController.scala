@@ -33,7 +33,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.controllers.VatDetailsController.{f
 import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.{Partnership, SoleTrader}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
-import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionService}
+import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.validators.CommonValidators.{checkOneAtATime, radioInputSelected}
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
@@ -47,12 +47,14 @@ class VatDetailsController @Inject()(
   override val continueUrlActions: ContinueUrlActions,
   override val authConnector: AuthConnector,
   val sessionStoreService: SessionStoreService,
-  val subscriptionService: SubscriptionService)(
+  val subscriptionService: SubscriptionService,
+  override val subscriptionJourneyService: SubscriptionJourneyService)(
   implicit override val metrics: Metrics,
   override val appConfig: AppConfig,
   val ec: ExecutionContext,
   override val messagesApi: MessagesApi)
-    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig) with SessionBehaviour {
+    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig, subscriptionJourneyService)
+    with SessionBehaviour {
 
   def showRegisteredForVatForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>

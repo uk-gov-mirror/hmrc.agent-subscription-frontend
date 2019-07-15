@@ -22,23 +22,30 @@ import play.api.mvc.{Request, Result}
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.{ContinueUrlActions, routes}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.InternalId
+import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.SubscriptionJourneyRecord
+import uk.gov.hmrc.agentsubscriptionfrontend.service.SubscriptionJourneyService
 import uk.gov.hmrc.agentsubscriptionfrontend.support.Monitoring
 import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{allEnrolments, authorisedEnrolments, credentials}
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{allEnrolments, authorisedEnrolments, credentials, internalId}
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, ~}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.config.AuthRedirects
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class Agent(private val enrolments: Set[Enrolment], private val maybeCredentials: Option[Credentials]) {
+class Agent(
+  private val enrolments: Set[Enrolment],
+  private val maybeCredentials: Option[Credentials],
+  val maybeJourneySubscriptionRecord: Option[SubscriptionJourneyRecord]) {
 
   def hasIRPAYEAGENT: Option[Enrolment] = enrolments.find(e => e.key == "IR-PAYE-AGENT" && e.isActivated)
   def hasIRSAAGENT: Option[Enrolment] = enrolments.find(e => e.key == "IR-SA-AGENT" && e.isActivated)
 
   def authProviderId: String = maybeCredentials.fold("unknown")(_.providerId)
   def authProviderType: String = "GovernmentGateway"
+
 }
 
 object Agent {
@@ -62,6 +69,11 @@ trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring
   def env: Environment = appConfig.environment
   def config: Configuration = appConfig.configuration
 
+  def subscriptionJourneyService: SubscriptionJourneyService
+
+  /**
+    * For a user logged in as a subscribed agent (finished journey)
+    * */
   def withSubscribedAgent[A](body: Arn => Future[Result])(
     implicit request: Request[A],
     hc: HeaderCarrier,
@@ -77,37 +89,46 @@ trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring
         handleException
       }
 
+  /**
+    *  User is half way through a setup/onboarding journey
+    * */
   def withSubscribingAgent[A](body: Agent => Future[Result])(
     implicit request: Request[A],
     hc: HeaderCarrier,
     ec: ExecutionContext): Future[Result] =
     authorised(AuthProviders(GovernmentGateway) and AffinityGroup.Agent)
-      .retrieve(allEnrolments and credentials) {
-        case enrolments ~ creds =>
+      .retrieve(allEnrolments and credentials and internalId) {
+        case enrolments ~ creds ~ intId =>
           if (isEnrolledForHmrcAsAgent(enrolments)) {
             continueUrlActions.extractContinueUrl.map {
               case Some(continueUrl) =>
                 mark("Count-Subscription-AlreadySubscribed-HasEnrolment-ContinueUrl")
-                Redirect(continueUrl.url)
+                Redirect(continueUrl.url) // end of journey; back to calling service
               case None =>
                 mark("Count-Subscription-AlreadySubscribed-HasEnrolment-AgentServicesAccount")
-                Redirect(appConfig.agentServicesAccountUrl)
+                Redirect(appConfig.agentServicesAccountUrl) // dashboard
             }
           } else {
-            body(new Agent(enrolments.enrolments, creds))
+            // check what we should do when InternalId not available!
+            for {
+              record <- subscriptionJourneyService.getJourneyRecord(intId.fold(InternalId("unknown"))(InternalId(_)))
+              result <- body(new Agent(enrolments.enrolments, creds, record))
+            } yield result
           }
       }
       .recover {
         handleException
       }
 
+  // only for the task list?
+  //
   def withSubscribingOrSubscribedAgent[A](unsubscribedBody: Agent => Future[Result])(subscribedBody: Future[Result])(
     implicit request: Request[A],
     hc: HeaderCarrier,
     ec: ExecutionContext): Future[Result] =
     authorised(AuthProviders(GovernmentGateway) and AffinityGroup.Agent)
-      .retrieve(allEnrolments and credentials) {
-        case enrolments ~ maybeCredentials =>
+      .retrieve(allEnrolments and credentials and internalId) {
+        case enrolments ~ maybeCredentials ~ intId =>
           if (isEnrolledForHmrcAsAgent(enrolments)) {
             continueUrlActions.extractContinueUrl.flatMap {
               case Some(continueUrl) =>
@@ -115,10 +136,14 @@ trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring
                 Future successful Redirect(continueUrl.url)
               case None =>
                 mark("Count-Subscription-AlreadySubscribed-HasEnrolment-AgentServicesAccount")
-                subscribedBody
+                subscribedBody // why not redirect to dashboard here?
             }
           } else {
-            unsubscribedBody(new Agent(enrolments.enrolments, maybeCredentials))
+            // check what we should do when InternalId not available!
+            for {
+              record <- subscriptionJourneyService.getJourneyRecord(intId.fold(InternalId("unknown"))(InternalId(_)))
+              result <- unsubscribedBody(new Agent(enrolments.enrolments, maybeCredentials, record))
+            } yield result
           }
       }
       .recover {

@@ -43,12 +43,14 @@ class PostcodeController @Inject()(
   val sessionStoreService: SessionStoreService,
   subscriptionService: SubscriptionService,
   assuranceService: AssuranceService,
-  auditService: AuditService)(
+  auditService: AuditService,
+  override val subscriptionJourneyService: SubscriptionJourneyService)(
   implicit override val metrics: Metrics,
   override val appConfig: AppConfig,
   val ec: ExecutionContext,
   override val messagesApi: MessagesApi)
-    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig) with SessionBehaviour {
+    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig, subscriptionJourneyService)
+    with SessionBehaviour {
 
   def showPostcodeForm(): Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { implicit agent =>

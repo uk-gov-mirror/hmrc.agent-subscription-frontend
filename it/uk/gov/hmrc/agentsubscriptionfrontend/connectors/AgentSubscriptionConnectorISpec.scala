@@ -20,7 +20,7 @@ class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {
   private lazy val connector: AgentSubscriptionConnector =
     new AgentSubscriptionConnector(
       new URL(s"http://localhost:$wireMockPort"),
-      app.injector.instanceOf[HttpGet with HttpPost with HttpPut],
+      app.injector.instanceOf[HttpGet with HttpPost with HttpPut with HttpDelete],
       app.injector.instanceOf[Metrics])
 
   private val utr = Utr("0123456789")

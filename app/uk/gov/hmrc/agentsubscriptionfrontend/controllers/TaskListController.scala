@@ -22,7 +22,7 @@ import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentAssuranceConnector
 import uk.gov.hmrc.agentsubscriptionfrontend.models.TaskListFlags
-import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
+import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService}
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.auth.core.AuthConnector
 
@@ -32,12 +32,14 @@ class TaskListController @Inject()(
   override val authConnector: AuthConnector,
   agentAssuranceConnector: AgentAssuranceConnector,
   continueUrlActions: ContinueUrlActions,
-  val sessionStoreService: SessionStoreService)(
+  val sessionStoreService: SessionStoreService,
+  override val subscriptionJourneyService: SubscriptionJourneyService)(
   implicit override implicit val appConfig: AppConfig,
   metrics: Metrics,
   override val messagesApi: MessagesApi,
   val ec: ExecutionContext)
-    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig) with SessionBehaviour {
+    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig, subscriptionJourneyService)
+    with SessionBehaviour {
 
   def showTaskList: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingOrSubscribedAgent { implicit agent =>

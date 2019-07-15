@@ -24,7 +24,7 @@ import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, Postcode, TaskListFlags}
 import uk.gov.hmrc.agentsubscriptionfrontend.repository.ChainedSessionDetailsRepository
-import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionService, SubscriptionState}
+import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService, SubscriptionService, SubscriptionState}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.auth.core.AuthConnector
@@ -38,12 +38,14 @@ class StartController @Inject()(
   chainedSessionDetailsRepository: ChainedSessionDetailsRepository,
   continueUrlActions: ContinueUrlActions,
   val sessionStoreService: SessionStoreService,
-  subscriptionService: SubscriptionService)(
+  subscriptionService: SubscriptionService,
+  subscriptionJourneyService: SubscriptionJourneyService)(
   implicit override implicit val appConfig: AppConfig,
   metrics: Metrics,
   override val messagesApi: MessagesApi,
   val ec: ExecutionContext)
-    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig) with SessionBehaviour {
+    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig, subscriptionJourneyService)
+    with SessionBehaviour {
 
   import uk.gov.hmrc.agentsubscriptionfrontend.support.CallOps._
 
@@ -55,7 +57,10 @@ class StartController @Inject()(
 
   def start: Action[AnyContent] = Action.async { implicit request =>
     continueUrlActions.withMaybeContinueUrl { urlOpt =>
-      Ok(html.start(urlOpt))
+      val nextUrl: String = routes.BusinessTypeController
+        .showBusinessTypeForm()
+        .toURLWithParams("continue" -> urlOpt.map(_.url))
+      Ok(html.start(nextUrl))
     }
   }
 

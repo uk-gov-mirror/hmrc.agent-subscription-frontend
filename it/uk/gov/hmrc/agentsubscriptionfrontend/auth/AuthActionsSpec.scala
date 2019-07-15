@@ -9,6 +9,7 @@ import play.api.test.Helpers._
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.ContinueUrlActions
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, TaskListFlags}
+import uk.gov.hmrc.agentsubscriptionfrontend.service.SubscriptionJourneyService
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.{subscribingAgentEnrolledForHMRCASAGENT, subscribingCleanAgentWithoutEnrolments}
@@ -31,6 +32,7 @@ class AuthActionsSpec extends BaseISpec with MockitoSugar {
     override def appConfig: AppConfig = app.injector.instanceOf[AppConfig]
     override def continueUrlActions: ContinueUrlActions = app.injector.instanceOf[ContinueUrlActions]
     override def metrics: Metrics = app.injector.instanceOf[Metrics]
+    override def subscriptionJourneyService: SubscriptionJourneyService = app.injector.instanceOf[SubscriptionJourneyService]
 
     def withSubscribedAgent[A]: Result =
       await(super.withSubscribedAgent { arn => Future.successful(Ok(arn.value)) })
@@ -40,6 +42,7 @@ class AuthActionsSpec extends BaseISpec with MockitoSugar {
 
     def storeCheckAnswersComplete: Future[Unit] =
       sessionStoreService.cacheAgentSession(AgentSession(taskListFlags = TaskListFlags(checkAnswersComplete = true)))
+
 
   }
 

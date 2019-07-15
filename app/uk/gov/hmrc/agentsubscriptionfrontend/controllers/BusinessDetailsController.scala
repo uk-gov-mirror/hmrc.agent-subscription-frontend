@@ -42,12 +42,14 @@ class BusinessDetailsController @Inject()(
   val sessionStoreService: SessionStoreService,
   val subscriptionService: SubscriptionService,
   val assuranceService: AssuranceService,
-  val auditService: AuditService)(
+  val auditService: AuditService,
+  override val subscriptionJourneyService: SubscriptionJourneyService)(
   implicit override val metrics: Metrics,
   override val appConfig: AppConfig,
   val ec: ExecutionContext,
   override val messagesApi: MessagesApi)
-    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig) with SessionBehaviour {
+    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig, subscriptionJourneyService)
+    with SessionBehaviour {
 
   def showBusinessDetailsForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { implicit agent =>
