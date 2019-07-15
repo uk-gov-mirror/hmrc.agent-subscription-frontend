@@ -26,6 +26,7 @@ import play.api.libs.json.JsValue
 import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr, Vrn}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
+import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.SubscriptionJourneyRecord
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.encoding.UriPathEncoding.encodePathSegment
 
@@ -38,6 +39,8 @@ class AgentSubscriptionConnector @Inject()(
   metrics: Metrics)(implicit ec: ExecutionContext)
     extends HttpAPIMonitor {
   override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
+
+  def getJourneyByPrimaryId(id: InternalId): Future[Option[SubscriptionJourneyRecord]] = ???
 
   def getRegistration(utr: Utr, postcode: String)(implicit hc: HeaderCarrier): Future[Option[Registration]] =
     monitor(s"ConsumedAPI-Agent-Subscription-hasAcceptableNumberOfClients-GET") {
