@@ -35,21 +35,11 @@
             </h2>
             <ul class="app-task-list__items">
                 <li class="app-task-list__item">
-                    @if(taskListFlags.checkAnswersComplete){ @Messages("task-list.1.identify-business")
-                    }else{<a href=@routes.BusinessTypeController.showBusinessTypeForm()>@Messages("task-list.1.identify-business")</a>}
-                    @if(taskListFlags.businessTaskComplete) {
-                        <strong class="govuk-tag app-task-list__task-completed">@Messages("task-list.completed")</strong>
-                    }
-                </li>
-                <li class="app-task-list__item">@if(taskListFlags.businessTaskComplete) {
                   @if(taskListFlags.isMAA | taskListFlags.checkAnswersComplete){ @Messages("task-list.1.amls")
                   }else {<a href=@routes.AMLSController.showCheckAmlsPage()>@Messages("task-list.1.amls")</a>}
                     @if(taskListFlags.amlsTaskComplete) {
                         <strong class="govuk-tag app-task-list__task-completed">@Messages("task-list.completed")</strong>
                     }
-                } else {
-                    @Messages("task-list.1.amls")
-                }
                 </li>
             </ul>
         </li>

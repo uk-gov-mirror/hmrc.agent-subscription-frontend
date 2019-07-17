@@ -18,7 +18,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.service
 
 import javax.inject.{Inject, Singleton}
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentSubscriptionConnector
-import uk.gov.hmrc.agentsubscriptionfrontend.models.AuthProviderId
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, AuthProviderId}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.SubscriptionJourneyRecord
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -39,5 +39,9 @@ class SubscriptionJourneyService @Inject()(agentSubscriptionConnector: AgentSubs
   def saveJourneyRecord(subscriptionJourneyRecord: SubscriptionJourneyRecord)(
     implicit hc: HeaderCarrier): Future[Unit] =
     agentSubscriptionConnector.createOrUpdate(subscriptionJourneyRecord)
+
+  def saveJourneyRecord(agentSession: AgentSession, authProviderId: AuthProviderId): Future[Unit] =
+    //make journey record from the session then call above save method to update DB
+    ???
 
 }

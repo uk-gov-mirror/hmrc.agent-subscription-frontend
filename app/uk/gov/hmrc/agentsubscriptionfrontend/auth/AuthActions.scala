@@ -114,7 +114,6 @@ trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring
               .getJourneyRecord(authProviderId)
               .flatMap(maybeSjr => body(new Agent(enrolments.enrolments, creds, maybeSjr)))
             // check what we should do when AuthProviderId not available!
-
           }
       }
       .recover {

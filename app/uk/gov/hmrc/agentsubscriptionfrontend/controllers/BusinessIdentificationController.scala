@@ -33,6 +33,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidationResult.FailureReason._
 import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidationResult.{Failure, Pass}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
+import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.SubscriptionJourneyRecord
 import uk.gov.hmrc.agentsubscriptionfrontend.service._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TaxIdentifierFormatters
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
@@ -143,7 +144,7 @@ class BusinessIdentificationController @Inject()(
                     Redirect(routes.BusinessIdentificationController.showAlreadySubscribed())
                   } else {
                     sessionStoreService.fetchContinueUrl.flatMap { continueUrl =>
-                      validatedBusinessDetailsAndRedirect(existingSession, continueUrl, agent).map(Redirect)
+                      validatedBusinessDetailsAndRedirect(existingSession, agent).map(Redirect)
                     }
                   }
                 case No =>
@@ -156,10 +157,8 @@ class BusinessIdentificationController @Inject()(
     }
   }
 
-  private def validatedBusinessDetailsAndRedirect(
-    existingSession: AgentSession,
-    continueUrl: Option[ContinueUrl],
-    agent: Agent)(implicit hc: HeaderCarrier): Future[Call] =
+  private def validatedBusinessDetailsAndRedirect(existingSession: AgentSession, agent: Agent)(
+    implicit hc: HeaderCarrier): Future[Call] =
     businessDetailsValidator.validate(existingSession.registration) match {
       case Failure(responses) if responses.contains(InvalidBusinessName) =>
         routes.BusinessIdentificationController.showBusinessNameForm()
@@ -167,20 +166,21 @@ class BusinessIdentificationController @Inject()(
         routes.BusinessIdentificationController.showUpdateBusinessAddressForm()
       case Failure(responses) if responses.contains(InvalidEmail) =>
         routes.BusinessIdentificationController.showBusinessEmailForm()
-      case _ if continueUrl.isDefined =>
-        //if service is trusts don't show task list
-        routes.AMLSController.showCheckAmlsPage()
       case _ =>
-        checkPartaillySubscribed(agent, existingSession)(for {
-          isMAA <- agentAssuranceConnector.isManuallyAssuredAgent(existingSession.utr.get)
-          _ <- if (isMAA)
-                sessionStoreService.cacheAgentSession(existingSession.copy(taskListFlags = existingSession.taskListFlags
-                  .copy(businessTaskComplete = true, amlsTaskComplete = true, createTaskComplete = true, isMAA = true)))
-              else
-                sessionStoreService.cacheAgentSession(
-                  existingSession.copy(taskListFlags = existingSession.taskListFlags.copy(businessTaskComplete = true)))
-          result <- routes.TaskListController.showTaskList()
-        } yield result)
+        checkPartaillySubscribed(agent, existingSession)(
+          checkMAAgent(agentAssuranceConnector, existingSession).flatMap(_ => routes.TaskListController.showTaskList()))
+    }
+
+  private def checkMAAgent(agentAssuranceConnector: AgentAssuranceConnector, existingSession: AgentSession)(
+    implicit hc: HeaderCarrier) =
+    agentAssuranceConnector.isManuallyAssuredAgent(existingSession.utr.get).flatMap {
+      case true =>
+        sessionStoreService.cacheAgentSession(
+          existingSession.copy(taskListFlags = existingSession.taskListFlags
+            .copy(businessTaskComplete = true, amlsTaskComplete = true, createTaskComplete = true, isMAA = true)))
+      case false =>
+        sessionStoreService.cacheAgentSession(
+          existingSession.copy(taskListFlags = existingSession.taskListFlags.copy(businessTaskComplete = true)))
     }
 
   def hasCleanCreds(agent: Agent)(uncleanCredsBody: => Future[Call])(cleanCredsBody: => Future[Call]) =
@@ -318,7 +318,7 @@ class BusinessIdentificationController @Inject()(
           .map(_ => Redirect(routes.SubscriptionController.showCheckAnswers()))
       case _ =>
         sessionStoreService.fetchContinueUrl.flatMap { continueUrl =>
-          validatedBusinessDetailsAndRedirect(updatedSession, continueUrl, agent).map(Redirect)
+          validatedBusinessDetailsAndRedirect(updatedSession, agent).map(Redirect)
         }
     }
   }

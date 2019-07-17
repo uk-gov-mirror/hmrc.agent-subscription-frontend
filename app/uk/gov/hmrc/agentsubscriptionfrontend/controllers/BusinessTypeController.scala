@@ -46,13 +46,17 @@ class BusinessTypeController @Inject()(
     withSubscribingAgent { implicit agent =>
       continueUrlActions.withMaybeContinueUrlCached {
         agent.subscriptionJourneyRecord match {
-          case Some(sjr) =>
-            sjr.businessDetails.businessType.key match {
-              case txt if txt.nonEmpty =>
-                Ok(html.business_type(businessTypeForm.fill(BusinessType(txt))))
-              case _ => Ok(html.business_type(businessTypeForm))
+          case None =>
+            sessionStoreService.fetchAgentSession.flatMap {
+              case Some(agentSession) =>
+                agentSession.businessType match {
+                  case Some(businessType) =>
+                    Ok(html.business_type(businessTypeForm.fill(businessType)))
+                  case _ => Ok(html.business_type(businessTypeForm))
+                }
+              case None => Ok(html.business_type(businessTypeForm))
             }
-          case None => Ok(html.business_type(businessTypeForm))
+          case _ => Redirect(routes.TaskListController.showTaskList())
         }
       }
     }
