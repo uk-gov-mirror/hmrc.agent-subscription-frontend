@@ -21,7 +21,8 @@ import play.api.data.Forms.{mapping, _}
 import play.api.i18n.Messages
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{BusinessDetails, RadioInputAnswer, _}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{BusinessDetails, RadioInputAnswer}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TaxIdentifierFormatters.normalizeUtr
 import uk.gov.hmrc.agentsubscriptionfrontend.validators.CommonValidators._
 import uk.gov.hmrc.domain.Nino

@@ -24,8 +24,8 @@ import play.api.libs.functional.syntax._
   *
   * @param id
   */
-final case class InternalId(id: String)
+final case class AuthProviderId(id: String)
 
-object InternalId {
-  implicit val format: Format[InternalId] = implicitly[Format[String]].inmap(InternalId(_), _.id)
+object AuthProviderId {
+  implicit val format: Format[AuthProviderId] = implicitly[Format[String]].inmap(AuthProviderId(_), _.id)
 }

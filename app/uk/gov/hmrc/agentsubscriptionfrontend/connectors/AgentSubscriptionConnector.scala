@@ -41,7 +41,7 @@ class AgentSubscriptionConnector @Inject()(
 
   override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
 
-  def getJourneyByPrimaryId(internalId: InternalId)(
+  def getJourneyByPrimaryId(internalId: AuthProviderId)(
     implicit hc: HeaderCarrier): Future[Option[SubscriptionJourneyRecord]] =
     monitor(s"ConsumedAPI-Agent-Subscription-getJourneyByPrimaryId-GET") {
       val url =
@@ -49,7 +49,7 @@ class AgentSubscriptionConnector @Inject()(
       http.GET[Option[SubscriptionJourneyRecord]](url.toString)
     }
 
-  def getJourneyByMappedId(internalId: InternalId)(
+  def getJourneyByMappedId(internalId: AuthProviderId)(
     implicit hc: HeaderCarrier): Future[Option[SubscriptionJourneyRecord]] =
     monitor(s"ConsumedAPI-Agent-Subscription-getJourneyByMappedId-GET") {
       val url =
@@ -76,12 +76,12 @@ class AgentSubscriptionConnector @Inject()(
         .POST[SubscriptionJourneyRecord, JsValue](
           new URL(
             baseUrl,
-            s"/agent-subscription/subscription/journey/primaryId/${encodePathSegment(journeyRecord.internalId.id)}").toString,
+            s"/agent-subscription/subscription/journey/primaryId/${encodePathSegment(journeyRecord.authProviderId.id)}").toString,
           journeyRecord)
         .map(_ => ())
     }
 
-  def delete(internalId: InternalId)(implicit hc: HeaderCarrier): Future[Unit] =
+  def delete(internalId: AuthProviderId)(implicit hc: HeaderCarrier): Future[Unit] =
     monitor("ConsumedAPI-Agent-Subscription-delete-DELETE") {
       val url =
         new URL(baseUrl, s"/agent-subscription/subscription/journey/primaryId/${encodePathSegment(internalId.id)}")

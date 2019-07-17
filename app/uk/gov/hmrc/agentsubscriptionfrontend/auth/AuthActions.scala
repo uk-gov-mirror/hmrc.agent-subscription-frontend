@@ -22,13 +22,13 @@ import play.api.mvc.{Request, Result}
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.{ContinueUrlActions, routes}
-import uk.gov.hmrc.agentsubscriptionfrontend.models.InternalId
+import uk.gov.hmrc.agentsubscriptionfrontend.models.AuthProviderId
 import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.SubscriptionJourneyRecord
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SubscriptionJourneyService
 import uk.gov.hmrc.agentsubscriptionfrontend.support.Monitoring
 import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{allEnrolments, authorisedEnrolments, credentials, internalId}
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{allEnrolments, authorisedEnrolments, credentials}
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, ~}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.config.AuthRedirects
@@ -38,12 +38,12 @@ import scala.concurrent.{ExecutionContext, Future}
 class Agent(
   private val enrolments: Set[Enrolment],
   private val maybeCredentials: Option[Credentials],
-  val maybeJourneySubscriptionRecord: Option[SubscriptionJourneyRecord]) {
+  val subscriptionJourneyRecord: Option[SubscriptionJourneyRecord]) {
 
   def hasIRPAYEAGENT: Option[Enrolment] = enrolments.find(e => e.key == "IR-PAYE-AGENT" && e.isActivated)
   def hasIRSAAGENT: Option[Enrolment] = enrolments.find(e => e.key == "IR-SA-AGENT" && e.isActivated)
 
-  def authProviderId: String = maybeCredentials.fold("unknown")(_.providerId)
+  def authProviderId: AuthProviderId = AuthProviderId(maybeCredentials.fold("unknown")(_.providerId))
   def authProviderType: String = "GovernmentGateway"
 
 }
@@ -97,8 +97,8 @@ trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring
     hc: HeaderCarrier,
     ec: ExecutionContext): Future[Result] =
     authorised(AuthProviders(GovernmentGateway) and AffinityGroup.Agent)
-      .retrieve(allEnrolments and credentials and internalId) {
-        case enrolments ~ creds ~ intId =>
+      .retrieve(allEnrolments and credentials) {
+        case enrolments ~ creds =>
           if (isEnrolledForHmrcAsAgent(enrolments)) {
             continueUrlActions.extractContinueUrl.map {
               case Some(continueUrl) =>
@@ -109,11 +109,12 @@ trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring
                 Redirect(appConfig.agentServicesAccountUrl) // dashboard
             }
           } else {
-            // check what we should do when InternalId not available!
-            for {
-              record <- subscriptionJourneyService.getJourneyRecord(intId.fold(InternalId("unknown"))(InternalId(_)))
-              result <- body(new Agent(enrolments.enrolments, creds, record))
-            } yield result
+            val authProviderId = AuthProviderId(creds.fold("unknown")(_.providerId))
+            subscriptionJourneyService
+              .getJourneyRecord(authProviderId)
+              .flatMap(maybeSjr => body(new Agent(enrolments.enrolments, creds, maybeSjr)))
+            // check what we should do when AuthProviderId not available!
+
           }
       }
       .recover {
@@ -127,8 +128,8 @@ trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring
     hc: HeaderCarrier,
     ec: ExecutionContext): Future[Result] =
     authorised(AuthProviders(GovernmentGateway) and AffinityGroup.Agent)
-      .retrieve(allEnrolments and credentials and internalId) {
-        case enrolments ~ maybeCredentials ~ intId =>
+      .retrieve(allEnrolments and credentials) {
+        case enrolments ~ maybeCredentials =>
           if (isEnrolledForHmrcAsAgent(enrolments)) {
             continueUrlActions.extractContinueUrl.flatMap {
               case Some(continueUrl) =>
@@ -140,10 +141,10 @@ trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring
             }
           } else {
             // check what we should do when InternalId not available!
-            for {
-              record <- subscriptionJourneyService.getJourneyRecord(intId.fold(InternalId("unknown"))(InternalId(_)))
-              result <- unsubscribedBody(new Agent(enrolments.enrolments, maybeCredentials, record))
-            } yield result
+            val authProviderId = AuthProviderId(maybeCredentials.fold("unknown")(_.providerId))
+            subscriptionJourneyService
+              .getJourneyRecord(authProviderId)
+              .flatMap(maybeRecord => unsubscribedBody(new Agent(enrolments.enrolments, maybeCredentials, maybeRecord)))
           }
       }
       .recover {

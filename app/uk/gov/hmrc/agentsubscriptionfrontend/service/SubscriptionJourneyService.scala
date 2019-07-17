@@ -18,7 +18,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.service
 
 import javax.inject.{Inject, Singleton}
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentSubscriptionConnector
-import uk.gov.hmrc.agentsubscriptionfrontend.models.InternalId
+import uk.gov.hmrc.agentsubscriptionfrontend.models.AuthProviderId
 import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.SubscriptionJourneyRecord
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -28,11 +28,16 @@ import scala.concurrent.{ExecutionContext, Future}
 class SubscriptionJourneyService @Inject()(agentSubscriptionConnector: AgentSubscriptionConnector)(
   implicit ec: ExecutionContext) {
 
-  def getJourneyRecord(internalId: InternalId)(implicit hc: HeaderCarrier): Future[Option[SubscriptionJourneyRecord]] =
+  def getJourneyRecord(internalId: AuthProviderId)(
+    implicit hc: HeaderCarrier): Future[Option[SubscriptionJourneyRecord]] =
     // TODO move logic to backend
     for {
       primaryRecord <- agentSubscriptionConnector.getJourneyByPrimaryId(internalId)
       mappedRecord  <- agentSubscriptionConnector.getJourneyByMappedId(internalId)
     } yield primaryRecord.orElse(mappedRecord)
+
+  def saveJourneyRecord(subscriptionJourneyRecord: SubscriptionJourneyRecord)
+                       (implicit hc: HeaderCarrier): Future[Unit] =
+    agentSubscriptionConnector.createOrUpdate(subscriptionJourneyRecord)
 
 }

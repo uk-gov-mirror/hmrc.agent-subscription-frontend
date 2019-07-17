@@ -22,7 +22,7 @@ import play.api.i18n.MessagesApi
 import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationForms.businessTypeForm
-import uk.gov.hmrc.agentsubscriptionfrontend.models.AgentSession
+import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.{BusinessDetails, BusinessType, SubscriptionJourneyRecord}
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
@@ -44,13 +44,13 @@ class BusinessTypeController @Inject()(
 
   def showBusinessTypeForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { implicit agent =>
-      continueUrlActions.withMaybeContinueUrlCached {
-        sessionStoreService.fetchAgentSession.flatMap {
-          case Some(agentSession) =>
-            agentSession.businessType match {
-              case Some(businessType) =>
-                Ok(html.business_type(businessTypeForm.fill(businessType)))
-              case None => Ok(html.business_type(businessTypeForm))
+      continueUrlActions.withMaybeContinueUrlCached{
+        agent.subscriptionJourneyRecord match {
+          case Some(sjr) =>
+            sjr.businessDetails.businessType.key match {
+              case txt if txt.nonEmpty =>
+                Ok(html.business_type(businessTypeForm.fill(BusinessType(txt))))
+              case _ => Ok(html.business_type(businessTypeForm))
             }
           case None => Ok(html.business_type(businessTypeForm))
         }
@@ -65,10 +65,8 @@ class BusinessTypeController @Inject()(
         .fold(
           formWithErrors => Ok(html.business_type(formWithErrors)),
           validatedBusinessType => {
-            sessionStoreService.fetchAgentSession
-              .flatMap(_.getOrElse(AgentSession()))
-              .flatMap { agentSession =>
-                updateSessionAndRedirect(agentSession.copy(businessType = Some(validatedBusinessType)))(
+           val sjr: SubscriptionJourneyRecord = agent.subscriptionJourneyRecord.getOrElse(SubscriptionJourneyRecord(authProviderId = agent.authProviderId, businessDetails = BusinessDetails()))
+                updateSubscriptionJourneyRecordAndRedirect(sjr.copy(busines))(
                   routes.BusinessDetailsController.showBusinessDetailsForm())
               }
           }
