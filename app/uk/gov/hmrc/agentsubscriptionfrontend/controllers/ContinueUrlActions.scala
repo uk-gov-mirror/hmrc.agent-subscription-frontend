@@ -67,7 +67,6 @@ class ContinueUrlActions @Inject()(whiteListService: HostnameWhiteListService, s
     withMaybeContinueUrl {
       case None => block
       case Some(url) =>
-
         sessionStoreService.cacheContinueUrl(url).flatMap(_ => block)
     }
 

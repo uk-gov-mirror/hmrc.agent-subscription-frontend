@@ -36,8 +36,8 @@ class SubscriptionJourneyService @Inject()(agentSubscriptionConnector: AgentSubs
       mappedRecord  <- agentSubscriptionConnector.getJourneyByMappedId(internalId)
     } yield primaryRecord.orElse(mappedRecord)
 
-  def saveJourneyRecord(subscriptionJourneyRecord: SubscriptionJourneyRecord)
-                       (implicit hc: HeaderCarrier): Future[Unit] =
+  def saveJourneyRecord(subscriptionJourneyRecord: SubscriptionJourneyRecord)(
+    implicit hc: HeaderCarrier): Future[Unit] =
     agentSubscriptionConnector.createOrUpdate(subscriptionJourneyRecord)
 
 }

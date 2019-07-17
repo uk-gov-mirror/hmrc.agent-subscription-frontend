@@ -22,7 +22,7 @@ import play.api.i18n.MessagesApi
 import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationForms.businessTypeForm
-import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.{BusinessDetails, BusinessType, SubscriptionJourneyRecord}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, BusinessType}
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
@@ -44,7 +44,7 @@ class BusinessTypeController @Inject()(
 
   def showBusinessTypeForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { implicit agent =>
-      continueUrlActions.withMaybeContinueUrlCached{
+      continueUrlActions.withMaybeContinueUrlCached {
         agent.subscriptionJourneyRecord match {
           case Some(sjr) =>
             sjr.businessDetails.businessType.key match {
@@ -65,8 +65,10 @@ class BusinessTypeController @Inject()(
         .fold(
           formWithErrors => Ok(html.business_type(formWithErrors)),
           validatedBusinessType => {
-           val sjr: SubscriptionJourneyRecord = agent.subscriptionJourneyRecord.getOrElse(SubscriptionJourneyRecord(authProviderId = agent.authProviderId, businessDetails = BusinessDetails()))
-                updateSubscriptionJourneyRecordAndRedirect(sjr.copy(busines))(
+            sessionStoreService.fetchAgentSession
+              .flatMap(_.getOrElse(AgentSession()))
+              .flatMap { agentSession =>
+                updateSessionAndRedirect(agentSession.copy(businessType = Some(validatedBusinessType)))(
                   routes.BusinessDetailsController.showBusinessDetailsForm())
               }
           }

@@ -28,14 +28,14 @@ import uk.gov.hmrc.agentsubscriptionfrontend.models.AuthProviderId
   *
   */
 final case class SubscriptionJourneyRecord(
-                                            authProviderId: AuthProviderId,
-                                            continueId: Option[String] = None, // once allocated, should not be changed?
-                                            businessDetails: BusinessDetails,
-                                            amlsData: Option[AmlsData] = None,
-                                            userMappings: List[UserMapping] = List.empty,
-                                            mappingComplete: Boolean = false,
-                                            cleanCredsInternalId: Option[AuthProviderId] = None,
-                                            lastModifiedDate: Option[LocalDateTime] = None)
+  authProviderId: AuthProviderId,
+  continueId: Option[String] = None, // once allocated, should not be changed?
+  businessDetails: BusinessDetails,
+  amlsData: Option[AmlsData] = None,
+  userMappings: List[UserMapping] = List.empty,
+  mappingComplete: Boolean = false,
+  cleanCredsInternalId: Option[AuthProviderId] = None,
+  lastModifiedDate: Option[LocalDateTime] = None)
 
 object SubscriptionJourneyRecord {
 
@@ -53,6 +53,3 @@ object SubscriptionJourneyRecord {
         .formatNullable[LocalDateTime])(SubscriptionJourneyRecord.apply, unlift(SubscriptionJourneyRecord.unapply))
 
 }
-
-
-
