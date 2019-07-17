@@ -18,7 +18,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney
 
 import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
-import uk.gov.hmrc.agentsubscriptionfrontend.models.DateOfBirth
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{BusinessType, CompanyRegistrationNumber, DateOfBirth, Postcode, Registration, VatDetails}
 import uk.gov.hmrc.domain.Nino
 
 /**

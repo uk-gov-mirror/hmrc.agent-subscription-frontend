@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney
-
-import java.time.LocalDate
+package uk.gov.hmrc.agentsubscriptionfrontend.models
 
 import play.api.libs.json.{Format, Json}
-import uk.gov.hmrc.agentmtdidentifiers.model.Vrn
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 
-case class VatDetails(vrn: Vrn, regDate: LocalDate)
+case class MainBusinessIdentity(utr: Utr, postcode: String)
 
-object VatDetails {
-  implicit val format: Format[VatDetails] = Json.format[VatDetails]
+object MainBusinessIdentity {
+  implicit val format: Format[MainBusinessIdentity] = Json.format[MainBusinessIdentity]
 }

@@ -33,6 +33,7 @@ object PendingDetails {
   implicit val format = Json.format[PendingDetails]
 }
 
+// TODO replace this with AmlsData which include the extra field
 case class AMLSDetails(supervisoryBody: String, details: Either[PendingDetails, RegisteredDetails])
 
 object AMLSDetails {

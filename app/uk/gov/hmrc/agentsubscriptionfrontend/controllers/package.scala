@@ -46,12 +46,12 @@ package object controllers {
             ))(input => BusinessType(input))(bType => Some(bType.key))
       )
 
-    def businessDetailsForm(businessType: String): Form[BusinessDetails] =
-      Form[BusinessDetails](
+    def businessDetailsForm(businessType: String): Form[MainBusinessIdentity] =
+      Form[MainBusinessIdentity](
         mapping("utr" -> businessUtr(businessType), "postcode" -> postcode)(
           (utrStr, postcode) =>
             normalizeUtr(utrStr)
-              .map(utr => BusinessDetails(utr, postcode))
+              .map(utr => MainBusinessIdentity(utr, postcode))
               .getOrElse(throw new Exception("Invalid utr found after validation")))(businessDetails =>
           Some((businessDetails.utr.value, businessDetails.postcode))))
 
