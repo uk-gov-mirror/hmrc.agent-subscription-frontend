@@ -123,22 +123,7 @@ class ConfirmBusinessISpec extends BaseISpec {
         metricShouldExistAndBeUpdated("Count-Subscription-AlreadySubscribed-RegisteredInETMP")
       }
 
-      "redirect to showAmlsDetailsForm if the user has clean creds and isSubscribedToAgentServices=false and there is a continueUrl" in {
-        implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
-          .withFormUrlEncodedBody("confirmBusiness" -> "yes")
-        sessionStoreService.currentSession.agentSession = Some(
-          AgentSession(
-            Some(BusinessType.SoleTrader),
-            utr = Some(utr),
-            registration = Some(registration.copy(isSubscribedToAgentServices = false))))
-        sessionStoreService.currentSession.continueUrl = Some(ContinueUrl("/continue/url"))
-
-        val result = await(controller.submitConfirmBusinessForm(request))
-
-        result.header.headers(LOCATION) shouldBe routes.AMLSController.showCheckAmlsPage().url
-      }
-
-      "redirect to task list if the user has clean creds and isSubscribedToAgentServices=false and there is no continueUrl" in {
+      "redirect to task list if the user has clean creds and isSubscribedToAgentServices=false" in {
         givenAgentIsNotManuallyAssured(utr.value)
         implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
           .withFormUrlEncodedBody("confirmBusiness" -> "yes")
@@ -153,7 +138,7 @@ class ConfirmBusinessISpec extends BaseISpec {
         result.header.headers(LOCATION) shouldBe routes.TaskListController.showTaskList().url
       }
 
-      "redirect to task list if the user has clean creds and isSubscribedToAgentServices=false and there is no continueUrl and is a MAA" in {
+      "redirect to task list if the user has clean creds and isSubscribedToAgentServices=false and is a MAA" in {
         givenAgentIsManuallyAssured(utr.value)
         implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
           .withFormUrlEncodedBody("confirmBusiness" -> "yes")
@@ -169,7 +154,7 @@ class ConfirmBusinessISpec extends BaseISpec {
 
         sessionStoreService.currentSession.agentSession.get.taskListFlags.amlsTaskComplete shouldBe true
       }
-      "redirect to subscription complete if user is partially subscribed with clean creds and there is no continue url" in {
+      "redirect to subscription complete if user is partially subscribed with clean creds" in {
         givenAgentIsNotManuallyAssured(utr.value)
         withPartiallySubscribedAgent(utr, postcode)
         AgentSubscriptionStub.partialSubscriptionWillSucceed(CompletePartialSubscriptionBody(
@@ -194,7 +179,7 @@ class ConfirmBusinessISpec extends BaseISpec {
         sessionStoreService.currentSession.agentSession.get.taskListFlags.createTaskComplete shouldBe true
       }
 
-      "redirect to task list if the user is partially subscribed with unclean creds and there is no continue url" in {
+      "redirect to task list if the user is partially subscribed with unclean creds" in {
         givenAgentIsNotManuallyAssured(utr.value)
         withPartiallySubscribedAgent(utr, postcode)
 

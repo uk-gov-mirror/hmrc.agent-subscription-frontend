@@ -70,15 +70,6 @@ class ContinueUrlActions @Inject()(whiteListService: HostnameWhiteListService, s
         sessionStoreService.cacheContinueUrl(url).flatMap(_ => block)
     }
 
-  def withMaybeContinueUrlCached[A](noContinueUrlBlock: => Future[Result], continueUrlblock: => Future[Result])(
-    implicit hc: HeaderCarrier,
-    request: Request[A]): Future[Result] =
-    withMaybeContinueUrl {
-      case None => noContinueUrlBlock
-      case Some(url) =>
-        sessionStoreService.cacheContinueUrl(url).flatMap(_ => continueUrlblock)
-    }
-
   private def isRelativeOrAbsoluteWhiteListed(continueUrl: ContinueUrl)(implicit hc: HeaderCarrier): Future[Boolean] =
     if (!continueUrl.isRelativeUrl) whiteListService.isAbsoluteUrlWhiteListed(continueUrl)
     else true
