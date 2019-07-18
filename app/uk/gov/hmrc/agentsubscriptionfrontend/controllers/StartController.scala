@@ -116,41 +116,20 @@ class StartController @Inject()(
         .cacheAgentSession(
           existingSession
             .copy(taskListFlags = existingSession.taskListFlags.copy(createTaskComplete = true)))
-        .flatMap(_ =>
-          sessionStoreService.fetchContinueUrl.flatMap {
-            case Some(_) => toFuture(Redirect(routes.SubscriptionController.showCheckAnswers()))
-            case None    => toFuture(Redirect(routes.TaskListController.showTaskList()))
-        })
+        .flatMap(_ => toFuture(Redirect(routes.TaskListController.showTaskList())))
 
     }
 
   private def handlePartialSubscription(kfcUtr: Utr, kfcPostcode: String, agentSession: AgentSession)(
     implicit request: Request[_],
-    hc: HeaderCarrier): Future[Result] = {
+    hc: HeaderCarrier): Future[Result] =
     subscriptionService
       .completePartialSubscription(kfcUtr, Postcode(kfcPostcode))
-      .map { _ =>
+      .flatMap { _ =>
         mark("Count-Subscription-PartialSubscriptionCompleted")
-        Redirect(routes.SubscriptionController.showSubscriptionComplete())
+        sessionStoreService
+          .cacheAgentSession(
+            agentSession.copy(taskListFlags = agentSession.taskListFlags.copy(createTaskComplete = true)))
+          .map(_ => Redirect(routes.SubscriptionController.showSubscriptionComplete()))
       }
-    sessionStoreService.fetchContinueUrl.flatMap {
-      case Some(continueUrl) =>
-        subscriptionService
-          .completePartialSubscription(kfcUtr, Postcode(kfcPostcode))
-          .map { _ =>
-            mark("Count-Subscription-PartialSubscriptionCompleted")
-            Redirect(routes.SubscriptionController.showSubscriptionComplete())
-          }
-      case None =>
-        subscriptionService
-          .completePartialSubscription(kfcUtr, Postcode(kfcPostcode))
-          .flatMap { _ =>
-            mark("Count-Subscription-PartialSubscriptionCompleted")
-            sessionStoreService
-              .cacheAgentSession(
-                agentSession.copy(taskListFlags = agentSession.taskListFlags.copy(createTaskComplete = true)))
-              .map(_ => Redirect(routes.SubscriptionController.showSubscriptionComplete()))
-          }
-    }
-  }
 }

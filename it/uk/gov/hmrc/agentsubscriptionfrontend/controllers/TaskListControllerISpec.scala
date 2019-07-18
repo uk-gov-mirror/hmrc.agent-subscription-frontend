@@ -81,15 +81,6 @@ class TaskListControllerISpec extends BaseISpec {
 
       checkHtmlResultWithBodyText(result, appConfig.agentMappingFrontendStartUrl)
     }
-    "redirect to start if there is a continue url in the request" in {
-      val sessionKeys = userIsAuthenticated(subscribingAgentEnrolledForNonMTD)
-      implicit val request: FakeRequest[AnyContentAsEmpty.type] =
-        FakeRequest("GET", "/agent-subscription/task-list?continue=/some/url").withSession(sessionKeys: _*)
-
-      val result = await(controller.showTaskList(request))
-      status(result) shouldBe 303
-      redirectLocation(result)(defaultTimeout) shouldBe Some(routes.BusinessTypeController.showBusinessTypeForm().url)
-    }
   }
 
 

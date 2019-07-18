@@ -296,21 +296,7 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
     val expiryMonth = expiryDate.getMonthValue.toString
     val expiryYear = expiryDate.getYear.toString
 
-    "store AMLS form in session cache after successful submission, and redirect to check answers when there is a continue url" in new Setup {
-      implicit val request = authenticatedRequest.withFormUrlEncodedBody("amlsCode" -> "AAT",
-        "membershipNumber" -> "12345", "expiry.day" -> expiryDay, "expiry.month" -> expiryMonth,  "expiry.year" -> expiryYear)
-      sessionStoreService.currentSession.continueUrl = Some(ContinueUrl("/continue/url"))
-
-      val result = await(controller.submitAmlsDetailsForm(request))
-      status(result) shouldBe 303
-      redirectLocation(result).get shouldBe routes.SubscriptionController.showCheckAnswers().url
-
-      val amlsDetails = await(sessionStoreService.fetchAgentSession).get.amlsDetails.get
-
-      amlsDetails shouldBe AMLSDetails("Association of AccountingTechnicians (AAT)", Right(RegisteredDetails("12345", expiryDate)))
-    }
-
-    "store AMLS form in session cache after successful submission, and redirect to task list when there is no continue url" in new Setup {
+    "store AMLS form in session cache after successful submission, and redirect to task list" in new Setup {
       implicit val request = authenticatedRequest.withFormUrlEncodedBody("amlsCode" -> "AAT",
         "membershipNumber" -> "12345", "expiry.day" -> expiryDay, "expiry.month" -> expiryMonth,  "expiry.year" -> expiryYear)
 
@@ -508,21 +494,7 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
     val month = appliedOnDate.getMonthValue.toString
     val year = appliedOnDate.getYear.toString
 
-    "store AMLS pending details in session cache after successful submission, redirect to check answeres when there is a continue url" in new Setup {
-      implicit val requst = authenticatedRequest.withFormUrlEncodedBody("amlsCode" -> "AAT",
-        "appliedOn.day" -> day, "appliedOn.month" -> month,  "appliedOn.year" -> year)
-      sessionStoreService.currentSession.continueUrl = Some(ContinueUrl("/continue/url"))
-
-      val result = await(controller.submitAmlsApplicationDatePage(requst))
-      status(result) shouldBe 303
-      redirectLocation(result).get shouldBe routes.SubscriptionController.showCheckAnswers().url
-
-      val amlsDetails = await(sessionStoreService.fetchAgentSession).get.amlsDetails.get
-
-      amlsDetails shouldBe AMLSDetails("Association of AccountingTechnicians (AAT)", Left(PendingDetails(appliedOnDate)))
-    }
-
-    "store AMLS pending details in session cache after successful submission, redirect to task list when there is no continue url" in new Setup {
+    "store AMLS pending details in session cache after successful submission, redirect to task list" in new Setup {
       implicit val requst = authenticatedRequest.withFormUrlEncodedBody("amlsCode" -> "AAT",
         "appliedOn.day" -> day, "appliedOn.month" -> month,  "appliedOn.year" -> year)
 
