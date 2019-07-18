@@ -168,7 +168,11 @@ class BusinessIdentificationController @Inject()(
         routes.BusinessIdentificationController.showBusinessEmailForm()
       case _ =>
         checkPartaillySubscribed(agent, existingSession)(
-          checkMAAgent(agentAssuranceConnector, existingSession).flatMap(_ => routes.TaskListController.showTaskList()))
+          checkMAAgent(agentAssuranceConnector, existingSession).flatMap(
+            _ =>
+              subscriptionJourneyService
+                .saveJourneyRecord(existingSession, agent.authProviderId)
+                .map(_ => routes.TaskListController.showTaskList())))
     }
 
   private def checkMAAgent(agentAssuranceConnector: AgentAssuranceConnector, existingSession: AgentSession)(

@@ -20,7 +20,7 @@ import java.time.LocalDateTime
 
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{JsPath, OFormat}
-import uk.gov.hmrc.agentsubscriptionfrontend.models.AuthProviderId
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, AuthProviderId}
 
 /**
   * A Mongo record which represents the user's current journey in setting up a new
@@ -42,7 +42,7 @@ object SubscriptionJourneyRecord {
   import MongoLocalDateTimeFormat._
 
   implicit val subscriptionJourneyFormat: OFormat[SubscriptionJourneyRecord] =
-    ((JsPath \ "internalId").format[AuthProviderId] and
+    ((JsPath \ "authProviderId").format[AuthProviderId] and
       (JsPath \ "continueId").formatNullable[String] and
       (JsPath \ "businessDetails").format[BusinessDetails] and
       (JsPath \ "amlsData").formatNullable[AmlsData] and
@@ -51,5 +51,21 @@ object SubscriptionJourneyRecord {
       (JsPath \ "cleanCredsInternalId").formatNullable[AuthProviderId] and
       (JsPath \ "lastModifiedDate")
         .formatNullable[LocalDateTime])(SubscriptionJourneyRecord.apply, unlift(SubscriptionJourneyRecord.unapply))
+
+  def fromAgentSession(agentSession: AgentSession, authProviderId: AuthProviderId): SubscriptionJourneyRecord =
+    SubscriptionJourneyRecord(
+      authProviderId = authProviderId,
+      continueId = None,
+      businessDetails = BusinessDetails(
+        businessType =
+          agentSession.businessType.getOrElse(throw new RuntimeException("no business type found in agent session")),
+        utr = agentSession.utr.getOrElse(throw new RuntimeException("no utr found in agent session")),
+        postcode = agentSession.postcode.getOrElse(throw new RuntimeException("no postcode found in agent session")),
+        registration = agentSession.registration,
+        nino = agentSession.nino,
+        companyRegistrationNumber = agentSession.companyRegistrationNumber,
+        dateOfBirth = agentSession.dateOfBirth
+      )
+    )
 
 }

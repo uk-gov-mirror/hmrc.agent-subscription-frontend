@@ -19,12 +19,13 @@ package uk.gov.hmrc.agentsubscriptionfrontend.auth
 import play.api.{Configuration, Environment, Logger}
 import play.api.mvc.Results._
 import play.api.mvc.{Request, Result}
+import reactivemongo.api.MongoConnectionOptions.Credential
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.{ContinueUrlActions, routes}
-import uk.gov.hmrc.agentsubscriptionfrontend.models.AuthProviderId
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, AuthProviderId}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.SubscriptionJourneyRecord
-import uk.gov.hmrc.agentsubscriptionfrontend.service.SubscriptionJourneyService
+import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.Monitoring
 import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
 import uk.gov.hmrc.auth.core._
@@ -32,6 +33,7 @@ import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{allEnrolments, authorisedEn
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, ~}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.config.AuthRedirects
+import uk.gov.hmrc.agentsubscriptionfrontend.models.AgentSession
 
 import scala.concurrent.{ExecutionContext, Future}
 

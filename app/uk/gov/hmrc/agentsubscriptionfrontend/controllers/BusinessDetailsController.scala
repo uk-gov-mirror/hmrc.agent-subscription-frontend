@@ -52,7 +52,7 @@ class BusinessDetailsController @Inject()(
     with SessionBehaviour {
 
   def showBusinessDetailsForm: Action[AnyContent] = Action.async { implicit request =>
-    withSubscribingAgent { implicit agent =>
+    withSubscribingAgent { _ =>
       continueUrlActions.withMaybeContinueUrlCached {
         withValidSession { (businessType, _) =>
           mark("Count-Subscription-BusinessDetails-Start")

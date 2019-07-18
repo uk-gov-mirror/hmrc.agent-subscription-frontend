@@ -31,8 +31,8 @@ import uk.gov.hmrc.domain.Nino
   */
 case class BusinessDetails(
   businessType: BusinessType,
-  utr: Option[Utr] = None, // CT or SA
-  postcode: Option[Postcode] = None,
+  utr: Utr, // CT or SA
+  postcode: Postcode,
   registration: Option[Registration] = None,
   nino: Option[Nino] = None,
   companyRegistrationNumber: Option[CompanyRegistrationNumber] = None,

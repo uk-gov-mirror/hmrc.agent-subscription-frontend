@@ -40,8 +40,9 @@ class SubscriptionJourneyService @Inject()(agentSubscriptionConnector: AgentSubs
     implicit hc: HeaderCarrier): Future[Unit] =
     agentSubscriptionConnector.createOrUpdate(subscriptionJourneyRecord)
 
-  def saveJourneyRecord(agentSession: AgentSession, authProviderId: AuthProviderId): Future[Unit] =
-    //make journey record from the session then call above save method to update DB
-    ???
-
+  def saveJourneyRecord(agentSession: AgentSession, authProviderId: AuthProviderId)(
+    implicit hc: HeaderCarrier): Future[Unit] = {
+    val sjr = SubscriptionJourneyRecord.fromAgentSession(agentSession, authProviderId)
+    saveJourneyRecord(sjr)
+  }
 }
