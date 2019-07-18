@@ -134,7 +134,10 @@ class SubscriptionController @Inject()(
             existingSession
               .copy(taskListFlags = existingSession.taskListFlags.copy(checkAnswersComplete = true)))
           .flatMap { _ =>
-            Future successful Redirect(routes.SubscriptionController.showSubscriptionComplete())
+            sessionStoreService.fetchContinueUrl.flatMap {
+              case Some(_) => Redirect(routes.SubscriptionController.showSubscriptionComplete())
+              case None    => Future successful Redirect(routes.SubscriptionController.showSubscriptionComplete())
+            }
           }
 
       case Left(SubscriptionReturnedHttpError(CONFLICT)) =>

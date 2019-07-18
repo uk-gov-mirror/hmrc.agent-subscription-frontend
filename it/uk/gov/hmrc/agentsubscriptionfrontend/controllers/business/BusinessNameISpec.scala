@@ -5,14 +5,10 @@ import play.api.test.Helpers.{redirectLocation, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.{BusinessIdentificationController, routes}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, BusinessType}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
-import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.subscribingCleanAgentWithoutEnrolments
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData.{validUtr, _}
-<<<<<<< HEAD
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub._
 import uk.gov.hmrc.play.binders.ContinueUrl
-=======
->>>>>>> TASK_LIST-CONNECT_FE_TO_BE
 
 class BusinessNameISpec extends BaseISpec {
 
@@ -66,16 +62,13 @@ class BusinessNameISpec extends BaseISpec {
   "submitBusinessNameForm" should {
     behave like anAgentAffinityGroupOnlyEndpoint(request => controller.submitBusinessNameForm(request))
 
-<<<<<<< HEAD
     "update business name after submission, redirect to task list when there is a continue url" in {
-=======
-    "update business name after submission, redirect to task list" in {
->>>>>>> TASK_LIST-CONNECT_FE_TO_BE
       givenAgentIsNotManuallyAssured(validUtr.value)
       implicit val request =
         authenticatedAs(subscribingCleanAgentWithoutEnrolments).withFormUrlEncodedBody("name" -> "new Agent name")
       sessionStoreService.currentSession.agentSession =
         Some(AgentSession(Some(BusinessType.SoleTrader), utr = Some(validUtr), registration = Some(registration)))
+      sessionStoreService.currentSession.continueUrl = Some(ContinueUrl("/continue/url"))
 
       val result = await(controller.submitBusinessNameForm(request))
       status(result) shouldBe 303
