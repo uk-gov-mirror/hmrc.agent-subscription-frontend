@@ -129,7 +129,7 @@ class AuditService @Inject()(val auditConnector: AuditConnector)(implicit ec: Ex
       }
     }
 
-    auditData.set("authProviderId", agent.authProviderId)
+    auditData.set("authProviderId", agent.authProviderId.id)
     auditData.set("authProviderType", agent.authProviderType)
 
     sendAgentAssuranceAuditEvent(auditData)
