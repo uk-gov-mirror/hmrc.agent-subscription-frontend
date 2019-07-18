@@ -7,6 +7,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, BusinessType}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.subscribingCleanAgentWithoutEnrolments
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData.{businessAddress, validUtr, _}
+import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub._
 import uk.gov.hmrc.play.binders.ContinueUrl
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -59,7 +60,8 @@ class BusinessAddressISpec extends BaseISpec {
   "submitUpdateBusinessAddressForm" should {
     behave like anAgentAffinityGroupOnlyEndpoint(request => controller.submitBusinessNameForm(request))
 
-    "update business address after submission, redirect to AMLS when there is a continueUrl" in {
+    "update business address after submission, redirect to task list when there is a continueUrl" in {
+      givenAgentIsNotManuallyAssured(validUtr.value)
       implicit val request =
         authenticatedAs(subscribingCleanAgentWithoutEnrolments).withFormUrlEncodedBody(
           "addressLine1" -> "new addressline 1",
@@ -75,7 +77,7 @@ class BusinessAddressISpec extends BaseISpec {
 
       val result = await(controller.submitUpdateBusinessAddressForm(request))
       status(result) shouldBe 303
-      redirectLocation(result).head shouldBe routes.AMLSController.showCheckAmlsPage().url
+      redirectLocation(result).head shouldBe routes.TaskListController.showTaskList().url
 
       val updatedBusinessAddress = await(sessionStoreService.fetchAgentSession).get.registration.get.address
 
