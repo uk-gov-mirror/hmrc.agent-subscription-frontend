@@ -15,6 +15,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.{subscribingAgentEnrolledForHMRCASAGENT, subscribingCleanAgentWithoutEnrolments}
 import uk.gov.hmrc.auth.core.{AuthConnector, InsufficientEnrolments}
 import uk.gov.hmrc.http.{HeaderCarrier, SessionKeys}
+import uk.gov.hmrc.agentsubscriptionfrontend.support.TestSetupNoJourneyRecord
 
 import scala.concurrent.Future
 
@@ -96,7 +97,7 @@ class AuthActionsSpec extends BaseISpec with MockitoSugar {
   }
 
   "withSubscribingOrSubscribedAgent" should {
-    "call body with a valid unsubscribed agent" in {
+    "call body with a valid unsubscribed agent" in new TestSetupNoJourneyRecord {
       authenticatedAs(subscribingCleanAgentWithoutEnrolments)
       val result = TestController.withSubscribingOrSubscribedAgent
 
