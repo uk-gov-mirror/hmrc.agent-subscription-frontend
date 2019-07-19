@@ -5,7 +5,7 @@ import play.api.test.Helpers.redirectLocation
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, TaskListFlags}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub.userIsAuthenticated
-import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
+import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestSetupNoJourneyRecord}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.{subscribingAgentEnrolledForHMRCASAGENT, subscribingAgentEnrolledForNonMTD}
 
 class TaskListControllerISpec extends BaseISpec {
@@ -15,7 +15,7 @@ class TaskListControllerISpec extends BaseISpec {
   "showTaskList (GET /task-list)" should {
     behave like anAgentAffinityGroupOnlyEndpoint(controller.showTaskList(_))
 
-    "contain page titles and header content when the user is not subscribed" in {
+    "contain page titles and header content when the user is not subscribed" in new TestSetupNoJourneyRecord {
       val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
       val result = await(controller.showTaskList(request))
 
@@ -39,7 +39,7 @@ class TaskListControllerISpec extends BaseISpec {
         "task-list.3.header",
         "task-list.4.header")
     }
-    "contain CONTINUE tag when a task has been completed" in {
+    "contain CONTINUE tag when a task has been completed" in new TestSetupNoJourneyRecord {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
       sessionStoreService.currentSession.agentSession = Some(AgentSession(taskListFlags = TaskListFlags(amlsTaskComplete = true)))
 
@@ -48,7 +48,7 @@ class TaskListControllerISpec extends BaseISpec {
         "task-list.header",
         "task-list.completed")
     }
-    "contain a CONTINUE tag when amls task has been completed and allow agent to re-click link when they are not manually assured" in {
+    "contain a CONTINUE tag when amls task has been completed and allow agent to re-click link when they are not manually assured" in new TestSetupNoJourneyRecord {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
       sessionStoreService.currentSession.agentSession = Some(AgentSession(taskListFlags = TaskListFlags(businessTaskComplete = true, amlsTaskComplete = true)))
 
@@ -60,7 +60,7 @@ class TaskListControllerISpec extends BaseISpec {
       checkHtmlResultWithBodyText(result,
         "<a href=/agent-subscription/check-money-laundering-compliance>Enter your money laundering compliance details</a>")
     }
-    "block link to complete amls and create new user id tasks when user is manually assured" in {
+    "block link to complete amls and create new user id tasks when user is manually assured" in new TestSetupNoJourneyRecord {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
       sessionStoreService.currentSession.agentSession = Some(AgentSession(taskListFlags =
         TaskListFlags(businessTaskComplete = true, amlsTaskComplete = true, createTaskComplete = true, isMAA = true)))
@@ -71,7 +71,7 @@ class TaskListControllerISpec extends BaseISpec {
         "<a href=/agent-subscription/check-money-laundering-compliance>Enter your money laundering compliance details</a>",
       "<a href=/agent-subscription/create-new-account>Create your user ID for your agent services account</a>")
     }
-    "contain a url to the mapping journey when user has completed all other tasks" in {
+    "contain a url to the mapping journey when user has completed all other tasks" in new TestSetupNoJourneyRecord {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
       sessionStoreService.currentSession.agentSession = Some(AgentSession(taskListFlags =
         TaskListFlags(businessTaskComplete = true, amlsTaskComplete = true, createTaskComplete = true, checkAnswersComplete = true)))
@@ -81,7 +81,7 @@ class TaskListControllerISpec extends BaseISpec {
 
       checkHtmlResultWithBodyText(result, appConfig.agentMappingFrontendStartUrl)
     }
-    "redirect to start if there is a continue url in the request" in {
+    "redirect to start if there is a continue url in the request" in new TestSetupNoJourneyRecord {
       val sessionKeys = userIsAuthenticated(subscribingAgentEnrolledForNonMTD)
       implicit val request: FakeRequest[AnyContentAsEmpty.type] =
         FakeRequest("GET", "/agent-subscription/task-list?continue=/some/url").withSession(sessionKeys: _*)
@@ -91,6 +91,4 @@ class TaskListControllerISpec extends BaseISpec {
       redirectLocation(result)(defaultTimeout) shouldBe Some(routes.BusinessTypeController.showBusinessTypeForm().url)
     }
   }
-
-
 }
