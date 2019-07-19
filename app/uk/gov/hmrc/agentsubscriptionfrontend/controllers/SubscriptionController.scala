@@ -134,10 +134,7 @@ class SubscriptionController @Inject()(
             existingSession
               .copy(taskListFlags = existingSession.taskListFlags.copy(checkAnswersComplete = true)))
           .flatMap { _ =>
-            sessionStoreService.fetchContinueUrl.flatMap {
-              case Some(_) => Redirect(routes.SubscriptionController.showSubscriptionComplete())
-              case None    => Future successful Redirect(routes.SubscriptionController.showSubscriptionComplete())
-            }
+            Future successful Redirect(routes.SubscriptionController.showSubscriptionComplete())
           }
 
       case Left(SubscriptionReturnedHttpError(CONFLICT)) =>
@@ -226,28 +223,27 @@ class SubscriptionController @Inject()(
             } yield {
               continueUrlOpt match {
                 case Some(continueUrl) =>
-                  Ok(html.subscription_complete(continueUrl.url, false, arn.value, agencyName, agencyEmail))
+                  Ok(
+                    html.subscription_complete(
+                      continueUrl.url,
+                      isUrlToASAccount = false,
+                      arn.value,
+                      agencyName,
+                      agencyEmail))
                 case None =>
                   Ok(
                     html.subscription_complete(
                       routes.TaskListController.showTaskList().url,
-                      false,
+                      isUrlToASAccount = false,
                       arn.value,
                       agencyName,
                       agencyEmail))
               }
-              val continueUrl =
-                if (existingSession.taskListFlags.createTaskComplete) routes.TaskListController.showTaskList().url
-                else continueUrlOpt.map(_.url).getOrElse(appConfig.agentServicesAccountUrl)
-              val isUrlToASAccount =
-                if (existingSession.taskListFlags.createTaskComplete) false else continueUrlOpt.isEmpty
-              Ok(html.subscription_complete(continueUrl, isUrlToASAccount, arn.value, agencyName, agencyEmail))
             }
           }
-          case _ => {
+          case _ =>
             Logger.warn("no registration details found in agent session")
             Redirect(routes.BusinessIdentificationController.showNoMatchFound())
-          }
         }
       }
     }

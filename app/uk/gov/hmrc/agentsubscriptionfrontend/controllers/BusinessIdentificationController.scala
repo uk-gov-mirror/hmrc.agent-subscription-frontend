@@ -33,7 +33,6 @@ import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidationResult.FailureReason._
 import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidationResult.{Failure, Pass}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
-import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.SubscriptionJourneyRecord
 import uk.gov.hmrc.agentsubscriptionfrontend.service._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TaxIdentifierFormatters
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
@@ -41,7 +40,6 @@ import uk.gov.hmrc.agentsubscriptionfrontend.validators.BusinessDetailsValidator
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.binders.ContinueUrl
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -142,11 +140,7 @@ class BusinessIdentificationController @Inject()(
                   if (existingSession.registration.exists(_.isSubscribedToAgentServices)) {
                     mark("Count-Subscription-AlreadySubscribed-RegisteredInETMP")
                     Redirect(routes.BusinessIdentificationController.showAlreadySubscribed())
-                  } else {
-                    sessionStoreService.fetchContinueUrl.flatMap { continueUrl =>
-                      validatedBusinessDetailsAndRedirect(existingSession, agent).map(Redirect)
-                    }
-                  }
+                  } else validatedBusinessDetailsAndRedirect(existingSession, agent).map(Redirect)
                 case No =>
                   //Redirect(routes.UtrController.showUtrForm())
                   Redirect(routes.BusinessDetailsController.showBusinessDetailsForm())
@@ -176,7 +170,7 @@ class BusinessIdentificationController @Inject()(
     }
 
   private def checkMAAgent(agentAssuranceConnector: AgentAssuranceConnector, existingSession: AgentSession)(
-    implicit hc: HeaderCarrier) =
+    implicit hc: HeaderCarrier): Future[Unit] =
     agentAssuranceConnector.isManuallyAssuredAgent(existingSession.utr.get).flatMap {
       case true =>
         sessionStoreService.cacheAgentSession(
@@ -187,14 +181,14 @@ class BusinessIdentificationController @Inject()(
           existingSession.copy(taskListFlags = existingSession.taskListFlags.copy(businessTaskComplete = true)))
     }
 
-  def hasCleanCreds(agent: Agent)(uncleanCredsBody: => Future[Call])(cleanCredsBody: => Future[Call]) =
+  def hasCleanCreds(agent: Agent)(uncleanCredsBody: => Future[Call])(cleanCredsBody: => Future[Call]): Future[Call] =
     agent match {
       case hasNonEmptyEnrolments(_) => uncleanCredsBody
       case _                        => cleanCredsBody
     }
 
   def checkPartaillySubscribed(agent: Agent, existingSession: AgentSession)(
-    notPartiallySubscribedBody: => Future[Call])(implicit hc: HeaderCarrier) = {
+    notPartiallySubscribedBody: => Future[Call])(implicit hc: HeaderCarrier): Future[Call] = {
     val utr = existingSession.utr.getOrElse(Utr(""))
     val postcode = existingSession.postcode.getOrElse(Postcode(""))
     for {
@@ -217,7 +211,8 @@ class BusinessIdentificationController @Inject()(
     } yield result
   }
 
-  def cachePartialSubscription(existingSession: AgentSession, cleanCreds: Boolean)(implicit hc: HeaderCarrier) =
+  def cachePartialSubscription(existingSession: AgentSession, cleanCreds: Boolean)(
+    implicit hc: HeaderCarrier): Future[Unit] =
     sessionStoreService
       .cacheAgentSession(
         existingSession.copy(taskListFlags = existingSession.taskListFlags
@@ -240,7 +235,7 @@ class BusinessIdentificationController @Inject()(
   val changeBusinessEmail: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
       sessionStoreService
-        .cacheIsChangingAnswers(true)
+        .cacheIsChangingAnswers(changing = true)
         .map(_ => Redirect(routes.BusinessIdentificationController.showBusinessEmailForm().url))
     }
   }
@@ -281,7 +276,7 @@ class BusinessIdentificationController @Inject()(
   val changeBusinessName: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
       sessionStoreService
-        .cacheIsChangingAnswers(true)
+        .cacheIsChangingAnswers(changing = true)
         .map(_ => Redirect(routes.BusinessIdentificationController.showBusinessNameForm().url))
     }
   }
@@ -318,12 +313,9 @@ class BusinessIdentificationController @Inject()(
     result.flatMap[Result] {
       case Some(true) =>
         sessionStoreService
-          .cacheIsChangingAnswers(false)
+          .cacheIsChangingAnswers(changing = false)
           .map(_ => Redirect(routes.SubscriptionController.showCheckAnswers()))
-      case _ =>
-        sessionStoreService.fetchContinueUrl.flatMap { continueUrl =>
-          validatedBusinessDetailsAndRedirect(updatedSession, agent).map(Redirect)
-        }
+      case _ => validatedBusinessDetailsAndRedirect(updatedSession, agent).map(Redirect)
     }
   }
 

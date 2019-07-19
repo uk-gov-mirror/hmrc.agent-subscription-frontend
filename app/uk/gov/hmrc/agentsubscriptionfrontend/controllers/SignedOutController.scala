@@ -47,7 +47,7 @@ class SignedOutController @Inject()(
     extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig, subscriptionJourneyService)
     with SessionBehaviour {
 
-  def redirectToSos = Action.async { implicit request =>
+  def redirectToSos: Action[AnyContent] = Action.async { implicit request =>
     for {
       chainedSessionIdOpt    <- prepareChainedSession()
       agentSubContinueUrlOpt <- sessionStoreService.fetchContinueUrl
@@ -70,7 +70,7 @@ class SignedOutController @Inject()(
                .map(id => Option(id)))
     } yield id).value
 
-  def signOutWithContinueUrl = Action.async { implicit request =>
+  def signOutWithContinueUrl: Action[AnyContent] = Action.async { implicit request =>
     sessionStoreService.fetchContinueUrl.map { maybeContinueUrl =>
       val signOutUrlWithContinueUrl =
         addParamsToUrl(appConfig.companyAuthSignInUrl, "continue" -> maybeContinueUrl.map(_.url))
@@ -78,11 +78,11 @@ class SignedOutController @Inject()(
     }
   }
 
-  def startSurvey = Action { implicit request =>
+  def startSurvey: Action[AnyContent] = Action { implicit request =>
     SeeOther(appConfig.surveyRedirectUrl).withNewSession
   }
 
-  def redirectToASAccountPage = Action { implicit request =>
+  def redirectToASAccountPage: Action[AnyContent] = Action { implicit request =>
     SeeOther(appConfig.agentServicesAccountUrl).withNewSession
   }
 
@@ -90,7 +90,7 @@ class SignedOutController @Inject()(
     Redirect(routes.StartController.start()).withNewSession
   }
 
-  def redirectToBusinessTypeForm = Action { implicit request =>
+  def redirectToBusinessTypeForm: Action[AnyContent] = Action { implicit request =>
     Redirect(routes.BusinessTypeController.showBusinessTypeForm()).withNewSession
   }
 }

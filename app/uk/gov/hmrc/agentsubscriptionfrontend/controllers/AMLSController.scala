@@ -179,10 +179,7 @@ class AMLSController @Inject()(
                   Right(RegisteredDetails(validForm.membershipNumber, validForm.expiry)))
                 updateSession(existingSession, amlsDetails, agent)
                   .flatMap { _ =>
-                    sessionStoreService.fetchContinueUrl.map {
-                      case Some(_) => Redirect(routes.SubscriptionController.showCheckAnswers())
-                      case None    => Redirect(routes.TaskListController.showTaskList())
-                    }
+                    Redirect(routes.TaskListController.showTaskList())
                   }
               }
             )
@@ -252,10 +249,7 @@ class AMLSController @Inject()(
 
                 updateSession(existingSession, amlsDetails, agent)
                   .flatMap { _ =>
-                    sessionStoreService.fetchContinueUrl.map {
-                      case Some(_) => Redirect(routes.SubscriptionController.showCheckAnswers())
-                      case None    => Redirect(routes.TaskListController.showTaskList())
-                    }
+                    Redirect(routes.TaskListController.showTaskList())
                   }
               }
             )

@@ -134,17 +134,8 @@ trait StartControllerISpec extends BaseISpec {
   "returnAfterGGCredsCreated" should {
     import FixturesForReturnAfterGGCredsCreated._
     "given a valid StashedChainedSessionDetails ID" when {
-      "agent is unsubscribed and has a continue url redirect to the /check-answers page" in new ValidKnownFactsCached with UnsubscribedAgentStub {
-        implicit val request = FakeRequest("GET", "/agent-subscription/return-after-gg-creds-created?continue=/some/url")
-        sessionStoreService.currentSession.agentSession = Some(agentSession)
 
-        val result = await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(request))
-
-        status(result) shouldBe 303
-        redirectLocation(result).head should include(routes.SubscriptionController.showCheckAnswers().url)
-      }
-
-      "agent is unsubscribed and has no continue url redirect to the /task-list page" in new ValidKnownFactsCached with UnsubscribedAgentStub {
+      "agent is unsubscribed redirect to the /task-list page" in new ValidKnownFactsCached with UnsubscribedAgentStub {
         implicit val request = FakeRequest()
         sessionStoreService.currentSession.agentSession = Some(agentSession)
 
@@ -155,15 +146,7 @@ trait StartControllerISpec extends BaseISpec {
         sessionStoreService.currentSession.agentSession.get.taskListFlags.createTaskComplete shouldBe true
       }
 
-      "agent is already fully subscribed and has a continue url redirect to the /check-answers page" in new ValidKnownFactsCached with SubscribedAgentStub {
-        val result = await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(
-          FakeRequest("GET", "/agent-subscription/return-after-gg-creds-created?continue=/some/url")))
-
-        status(result) shouldBe 303
-        redirectLocation(result).head should include(routes.SubscriptionController.showCheckAnswers().url)
-      }
-
-      "agent is already fully subscribed and has no continue url redirect to the /task-list page" in new ValidKnownFactsCached with SubscribedAgentStub {
+      "agent is already fully subscribed redirect to the /task-list page" in new ValidKnownFactsCached with SubscribedAgentStub {
         implicit val request = FakeRequest()
         val result = await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(request))
 
