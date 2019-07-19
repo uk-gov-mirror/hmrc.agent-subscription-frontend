@@ -124,7 +124,7 @@ trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring
 
   // only for the task list?
   //
-  def withSubscribingOrSubscribedAgent[A](unsubscribedBody: Agent => Future[Result])(subscribedBody: Future[Result])(
+  def withSubscribingOrSubscribedAgent[A](body: Agent => Future[Result])(
     implicit request: Request[A],
     hc: HeaderCarrier,
     ec: ExecutionContext): Future[Result] =
@@ -138,19 +138,21 @@ trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring
                 Future successful Redirect(continueUrl.url)
               case None =>
                 mark("Count-Subscription-AlreadySubscribed-HasEnrolment-AgentServicesAccount")
-                subscribedBody // why not redirect to dashboard here?
+                bodyWithJourneyRecord(enrolments, maybeCredentials)(body)
             }
           } else {
-            // check what we should do when InternalId not available!
-            val authProviderId = AuthProviderId(maybeCredentials.fold("unknown")(_.providerId))
-            subscriptionJourneyService
-              .getJourneyRecord(authProviderId)
-              .flatMap(maybeRecord => unsubscribedBody(new Agent(enrolments.enrolments, maybeCredentials, maybeRecord)))
+            bodyWithJourneyRecord(enrolments, maybeCredentials)(body)
           }
       }
       .recover {
         handleException
       }
+
+  def bodyWithJourneyRecord(enrolments: Enrolments, maybeCredentials: Option[Credentials])(
+    body: Agent => Future[Result])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Result] =
+    subscriptionJourneyService
+      .getJourneyRecord(AuthProviderId(maybeCredentials.fold("unknown")(_.providerId)))
+      .flatMap(maybeRecord => body(new Agent(enrolments.enrolments, maybeCredentials, maybeRecord)))
 
   def withAuthenticatedAgent[A](
     body: => Future[Result])(implicit request: Request[A], hc: HeaderCarrier, ec: ExecutionContext): Future[Result] =

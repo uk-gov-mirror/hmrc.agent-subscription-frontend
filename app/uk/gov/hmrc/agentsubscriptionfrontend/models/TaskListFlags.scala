@@ -15,15 +15,15 @@
  */
 
 package uk.gov.hmrc.agentsubscriptionfrontend.models
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, OFormat}
 
 case class TaskListFlags(
-  businessTaskComplete: Boolean = false,
+  businessTaskComplete: Boolean = false, // TODO remove?
   amlsTaskComplete: Boolean = false,
   isMAA: Boolean = false,
   createTaskComplete: Boolean = false,
   checkAnswersComplete: Boolean = false)
 
 object TaskListFlags {
-  implicit val formats = Json.format[TaskListFlags]
+  implicit val formats: OFormat[TaskListFlags] = Json.format
 }

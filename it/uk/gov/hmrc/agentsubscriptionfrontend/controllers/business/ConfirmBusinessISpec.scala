@@ -1,16 +1,18 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers.business
 
+import play.api.mvc.AnyContentAsFormUrlEncoded
+import play.api.test.FakeRequest
 import play.api.test.Helpers.{redirectLocation, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.{BusinessIdentificationController, routes}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.SubscriptionJourneyRecord
-import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestSetupNoJourneyRecord}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.{subscribingAgentEnrolledForNonMTD, subscribingCleanAgentWithoutEnrolments}
-import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData.{businessAddress, testPostcode, utr, validUtr, _}
+import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData.{businessAddress, testPostcode, utr, _}
+import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestSetupNoJourneyRecord}
 
 class ConfirmBusinessISpec extends BaseISpec {
   lazy val controller: BusinessIdentificationController = app.injector.instanceOf[BusinessIdentificationController]
@@ -145,7 +147,9 @@ class ConfirmBusinessISpec extends BaseISpec {
         result.header.headers(LOCATION) shouldBe routes.TaskListController.showTaskList().url
       }
 
-      "redirect to task list if the user has clean creds and isSubscribedToAgentServices=false and there is no continueUrl and is a MAA" in new TestSetupNoJourneyRecord {
+      "redirect to task list if user has clean creds " +
+      "and isSubscribedToAgentServices=false and no continueUrl and is a MAA" in new TestSetupNoJourneyRecord {
+
         val agentSession = AgentSession(
           Some(BusinessType.SoleTrader),
           utr = Some(utr),
@@ -165,7 +169,6 @@ class ConfirmBusinessISpec extends BaseISpec {
 
         result.header.headers(LOCATION) shouldBe routes.TaskListController.showTaskList().url
 
-        sessionStoreService.currentSession.agentSession.get.taskListFlags.amlsTaskComplete shouldBe true
       }
       "redirect to subscription complete if user is partially subscribed with clean creds and there is no continue url" in new TestSetupNoJourneyRecord {
         givenAgentIsNotManuallyAssured(utr.value)
@@ -195,7 +198,7 @@ class ConfirmBusinessISpec extends BaseISpec {
         givenAgentIsNotManuallyAssured(utr.value)
         withPartiallySubscribedAgent(utr, testPostcode)
 
-        implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+        implicit val request: FakeRequest[AnyContentAsFormUrlEncoded] = authenticatedAs(subscribingAgentEnrolledForNonMTD)
           .withFormUrlEncodedBody("confirmBusiness" -> "yes")
         sessionStoreService.currentSession.agentSession = Some(
           AgentSession(

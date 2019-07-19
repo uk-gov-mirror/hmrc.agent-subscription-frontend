@@ -8,14 +8,14 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.ContinueUrlActions
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, TaskListFlags}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, AuthProviderId, TaskListFlags}
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SubscriptionJourneyService
+import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub.givenSubscriptionJourneyRecordExists
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub._
-import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
+import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestData, TestSetupNoJourneyRecord}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.{subscribingAgentEnrolledForHMRCASAGENT, subscribingCleanAgentWithoutEnrolments}
 import uk.gov.hmrc.auth.core.{AuthConnector, InsufficientEnrolments}
 import uk.gov.hmrc.http.{HeaderCarrier, SessionKeys}
-import uk.gov.hmrc.agentsubscriptionfrontend.support.TestSetupNoJourneyRecord
 
 import scala.concurrent.Future
 
@@ -39,7 +39,7 @@ class AuthActionsSpec extends BaseISpec with MockitoSugar {
       await(super.withSubscribedAgent { arn => Future.successful(Ok(arn.value)) })
 
     def withSubscribingOrSubscribedAgent[A]: Result = await(TestController.withSubscribingOrSubscribedAgent(
-      _ => Future successful Ok("unsubscribed"))(Future successful Ok("subscribed")))
+      _ => Future successful Ok("task list")))
 
     def storeCheckAnswersComplete: Future[Unit] =
       sessionStoreService.cacheAgentSession(AgentSession(taskListFlags = TaskListFlags(checkAnswersComplete = true)))
@@ -102,15 +102,19 @@ class AuthActionsSpec extends BaseISpec with MockitoSugar {
       val result = TestController.withSubscribingOrSubscribedAgent
 
       status(result) shouldBe 200
-      bodyOf(result) shouldBe "unsubscribed"
+      bodyOf(result) shouldBe "task list"
     }
     "return the taskListSubscribed result when there is a check answers complete true flag in the session" in {
+
+      givenSubscriptionJourneyRecordExists(AuthProviderId("12345-credId"),
+        TestData.minimalSubscriptionJourneyRecord(AuthProviderId("12345-credId")))
+
       authenticatedAs(subscribingAgentEnrolledForHMRCASAGENT)
       TestController.storeCheckAnswersComplete
       val result = TestController.withSubscribingOrSubscribedAgent
 
       status(result) shouldBe 200
-      bodyOf(result) shouldBe "subscribed"
+      bodyOf(result) shouldBe "task list"
     }
   }
 }
