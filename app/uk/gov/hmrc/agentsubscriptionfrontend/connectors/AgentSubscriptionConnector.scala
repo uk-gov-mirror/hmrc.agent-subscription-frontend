@@ -22,7 +22,7 @@ import java.time.LocalDate
 import com.codahale.metrics.MetricRegistry
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Named, Singleton}
-import play.api.libs.json.JsValue
+import play.api.libs.json.{JsValue, Json}
 import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr, Vrn}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
@@ -40,6 +40,20 @@ class AgentSubscriptionConnector @Inject()(
     extends HttpAPIMonitor {
 
   override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
+
+  def getJourneyById(internalId: AuthProviderId)(
+    implicit hc: HeaderCarrier): Future[Option[SubscriptionJourneyRecord]] =
+    monitor(s"ConsumedAPI-Agent-Subscription-getJourneyByPrimaryId-GET") {
+      val url =
+        new URL(baseUrl, s"/agent-subscription/subscription/journey/id/${encodePathSegment(internalId.id)}")
+      http
+        .GET[HttpResponse](url.toString)
+        .map(response =>
+          response.status match {
+            case 200 => Some(Json.toJson(response.body).as[SubscriptionJourneyRecord])
+            case 204 => None
+        })
+    }
 
   def getJourneyByPrimaryId(internalId: AuthProviderId)(
     implicit hc: HeaderCarrier): Future[Option[SubscriptionJourneyRecord]] =
@@ -73,12 +87,15 @@ class AgentSubscriptionConnector @Inject()(
   def createOrUpdate(journeyRecord: SubscriptionJourneyRecord)(implicit hc: HeaderCarrier): Future[Unit] =
     monitor("ConsumedAPI-Agent-Subscription-createOrUpdate-POST") {
       http
-        .POST[SubscriptionJourneyRecord, JsValue](
+        .POST[SubscriptionJourneyRecord, HttpResponse](
           new URL(
             baseUrl,
             s"/agent-subscription/subscription/journey/primaryId/${encodePathSegment(journeyRecord.authProviderId.id)}").toString,
           journeyRecord)
-        .map(_ => ())
+        .map(_.status match {
+          case 204 => ()
+          case _   => throw new Exception("what")
+        })
     }
 
   def delete(internalId: AuthProviderId)(implicit hc: HeaderCarrier): Future[Unit] =

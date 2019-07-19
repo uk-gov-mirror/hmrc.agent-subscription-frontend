@@ -47,7 +47,7 @@ trait SignOutControllerISpec extends BaseISpec with BeforeAndAfterEach {
     "the SOS redirect URL should include an ID of the saved ChainedSessionDetails" in {
       implicit val request: FakeRequest[AnyContentAsEmpty.type] = authenticatedAs(subscribingAgentEnrolledForNonMTD)
       sessionStoreService.currentSession.agentSession =
-        Some(AgentSession(Some(BusinessType.SoleTrader), utr = Some(Utr("9876543210")), registration = Some(registration)))
+        Some(AgentSession(Some(BusinessType.SoleTrader), utr = Some(Utr("9876543210")), registration = Some(testRegistration)))
 
 
       val result = await(controller.redirectToSos(request))
@@ -59,7 +59,7 @@ trait SignOutControllerISpec extends BaseISpec with BeforeAndAfterEach {
     "the SOS redirect URL should include an ID of the saved ChainedSessionDetails when initial details is empty" in {
       implicit val request: FakeRequest[AnyContentAsEmpty.type] = authenticatedAs(subscribingAgentEnrolledForNonMTD)
       sessionStoreService.currentSession.agentSession =
-        Some(AgentSession(Some(BusinessType.SoleTrader), utr = Some(Utr("9876543210")), registration = Some(registration)))
+        Some(AgentSession(Some(BusinessType.SoleTrader), utr = Some(Utr("9876543210")), registration = Some(testRegistration)))
 
       val result = await(controller.redirectToSos(request))
       val id = findByUtr("9876543210").map(_.id).get
@@ -92,7 +92,7 @@ trait SignOutControllerISpec extends BaseISpec with BeforeAndAfterEach {
       val ourContinueUrl = ContinueUrl("/test-continue-url")
       implicit val request: FakeRequest[AnyContentAsEmpty.type] = authenticatedAs(subscribingAgentEnrolledForNonMTD)
       sessionStoreService.currentSession.agentSession =
-        Some(AgentSession(Some(BusinessType.SoleTrader), utr = Some(Utr("9876543210")), registration = Some(registration)))
+        Some(AgentSession(Some(BusinessType.SoleTrader), utr = Some(Utr("9876543210")), registration = Some(testRegistration)))
       sessionStoreService.currentSession.continueUrl = Some(ourContinueUrl)
 
       val result = await(controller.redirectToSos(request))
@@ -183,12 +183,12 @@ class SignOutController extends SignOutControllerISpec {
       sessionStoreService
         .currentSession
         .agentSession = Some(
-        AgentSession(Some(BusinessType.SoleTrader), utr = Some(Utr("9876543210")), registration = Some(registration)))
+        AgentSession(Some(BusinessType.SoleTrader), utr = Some(Utr("9876543210")), registration = Some(testRegistration)))
 
       await(controller.redirectToSos(request))
       findByUtr("9876543210").map(_.chainedSessionDetails) shouldBe Some(
         ChainedSessionDetails(
-          AgentSession(Some(BusinessType.SoleTrader), utr = Some(Utr("9876543210")), registration = Some(registration))
+          AgentSession(Some(BusinessType.SoleTrader), utr = Some(Utr("9876543210")), registration = Some(testRegistration))
         )
       )
     }

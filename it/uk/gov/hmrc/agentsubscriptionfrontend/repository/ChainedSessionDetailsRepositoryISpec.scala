@@ -32,7 +32,7 @@ class ChainedSessionDetailsRepositoryISpec extends UnitSpec with OneAppPerSuite 
   val amlsDetails = AMLSDetails("supervisory", Right(RegisteredDetails("123456789", LocalDate.now())))
 
   val agentSession =
-    AgentSession(Some(BusinessType.SoleTrader), utr = Some(validUtr), registration = Some(registration), amlsDetails = Some(amlsDetails))
+    AgentSession(Some(BusinessType.SoleTrader), utr = Some(validUtr), registration = Some(testRegistration), amlsDetails = Some(amlsDetails))
 
   private val chainedSessionDetails = ChainedSessionDetails(agentSession)
 

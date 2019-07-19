@@ -30,11 +30,9 @@ class SubscriptionJourneyService @Inject()(agentSubscriptionConnector: AgentSubs
 
   def getJourneyRecord(internalId: AuthProviderId)(
     implicit hc: HeaderCarrier): Future[Option[SubscriptionJourneyRecord]] =
-    // TODO move logic to backend
     for {
-      primaryRecord <- agentSubscriptionConnector.getJourneyByPrimaryId(internalId)
-      mappedRecord  <- agentSubscriptionConnector.getJourneyByMappedId(internalId)
-    } yield primaryRecord.orElse(mappedRecord)
+      record <- agentSubscriptionConnector.getJourneyById(internalId)
+    } yield record
 
   def saveJourneyRecord(subscriptionJourneyRecord: SubscriptionJourneyRecord)(
     implicit hc: HeaderCarrier): Future[Unit] =

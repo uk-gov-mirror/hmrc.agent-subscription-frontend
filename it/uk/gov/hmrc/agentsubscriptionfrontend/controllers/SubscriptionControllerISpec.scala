@@ -51,7 +51,7 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
   val amlsSDetails = AMLSDetails("supervisory", Right(RegisteredDetails("123456789", LocalDate.now().plusDays(10))))
 
   val agentSession = Some(
-    AgentSession(Some(BusinessType.SoleTrader), utr = Some(validUtr), postcode = Some(Postcode("AA1 2AA")), registration = Some(registration), amlsDetails = Some(amlsSDetails)))
+    AgentSession(Some(BusinessType.SoleTrader), utr = Some(validUtr), postcode = Some(Postcode("AA1 2AA")), registration = Some(testRegistration), amlsDetails = Some(amlsSDetails)))
 
   "showCheckAnswers" should {
     behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showCheckAnswers(request))
@@ -81,7 +81,7 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         "checkAnswers.businessAddress.label"
       )
 
-      result should containSubstrings(registrationName, registration.emailAddress.get, registration.address.addressLine1, registration.address.postalCode.get)
+      result should containSubstrings(registrationName, testRegistration.emailAddress.get, testRegistration.address.addressLine1, testRegistration.address.postalCode.get)
 
       sessionStoreService.fetchGoBackUrl.futureValue shouldBe Some(routes.SubscriptionController.showCheckAnswers().url)
     }
@@ -142,7 +142,7 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         AgentSubscriptionStub.subscriptionWillConflict(validUtr, subscriptionRequestWithNoEdit())
 
         implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
-        val agentSession = AgentSession(Some(BusinessType.SoleTrader), utr = Some(validUtr), postcode = Some(Postcode("AA1 2AA")), registration = Some(registration.copy(isSubscribedToAgentServices = true)), amlsDetails = Some(amlsSDetails))
+        val agentSession = AgentSession(Some(BusinessType.SoleTrader), utr = Some(validUtr), postcode = Some(Postcode("AA1 2AA")), registration = Some(testRegistration.copy(isSubscribedToAgentServices = true)), amlsDetails = Some(amlsSDetails))
 
         sessionStoreService.currentSession.agentSession = Some(agentSession)
 
@@ -480,14 +480,14 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       agency = Agency(
         name = registrationName,
         address = DesAddress(
-          addressLine1 = registration.address.addressLine1,
-          addressLine2 = registration.address.addressLine2,
-          addressLine3 = registration.address.addressLine3,
-          addressLine4 = registration.address.addressLine4,
-          postcode = registration.address.postalCode.get,
-          countryCode = registration.address.countryCode
+          addressLine1 = testRegistration.address.addressLine1,
+          addressLine2 = testRegistration.address.addressLine2,
+          addressLine3 = testRegistration.address.addressLine3,
+          addressLine4 = testRegistration.address.addressLine4,
+          postcode = testRegistration.address.postalCode.get,
+          countryCode = testRegistration.address.countryCode
         ),
-        email = registration.emailAddress.get
+        email = testRegistration.emailAddress.get
       ),
       amlsDetails = Some(amlsSDetails)
     )

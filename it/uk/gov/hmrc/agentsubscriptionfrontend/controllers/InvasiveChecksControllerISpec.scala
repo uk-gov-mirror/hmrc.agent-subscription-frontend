@@ -8,7 +8,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, BusinessType,
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub.{givenAUserDoesNotHaveRelationshipInCesa, givenNinoAGoodCombinationAndUserHasRelationshipInCesa, givenUtrAGoodCombinationAndUserHasRelationshipInCesa}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.subscribingCleanAgentWithoutEnrolments
-import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData.{registration, validUtr, _}
+import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData.{testRegistration, validUtr, _}
 import uk.gov.hmrc.domain.Nino
 
 class AssuranceChecksControllerISpec extends BaseISpec {
@@ -121,7 +121,7 @@ class AssuranceChecksControllerISpec extends BaseISpec {
           .withSession("saAgentReferenceToCheck" -> "SA6012")
 
         sessionStoreService.currentSession.agentSession =
-          Some(AgentSession(Some(BusinessType.SoleTrader), utr = Some(validUtr), postcode = Some(Postcode(postcode)), registration = Some(registration)))
+          Some(AgentSession(Some(BusinessType.SoleTrader), utr = Some(validUtr), postcode = Some(Postcode(testPostcode)), registration = Some(testRegistration)))
 
         val result = await(controller.submitClientDetailsForm(request))
 
@@ -140,7 +140,7 @@ class AssuranceChecksControllerISpec extends BaseISpec {
       implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
         .withFormUrlEncodedBody(("variant", "nino"), ("nino", "AA123456A"))
       sessionStoreService.currentSession.agentSession =
-        Some(AgentSession(Some(BusinessType.SoleTrader), utr = Some(validUtr), registration = Some(registration.copy(emailAddress = None))))
+        Some(AgentSession(Some(BusinessType.SoleTrader), utr = Some(validUtr), registration = Some(testRegistration.copy(emailAddress = None))))
 
       val result = await(controller.submitClientDetailsForm(request))
 
@@ -155,7 +155,7 @@ class AssuranceChecksControllerISpec extends BaseISpec {
         .withFormUrlEncodedBody(("variant", "nino"), ("nino", "AA123456A"))
         .withSession("saAgentReferenceToCheck" -> "SA6012")
       sessionStoreService.currentSession.agentSession =
-        Some(AgentSession(Some(BusinessType.SoleTrader), utr = Some(validUtr), postcode = Some(Postcode(postcode)), registration = Some(registration)))
+        Some(AgentSession(Some(BusinessType.SoleTrader), utr = Some(validUtr), postcode = Some(Postcode(testPostcode)), registration = Some(testRegistration)))
 
       val result = await(controller.submitClientDetailsForm(request))
 
@@ -245,7 +245,7 @@ class AssuranceChecksControllerISpec extends BaseISpec {
       "submitting invalid Utr which fails Modulus11Check" in {
         implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
         sessionStoreService.currentSession.agentSession =
-          Some(AgentSession(Some(BusinessType.SoleTrader), utr = Some(validUtr), registration = Some(registration)))
+          Some(AgentSession(Some(BusinessType.SoleTrader), utr = Some(validUtr), registration = Some(testRegistration)))
 
         val result = await(
           controller.submitClientDetailsForm(
@@ -264,7 +264,7 @@ class AssuranceChecksControllerISpec extends BaseISpec {
 
         implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
         sessionStoreService.currentSession.agentSession =
-          Some(AgentSession(Some(BusinessType.SoleTrader), utr = Some(validUtr), postcode = Some(Postcode(postcode)), registration = Some(registration)))
+          Some(AgentSession(Some(BusinessType.SoleTrader), utr = Some(validUtr), postcode = Some(Postcode(testPostcode)), registration = Some(testRegistration)))
 
         val result = await(
           controller.submitClientDetailsForm(

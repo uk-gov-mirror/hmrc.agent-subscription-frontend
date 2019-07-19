@@ -14,7 +14,7 @@ object TestData {
   val blacklistedPostcode = "AB10 1ZT"
 
   val utr = Utr("0123456789")
-  val postcode = "AA1 1AA"
+  val testPostcode = "AA1 1AA"
   val registrationName = "My Agency"
   val businessAddress =
     BusinessAddress("AddressLine1 A", Some("AddressLine2 A"), Some("AddressLine3 A"), Some("AddressLine4 A"), Some("AA11AA"), "GB")
@@ -26,6 +26,6 @@ object TestData {
 
   val agentSessionForLimitedCompany: AgentSession = agentSession.copy(businessType = Some(LimitedCompany))
 
-  val registration = Registration(Some(registrationName), false, false, businessAddress, Some("test@gmail.com"))
+  val testRegistration = Registration(Some(registrationName), false, false, businessAddress, Some("test@gmail.com"))
 
 }

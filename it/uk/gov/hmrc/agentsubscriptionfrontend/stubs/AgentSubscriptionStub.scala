@@ -20,9 +20,12 @@ import java.time.LocalDate
 
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
+import play.api.Logger
 import play.api.http.Status
+import play.api.libs.json.Json
 import uk.gov.hmrc.agentmtdidentifiers.model.{Utr, Vrn}
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{CompanyRegistrationNumber, CompletePartialSubscriptionBody, DateOfBirth, SubscriptionRequest}
+import uk.gov.hmrc.agentsubscriptionfrontend.models._
+import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.SubscriptionJourneyRecord
 import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.play.encoding.UriPathEncoding.encodePathSegment
 
@@ -287,4 +290,25 @@ object AgentSubscriptionStub {
                                       |   }
                                       |}""".stripMargin))
   }
+
+  def givenNoSubscriptionJourneyRecordExists(authProviderId: AuthProviderId): StubMapping =
+    stubFor(
+      get(urlEqualTo(
+        s"/agent-subscription/subscription/journey/id/${encodePathSegment(authProviderId.id)}"))
+        .willReturn(
+          aResponse()
+            .withStatus(Status.NO_CONTENT)
+        )
+    )
+
+  def givenSubscriptionRecordCreated(authProviderId: AuthProviderId, subscriptionJourneyRecord: SubscriptionJourneyRecord) = {
+    stubFor(
+      post(
+        urlEqualTo(s"/agent-subscription/subscription/journey/primaryId/${encodePathSegment(authProviderId.id)}"))
+        .withRequestBody(equalToJson(Json.toJson(subscriptionJourneyRecord).toString()))
+        .willReturn(aResponse().withStatus(Status.NO_CONTENT))
+    )
+
+  }
+
 }
