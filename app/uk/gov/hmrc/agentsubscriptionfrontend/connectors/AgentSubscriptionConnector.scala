@@ -50,7 +50,7 @@ class AgentSubscriptionConnector @Inject()(
         .GET[HttpResponse](url.toString)
         .map(response =>
           response.status match {
-            case 200 => Some(Json.toJson(response.body).as[SubscriptionJourneyRecord])
+            case 200 => Some(Json.parse(response.body).as[SubscriptionJourneyRecord])
             case 204 => None
         })
     }

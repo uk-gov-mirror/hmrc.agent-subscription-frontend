@@ -1,14 +1,15 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 import org.jsoup.Jsoup
-import play.api.test.Helpers.LOCATION
-import uk.gov.hmrc.agentsubscriptionfrontend.models.AgentSession
+import play.api.test.Helpers.{redirectLocation, _}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, AuthProviderId}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.SoleTrader
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub.userIsAuthenticated
-import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
+import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub._
+import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestData, TestSetupNoJourneyRecord}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.{subscribingAgentEnrolledForNonMTD, subscribingCleanAgentWithoutEnrolments}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData.validBusinessTypes
+
 import scala.concurrent.ExecutionContext.Implicits.global
-import uk.gov.hmrc.agentsubscriptionfrontend.support.TestSetupNoJourneyRecord
 
 class BusinessTypeControllerISpec extends BaseISpec with SessionDataMissingSpec {
 
@@ -63,6 +64,15 @@ class BusinessTypeControllerISpec extends BaseISpec with SessionDataMissingSpec 
       link.attr("checked") shouldBe "checked"
     }
 
+    "redirect to task list if a subscription journey exists for the logged in user" in {
+      givenSubscriptionJourneyRecordExists(AuthProviderId("12345-credId"),
+        TestData.minimalSubscriptionJourneyRecord(AuthProviderId("12345-credId")))
+      val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+      val result = await(controller.showBusinessTypeForm(request))
+
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.TaskListController.showTaskList().url)
+    }
   }
 
   "submitBusinessTypeForm (POST /business-type)" when {
