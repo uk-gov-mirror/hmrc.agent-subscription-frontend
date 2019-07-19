@@ -19,6 +19,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 import org.jsoup.Jsoup
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser._
+import uk.gov.hmrc.agentsubscriptionfrontend.support.TestSetupNoJourneyRecord
 
 class BusinessIdentificationControllerISpec extends BaseISpec {
 
@@ -29,7 +30,7 @@ class BusinessIdentificationControllerISpec extends BaseISpec {
     behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showCreateNewAccount(request))
     behave like aPageWithFeedbackLinks(controller.showCreateNewAccount(_), authenticatedAs(subscribingCleanAgentWithoutEnrolments))
 
-    "display the has other enrolments page if the current user is logged in and has affinity group = Agent" in {
+    "display the has other enrolments page if the current user is logged in and has affinity group = Agent" in new TestSetupNoJourneyRecord{
       val result = await(controller.showCreateNewAccount(authenticatedAs(subscribingAgentEnrolledForNonMTD)))
 
       result should containMessages("createNewAccount.title")
@@ -43,7 +44,7 @@ class BusinessIdentificationControllerISpec extends BaseISpec {
       controller.showNoMatchFound(request)
     }, authenticatedAs(subscribingCleanAgentWithoutEnrolments))
 
-    "display the no agency found page if the current user is logged in and has affinity group = Agent" in {
+    "display the no agency found page if the current user is logged in and has affinity group = Agent" in new TestSetupNoJourneyRecord{
       val result = await(controller.showNoMatchFound(authenticatedAs(subscribingCleanAgentWithoutEnrolments)))
 
       result should containMessages("noAgencyFound.title", "noAgencyFound.p1", "noAgencyFound.p2", "button.startAgain")
@@ -54,7 +55,7 @@ class BusinessIdentificationControllerISpec extends BaseISpec {
 
     behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showAlreadySubscribed(request))
 
-    "display the already subscribed page if the current user is logged in and has affinity group = Agent" in {
+    "display the already subscribed page if the current user is logged in and has affinity group = Agent" in new TestSetupNoJourneyRecord{
 
       val result = await(controller.showAlreadySubscribed(authenticatedAs(subscribingCleanAgentWithoutEnrolments)))
 

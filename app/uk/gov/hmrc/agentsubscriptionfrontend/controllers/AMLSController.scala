@@ -56,7 +56,7 @@ class AMLSController @Inject()(
   private val amlsBodies: Map[String, String] = AMLSLoader.load("/amls.csv")
 
   def showCheckAmlsPage: Action[AnyContent] = Action.async { implicit request =>
-    withSubscribingAgent { _ =>
+    withSubscribingAgent { agent =>
       withValidSession { (_, existingSession) =>
         withManuallyAssuredAgent(existingSession) {
           existingSession.checkAmls.fold(

@@ -8,6 +8,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.{subscribingAgentEnrolledForNonMTD, subscribingCleanAgentWithoutEnrolments}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData.validBusinessTypes
 import scala.concurrent.ExecutionContext.Implicits.global
+import uk.gov.hmrc.agentsubscriptionfrontend.support.TestSetupNoJourneyRecord
 
 class BusinessTypeControllerISpec extends BaseISpec with SessionDataMissingSpec {
 
@@ -20,7 +21,7 @@ class BusinessTypeControllerISpec extends BaseISpec with SessionDataMissingSpec 
       controller.showBusinessTypeForm(_),
       userIsAuthenticated(subscribingCleanAgentWithoutEnrolments))
 
-    "contain page titles and header content" in {
+    "contain page titles and header content" in new TestSetupNoJourneyRecord {
       val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
       val result = await(controller.showBusinessTypeForm(request))
 
@@ -30,7 +31,7 @@ class BusinessTypeControllerISpec extends BaseISpec with SessionDataMissingSpec 
         "businessType.progressive.content.p1")
     }
 
-    "contain radio options for Sole Trader, Limited Company, Partnership, and LLP" in {
+    "contain radio options for Sole Trader, Limited Company, Partnership, and LLP" in new TestSetupNoJourneyRecord{
       val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
       val result = await(controller.showBusinessTypeForm(request))
       val doc = Jsoup.parse(bodyOf(result))
@@ -42,7 +43,7 @@ class BusinessTypeControllerISpec extends BaseISpec with SessionDataMissingSpec 
       doc.getElementById("businessType-llp").`val`() shouldBe "llp"
     }
 
-    "contain a link to sign out" in {
+    "contain a link to sign out" in new TestSetupNoJourneyRecord{
       val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
       val result = await(controller.showBusinessTypeForm(request))
       val doc = Jsoup.parse(bodyOf(result))
@@ -51,7 +52,7 @@ class BusinessTypeControllerISpec extends BaseISpec with SessionDataMissingSpec 
       signOutLink.text() shouldBe htmlEscapedMessage("businessType.progressive.content.link")
     }
 
-    "pre-populate the business type if one is already stored in the session" in {
+    "pre-populate the business type if one is already stored in the session" in new TestSetupNoJourneyRecord{
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
       await(sessionStoreService.cacheAgentSession(AgentSession(Some(SoleTrader))))
 
@@ -68,7 +69,7 @@ class BusinessTypeControllerISpec extends BaseISpec with SessionDataMissingSpec 
     behave like anAgentAffinityGroupOnlyEndpoint(controller.submitBusinessTypeForm(_))
 
     validBusinessTypes.foreach { validBusinessTypeIdentifier =>
-      s"redirect to /business-details when valid businessTypeIdentifier: $validBusinessTypeIdentifier" in {
+      s"redirect to /business-details when valid businessTypeIdentifier: $validBusinessTypeIdentifier" in new TestSetupNoJourneyRecord{
         val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
           .withFormUrlEncodedBody("businessType" -> validBusinessTypeIdentifier.key)
 
@@ -79,7 +80,7 @@ class BusinessTypeControllerISpec extends BaseISpec with SessionDataMissingSpec 
     }
 
     "choice is invalid" should {
-      "return 200 and redisplay the /business-type page with an error message for invalid choice - the user manipulated the submit value" in {
+      "return 200 and redisplay the /business-type page with an error message for invalid choice - the user manipulated the submit value" in new TestSetupNoJourneyRecord{
         implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("businessType" -> "invalid")
         val result = await(controller.submitBusinessTypeForm(request))
         result should containMessages("businessType.error.invalid-choice")

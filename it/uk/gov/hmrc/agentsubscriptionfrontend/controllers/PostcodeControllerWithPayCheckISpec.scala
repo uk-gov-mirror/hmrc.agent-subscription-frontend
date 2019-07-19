@@ -9,6 +9,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.subscribingAgentEnrolledForNonMTD
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData._
+import uk.gov.hmrc.agentsubscriptionfrontend.support.TestSetupNoJourneyRecord
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -26,7 +27,7 @@ class PostcodeControllerWithPayCheckISpec extends BaseISpec with SessionDataMiss
 
   "submitPostcodeForm" should {
 
-    "read the form and redirect to /national-insurance-number if businessType is SoleTrader or Partnership" in {
+    "read the form and redirect to /national-insurance-number if businessType is SoleTrader or Partnership" in new TestSetupNoJourneyRecord {
       List(SoleTrader, Partnership).foreach { businessType =>
         withMatchingUtrAndPostcode(validUtr, validPostcode)
         givenUserIsAnAgentWithAnAcceptableNumberOfClients("IR-PAYE")
@@ -49,7 +50,7 @@ class PostcodeControllerWithPayCheckISpec extends BaseISpec with SessionDataMiss
       }
     }
 
-    "read the form and redirect to /company-registration-number if businessType is Limited Company or Llp" in {
+    "read the form and redirect to /company-registration-number if businessType is Limited Company or Llp" in new TestSetupNoJourneyRecord{
       List(LimitedCompany, Llp).foreach { businessType =>
         withMatchingUtrAndPostcode(validUtr, validPostcode)
         givenUserIsAnAgentWithAnAcceptableNumberOfClients("IR-PAYE")
@@ -72,7 +73,7 @@ class PostcodeControllerWithPayCheckISpec extends BaseISpec with SessionDataMiss
       }
     }
 
-    "fail when a matching registration is found for the UTR and postcode for an agent when failing the SaAgent check" in {
+    "fail when a matching registration is found for the UTR and postcode for an agent when failing the SaAgent check" in new TestSetupNoJourneyRecord{
       withMatchingUtrAndPostcode(validUtr, validPostcode)
       givenUserIsNotAnAgentWithAnAcceptableNumberOfClients("IR-PAYE")
       givenUserIsNotAnAgentWithAnAcceptableNumberOfClients("IR-SA")
@@ -98,7 +99,7 @@ class PostcodeControllerWithPayCheckISpec extends BaseISpec with SessionDataMiss
       sessionStoreService.fetchAgentSession.get.registration.get.taxpayerName shouldBe Some(registrationName)
     }
 
-    "redirect to /business-type if businessType is not found in session" in {
+    "redirect to /business-type if businessType is not found in session" in new TestSetupNoJourneyRecord{
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("postcode" -> "AA12 1JN")
 
       val result = await(controller.submitPostcodeForm()(request))
@@ -108,7 +109,7 @@ class PostcodeControllerWithPayCheckISpec extends BaseISpec with SessionDataMiss
       redirectLocation(result) shouldBe Some(routes.BusinessTypeController.showBusinessTypeForm().url)
     }
 
-    "handle for with invalid postcodes" in {
+    "handle for with invalid postcodes" in new TestSetupNoJourneyRecord{
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("postcode" -> "sdsds")
       await(sessionStoreService.cacheAgentSession(AgentSession(Some(SoleTrader))))
 

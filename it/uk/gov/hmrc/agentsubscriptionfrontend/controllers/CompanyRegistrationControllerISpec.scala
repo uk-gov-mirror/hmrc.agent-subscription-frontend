@@ -8,6 +8,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.subscribingAgentEnrolledForNonMTD
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData._
+import uk.gov.hmrc.agentsubscriptionfrontend.support.TestSetupNoJourneyRecord
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -17,7 +18,7 @@ class CompanyRegistrationControllerISpec extends BaseISpec with SessionDataMissi
 
   "/GET company-registration-number" should {
 
-    "display the page with expected content" in {
+    "display the page with expected content" in new TestSetupNoJourneyRecord {
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
       await(sessionStoreService.cacheAgentSession(AgentSession(Some(SoleTrader))))
@@ -26,7 +27,7 @@ class CompanyRegistrationControllerISpec extends BaseISpec with SessionDataMissi
       result should containMessages("crn.title", "crn.hint")
     }
 
-    "pre-populate the crn if one is already stored in the session" in {
+    "pre-populate the crn if one is already stored in the session" in new TestSetupNoJourneyRecord{
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
       await(sessionStoreService.cacheAgentSession(AgentSession(Some(SoleTrader), companyRegistrationNumber = Some(CompanyRegistrationNumber("12345")))))
 
@@ -42,7 +43,7 @@ class CompanyRegistrationControllerISpec extends BaseISpec with SessionDataMissi
 
   "POST /company-registration-number" should {
 
-    "read the crn as expected and save it to the session when supplied utr matches with DES utr (retrieved using crn)" in {
+    "read the crn as expected and save it to the session when supplied utr matches with DES utr (retrieved using crn)" in new TestSetupNoJourneyRecord{
       val crn = CompanyRegistrationNumber("12345678")
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
@@ -60,7 +61,7 @@ class CompanyRegistrationControllerISpec extends BaseISpec with SessionDataMissi
       sessionStoreService.currentSession.agentSession shouldBe Some(agentSessionForLimitedCompany.copy(companyRegistrationNumber = Some(crn)))
     }
 
-    "redirect to /no-match page when supplied utr does not matches with DES utr (retrieved using crn)" in {
+    "redirect to /no-match page when supplied utr does not matches with DES utr (retrieved using crn)" in new TestSetupNoJourneyRecord{
       val crn = CompanyRegistrationNumber("12345678")
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
@@ -78,7 +79,7 @@ class CompanyRegistrationControllerISpec extends BaseISpec with SessionDataMissi
       sessionStoreService.currentSession.agentSession shouldBe Some(agentSessionForLimitedCompany.copy(companyRegistrationNumber = None))
     }
 
-    "redirect to /unique-taxpayer-reference page utr is not available in agent session" in {
+    "redirect to /unique-taxpayer-reference page utr is not available in agent session" in new TestSetupNoJourneyRecord{
       val crn = CompanyRegistrationNumber("12345678")
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
@@ -92,7 +93,7 @@ class CompanyRegistrationControllerISpec extends BaseISpec with SessionDataMissi
       redirectLocation(result) shouldBe Some(routes.UtrController.showUtrForm().url)
     }
 
-    "handle forms with empty field" in {
+    "handle forms with empty field" in new TestSetupNoJourneyRecord{
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("crn" -> "")
 
@@ -105,7 +106,7 @@ class CompanyRegistrationControllerISpec extends BaseISpec with SessionDataMissi
       result should containMessages("error.crn.empty")
     }
 
-    "handle forms with a crn that's too short" in {
+    "handle forms with a crn that's too short" in new TestSetupNoJourneyRecord{
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("crn" -> "1234567")
 
@@ -118,7 +119,7 @@ class CompanyRegistrationControllerISpec extends BaseISpec with SessionDataMissi
       result should containMessages("error.crn.invalid")
     }
 
-    "handle forms with a crn that's too long" in {
+    "handle forms with a crn that's too long" in new TestSetupNoJourneyRecord{
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("crn" -> "123456789")
 
@@ -131,7 +132,7 @@ class CompanyRegistrationControllerISpec extends BaseISpec with SessionDataMissi
       result should containMessages("error.crn.invalid")
     }
 
-    "handle forms with an invalid crn" in {
+    "handle forms with an invalid crn" in new TestSetupNoJourneyRecord{
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("crn" -> "1AA23456")
 
