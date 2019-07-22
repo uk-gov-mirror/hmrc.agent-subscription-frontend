@@ -45,8 +45,7 @@ class TaskListController @Inject()(
     withSubscribingOrSubscribedAgent { agent =>
       agent.subscriptionJourneyRecord match {
         case Some(record) => taskListService.getTaskListFlags(record).map(flags => Ok(html.task_list(flags)))
-        case None =>
-          Future successful InternalServerError("No journey record found for task list") // TODO redirect to business id setup instead?
+        case None         => Future.successful(Redirect(routes.BusinessTypeController.showBusinessTypeForm()))
       }
     }
 

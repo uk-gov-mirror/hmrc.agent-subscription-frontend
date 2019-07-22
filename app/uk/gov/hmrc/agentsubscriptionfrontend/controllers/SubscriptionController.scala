@@ -129,6 +129,7 @@ class SubscriptionController @Inject()(
     either match {
       case Right((arn, nameFromDetails)) =>
         mark("Count-Subscription-Complete")
+        // TODO replace with journey record update (subscription created)
         sessionStoreService
           .cacheAgentSession(
             existingSession

@@ -46,6 +46,7 @@ class BusinessTypeController @Inject()(
     withSubscribingAgent { implicit agent =>
       continueUrlActions.withMaybeContinueUrlCached {
         agent.subscriptionJourneyRecord match {
+          case Some(_) => Redirect(routes.TaskListController.showTaskList())
           case None =>
             sessionStoreService.fetchAgentSession.flatMap {
               case Some(agentSession) =>
@@ -56,7 +57,6 @@ class BusinessTypeController @Inject()(
                 }
               case None => Ok(html.business_type(businessTypeForm))
             }
-          case _ => Redirect(routes.TaskListController.showTaskList())
         }
       }
     }

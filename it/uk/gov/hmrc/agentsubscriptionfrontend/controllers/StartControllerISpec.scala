@@ -163,9 +163,7 @@ trait StartControllerISpec extends BaseISpec {
 
         status(result) shouldBe 303
         redirectLocation(result).head should include(routes.TaskListController.showTaskList().url)
-        sessionStoreService.currentSession.agentSession.get.taskListFlags.businessTaskComplete shouldBe false
-        sessionStoreService.currentSession.agentSession.get.taskListFlags.amlsTaskComplete shouldBe false
-        sessionStoreService.currentSession.agentSession.get.taskListFlags.createTaskComplete shouldBe false
+
       }
     }
 

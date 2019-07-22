@@ -200,11 +200,13 @@ class BusinessIdentificationController @Inject()(
     } yield result
   }
 
-  def cachePartialSubscription(existingSession: AgentSession, cleanCreds: Boolean)(implicit hc: HeaderCarrier) =
+  // TODO we'll need to use tasklistservice instead
+  def cachePartialSubscription(existingSession: AgentSession, cleanCreds: Boolean)(
+    implicit hc: HeaderCarrier): Future[Unit] =
     sessionStoreService
       .cacheAgentSession(
         existingSession.copy(taskListFlags = existingSession.taskListFlags
-          .copy(businessTaskComplete = true, amlsTaskComplete = true, createTaskComplete = cleanCreds)))
+          .copy(amlsTaskComplete = true, createTaskComplete = cleanCreds)))
 
   val showBusinessEmailForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>

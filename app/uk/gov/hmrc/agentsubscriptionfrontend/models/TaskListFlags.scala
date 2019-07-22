@@ -17,13 +17,18 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.models
 import play.api.libs.json.{Json, OFormat}
 
+/**
+  * Simple data structure which represents the user's journey state on the task list page
+  * Tasks are complete when either a) they have been done OR b) they are not required (implicitly complete)
+  * Tasks must be completed in a specific order; the next task is not available until all previous steps are done
+  */
 case class TaskListFlags(
-  businessTaskComplete: Boolean = false, // TODO remove?
   amlsTaskComplete: Boolean = false,
   isMAA: Boolean = false,
   createTaskComplete: Boolean = false,
-  checkAnswersComplete: Boolean = false)
+  checkAnswersComplete: Boolean = false) // no more editing allowed once done
 
+// TODO remove when no longer needed in AgentSession
 object TaskListFlags {
   implicit val formats: OFormat[TaskListFlags] = Json.format
 }

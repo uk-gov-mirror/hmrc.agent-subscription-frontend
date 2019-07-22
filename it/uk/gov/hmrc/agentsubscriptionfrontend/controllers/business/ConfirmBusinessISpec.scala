@@ -189,9 +189,6 @@ class ConfirmBusinessISpec extends BaseISpec {
 
         result.header.headers(LOCATION) shouldBe routes.SubscriptionController.showSubscriptionComplete().url
 
-        sessionStoreService.currentSession.agentSession.get.taskListFlags.businessTaskComplete shouldBe true
-        sessionStoreService.currentSession.agentSession.get.taskListFlags.amlsTaskComplete shouldBe true
-        sessionStoreService.currentSession.agentSession.get.taskListFlags.createTaskComplete shouldBe true
       }
 
       "redirect to task list if the user is partially subscribed with unclean creds and there is no continue url" in new TestSetupNoJourneyRecord {
@@ -211,8 +208,6 @@ class ConfirmBusinessISpec extends BaseISpec {
 
         result.header.headers(LOCATION) shouldBe routes.TaskListController.showTaskList().url
 
-        sessionStoreService.currentSession.agentSession.get.taskListFlags.businessTaskComplete shouldBe true
-        sessionStoreService.currentSession.agentSession.get.taskListFlags.amlsTaskComplete shouldBe true
       }
 
       "redirect to showBusinessEmailForm if the user has clean creds and isSubscribedToAgentServices=false and ETMP record contains empty email" in new TestSetupNoJourneyRecord {

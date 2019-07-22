@@ -59,13 +59,8 @@ class AMLSController @Inject()(
     withSubscribingAgent { agent =>
       withValidSession { (_, existingSession) =>
         withManuallyAssuredAgent(existingSession) {
-          existingSession.checkAmls.fold(
-            Ok(check_amls(checkAmlsForm, existingSession.taskListFlags.businessTaskComplete)))(
-            amls =>
-              Ok(
-                check_amls(
-                  checkAmlsForm.bind(Map("registeredAmls" -> amls.toString)),
-                  existingSession.taskListFlags.businessTaskComplete)))
+          existingSession.checkAmls.fold(Ok(check_amls(checkAmlsForm)))(amls =>
+            Ok(check_amls(checkAmlsForm.bind(Map("registeredAmls" -> amls.toString)))))
         }
       }
     }
@@ -78,8 +73,7 @@ class AMLSController @Inject()(
           checkAmlsForm
             .bindFromRequest()
             .fold(
-              formWithErrors =>
-                Ok(html.amls.check_amls(formWithErrors, existingSession.taskListFlags.businessTaskComplete)),
+              formWithErrors => Ok(html.amls.check_amls(formWithErrors)),
               validForm => {
                 val nextPage = validForm match {
                   case Yes =>

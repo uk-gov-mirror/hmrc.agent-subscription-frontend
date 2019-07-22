@@ -35,7 +35,6 @@ class TaskListService @Inject()(agentAssuranceConnector: AgentAssuranceConnector
       manuallyAssured <- isMaaAgent(subscriptionJourneyRecord.businessDetails.utr)
     } yield
       TaskListFlags(
-        businessTaskComplete = true,
         amlsTaskComplete = isAmlsTaskComplete(subscriptionJourneyRecord),
         isMAA = manuallyAssured,
         createTaskComplete = isCreateTaskComplete(subscriptionJourneyRecord),
@@ -52,6 +51,6 @@ class TaskListService @Inject()(agentAssuranceConnector: AgentAssuranceConnector
     subscriptionJourneyRecord.cleanCredsInternalId.fold(false)(_ => true)
 
   private def isCheckAnswersComplete(subscriptionJourneyRecord: SubscriptionJourneyRecord): Boolean =
-    false // TODO implement
+    subscriptionJourneyRecord.subscriptionCreated
 
 }
