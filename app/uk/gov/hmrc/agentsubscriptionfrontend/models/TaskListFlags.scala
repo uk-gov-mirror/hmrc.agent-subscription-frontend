@@ -26,7 +26,13 @@ case class TaskListFlags(
   amlsTaskComplete: Boolean = false,
   isMAA: Boolean = false,
   createTaskComplete: Boolean = false,
-  checkAnswersComplete: Boolean = false) // no more editing allowed once done
+  checkAnswersComplete: Boolean = false) {
+
+  def cannotEditAmls: Boolean = isMAA || checkAnswersComplete
+  def mustCreateCleanCreds: Boolean = amlsTaskComplete && !createTaskComplete && !checkAnswersComplete && !isMAA
+  def mustCheckAnswers: Boolean = createTaskComplete && !checkAnswersComplete
+
+}
 
 // TODO remove when no longer needed in AgentSession
 object TaskListFlags {

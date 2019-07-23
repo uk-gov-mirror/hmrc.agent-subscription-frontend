@@ -19,8 +19,8 @@ package uk.gov.hmrc.agentsubscriptionfrontend.service
 import javax.inject.{Inject, Singleton}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentAssuranceConnector
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, TaskListFlags}
-import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.SubscriptionJourneyRecord
+import uk.gov.hmrc.agentsubscriptionfrontend.models.TaskListFlags
+import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.{AmlsData, SubscriptionJourneyRecord}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -45,7 +45,11 @@ class TaskListService @Inject()(agentAssuranceConnector: AgentAssuranceConnector
     agentAssuranceConnector.isManuallyAssuredAgent(utr)
 
   private def isAmlsTaskComplete(subscriptionJourneyRecord: SubscriptionJourneyRecord): Boolean =
-    subscriptionJourneyRecord.amlsData.fold(false)(_ => true)
+    subscriptionJourneyRecord.amlsData.fold(false) {
+      case AmlsData(true, _, Some(_), _, Some(_))           => true // registered (with details)
+      case AmlsData(false, Some(true), Some(_), Some(_), _) => true // not registered, but applied for (with details)
+      case _                                                => false
+    }
 
   private def isCreateTaskComplete(subscriptionJourneyRecord: SubscriptionJourneyRecord): Boolean =
     subscriptionJourneyRecord.cleanCredsInternalId.fold(false)(_ => true)

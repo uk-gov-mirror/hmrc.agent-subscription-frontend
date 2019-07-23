@@ -32,6 +32,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class AgentAssuranceConnector @Inject()(@Named("agent-assurance-baseUrl") baseUrl: URL, http: HttpGet, metrics: Metrics)(
   implicit ec: ExecutionContext)
     extends HttpAPIMonitor {
+
   override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
 
   def hasAcceptableNumberOfClients(regime: String)(implicit hc: HeaderCarrier): Future[Boolean] =

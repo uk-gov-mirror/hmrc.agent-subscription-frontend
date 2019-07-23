@@ -1,16 +1,16 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
-import java.time.{LocalDate, LocalDateTime}
+import java.time.LocalDate
 
-import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, AuthProviderId, TaskListFlags}
-import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub.givenSubscriptionJourneyRecordExists
-import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub._
-import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.{subscribingAgentEnrolledForHMRCASAGENT, subscribingAgentEnrolledForNonMTD}
-import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestData, TestSetupNoJourneyRecord}
-import TestData._
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
+import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
+import uk.gov.hmrc.agentsubscriptionfrontend.models.AuthProviderId
 import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.{AmlsData, RegDetails}
+import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub._
+import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub.givenSubscriptionJourneyRecordExists
+import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.{subscribingAgentEnrolledForHMRCASAGENT, subscribingAgentEnrolledForNonMTD}
+import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData._
+import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestData}
 
 class TaskListControllerISpec extends BaseISpec {
   lazy val controller: TaskListController = app.injector.instanceOf[TaskListController]
@@ -61,7 +61,7 @@ class TaskListControllerISpec extends BaseISpec {
       givenSubscriptionJourneyRecordExists(AuthProviderId("12345-credId"),
         TestData.minimalSubscriptionJourneyRecord(AuthProviderId("12345-credId"))
           .copy(amlsData = Some(
-            AmlsData(amlsRegistered = false, amlsAppliedFor = Some(false),
+            AmlsData(amlsRegistered = true, amlsAppliedFor = Some(false),
               Some("supervisory body"), None,
               Some(RegDetails("123", LocalDate.now().plusDays(10)))))
           )
@@ -82,7 +82,7 @@ class TaskListControllerISpec extends BaseISpec {
       givenSubscriptionJourneyRecordExists(AuthProviderId("12345-credId"),
         TestData.minimalSubscriptionJourneyRecord(AuthProviderId("12345-credId"))
           .copy(amlsData = Some(
-            AmlsData(amlsRegistered = false, amlsAppliedFor = Some(false),
+            AmlsData(amlsRegistered = true, amlsAppliedFor = Some(false),
               Some("supervisory body"), None,
               Some(RegDetails("123", LocalDate.now().plusDays(10)))))
           )

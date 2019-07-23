@@ -22,6 +22,10 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.models.TaskListFlags
 @(taskListFlags: TaskListFlags)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
+@completedMark = {
+    <strong class="govuk-tag app-task-list__task-completed">@Messages("task-list.completed")</strong>
+}
+
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = Messages("task-list.header"), bodyClasses = None) {
 
     <h1 class="heading-xlarge margin-bottom-40">@Messages("task-list.header")</h1>
@@ -35,11 +39,12 @@
             </h2>
             <ul class="app-task-list__items">
                 <li class="app-task-list__item">
-                  @if(taskListFlags.isMAA | taskListFlags.checkAnswersComplete){ @Messages("task-list.1.amls")
-                  }else {<a href=@routes.AMLSController.showAmlsRegisteredPage()>@Messages("task-list.1.amls")</a>}
-                    @if(taskListFlags.amlsTaskComplete) {
-                        <strong class="govuk-tag app-task-list__task-completed">@Messages("task-list.completed")</strong>
+                    @if(taskListFlags.cannotEditAmls) {
+                        @Messages("task-list.1.amls")
+                    } else {
+                        <a href=@routes.AMLSController.showAmlsRegisteredPage()>@Messages("task-list.1.amls")</a>
                     }
+                    @if(taskListFlags.amlsTaskComplete) { @completedMark }
                 </li>
             </ul>
         </li>
@@ -48,15 +53,13 @@
                 <span class="app-task-list__section-number">@Messages("task-list.2.number")</span>@Messages("task-list.2.header")
             </h2>
             <ul class="app-task-list__items">
-                <li class="app-task-list__item">@if(taskListFlags.amlsTaskComplete) {
-                  @if(taskListFlags.checkAnswersComplete | taskListFlags.isMAA){ @Messages("task-list.2.create")
-                  }else{<a href=@routes.BusinessIdentificationController.showCreateNewAccount()>@Messages("task-list.2.create")</a>}
-                    @if(taskListFlags.createTaskComplete) {
-                        <strong class="govuk-tag app-task-list__task-completed">@Messages("task-list.completed")</strong>
+                <li class="app-task-list__item">
+                    @if(taskListFlags.mustCreateCleanCreds) {
+                        <a href=@routes.BusinessIdentificationController.showCreateNewAccount()>@Messages("task-list.2.create")</a>
+                    } else {
+                        @Messages("task-list.2.create")
                     }
-                } else {
-                    @Messages("task-list.2.create")
-                }
+                    @if(taskListFlags.createTaskComplete) { @completedMark }
                 </li>
             </ul>
         </li>
@@ -65,15 +68,13 @@
                 <span class="app-task-list__section-number">@Messages("task-list.3.number")</span>@Messages("task-list.3.header")
             </h2>
             <ul class="app-task-list__items">
-                <li class="app-task-list__item">@if(taskListFlags.createTaskComplete) {
-                    @if(taskListFlags.checkAnswersComplete){ @Messages("task-list.3.header")
-                    }else{<a href=@routes.SubscriptionController.showCheckAnswers()>@Messages("task-list.3.header")</a>}
-                    @if(taskListFlags.checkAnswersComplete) {
-                        <strong class="govuk-tag app-task-list__task-completed">@Messages("task-list.completed")</strong>
+                <li class="app-task-list__item">
+                    @if(taskListFlags.mustCheckAnswers) {
+                        <a href=@routes.SubscriptionController.showCheckAnswers()>@Messages("task-list.3.header")</a>
+                    } else {
+                        @Messages("task-list.3.header")
                     }
-                } else {
-                    @Messages("task-list.3.header")
-                }
+                    @if(taskListFlags.checkAnswersComplete) { @completedMark }
                 </li>
             </ul>
         </li>
@@ -82,7 +83,8 @@
                 <span class="app-task-list__section-number">@Messages("task-list.4.number")</span>@Messages("task-list.4.header")
             </h2>
             <ul class="app-task-list__items">
-                <li class="app-task-list__item">@if(taskListFlags.checkAnswersComplete) {
+                <li class="app-task-list__item">
+                @if(taskListFlags.checkAnswersComplete) {
                     <a href=@appConfig.agentMappingFrontendStartUrl>@Messages("task-list.4.copy")</a>
                 } else {
                     @Messages("task-list.4.copy")
