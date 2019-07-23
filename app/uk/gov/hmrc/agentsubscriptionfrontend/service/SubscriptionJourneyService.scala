@@ -19,7 +19,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.service
 import javax.inject.{Inject, Singleton}
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentSubscriptionConnector
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, AuthProviderId}
-import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.SubscriptionJourneyRecord
+import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.{AmlsData, SubscriptionJourneyRecord}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -33,6 +33,16 @@ class SubscriptionJourneyService @Inject()(agentSubscriptionConnector: AgentSubs
     for {
       record <- agentSubscriptionConnector.getJourneyById(internalId)
     } yield record
+
+  def getMandatoryJourneyRecord(internalId: AuthProviderId)(
+    implicit hc: HeaderCarrier): Future[SubscriptionJourneyRecord] =
+    for {
+      record <- agentSubscriptionConnector.getJourneyById(internalId)
+    } yield
+      record match {
+        case Some(r) => r
+        case None    => throw new RuntimeException("Journey record expected")
+      }
 
   def saveJourneyRecord(subscriptionJourneyRecord: SubscriptionJourneyRecord)(
     implicit hc: HeaderCarrier): Future[Unit] =

@@ -121,7 +121,7 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       val result = await(controller.showCheckAnswers(request))
 
       status(result) shouldBe 303
-      redirectLocation(result) shouldBe Some(routes.AMLSController.showCheckAmlsPage().url)
+      redirectLocation(result) shouldBe Some(routes.AMLSController.showAmlsRegisteredPage().url)
 
     }
   }

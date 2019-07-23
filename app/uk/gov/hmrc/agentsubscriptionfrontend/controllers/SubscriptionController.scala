@@ -85,7 +85,7 @@ class SubscriptionController @Inject()(
                   amlsDetails = None
                 ))
 
-            case (_, None) => Redirect(routes.AMLSController.showCheckAmlsPage())
+            case (_, None) => Redirect(routes.AMLSController.showAmlsRegisteredPage())
           }
         }
       }

@@ -10,7 +10,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestData, TestS
 import TestData._
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
-import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.{AmlsData, RegisteredDetails}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.{AmlsData, RegDetails}
 
 class TaskListControllerISpec extends BaseISpec {
   lazy val controller: TaskListController = app.injector.instanceOf[TaskListController]
@@ -61,9 +61,9 @@ class TaskListControllerISpec extends BaseISpec {
       givenSubscriptionJourneyRecordExists(AuthProviderId("12345-credId"),
         TestData.minimalSubscriptionJourneyRecord(AuthProviderId("12345-credId"))
           .copy(amlsData = Some(
-            AmlsData(amlsAppliedFor = false,
-              "supervisory body",
-              Right(RegisteredDetails("123", LocalDate.now().plusDays(10)))))
+            AmlsData(amlsRegistered = false, amlsAppliedFor = Some(false),
+              Some("supervisory body"), None,
+              Some(RegDetails("123", LocalDate.now().plusDays(10)))))
           )
       )
 
@@ -82,9 +82,9 @@ class TaskListControllerISpec extends BaseISpec {
       givenSubscriptionJourneyRecordExists(AuthProviderId("12345-credId"),
         TestData.minimalSubscriptionJourneyRecord(AuthProviderId("12345-credId"))
           .copy(amlsData = Some(
-            AmlsData(amlsAppliedFor = false,
-              "supervisory body",
-              Right(RegisteredDetails("123", LocalDate.now().plusDays(10)))))
+            AmlsData(amlsRegistered = false, amlsAppliedFor = Some(false),
+              Some("supervisory body"), None,
+              Some(RegDetails("123", LocalDate.now().plusDays(10)))))
           )
       )
 

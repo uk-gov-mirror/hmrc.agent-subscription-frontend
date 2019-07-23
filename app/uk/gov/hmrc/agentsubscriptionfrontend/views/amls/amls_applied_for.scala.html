@@ -27,7 +27,7 @@
 
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = error_prefix(amlsAppliedForForm) + Messages("amlsAppliedFor.title"), bodyClasses = None) {
 
- <a href="@routes.AMLSController.showCheckAmlsPage()" class="link-back">@Messages("button.back")</a>
+ <a href="@routes.AMLSController.showAmlsRegisteredPage()" class="link-back">@Messages("button.back")</a>
 
 @if(amlsAppliedForForm.hasErrors) {
 @errorSummary(Messages("error.summary.heading"), amlsAppliedForForm, Seq.empty, Some("amls-applied"))

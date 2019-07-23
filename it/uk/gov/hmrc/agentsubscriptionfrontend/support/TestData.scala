@@ -2,7 +2,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.support
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.{LimitedCompany, SoleTrader}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
-import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.{BusinessDetails, SubscriptionJourneyRecord}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.{AmlsData, BusinessDetails, SubscriptionJourneyRecord}
 import uk.gov.hmrc.domain.Nino
 
 object TestData {
@@ -44,5 +44,11 @@ object TestData {
     SubscriptionJourneyRecord(
       authProviderId,
       businessDetails = BusinessDetails(SoleTrader, validUtr, Postcode(validPostcode)))
+
+  def minimalSubscriptionJourneyRecordWithAmls(authProviderId: AuthProviderId) =
+    SubscriptionJourneyRecord(
+      authProviderId,
+      businessDetails = BusinessDetails(SoleTrader, validUtr, Postcode(validPostcode)),
+      amlsData = Some(AmlsData.registeredUserNoDataEntered))
 
 }
