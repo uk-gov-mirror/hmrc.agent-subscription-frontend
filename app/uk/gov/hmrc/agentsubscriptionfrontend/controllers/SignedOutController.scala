@@ -50,11 +50,15 @@ class SignedOutController @Inject()(
       chainedSessionIdOpt    <- prepareChainedSession()
       agentSubContinueUrlOpt <- sessionStoreService.fetchContinueUrl
     } yield {
+      val rootContinueUrl: String =
+        if (appConfig.isDevMode) "http://localhost:9437/agent-subscription/return-after-gg-creds-created"
+        else "/agent-subscription/return-after-gg-creds-created"
       val continueUrl =
         addParamsToUrl(
-          "/agent-subscription/return-after-gg-creds-created",
+          rootContinueUrl,
           "id"       -> chainedSessionIdOpt.map(_.toString),
-          "continue" -> agentSubContinueUrlOpt.map(_.url))
+          "continue" -> agentSubContinueUrlOpt.map(_.url)
+        )
       SeeOther(addParamsToUrl(appConfig.sosRedirectUrl, "continue" -> Some(continueUrl))).withNewSession
     }
   }
