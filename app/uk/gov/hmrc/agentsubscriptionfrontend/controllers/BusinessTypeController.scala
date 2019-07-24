@@ -42,6 +42,10 @@ class BusinessTypeController @Inject()(
     extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig, subscriptionJourneyService)
     with SessionBehaviour {
 
+  def redirectToBusinessTypeForm: Action[AnyContent] = Action.async { implicit request =>
+    Redirect(routes.BusinessTypeController.showBusinessTypeForm())
+  }
+
   def showBusinessTypeForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { implicit agent =>
       continueUrlActions.withMaybeContinueUrlCached {

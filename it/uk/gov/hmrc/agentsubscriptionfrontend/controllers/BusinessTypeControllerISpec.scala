@@ -1,7 +1,7 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 import org.jsoup.Jsoup
-import play.api.test.Helpers.{redirectLocation, _}
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, AuthProviderId}
+import play.api.test.Helpers.{redirectLocation, defaultAwaitTimeout, LOCATION}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.AgentSession
 import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.SoleTrader
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub.userIsAuthenticated
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub._
@@ -14,6 +14,16 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class BusinessTypeControllerISpec extends BaseISpec with SessionDataMissingSpec {
 
   lazy val controller: BusinessTypeController = app.injector.instanceOf[BusinessTypeController]
+
+  "redirectToBusinessTypeForm" should {
+    "redirect to the business type form page" in {
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+      val result = await(controller.redirectToBusinessTypeForm(request))
+
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.BusinessTypeController.showBusinessTypeForm().url)
+    }
+  }
 
   "showBusinessTypeForm (GET /business-type)" should {
     behave like anAgentAffinityGroupOnlyEndpoint(controller.showBusinessTypeForm(_))
