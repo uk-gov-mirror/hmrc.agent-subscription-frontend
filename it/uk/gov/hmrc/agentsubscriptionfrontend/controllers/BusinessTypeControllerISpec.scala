@@ -1,7 +1,7 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 import org.jsoup.Jsoup
-import play.api.test.Helpers.{redirectLocation, defaultAwaitTimeout, LOCATION}
-import uk.gov.hmrc.agentsubscriptionfrontend.models.AgentSession
+import play.api.test.Helpers.{LOCATION, defaultAwaitTimeout, redirectLocation}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, AuthProviderId}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.SoleTrader
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub.userIsAuthenticated
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub._
