@@ -17,6 +17,7 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.models
 import play.api.libs.json.{Format, Json}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.AmlsData
 
 case class SubscriptionDetails(
   utr: Utr,
@@ -24,7 +25,7 @@ case class SubscriptionDetails(
   name: String,
   email: String,
   address: DesAddress,
-  amlsDetails: Option[AMLSDetails])
+  amlsData: Option[AmlsData])
 
 object SubscriptionDetails {
   implicit val formatDesAddress: Format[DesAddress] = Json.format[DesAddress]
@@ -34,7 +35,7 @@ object SubscriptionDetails {
     utr: Utr,
     postcode: Postcode,
     registration: Registration,
-    amlsDetails: Option[AMLSDetails]): SubscriptionDetails = {
+    amlsData: Option[AmlsData]): SubscriptionDetails = {
     val desAddress = DesAddress(
       registration.address.addressLine1,
       registration.address.addressLine2,
@@ -50,7 +51,7 @@ object SubscriptionDetails {
       registration.taxpayerName.getOrElse(""),
       registration.emailAddress.getOrElse(throw new Exception("email should not be empty")),
       desAddress,
-      amlsDetails
+      amlsData
     )
   }
 }

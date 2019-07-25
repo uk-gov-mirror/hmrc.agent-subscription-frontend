@@ -10,6 +10,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, MetricTestSuppo
 import uk.gov.hmrc.http._
 import com.kenshoo.play.metrics.Metrics
 import org.scalatest.Assertion
+import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.{AmlsData, RegDetails}
 import uk.gov.hmrc.domain.Nino
 
 import scala.concurrent.ExecutionContext.Implicits.global

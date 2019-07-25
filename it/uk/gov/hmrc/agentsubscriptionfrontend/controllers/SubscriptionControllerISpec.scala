@@ -30,7 +30,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AddressLookupFrontendStubs._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub.givenNoSubscriptionJourneyRecordExists
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.{AgentSubscriptionStub, AuthStub}
-import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestSetupNoJourneyRecord}
+import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestSetupNoJourneyRecord, TestSetupWithCompleteJourneyRecord}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData._
 import uk.gov.hmrc.play.binders.ContinueUrl
@@ -49,10 +49,10 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
 
   protected lazy val redirectUrl = "https://www.gov.uk/"
 
-  val amlsSDetails = AMLSDetails("supervisory", Right(RegisteredDetails("123456789", LocalDate.now().plusDays(10))))
+  val amlsDetails = AMLSDetails("supervisory", Right(RegisteredDetails("123456789", LocalDate.now().plusDays(10))))
 
   val agentSession = Some(
-    AgentSession(Some(BusinessType.SoleTrader), utr = Some(validUtr), postcode = Some(Postcode("AA1 2AA")), registration = Some(testRegistration), amlsDetails = Some(amlsSDetails)))
+    AgentSession(Some(BusinessType.SoleTrader), utr = Some(validUtr), postcode = Some(Postcode("AA1 2AA")), registration = Some(testRegistration), amlsDetails = Some(AMLSDetails("supervisory", Left(PendingDetails(LocalDate.now()))))))
 
   "showCheckAnswers" should {
     behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showCheckAnswers(request))
@@ -66,7 +66,7 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       noMetricExpectedAtThisPoint()
     }
 
-    "show subscription answers page if user has not already subscribed and has clean creds and also cache the goBack url" in new TestSetupNoJourneyRecord {
+    "show subscription answers page if user has not already subscribed and has clean creds and also cache the goBack url" in new TestSetupWithCompleteJourneyRecord {
       implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
       sessionStoreService.currentSession.agentSession = agentSession
 
@@ -143,7 +143,7 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         AgentSubscriptionStub.subscriptionWillConflict(validUtr, subscriptionRequestWithNoEdit())
 
         implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
-        val agentSession = AgentSession(Some(BusinessType.SoleTrader), utr = Some(validUtr), postcode = Some(Postcode("AA1 2AA")), registration = Some(testRegistration.copy(isSubscribedToAgentServices = true)), amlsDetails = Some(amlsSDetails))
+        val agentSession = AgentSession(Some(BusinessType.SoleTrader), utr = Some(validUtr), postcode = Some(Postcode("AA1 2AA")), registration = Some(testRegistration.copy(isSubscribedToAgentServices = true)), amlsDetails = Some(amlsDetails))
 
         sessionStoreService.currentSession.agentSession = Some(agentSession)
 
@@ -163,7 +163,7 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
   "showSubscriptionComplete" should {
     trait RequestWithSessionDetails {
       val arn = "AARN0000001"
-      AuthStub.authenticatedAgent(arn)
+      AuthStub.authenticatedAgent(arn, "foo")
       implicit val request = FakeRequest()
       sessionStoreService.currentSession.agentSession = agentSession
 
@@ -473,7 +473,7 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
           countryCode = countryCode),
         email = "agency@example.com"
       ),
-      amlsDetails = Some(AMLSDetails("supervisory", Right(RegisteredDetails("123456789", LocalDate.now())))))
+      amlsDetails = Some(amlsDetails))
 
 
   protected def subscriptionRequestWithNoEdit() =
@@ -492,7 +492,7 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         ),
         email = testRegistration.emailAddress.get
       ),
-      amlsDetails = Some(amlsSDetails)
+      amlsDetails = Some(amlsDetails)
     )
 
   private def subscriptionDetailsRequest2(keyToRemove: String = "", additionalParameters: Seq[(String, String)] = Seq()) =
@@ -515,7 +515,7 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
           countryCode = "GB"),
         email = "agency2@example.com"
       ),
-      amlsDetails = Some(AMLSDetails("supervisory", Right(RegisteredDetails("123456789", LocalDate.now()))))
+      amlsDetails = Some(amlsDetails)
     )
 
   private def stubAddressLookupReturnedAddress(addressId: String, subscriptionRequest: SubscriptionRequest, unsupportedAddressLines: Seq[String] = Seq.empty) =

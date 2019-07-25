@@ -80,16 +80,27 @@ trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring
   /**
     * For a user logged in as a subscribed agent (finished journey)
     * */
-  def withSubscribedAgent[A](body: Arn => Future[Result])(
+  def withSubscribedAgent[A](body: (Arn, SubscriptionJourneyRecord) => Future[Result])(
     implicit request: Request[A],
     hc: HeaderCarrier,
     ec: ExecutionContext): Future[Result] =
     authorised(Enrolment("HMRC-AS-AGENT") and AuthProviders(GovernmentGateway))
-      .retrieve(authorisedEnrolments) { enrolments =>
-        body(
-          getEnrolmentValue(enrolments, "HMRC-AS-AGENT", "AgentReferenceNumber")
-            .map(Arn(_))
-            .getOrElse(throw InsufficientEnrolments("could not find the HMRC-AS-AGENT enrolment to continue")))
+      .retrieve(authorisedEnrolments and credentials) {
+        case enrolments ~ creds =>
+          creds match {
+            case Some(c) =>
+              subscriptionJourneyService.getJourneyRecord(AuthProviderId(c.providerId)).flatMap {
+              case Some(sjr) =>
+                body(
+                  getEnrolmentValue(enrolments, "HMRC-AS-AGENT", "AgentReferenceNumber")
+                    .map(Arn(_))
+                    .getOrElse(throw InsufficientEnrolments("could not find the HMRC-AS-AGENT enrolment to continue")),
+                  sjr
+                )
+              case None => throw new RuntimeException("subscription journey record expected")
+            }
+            case None => throw new UnsupportedCredentialRole("credentials expected but not found")
+          }
       }
       .recover {
         handleException
@@ -192,6 +203,10 @@ trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring
 
     case _: UnsupportedAuthProvider =>
       Logger.warn("User is not logged in via  GovernmentGateway, signing out and redirecting")
+      Redirect(routes.SignedOutController.signOut())
+
+    case _: UnsupportedCredentialRole =>
+      Logger.warn("User does not have the correct credentials")
       Redirect(routes.SignedOutController.signOut())
   }
 }

@@ -36,20 +36,22 @@ class AuthActionsSpec extends BaseISpec with MockitoSugar {
     override def subscriptionJourneyService: SubscriptionJourneyService = app.injector.instanceOf[SubscriptionJourneyService]
 
     def withSubscribedAgent[A]: Result =
-      await(super.withSubscribedAgent { arn => Future.successful(Ok(arn.value)) })
+      await(super.withSubscribedAgent { (arn, sjr) => Future.successful(Ok(arn.value)) })
 
     def withSubscribingOrSubscribedAgent[A]: Result = await(TestController.withSubscribingOrSubscribedAgent(
       _ => Future successful Ok("task list")))
 
     def storeCheckAnswersComplete: Future[Unit] =
       sessionStoreService.cacheAgentSession(AgentSession(taskListFlags = TaskListFlags(checkAnswersComplete = true)))
-
-
   }
 
   "withSubscribedAgent" should {
-    "call body with arn when valid agent" in {
-      authenticatedAgent("fooArn")
+    val providerId = AuthProviderId("12345-credId")
+
+    "call body with arn when valid agent" in new TestSetupNoJourneyRecord {
+      givenSubscriptionJourneyRecordExists(providerId,
+        TestData.minimalSubscriptionJourneyRecord(providerId))
+      authenticatedAgent("fooArn", "12345-credId")
 
       val result = TestController.withSubscribedAgent
 
@@ -57,7 +59,9 @@ class AuthActionsSpec extends BaseISpec with MockitoSugar {
       bodyOf(result) shouldBe "fooArn"
     }
 
-    "throw InsufficientEnrolments when agent not enrolled for service" in {
+    "throw InsufficientEnrolments when agent not enrolled for service" in new TestSetupNoJourneyRecord {
+      givenSubscriptionJourneyRecordExists(providerId,
+        TestData.minimalSubscriptionJourneyRecord(providerId))
       givenAuthorisedFor(
         "{}",
         s"""{
@@ -65,14 +69,17 @@ class AuthActionsSpec extends BaseISpec with MockitoSugar {
            |  { "key":"HMRC-MTD-IT", "identifiers": [
            |    { "key":"MTDITID", "value": "fooMtdItId" }
            |  ]}
-           |]}""".stripMargin
+           |],
+           |"optionalCredentials": {"providerId": "${providerId.id}", "providerType": "GovernmentGateway"}}""".stripMargin
       )
       an[InsufficientEnrolments] shouldBe thrownBy {
         TestController.withSubscribedAgent
       }
     }
 
-    "throw InsufficientEnrolments when expected agent's identifier missing" in {
+    "throw InsufficientEnrolments when expected agent's identifier missing" in new TestSetupNoJourneyRecord {
+      givenSubscriptionJourneyRecordExists(providerId,
+        TestData.minimalSubscriptionJourneyRecord(providerId))
       givenAuthorisedFor(
         "{}",
         s"""{
@@ -80,14 +87,15 @@ class AuthActionsSpec extends BaseISpec with MockitoSugar {
            |  { "key":"HMRC-AS-AGENT", "identifiers": [
            |    { "key":"BAR", "value": "fooArn" }
            |  ]}
-           |]}""".stripMargin
+           |],
+           |"optionalCredentials": {"providerId": "${providerId.id}", "providerType": "GovernmentGateway"}}""".stripMargin
       )
       an[InsufficientEnrolments] shouldBe thrownBy {
         TestController.withSubscribedAgent
       }
     }
 
-    "UnsupportedAuthProvider error should redirect user to start page" in {
+    "UnsupportedAuthProvider error should redirect user to start page" in new TestSetupNoJourneyRecord {
       userLoggedInViaUnsupportedAuthProvider()
       val result = TestController.withSubscribedAgent
 

@@ -75,7 +75,7 @@ object AuthStub {
     sessionKeysForMockAuth(user)
   }
 
-  def authenticatedAgent(arn: String): StubMapping = {
+  def authenticatedAgent(arn: String, providerId: String): StubMapping = {
     givenAuthorisedFor(
       s"""
          |{
@@ -83,7 +83,7 @@ object AuthStub {
          |    { "identifiers":[], "state":"Activated", "enrolment": "HMRC-AS-AGENT" },
          |    { "authProviders": ["GovernmentGateway"] }
          |  ],
-         |  "retrieve":["authorisedEnrolments"]
+         |  "retrieve":["authorisedEnrolments", "optionalCredentials"]
          |}
            """.stripMargin,
       s"""
@@ -92,7 +92,9 @@ object AuthStub {
          |  { "key":"HMRC-AS-AGENT", "identifiers": [
          |    {"key":"AgentReferenceNumber", "value": "$arn"}
          |  ]}
-         |]}
+         |],
+         |"optionalCredentials": {"providerId": "$providerId", "providerType": "GovernmentGateway"}
+         |}
           """.stripMargin
     )
   }

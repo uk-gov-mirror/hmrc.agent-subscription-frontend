@@ -17,7 +17,6 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.models
 
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
-import uk.gov.hmrc.domain.SimpleObjectReads
 import play.api.libs.json._
 
 case class Agency(name: String, address: DesAddress, email: String)

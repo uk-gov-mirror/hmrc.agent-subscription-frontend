@@ -79,10 +79,12 @@ POST        /check-answers                                 uk.gov.hmrc.agentsubs
 GET         /business-name                                 uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showBusinessNameForm
 POST        /business-name                                 uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.submitBusinessNameForm
 GET         /change-business-name                          uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.changeBusinessName
+POST        /change-business-name                          uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.submitChangeBusinessName
 
 GET         /business-email                                uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showBusinessEmailForm
 POST        /business-email                                uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.submitBusinessEmailForm
 GET         /change-business-email                         uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.changeBusinessEmail
+POST        /change-business-email                         uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.submitChangeBusinessEmail
 
 GET         /business-address                              uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showBusinessAddressForm
 

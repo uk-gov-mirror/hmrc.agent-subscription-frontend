@@ -24,6 +24,7 @@ import play.api.http.Status
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr, Vrn}
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentSubscriptionConnector
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
+import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.AmlsData
 import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.http.{HeaderCarrier, Upstream4xxResponse}
 
@@ -45,10 +46,10 @@ class SubscriptionService @Inject()(
 
   import SubscriptionDetails._
 
-  def subscribe(utr: Utr, postcode: Postcode, registration: Registration, amlsDetails: Option[AMLSDetails])(
+  def subscribe(utr: Utr, postcode: Postcode, registration: Registration, amlsData: Option[AmlsData])(
     implicit hc: HeaderCarrier,
     ec: ExecutionContext): Future[Either[SubscriptionReturnedHttpError, (Arn, String)]] = {
-    val subscriptionDetails = mapper(utr, postcode, registration, amlsDetails)
+    val subscriptionDetails = mapper(utr, postcode, registration, amlsData)
     subscribeAgencyToMtd(subscriptionDetails) map {
       case Right(arn) => Right((arn, subscriptionDetails.name))
       case Left(x)    => Left(SubscriptionReturnedHttpError(x))
@@ -71,7 +72,7 @@ class SubscriptionService @Inject()(
       subscriptionDetails.utr,
       SubscriptionRequestKnownFacts(subscriptionDetails.knownFactsPostcode),
       Agency(name = subscriptionDetails.name, email = subscriptionDetails.email, address = address),
-      subscriptionDetails.amlsDetails
+      AmlsData.amlsDataToDetails(subscriptionDetails.amlsData)
     )
 
     agentSubscriptionConnector.subscribeAgencyToMtd(request).map[Either[Int, Arn]] { arn =>

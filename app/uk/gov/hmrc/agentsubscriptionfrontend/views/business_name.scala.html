@@ -19,7 +19,7 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessName
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
 
-@(businessNameForm: Form[BusinessName], desErrorExists: Boolean = false)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+@(businessNameForm: Form[BusinessName], desErrorExists: Boolean = false, isChange: Boolean)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 @title = @{ if(desErrorExists) Messages("businessName.updated.title") else Messages("businessName.title") }
 
@@ -47,7 +47,7 @@
 
 
     @form(
-        action = routes.BusinessIdentificationController.submitBusinessNameForm(),
+        action = if(isChange) routes.BusinessIdentificationController.submitChangeBusinessName else routes.BusinessIdentificationController.submitBusinessNameForm(),
         'class -> "form js-form") {
 
         <div class="form-group">

@@ -33,7 +33,6 @@ import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidationResult.FailureReason._
 import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidationResult.{Failure, Pass}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
-import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.SubscriptionJourneyRecord
 import uk.gov.hmrc.agentsubscriptionfrontend.service._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TaxIdentifierFormatters
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
@@ -170,14 +169,14 @@ class BusinessIdentificationController @Inject()(
 
     }
 
-  def hasCleanCreds(agent: Agent)(uncleanCredsBody: => Future[Call])(cleanCredsBody: => Future[Call]) =
+  def hasCleanCreds(agent: Agent)(uncleanCredsBody: => Future[Call])(cleanCredsBody: => Future[Call]): Future[Call] =
     agent match {
       case hasNonEmptyEnrolments(_) => uncleanCredsBody
       case _                        => cleanCredsBody
     }
 
   def checkPartaillySubscribed(agent: Agent, existingSession: AgentSession)(
-    notPartiallySubscribedBody: => Future[Call])(implicit hc: HeaderCarrier) = {
+    notPartiallySubscribedBody: => Future[Call])(implicit hc: HeaderCarrier): Future[Call] = {
     val utr = existingSession.utr.getOrElse(Utr(""))
     val postcode = existingSession.postcode.getOrElse(Postcode(""))
     for {
@@ -216,19 +215,42 @@ class BusinessIdentificationController @Inject()(
             existingSession.registration
               .flatMap(_.emailAddress)
               .fold(businessEmailForm)(email => businessEmailForm.fill(BusinessEmail(email))),
-            hasInvalidEmail(existingSession.registration)
+            hasInvalidEmail(existingSession.registration), isChange = false
           ))
       }
     }
   }
 
   val changeBusinessEmail: Action[AnyContent] = Action.async { implicit request =>
-    withSubscribingAgent { _ =>
-      sessionStoreService
-        .cacheIsChangingAnswers(true)
-        .map(_ => Redirect(routes.BusinessIdentificationController.showBusinessEmailForm().url))
+    withSubscribingAgent { agent =>
+    val sjr = agent.getMandatorySubscriptionRecord
+      Ok(
+        html.business_email(
+          sjr.businessDetails.registration
+            .flatMap(_.emailAddress)
+            .fold(businessEmailForm)(email => businessEmailForm.fill(BusinessEmail(email))),
+          hasInvalidEmail(sjr.businessDetails.registration), isChange = true
+        ))
     }
   }
+
+  val submitChangeBusinessEmail: Action[AnyContent] = Action.async {implicit request =>
+    withSubscribingAgent { agent =>
+      val currentSjr = agent.getMandatorySubscriptionRecord
+      businessEmailForm
+        .bindFromRequest()
+        .fold(
+          formWithErrors => Ok(html.business_email(formWithErrors, hasInvalidEmail(currentSjr.businessDetails.registration), isChange = true)),
+          validForm => {
+            val updatedSjr = currentSjr.copy(businessDetails = currentSjr.businessDetails.copy(
+              registration = Some(currentSjr.businessDetails.registration.get.copy(emailAddress = Some(validForm.email)))))
+            for {
+              _               <- subscriptionJourneyService.saveJourneyRecord(updatedSjr)
+              goto <- Redirect(routes.SubscriptionController.showCheckAnswers())
+            }yield goto
+          })
+    }
+    }
 
   val submitBusinessEmailForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { agent =>
@@ -236,7 +258,7 @@ class BusinessIdentificationController @Inject()(
         businessEmailForm
           .bindFromRequest()
           .fold(
-            formWithErrors => Ok(html.business_email(formWithErrors, hasInvalidEmail(existingSession.registration))),
+            formWithErrors => Ok(html.business_email(formWithErrors, hasInvalidEmail(existingSession.registration), isChange = false)),
             validForm => {
               val updatedReg = existingSession.registration match {
                 case Some(registration) => registration.copy(emailAddress = Some(validForm.email))
@@ -257,19 +279,42 @@ class BusinessIdentificationController @Inject()(
         Ok(
           html.business_name(
             businessNameForm.fill(BusinessName(existingSession.registration.flatMap(_.taxpayerName).getOrElse(""))),
-            hasInvalidBusinessName(existingSession.registration)
+            hasInvalidBusinessName(existingSession.registration), isChange = false
           ))
       }
     }
   }
 
   val changeBusinessName: Action[AnyContent] = Action.async { implicit request =>
-    withSubscribingAgent { _ =>
-      sessionStoreService
-        .cacheIsChangingAnswers(true)
-        .map(_ => Redirect(routes.BusinessIdentificationController.showBusinessNameForm().url))
+    withSubscribingAgent { agent =>
+      val sjr = agent.getMandatorySubscriptionRecord
+      Ok(
+        html.business_name(
+          businessNameForm.fill(BusinessName(sjr.businessDetails.registration.flatMap(_.taxpayerName).getOrElse(""))),
+          hasInvalidBusinessName(sjr.businessDetails.registration), isChange = true
+        ))
     }
   }
+
+  val submitChangeBusinessName: Action[AnyContent] = Action.async {implicit request =>
+    withSubscribingAgent { agent =>
+      val currentSjr = agent.getMandatorySubscriptionRecord
+      businessNameForm
+        .bindFromRequest()
+        .fold(
+          formWithErrors =>
+            Ok(html.business_name(formWithErrors, hasInvalidBusinessName(currentSjr.businessDetails.registration), isChange = true)),
+          validForm => {
+            val updatedSjr = currentSjr.copy(businessDetails = currentSjr.businessDetails.copy(
+              registration = Some(currentSjr.businessDetails.registration.get.copy(taxpayerName = Some(validForm.name)))))
+
+            for {
+              _               <- subscriptionJourneyService.saveJourneyRecord(updatedSjr)
+              goto <- Redirect(routes.SubscriptionController.showCheckAnswers())
+            }yield goto
+          })
+          }
+          }
 
   val submitBusinessNameForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { agent =>
@@ -278,7 +323,7 @@ class BusinessIdentificationController @Inject()(
           .bindFromRequest()
           .fold(
             formWithErrors =>
-              Ok(html.business_name(formWithErrors, hasInvalidBusinessName(existingSession.registration))),
+              Ok(html.business_name(formWithErrors, hasInvalidBusinessName(existingSession.registration), false)),
             validForm => {
               val updatedReg = existingSession.registration match {
                 case Some(registration) => registration.copy(taxpayerName = Some(validForm.name))

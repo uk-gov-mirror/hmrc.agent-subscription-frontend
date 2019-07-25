@@ -36,6 +36,7 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 import play.api.libs.json._
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AMLSDetails, PendingDetails, RegisteredDetails}
 
 case class RegDetails(membershipNumber: String, membershipExpiresOn: LocalDate)
 
@@ -68,4 +69,17 @@ object AmlsData {
   }
 
   implicit val format: Format[AmlsData] = Json.format[AmlsData]
+
+  //TODO: convert backend to use AmlsData instead of AmlsDetails
+  def amlsDataToDetails(amlsData: Option[AmlsData]): Option[AMLSDetails] =
+    amlsData match {
+      case Some(AmlsData(_, _, Some(supervisoryBody), Some(pendingDetails), None)) =>
+        Some(AMLSDetails(supervisoryBody, Left(PendingDetails(pendingDetails.appliedOn))))
+      case Some(AmlsData(_, _, Some(supervisoryBody), None, Some(registeredDetails))) =>
+        Some(
+          AMLSDetails(
+            supervisoryBody,
+            Right(RegisteredDetails(registeredDetails.membershipNumber, registeredDetails.membershipExpiresOn))))
+      case _ => None
+    }
 }
