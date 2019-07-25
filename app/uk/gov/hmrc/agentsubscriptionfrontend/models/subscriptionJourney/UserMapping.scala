@@ -20,7 +20,19 @@ import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.AuthProviderId
 import uk.gov.hmrc.domain.AgentCode
 
-case class UserMapping(internalId: AuthProviderId, agentCodes: Seq[AgentCode] = Seq.empty, count: Int = 0)
+/**
+  * A single GG user (agent login) which is being consolidated into a new ASA account
+  *
+  * @param authProviderId identifies the GG user being mapped
+  * @param agentCodes the agent codes that this GG user has - part of auth details
+  * @param count the number of active client relationships - from EACD
+  * @param ggTag the user's label for this GG user, generally the last 4 digits of the GG ID
+  */
+case class UserMapping(
+  authProviderId: AuthProviderId,
+  agentCodes: Seq[AgentCode] = Seq.empty,
+  count: Int = 0,
+  ggTag: String)
 
 object UserMapping {
   implicit val format: OFormat[UserMapping] = Json.format
