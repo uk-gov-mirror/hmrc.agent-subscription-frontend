@@ -1,8 +1,10 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.support
+import java.time.LocalDate
+
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.{LimitedCompany, SoleTrader}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
-import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.{AmlsData, BusinessDetails, SubscriptionJourneyRecord}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.{AmlsData, BusinessDetails, RegDetails, SubscriptionJourneyRecord}
 import uk.gov.hmrc.domain.Nino
 
 object TestData {
@@ -15,7 +17,7 @@ object TestData {
   val invalidPostcode = "11AAAA"
   val blacklistedPostcode = "AB10 1ZT"
 
-  val utr = Utr("0123456789")
+  val utr = Utr("2000000000")
   val testPostcode = "AA1 1AA"
   val registrationName = "My Agency"
   val businessAddress =
@@ -54,5 +56,15 @@ object TestData {
       authProviderId,
       businessDetails = BusinessDetails(SoleTrader, validUtr, Postcode(validPostcode)),
       amlsData = Some(AmlsData.registeredUserNoDataEntered))
+
+  val completeJourneyRecord = SubscriptionJourneyRecord(AuthProviderId("12345-credId"),
+    None,
+    BusinessDetails(SoleTrader,
+      validUtr,
+      Postcode(validPostcode),
+      Some(Registration(Some(registrationName), true, true,
+        businessAddress,
+        Some("test@gmail.com")))), Some(AmlsData(true, Some(false), Some("supervisory"), None, Some(RegDetails("123456789", LocalDate.now().plusDays(10))))),
+    cleanCredsAuthProviderId = Some(id))
 
 }

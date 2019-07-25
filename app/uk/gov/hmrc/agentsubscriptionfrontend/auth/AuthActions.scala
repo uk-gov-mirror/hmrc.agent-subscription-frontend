@@ -90,15 +90,16 @@ trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring
           creds match {
             case Some(c) =>
               subscriptionJourneyService.getJourneyRecord(AuthProviderId(c.providerId)).flatMap {
-              case Some(sjr) =>
-                body(
-                  getEnrolmentValue(enrolments, "HMRC-AS-AGENT", "AgentReferenceNumber")
-                    .map(Arn(_))
-                    .getOrElse(throw InsufficientEnrolments("could not find the HMRC-AS-AGENT enrolment to continue")),
-                  sjr
-                )
-              case None => throw new RuntimeException("subscription journey record expected")
-            }
+                case Some(sjr) =>
+                  body(
+                    getEnrolmentValue(enrolments, "HMRC-AS-AGENT", "AgentReferenceNumber")
+                      .map(Arn(_))
+                      .getOrElse(
+                        throw InsufficientEnrolments("could not find the HMRC-AS-AGENT enrolment to continue")),
+                    sjr
+                  )
+                case None => throw new RuntimeException("subscription journey record expected")
+              }
             case None => throw new UnsupportedCredentialRole("credentials expected but not found")
           }
       }
