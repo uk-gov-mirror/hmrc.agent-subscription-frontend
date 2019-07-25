@@ -127,4 +127,29 @@ class TaskListControllerISpec extends BaseISpec {
       checkHtmlResultWithBodyText(result, appConfig.agentMappingFrontendStartUrl)
     }
   }
+
+  "savedProgress (GET /saved-progress)" should {
+  "contain page title and content" in {
+
+    implicit val request = FakeRequest()
+    val result = await(controller.savedProgress(backLink = None)(request))
+
+    status(result) shouldBe 200
+
+    result should containMessages(
+      "saved-progress.title",
+      "saved-progress.p1",
+      "saved-progress.p2",
+      "saved-progress.link",
+      "saved-progress.continue"
+    )
+
+    result should containSubstrings("To complete this form later, go to the",
+      "guidance page about creating an agent services account (open in a new window or tab)",
+    "on GOV.UK and sign in to this service again.")
+
+    result should containLink("saved-progress.continue",routes.TaskListController.showTaskList().url)
+    result should containLink("saved-progress.finish", routes.SignedOutController.signOut().url)
+  }
+  }
 }

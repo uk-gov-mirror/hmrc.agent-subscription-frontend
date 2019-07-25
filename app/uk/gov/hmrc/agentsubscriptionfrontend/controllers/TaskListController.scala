@@ -48,6 +48,9 @@ class TaskListController @Inject()(
         case None         => Future.successful(Redirect(routes.BusinessTypeController.showBusinessTypeForm()))
       }
     }
+  }
 
+  def savedProgress(backLink: Option[String] = None): Action[AnyContent] = Action { implicit request =>
+    Ok(html.saved_progress(backLink))
   }
 }

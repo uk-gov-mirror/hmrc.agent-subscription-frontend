@@ -1,0 +1,41 @@
+@*
+ * Copyright 2019 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
+@import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
+
+
+@(backLink: Option[String])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+
+@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title =  Messages("saved-progress.title"), bodyClasses = None) {
+
+
+    <div class="transaction-banner--complete">
+        <h1 class="transaction-banner__heading">@Messages("saved-progress.title")</h1>
+    </div>
+
+    <p class="margin-bottom-0">@Messages("saved-progress.p1")</p>
+        <p>@Messages("saved-progress.p2")</p>
+
+
+    <p>@Html(s"${Messages("saved-progress.p3",s"<a href='https://www.gov.uk/guidance/get-an-hmrc-agent-services-account'>${Messages("saved-progress.link")}</a>")}")</p>
+    <p>@Messages("saved-progress.p4")</p>
+    <p><a href="@backLink.getOrElse(routes.TaskListController.showTaskList())">@Messages("saved-progress.continue")</a></p>
+    <p><a href="@routes.SignedOutController.signOut()">@Messages("saved-progress.finish")</a></p>
+
+
+
+}

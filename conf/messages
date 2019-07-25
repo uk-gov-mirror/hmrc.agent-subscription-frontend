@@ -152,6 +152,17 @@ task-list.4.header=Copy across your existing client relationships
 task-list.4.copy=Copy across your existing Self Assessment and VAT clients to your new agent services account.
 task-list.completed=COMPLETED
 
+#Saved Progress
+saved-progress.title=Your progress has been saved for 30 days
+saved-progress.p1=What you need to do next
+saved-progress.p2=You need to come back and complete this form within 30 days.
+saved-progress.p3=To complete this form later, go to the {0} on GOV.UK and sign in to this service again.
+saved-progress.link=guidance page about creating an agent services account (open in a new window or tab)
+saved-progress.p4=You will need to sign in with the same Government Gateway user ID you used when you started filling out this form.
+saved-progress.continue=Continue where you left off
+saved-progress.finish=Finish and sign out
+
+
 #Check business type
 businessType.title=What type of business are you?
 businessType.option.sole-trader=Sole trader
