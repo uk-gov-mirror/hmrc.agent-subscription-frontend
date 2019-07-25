@@ -15,6 +15,7 @@ class BusinessTypeControllerISpec extends BaseISpec with SessionDataMissingSpec 
 
   lazy val controller: BusinessTypeController = app.injector.instanceOf[BusinessTypeController]
 
+
   "redirectToBusinessTypeForm" should {
     "redirect to the business type form page" in {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
@@ -28,16 +29,16 @@ class BusinessTypeControllerISpec extends BaseISpec with SessionDataMissingSpec 
   "showBusinessTypeForm (GET /business-type)" should {
     behave like anAgentAffinityGroupOnlyEndpoint(controller.showBusinessTypeForm(_))
 
-    behave like aPageTakingContinueUrlAndCachingInSessionStore(
-      controller.showBusinessTypeForm(_),
-      userIsAuthenticated(subscribingCleanAgentWithoutEnrolments))
+          behave like aPageTakingContinueUrlAndCachingInSessionStore(
+            controller.showBusinessTypeForm(_),
+            userIsAuthenticated(subscribingCleanAgentWithoutEnrolments))
 
-    "contain page titles and header content" in new TestSetupNoJourneyRecord {
-      val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
-      val result = await(controller.showBusinessTypeForm(request))
+          "contain page titles and header content" in new TestSetupNoJourneyRecord {
+            val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+            val result = await(controller.showBusinessTypeForm(request))
 
-      result should containMessages(
-        "businessType.title",
+            result should containMessages(
+              "businessType.title",
         "businessType.progressive.title",
         "businessType.progressive.content.p1")
     }

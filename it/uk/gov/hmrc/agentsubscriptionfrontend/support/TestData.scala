@@ -40,6 +40,10 @@ object TestData {
 
   val testRegistration = Registration(Some(registrationName), false, false, businessAddress, Some("test@gmail.com"))
 
+  val id = AuthProviderId("12345-credId")
+
+  val record = TestData.minimalSubscriptionJourneyRecord(id)
+
   def minimalSubscriptionJourneyRecord(authProviderId: AuthProviderId) =
     SubscriptionJourneyRecord(
       authProviderId,

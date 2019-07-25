@@ -16,9 +16,13 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.service
 
+import java.util.UUID
+
 import javax.inject.{Inject, Singleton}
+import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent._
+import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentSubscriptionConnector
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, AuthProviderId}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, AuthProviderId, ContinueId}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.{AmlsData, SubscriptionJourneyRecord}
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -27,6 +31,11 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class SubscriptionJourneyService @Inject()(agentSubscriptionConnector: AgentSubscriptionConnector)(
   implicit ec: ExecutionContext) {
+
+  def getMandatoryJourneyRecord(continueId: ContinueId)(implicit hc: HeaderCarrier): Future[SubscriptionJourneyRecord] =
+    for {
+      record <- agentSubscriptionConnector.getJourneyByContinueId(continueId)
+    } yield extractMandatoryRecord(record)
 
   def getJourneyRecord(internalId: AuthProviderId)(
     implicit hc: HeaderCarrier): Future[Option[SubscriptionJourneyRecord]] =
@@ -38,19 +47,25 @@ class SubscriptionJourneyService @Inject()(agentSubscriptionConnector: AgentSubs
     implicit hc: HeaderCarrier): Future[SubscriptionJourneyRecord] =
     for {
       record <- agentSubscriptionConnector.getJourneyById(internalId)
-    } yield
-      record match {
-        case Some(r) => r
-        case None    => throw new RuntimeException("Journey record expected")
-      }
+    } yield extractMandatoryRecord(record)
+
+  private def extractMandatoryRecord(record: Option[SubscriptionJourneyRecord]): SubscriptionJourneyRecord =
+    record match {
+      case Some(r) => r
+      case None    => throw new RuntimeException("Journey record expected")
+    }
 
   def saveJourneyRecord(subscriptionJourneyRecord: SubscriptionJourneyRecord)(
     implicit hc: HeaderCarrier): Future[Unit] =
     agentSubscriptionConnector.createOrUpdate(subscriptionJourneyRecord)
 
-  def saveJourneyRecord(agentSession: AgentSession, authProviderId: AuthProviderId)(
-    implicit hc: HeaderCarrier): Future[Unit] = {
-    val sjr = SubscriptionJourneyRecord.fromAgentSession(agentSession, authProviderId)
+  def createJourneyRecord(agentSession: AgentSession, agent: Agent)(implicit hc: HeaderCarrier): Future[Unit] = {
+    val cleanCredsAuthProviderIdOpt = agent match {
+      case hasNonEmptyEnrolments(_) => None
+      case _                        => Some(agent.authProviderId)
+    }
+    val sjr =
+      SubscriptionJourneyRecord.fromAgentSession(agentSession, agent.authProviderId, cleanCredsAuthProviderIdOpt)
     saveJourneyRecord(sjr)
   }
 }

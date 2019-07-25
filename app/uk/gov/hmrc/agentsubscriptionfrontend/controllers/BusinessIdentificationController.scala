@@ -165,7 +165,7 @@ class BusinessIdentificationController @Inject()(
       case _ =>
         checkPartaillySubscribed(agent, existingSession)(
           subscriptionJourneyService
-            .saveJourneyRecord(existingSession, agent.authProviderId)
+            .createJourneyRecord(existingSession, agent)
             .map(_ => routes.TaskListController.showTaskList()))
 
     }

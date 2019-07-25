@@ -22,7 +22,7 @@ import play.api.i18n.MessagesApi
 import play.api.mvc.{Action, AnyContent, Request, Result}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, Postcode, TaskListFlags}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, ContinueId, Postcode, TaskListFlags}
 import uk.gov.hmrc.agentsubscriptionfrontend.repository.ChainedSessionDetailsRepository
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService, SubscriptionService, SubscriptionState}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
@@ -71,22 +71,27 @@ class StartController @Inject()(
   }
 
   def returnAfterGGCredsCreated(id: Option[String] = None): Action[AnyContent] = Action.async { implicit request =>
-    continueUrlActions.withMaybeContinueUrlCached {
-      id match {
-        case Some(value) =>
-          chainedSessionDetailsRepository.findChainedSessionDetails(value).flatMap {
-            case Some(chainedSessionDetails) =>
-              chainedSessionDetailsRepository.delete(value).flatMap { _ =>
-                storeAgentSessionAndRedirect(chainedSessionDetails.agentSession)
-              }
+    withSubscribingAgent { agent =>
+      continueUrlActions.withMaybeContinueUrlCached {
+        id match {
+          case Some(continueId) =>
+            // sanity check - they just came back with a brand new Auth Id
+            require(agent.subscriptionJourneyRecord.isEmpty)
 
-            case None => Redirect(routes.TaskListController.showTaskList())
-          }
-        case None => Redirect(routes.TaskListController.showTaskList())
+            for {
+              record <- subscriptionJourneyService.getMandatoryJourneyRecord(ContinueId(continueId))
+              _ <- subscriptionJourneyService.saveJourneyRecord(
+                    record.copy(cleanCredsAuthProviderId = Some(agent.authProviderId)))
+            } yield Redirect(routes.TaskListController.showTaskList())
+
+          case None => Future.successful(Redirect(routes.TaskListController.showTaskList()))
+        }
       }
     }
   }
 
+  // TODO move out the code which handles partial subscription so it can be reused
+  // and then delete this!
   private def storeAgentSessionAndRedirect(
     agentSession: AgentSession)(implicit hc: HeaderCarrier, request: Request[_]): Future[Result] =
     sessionStoreService.cacheAgentSession(agentSession).flatMap { _ =>

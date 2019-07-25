@@ -135,7 +135,7 @@ class ConfirmBusinessISpec extends BaseISpec {
 
         val sjr = SubscriptionJourneyRecord.fromAgentSession(agentSession, AuthProviderId("12345-credId"))
 
-        givenSubscriptionRecordCreated(AuthProviderId("12345-credId"), sjr)
+        givenSubscriptionRecordCreated(AuthProviderId("12345-credId"), sjr.copy(continueId = None))
 
         givenAgentIsNotManuallyAssured(utr.value)
         implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
@@ -148,8 +148,7 @@ class ConfirmBusinessISpec extends BaseISpec {
       }
 
       "redirect to task list if user has clean creds " +
-      "and isSubscribedToAgentServices=false and no continueUrl and is a MAA" in new TestSetupNoJourneyRecord {
-
+      "and isSubscribedToAgentServices=false and is a MAA" in new TestSetupNoJourneyRecord {
         val agentSession = AgentSession(
           Some(BusinessType.SoleTrader),
           utr = Some(utr),
@@ -158,7 +157,7 @@ class ConfirmBusinessISpec extends BaseISpec {
         )
 
         val sjr = SubscriptionJourneyRecord.fromAgentSession(agentSession, AuthProviderId("12345-credId"))
-        givenSubscriptionRecordCreated(AuthProviderId("12345-credId"), sjr)
+        givenSubscriptionRecordCreated(AuthProviderId("12345-credId"), sjr.copy(continueId = None))
         givenAgentIsManuallyAssured(utr.value)
         implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
           .withFormUrlEncodedBody("confirmBusiness" -> "yes")
@@ -168,7 +167,6 @@ class ConfirmBusinessISpec extends BaseISpec {
         val result = await(controller.submitConfirmBusinessForm(request))
 
         result.header.headers(LOCATION) shouldBe routes.TaskListController.showTaskList().url
-
       }
       "redirect to subscription complete if user is partially subscribed with clean creds and there is no continue url" in new TestSetupNoJourneyRecord {
         givenAgentIsNotManuallyAssured(utr.value)

@@ -30,7 +30,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub.{givenAgentIsManuallyAssured, givenAgentIsNotManuallyAssured}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub.{givenNoSubscriptionJourneyRecordExists, givenSubscriptionJourneyRecordExists, givenSubscriptionRecordCreated}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.{subscribingAgentEnrolledForNonMTD, subscribingCleanAgentWithoutEnrolments}
-import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData.{validPostcode, validUtr}
+import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestData, TestSetupNoJourneyRecord}
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -48,9 +48,6 @@ class AMLSControllerISpec extends BaseISpec with SessionDataMissingSpec {
       Some("AddressLine4 A"),
       Some("AA11AA"),
       "GB")
-
-  private val id = AuthProviderId("12345-credId")
-  private val record = TestData.minimalSubscriptionJourneyRecord(id)
 
   trait Setup {
     implicit val authenticatedRequest: FakeRequest[AnyContentAsEmpty.type] = authenticatedAs(

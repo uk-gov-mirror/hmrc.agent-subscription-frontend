@@ -52,7 +52,8 @@ class TaskListService @Inject()(agentAssuranceConnector: AgentAssuranceConnector
     }
 
   private def isCreateTaskComplete(subscriptionJourneyRecord: SubscriptionJourneyRecord): Boolean =
-    subscriptionJourneyRecord.cleanCredsInternalId.fold(false)(_ => true)
+    subscriptionJourneyRecord.cleanCredsAuthProviderId.fold(false)(_ => true) && isAmlsTaskComplete(
+      subscriptionJourneyRecord)
 
   private def isCheckAnswersComplete(subscriptionJourneyRecord: SubscriptionJourneyRecord): Boolean =
     subscriptionJourneyRecord.subscriptionCreated

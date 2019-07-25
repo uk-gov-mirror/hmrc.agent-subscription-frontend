@@ -77,10 +77,11 @@ class AgentSubscriptionConnector @Inject()(
       http.GET[Option[SubscriptionJourneyRecord]](url.toString)
     }
 
-  def getJourneyByContinueId(uuid: String)(implicit hc: HeaderCarrier): Future[Option[SubscriptionJourneyRecord]] =
+  def getJourneyByContinueId(continueId: ContinueId)(
+    implicit hc: HeaderCarrier): Future[Option[SubscriptionJourneyRecord]] =
     monitor(s"ConsumedAPI-Agent-Subscription-getJourneyByContinueId-GET") {
       val url =
-        new URL(baseUrl, s"/agent-subscription/subscription/journey/continueId/${encodePathSegment(uuid.toString)}")
+        new URL(baseUrl, s"/agent-subscription/subscription/journey/continueId/${encodePathSegment(continueId.value)}")
       http.GET[Option[SubscriptionJourneyRecord]](url.toString)
     }
 

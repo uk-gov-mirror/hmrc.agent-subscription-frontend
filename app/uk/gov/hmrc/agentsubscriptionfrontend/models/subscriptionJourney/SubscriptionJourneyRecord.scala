@@ -17,9 +17,11 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney
 
 import java.time.LocalDateTime
+import java.util.UUID
 
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{JsPath, OFormat}
+import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, AuthProviderId}
 
 /**
@@ -34,7 +36,7 @@ final case class SubscriptionJourneyRecord(
   amlsData: Option[AmlsData] = None,
   userMappings: List[UserMapping] = List.empty,
   mappingComplete: Boolean = false,
-  cleanCredsInternalId: Option[AuthProviderId] = None,
+  cleanCredsAuthProviderId: Option[AuthProviderId] = None,
   subscriptionCreated: Boolean = false,
   lastModifiedDate: Option[LocalDateTime] = None)
 
@@ -49,15 +51,18 @@ object SubscriptionJourneyRecord {
       (JsPath \ "amlsData").formatNullable[AmlsData] and
       (JsPath \ "userMappings").format[List[UserMapping]] and
       (JsPath \ "mappingComplete").format[Boolean] and
-      (JsPath \ "cleanCredsInternalId").formatNullable[AuthProviderId] and
+      (JsPath \ "cleanCredsAuthProviderId").formatNullable[AuthProviderId] and
       (JsPath \ "subscriptionCreated").format[Boolean] and
       (JsPath \ "lastModifiedDate")
         .formatNullable[LocalDateTime])(SubscriptionJourneyRecord.apply, unlift(SubscriptionJourneyRecord.unapply))
 
-  def fromAgentSession(agentSession: AgentSession, authProviderId: AuthProviderId): SubscriptionJourneyRecord =
+  def fromAgentSession(
+    agentSession: AgentSession,
+    authProviderId: AuthProviderId,
+    cleanCredsAuthProviderId: Option[AuthProviderId] = None): SubscriptionJourneyRecord =
     SubscriptionJourneyRecord(
       authProviderId = authProviderId,
-      continueId = None,
+      continueId = Some(UUID.randomUUID().toString.replace("-", "")),
       businessDetails = BusinessDetails(
         businessType =
           agentSession.businessType.getOrElse(throw new RuntimeException("no business type found in agent session")),
@@ -67,7 +72,7 @@ object SubscriptionJourneyRecord {
         nino = agentSession.nino,
         companyRegistrationNumber = agentSession.companyRegistrationNumber,
         dateOfBirth = agentSession.dateOfBirth
-      )
+      ),
+      cleanCredsAuthProviderId = cleanCredsAuthProviderId
     )
-
 }

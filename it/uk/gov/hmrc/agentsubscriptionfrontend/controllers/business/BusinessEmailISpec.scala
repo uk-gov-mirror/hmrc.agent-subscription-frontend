@@ -10,7 +10,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.subscribingClean
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData.{validUtr, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub._
-import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub.givenNoSubscriptionJourneyRecordExists
+import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent
 import uk.gov.hmrc.play.binders.ContinueUrl
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -81,6 +81,7 @@ class BusinessEmailISpec extends BaseISpec {
 
       val sjr = SubscriptionJourneyRecord.fromAgentSession(agentSession, AuthProviderId("12345-credId"))
       val newsjr = sjr.copy(
+        continueId = None,
         businessDetails = sjr.businessDetails.copy(
           registration = Some(testRegistration.copy(emailAddress = Some("newagent@example.com")))))
 

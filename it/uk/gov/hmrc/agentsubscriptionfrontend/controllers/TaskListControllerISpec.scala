@@ -114,11 +114,12 @@ class TaskListControllerISpec extends BaseISpec {
       "<a href=/agent-subscription/create-new-account>Create your user ID for your agent services account</a>")
     }
 
-    "contain a url to the mapping journey when user has completed all other tasks" ignore {
+    "contain a url to the mapping journey when user has completed all other tasks" in {
+      givenAgentIsNotManuallyAssured(validUtr.value)
+      givenSubscriptionJourneyRecordExists(AuthProviderId("12345-credId"),
+        TestData.minimalSubscriptionJourneyRecord(AuthProviderId("12345-credId")).copy(subscriptionCreated = true))
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
-
-      // TODO implement final checked your answers task flag
 
       val result = await(controller.showTaskList(request))
       status(result) shouldBe 200

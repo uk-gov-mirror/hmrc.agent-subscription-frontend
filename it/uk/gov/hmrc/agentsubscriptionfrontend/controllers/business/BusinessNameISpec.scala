@@ -11,6 +11,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData.{validUtr, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub._
 import uk.gov.hmrc.play.binders.ContinueUrl
+import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent
 
 class BusinessNameISpec extends BaseISpec {
 
@@ -79,6 +80,7 @@ class BusinessNameISpec extends BaseISpec {
         postcode = Some(Postcode("AA1 1AA")))
       val sjr = SubscriptionJourneyRecord.fromAgentSession(agentSession, AuthProviderId("12345-credId"))
       val newSjr = sjr.copy(
+        continueId = None,
         businessDetails = sjr.businessDetails.copy(
           registration = Some(testRegistration.copy(taxpayerName = Some("new Agent name")))
         )
