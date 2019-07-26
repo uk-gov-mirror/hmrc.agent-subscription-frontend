@@ -76,6 +76,8 @@ class AMLSControllerISpec extends BaseISpec {
         "button.yes",
         "button.no"
       )
+      result should containSubmitButton("button.saveContinue","check-amls-continue")
+      result should containSubmitButton("button.saveComeBackLater","check-amls-save")
     }
 
     "pre-populate radio button on page when it is present in the BE store" in new Setup {
@@ -101,28 +103,37 @@ class AMLSControllerISpec extends BaseISpec {
   "POST /check-money-laundering-compliance" should {
     behave like anAgentAffinityGroupOnlyEndpoint(controller.submitAmlsRegistered(_))
 
-    "redirect to /money-laundering-compliance when user selects yes" in new Setup {
+    "redirect to /money-laundering-compliance when user selects yes and continues" in new Setup {
       givenSubscriptionRecordCreated(id, record.copy(amlsData = Some(AmlsData.registeredUserNoDataEntered)))
 
       val result =
-        await(controller.submitAmlsRegistered(authenticatedRequest.withFormUrlEncodedBody("registeredAmls" -> "yes")))
+        await(controller.submitAmlsRegistered(authenticatedRequest.withFormUrlEncodedBody("registeredAmls" -> "yes", "continue" -> "continue")))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.AMLSController.showAmlsDetailsForm().url)
     }
+    "redirect to /progress-saved when user selects yes and save and come back later" in new Setup {
+      givenSubscriptionRecordCreated(id, record.copy(amlsData = Some(AmlsData.registeredUserNoDataEntered)))
 
-    "redirect to /check-money-laundering-application when user selects no" in new Setup {
+      val result =
+        await(controller.submitAmlsRegistered(authenticatedRequest.withFormUrlEncodedBody("registeredAmls" -> "yes", "continue" -> "save")))
+
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.TaskListController.savedProgress(Some(routes.AMLSController.showAmlsRegisteredPage().url)).url)
+    }
+
+    "redirect to /check-money-laundering-application when user selects no and continues" in new Setup {
       givenSubscriptionRecordCreated(id, record.copy(amlsData = Some(AmlsData.nonRegisteredUserNoDataEntered)))
 
       val result =
-        await(controller.submitAmlsRegistered(authenticatedRequest.withFormUrlEncodedBody("registeredAmls" -> "no")))
+        await(controller.submitAmlsRegistered(authenticatedRequest.withFormUrlEncodedBody("registeredAmls" -> "no", "continue" -> "continue")))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.AMLSController.showCheckAmlsAlreadyAppliedForm().url)
     }
 
     "redirect to /money-laundering-compliance page and clear amls data in store when field is pre-populated with no " +
-      "but user changes answer to yes" in new Setup {
+      "but user changes answer to yes and continues" in new Setup {
       val completeAmlsData = AmlsData(
         false,
         None,
@@ -136,13 +147,34 @@ class AMLSControllerISpec extends BaseISpec {
         record.copy(amlsData = Some(AmlsData(amlsRegistered = true, None, None, None, None))))
 
       val result =
-        await(controller.submitAmlsRegistered(authenticatedRequest.withFormUrlEncodedBody("registeredAmls" -> "yes")))
+        await(controller.submitAmlsRegistered(authenticatedRequest.withFormUrlEncodedBody("registeredAmls" -> "yes", "continue" -> "continue")))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.AMLSController.showAmlsDetailsForm().url)
     }
 
-    "redirect to /money-laundering-compliance page and clear amls data in store when user submits pre-populated field" in new Setup {
+    "redirect to /progress-saved page and clear amls data in store when field is pre-populated with no " +
+      "but user changes answer to yes and saves" in new Setup {
+      val completeAmlsData = AmlsData(
+        false,
+        None,
+        Some("Insolvency Practitioners Association (IPA)"),
+        None,
+        Some(RegDetails("123456789", LocalDate.now())))
+
+      givenSubscriptionJourneyRecordExists(id, record.copy(amlsData = Some(completeAmlsData)))
+      givenSubscriptionRecordCreated(
+        id,
+        record.copy(amlsData = Some(AmlsData(amlsRegistered = true, None, None, None, None))))
+
+      val result =
+        await(controller.submitAmlsRegistered(authenticatedRequest.withFormUrlEncodedBody("registeredAmls" -> "yes", "continue" -> "save")))
+
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.TaskListController.savedProgress(Some(routes.AMLSController.showAmlsRegisteredPage().url)).url)
+    }
+
+    "redirect to /money-laundering-compliance page and clear amls data in store when user submits pre-populated field and continues" in new Setup {
       val completeAmlsData = AmlsData(
         true,
         None,
@@ -154,7 +186,7 @@ class AMLSControllerISpec extends BaseISpec {
       givenSubscriptionRecordCreated(id, record.copy(amlsData = Some(completeAmlsData)))
 
       val result =
-        await(controller.submitAmlsRegistered(authenticatedRequest.withFormUrlEncodedBody("registeredAmls" -> "yes")))
+        await(controller.submitAmlsRegistered(authenticatedRequest.withFormUrlEncodedBody("registeredAmls" -> "yes", "continue" -> "continue")))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.AMLSController.showAmlsDetailsForm().url)
@@ -202,6 +234,9 @@ class AMLSControllerISpec extends BaseISpec {
         "button.yes",
         "button.no"
       )
+
+      result should containSubmitButton("button.saveContinue","amls-applied-for-continue")
+      result should containSubmitButton("button.saveComeBackLater","amls-applied-for-save")
     }
 
     "pre-populate radio button field when it exists in BE store" in new Setup {
@@ -224,7 +259,7 @@ class AMLSControllerISpec extends BaseISpec {
   "POST /check-money-laundering-application" should {
     behave like anAgentAffinityGroupOnlyEndpoint(controller.submitCheckAmlsAlreadyAppliedForm(_))
 
-    "redirect to /money-laundering-application-details when user selects yes" in new Setup {
+    "redirect to /money-laundering-application-details when user selects yes and continues" in new Setup {
       givenSubscriptionJourneyRecordExists(id, TestData.minimalSubscriptionJourneyRecordWithAmls(id))
       givenSubscriptionRecordCreated(
         id,
@@ -232,13 +267,27 @@ class AMLSControllerISpec extends BaseISpec {
 
       val result = await(
         controller.submitCheckAmlsAlreadyAppliedForm(
-          authenticatedRequest.withFormUrlEncodedBody("amlsAppliedFor" -> "yes")))
+          authenticatedRequest.withFormUrlEncodedBody("amlsAppliedFor" -> "yes", "continue" -> "continue")))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.AMLSController.showAmlsApplicationDatePage().url)
     }
 
-    "redirect to /money-laundering-compliance-incomplete when user selects no" in new Setup {
+    "redirect to /progress-saved when user selects yes and saves" in new Setup {
+      givenSubscriptionJourneyRecordExists(id, TestData.minimalSubscriptionJourneyRecordWithAmls(id))
+      givenSubscriptionRecordCreated(
+        id,
+        record.copy(amlsData = Some(AmlsData.registeredUserNoDataEntered.copy(amlsAppliedFor = Some(true)))))
+
+      val result = await(
+        controller.submitCheckAmlsAlreadyAppliedForm(
+          authenticatedRequest.withFormUrlEncodedBody("amlsAppliedFor" -> "yes", "continue" -> "save")))
+
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.TaskListController.savedProgress(Some(routes.AMLSController.showCheckAmlsAlreadyAppliedForm().url)).url)
+    }
+
+    "redirect to /money-laundering-compliance-incomplete when user selects no and continues" in new Setup {
       givenSubscriptionJourneyRecordExists(id, TestData.minimalSubscriptionJourneyRecordWithAmls(id))
       givenSubscriptionRecordCreated(
         id,
@@ -246,10 +295,24 @@ class AMLSControllerISpec extends BaseISpec {
 
       val result = await(
         controller.submitCheckAmlsAlreadyAppliedForm(
-          authenticatedRequest.withFormUrlEncodedBody("amlsAppliedFor" -> "no")))
+          authenticatedRequest.withFormUrlEncodedBody("amlsAppliedFor" -> "no", "continue" -> "continue")))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.AMLSController.showAmlsNotAppliedPage().url)
+    }
+
+    "redirect to /progress-saved when user selects no and saves" in new Setup {
+      givenSubscriptionJourneyRecordExists(id, TestData.minimalSubscriptionJourneyRecordWithAmls(id))
+      givenSubscriptionRecordCreated(
+        id,
+        record.copy(amlsData = Some(AmlsData.registeredUserNoDataEntered.copy(amlsAppliedFor = Some(false)))))
+
+      val result = await(
+        controller.submitCheckAmlsAlreadyAppliedForm(
+          authenticatedRequest.withFormUrlEncodedBody("amlsAppliedFor" -> "no", "continue" -> "save")))
+
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.TaskListController.savedProgress(Some(routes.AMLSController.showCheckAmlsAlreadyAppliedForm().url)).url)
     }
 
     "throw a RuntimeException when there is no AMLS data found" in new Setup {
@@ -297,7 +360,7 @@ class AMLSControllerISpec extends BaseISpec {
 
     behave like anAgentAffinityGroupOnlyEndpoint(controller.showAmlsDetailsForm(_))
 
-    "contain page titles and header content" in new Setup {
+    "contain page titles and content" in new Setup {
       givenSubscriptionJourneyRecordExists(id, TestData.minimalSubscriptionJourneyRecordWithAmls(id))
 
       val result = await(controller.showAmlsDetailsForm(authenticatedRequest))
@@ -306,6 +369,9 @@ class AMLSControllerISpec extends BaseISpec {
         "moneyLaunderingCompliance.title",
         "moneyLaunderingCompliance.p1"
       )
+
+      result should containSubmitButton("button.saveContinue","amls-details-continue")
+      result should containSubmitButton("button.saveComeBackLater","amls-details-save")
     }
 
     "ask for a money laundering supervisory body name from a list of acceptable values" in new Setup {
@@ -358,14 +424,19 @@ class AMLSControllerISpec extends BaseISpec {
       result should containInputElement("expiry.year", "tel")
     }
 
-    "contain a continue button" in new Setup {
+    "contain continue and save buttons" in new Setup {
       givenSubscriptionJourneyRecordExists(id, TestData.minimalSubscriptionJourneyRecordWithAmls(id))
 
       val result = await(controller.showAmlsDetailsForm(authenticatedRequest))
 
       result should containSubmitButton(
-        expectedMessageKey = "moneyLaunderingCompliance.continue",
-        expectedElementId = "continue"
+        expectedMessageKey = "button.saveContinue",
+        expectedElementId = "amls-details-continue"
+      )
+
+      result should containSubmitButton(
+        expectedMessageKey = "button.saveComeBackLater",
+        expectedElementId = "amls-details-save"
       )
     }
 
@@ -442,7 +513,8 @@ class AMLSControllerISpec extends BaseISpec {
         "membershipNumber" -> "12345",
         "expiry.day"       -> expiryDay,
         "expiry.month"     -> expiryMonth,
-        "expiry.year"      -> expiryYear)
+        "expiry.year"      -> expiryYear,
+      "continue" -> "continue")
 
       sessionStoreService.currentSession.changingAnswers = Some(false)
 
@@ -466,7 +538,8 @@ class AMLSControllerISpec extends BaseISpec {
         "membershipNumber" -> "12345",
         "expiry.day"       -> expiryDay,
         "expiry.month"     -> expiryMonth,
-        "expiry.year"      -> expiryYear)
+        "expiry.year"      -> expiryYear,
+      "continue" -> "continue")
 
       sessionStoreService.currentSession.changingAnswers = Some(true)
 
@@ -675,6 +748,9 @@ class AMLSControllerISpec extends BaseISpec {
         "amls.pending.appliedOn.title",
         "amls.pending.appliedOn.title"
       )
+
+      result should containSubmitButton("button.saveContinue","amls-pending-continue")
+      result should containSubmitButton("button.saveComeBackLater","amls-pending-save")
     }
   }
 
@@ -699,7 +775,8 @@ class AMLSControllerISpec extends BaseISpec {
         "amlsCode"        -> "AAT",
         "appliedOn.day"   -> day,
         "appliedOn.month" -> month,
-        "appliedOn.year"  -> year)
+        "appliedOn.year"  -> year,
+      "continue" -> "continue")
 
       sessionStoreService.currentSession.changingAnswers = Some(false)
 
@@ -722,7 +799,8 @@ class AMLSControllerISpec extends BaseISpec {
         "amlsCode"        -> "AAT",
         "appliedOn.day"   -> day,
         "appliedOn.month" -> month,
-        "appliedOn.year"  -> year)
+        "appliedOn.year"  -> year,
+      "continue" -> "continue")
 
       sessionStoreService.currentSession.changingAnswers = Some(true)
 

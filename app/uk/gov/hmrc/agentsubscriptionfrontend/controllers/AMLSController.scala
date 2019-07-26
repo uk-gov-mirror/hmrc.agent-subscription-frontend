@@ -18,6 +18,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
+import play.api.Logger
 import play.api.i18n.MessagesApi
 import play.api.mvc.{AnyContent, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent
@@ -83,10 +84,10 @@ class AMLSController @Inject()(
           .fold(
             formWithErrors => Ok(html.amls.check_amls(formWithErrors)),
             validForm => {
-              val nextPage: Result = validForm match {
+              val continue: Call = validForm match {
                 case Yes =>
-                  Redirect(routes.AMLSController.showAmlsDetailsForm())
-                case No => Redirect(routes.AMLSController.showCheckAmlsAlreadyAppliedForm())
+                  routes.AMLSController.showAmlsDetailsForm()
+                case No => routes.AMLSController.showCheckAmlsAlreadyAppliedForm()
               }
               val cleanAmlsData = AmlsData(
                 amlsRegistered = RadioInputAnswer.toBoolean(validForm),
@@ -102,8 +103,9 @@ class AMLSController @Inject()(
                     else Some(cleanAmlsData)
                   }
                 },
-                nextPage,
                 maybeCreateNewAmlsData = Some(cleanAmlsData)
+              ).map(
+                _ => Redirect(continueOrStop(continue, routes.AMLSController.showAmlsRegisteredPage()))
               )
             }
           )
@@ -131,14 +133,15 @@ class AMLSController @Inject()(
         appliedForAmlsForm.bindFromRequest.fold(
           formWithErrors => Ok(amls_applied_for(formWithErrors)),
           validForm => {
-            val nextPage = validForm match {
-              case Yes => Redirect(routes.AMLSController.showAmlsApplicationDatePage())
-              case No  => Redirect(routes.AMLSController.showAmlsNotAppliedPage())
+            val continue = validForm match {
+              case Yes => routes.AMLSController.showAmlsApplicationDatePage()
+              case No  => routes.AMLSController.showAmlsNotAppliedPage()
             }
             updateAmlsJourneyRecord(
               agent,
-              amlsData => Some(amlsData.copy(amlsAppliedFor = Some(RadioInputAnswer.toBoolean(validForm)))),
-              nextPage)
+              amlsData => Some(amlsData.copy(amlsAppliedFor = Some(RadioInputAnswer.toBoolean(validForm))))).map(
+              _ => Redirect(continueOrStop(continue, routes.AMLSController.showCheckAmlsAlreadyAppliedForm()))
+            )
           }
         )
       }
@@ -183,15 +186,16 @@ class AMLSController @Inject()(
               validForm => {
                 val supervisoryBodyData =
                   amlsBodies.getOrElse(validForm.amlsCode, throw new Exception("Invalid AMLS code"))
+                val continue = toTaskListOrCheckYourAnswers(isChanging)
                 updateAmlsJourneyRecord(
                   agent,
                   amlsData =>
                     Some(
                       amlsData.copy(
                         supervisoryBody = Some(supervisoryBodyData),
-                        registeredDetails = Some(RegDetails(validForm.membershipNumber, validForm.expiry)))),
-                  if (isChanging.getOrElse(false)) Redirect(routes.SubscriptionController.showCheckAnswers())
-                  else Redirect(routes.TaskListController.showTaskList())
+                        registeredDetails = Some(RegDetails(validForm.membershipNumber, validForm.expiry))))
+                ).map(
+                  _ => Redirect(continueOrStop(continue, routes.AMLSController.showAmlsDetailsForm()))
                 )
               }
             )
@@ -250,15 +254,16 @@ class AMLSController @Inject()(
                 val supervisoryBodyData =
                   amlsBodies.getOrElse(validForm.amlsCode, throw new Exception("Invalid AMLS code"))
 
+                val continue = toTaskListOrCheckYourAnswers(isChanging)
                 updateAmlsJourneyRecord(
                   agent,
                   amlsData =>
                     Some(
                       amlsData.copy(
                         supervisoryBody = Some(supervisoryBodyData),
-                        pendingDetails = Some(PendingDate(validForm.appliedOn)))),
-                  if (isChanging.getOrElse(false)) Redirect(routes.SubscriptionController.showCheckAnswers())
-                  else Redirect(routes.TaskListController.showTaskList())
+                        pendingDetails = Some(PendingDate(validForm.appliedOn))))
+                ).map(
+                  _ => Redirect(continueOrStop(continue, routes.AMLSController.showAmlsApplicationDatePage()))
                 )
               }
             )
@@ -266,6 +271,22 @@ class AMLSController @Inject()(
       }
     }
   }
+
+  private def continueOrStop(next: Call, previous: Call)(implicit request: Request[AnyContent]): Call = {
+    val call = request.body.asFormUrlEncoded.get("continue").headOption match {
+      case Some("continue") => next
+      case Some("save")     => routes.TaskListController.savedProgress(Some(previous.url))
+      case _ => {
+        Logger.warn("unexpected value in submit")
+        routes.TaskListController.showTaskList()
+      }
+    }
+    call
+  }
+
+  private def toTaskListOrCheckYourAnswers(isChanging: Option[Boolean]) =
+    if (isChanging.getOrElse(false)) routes.SubscriptionController.showCheckAnswers()
+    else routes.TaskListController.showTaskList()
 
   private def withManuallyAssuredAgent(agent: Agent)(body: => Future[Result])(
     implicit hc: HeaderCarrier): Future[Result] = {
@@ -279,8 +300,7 @@ class AMLSController @Inject()(
   private def updateAmlsJourneyRecord(
     agent: Agent,
     updateExistingAmlsData: AmlsData => Option[AmlsData],
-    nextPage: Result,
-    maybeCreateNewAmlsData: Option[AmlsData] = None)(implicit hc: HeaderCarrier): Future[Result] =
+    maybeCreateNewAmlsData: Option[AmlsData] = None)(implicit hc: HeaderCarrier): Future[Unit] =
     for {
       record <- agent.getMandatorySubscriptionRecord
       updatedRecord <- {
@@ -292,7 +312,6 @@ class AMLSController @Inject()(
         }
         record.copy(amlsData = newAmlsData)
       }
-      _        <- subscriptionJourneyService.saveJourneyRecord(updatedRecord)
-      gotoPage <- nextPage
-    } yield gotoPage
+      _ <- subscriptionJourneyService.saveJourneyRecord(updatedRecord)
+    } yield ()
 }

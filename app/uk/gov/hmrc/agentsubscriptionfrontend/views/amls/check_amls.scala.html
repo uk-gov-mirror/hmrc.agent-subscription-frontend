@@ -50,7 +50,8 @@ action = routes.AMLSController.submitAmlsRegistered(), 'class -> "form js-form")
 </div>
 
 <div class="form-field">
-    <button class="button" type="submit" id="submit-check-amls">@Messages("button.continue")</button>
+    <button class="button margin-right-5" type="submit" id="check-amls-continue" name="continue" value="continue">@Messages("button.saveContinue")</button>
+    <button class="button--secondary" type="submit" id="check-amls-save" name="continue" value="save">@Messages("button.saveComeBackLater")</button>
 </div>
 }
 }

@@ -312,6 +312,8 @@ subscriptionComplete.button.continueJourney=Continue
 #Common
 button.startAgain=Try again
 button.continue=Continue
+button.saveContinue=Save and continue
+button.saveComeBackLater=Save and come back later
 button.yes=Yes
 button.no=No
 button.createAccount=Create account
