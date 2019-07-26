@@ -8,8 +8,6 @@ import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{contentType, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{AMLSDetails, _}
-import uk.gov.hmrc.agentsubscriptionfrontend.repository.ChainedSessionDetailsRepository
-import uk.gov.hmrc.agentsubscriptionfrontend.repository.StashedChainedSessionDetails.StashedChainnedSessionId
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.{AgentSubscriptionStub, AuthStub}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.{individual, subscribingAgentEnrolledForNonMTD}
@@ -24,7 +22,6 @@ trait StartControllerISpec extends BaseISpec {
 
   protected lazy val controller: StartController = app.injector.instanceOf[StartController]
   protected lazy val configuredGovernmentGatewayUrl = "http://configured-government-gateway.gov.uk/"
-  protected lazy val repo = app.injector.instanceOf[ChainedSessionDetailsRepository]
 
   private val id = AuthProviderId("12345-credId")
   private val continueId = ContinueId("foobar")
@@ -38,24 +35,17 @@ trait StartControllerISpec extends BaseISpec {
     val amlsSDetails = AMLSDetails("supervisory", Right(RegisteredDetails("123456789", LocalDate.now())))
 
     val agentSession =
-      AgentSession(Some(BusinessType.SoleTrader), utr = Some(validUtr), postcode = Some(Postcode(testPostcode)), registration = Some(testRegistration), amlsDetails = Some(amlsSDetails))
-
-    class ValidKnownFactsCached(val wasEligibleForMapping: Option[Boolean] = Some(false), includeInitialDetails: Boolean = true) {
-      def persistedId: StashedChainnedSessionId = await(repo.create(ChainedSessionDetails(agentSession)))
-    }
+      AgentSession(Some(BusinessType.SoleTrader), utr = Some(validUtr), postcode = Some(Postcode(testPostcode)), registration = Some(testRegistration) )
 
     trait UnsubscribedAgentStub {
-      self: ValidKnownFactsCached =>
       AgentSubscriptionStub.withMatchingUtrAndPostcode(validUtr, testPostcode)
     }
 
     trait SubscribedAgentStub {
-      self: ValidKnownFactsCached =>
       AgentSubscriptionStub.withMatchingUtrAndPostcode(validUtr, testPostcode, isSubscribedToAgentServices = true, isSubscribedToETMP = true)
     }
 
     trait PartiallySubscribedAgentStub {
-      self: ValidKnownFactsCached =>
       AgentSubscriptionStub.withMatchingUtrAndPostcode(validUtr, testPostcode, isSubscribedToAgentServices = false, isSubscribedToETMP = true)
     }
 
@@ -176,43 +166,38 @@ trait StartControllerISpec extends BaseISpec {
     // TODO: move partial subscription test when decision made on where to complete partial subscription
     "redirect to correct page if given a valid StashedChainedSessionDetails ID and agent is partially subscribed (subscribed in ETMP but not enrolled)" when {
 
-      "agent was not eligible for mapping, should redirect to /subscription-complete" ignore new ValidKnownFactsCached(
-        wasEligibleForMapping = Some(false),
-        includeInitialDetails = false) with PartiallySubscribedAgentStub {
+      "agent was not eligible for mapping, should redirect to /subscription-complete" ignore new PartiallySubscribedAgentStub {
         AgentSubscriptionStub.partialSubscriptionWillSucceed(
           CompletePartialSubscriptionBody(utr = validUtr, knownFacts = SubscriptionRequestKnownFacts(testPostcode)),
           arn = "TARN00023")
 
         implicit val request = FakeRequest()
-        val result = await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(request))
+        val result = await(controller.returnAfterGGCredsCreated(id = Some("thing"))(request))
 
         status(result) shouldBe 303
         redirectLocation(result).head should include(routes.SubscriptionController.showSubscriptionComplete().url)
       }
     }
 
-    "throw Upstream4xxResponse if agent-subscription returns 403 when completing partial subscription" ignore new ValidKnownFactsCached(
-      includeInitialDetails = false) with PartiallySubscribedAgentStub {
+    "throw Upstream4xxResponse if agent-subscription returns 403 when completing partial subscription" ignore new PartiallySubscribedAgentStub {
       AgentSubscriptionStub
         .partialSubscriptionWillReturnStatus(CompletePartialSubscriptionBody(utr = validUtr, knownFacts = SubscriptionRequestKnownFacts(testPostcode)), 403)
 
-      an[Upstream4xxResponse] shouldBe thrownBy(await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(FakeRequest())))
+      an[Upstream4xxResponse] shouldBe thrownBy(await(controller.returnAfterGGCredsCreated(id = Some("thing"))(FakeRequest())))
     }
 
-    "throw Upstream4xxResponse if agent-subscription returns 409 when completing partial subscription" ignore new ValidKnownFactsCached(
-      includeInitialDetails = false) with PartiallySubscribedAgentStub {
+    "throw Upstream4xxResponse if agent-subscription returns 409 when completing partial subscription" ignore new  PartiallySubscribedAgentStub {
       AgentSubscriptionStub
         .partialSubscriptionWillReturnStatus(CompletePartialSubscriptionBody(utr = validUtr, knownFacts = SubscriptionRequestKnownFacts(testPostcode)), 409)
 
-      an[Upstream4xxResponse] shouldBe thrownBy(await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(FakeRequest())))
+      an[Upstream4xxResponse] shouldBe thrownBy(await(controller.returnAfterGGCredsCreated(id = Some("thing"))(FakeRequest())))
     }
 
-    "throw Upstream5xxResponse, 500 when executing partialSubscriptionFix" ignore new ValidKnownFactsCached(includeInitialDetails = false)
-    with PartiallySubscribedAgentStub {
+    "throw Upstream5xxResponse, 500 when executing partialSubscriptionFix" ignore new PartiallySubscribedAgentStub {
       AgentSubscriptionStub
         .partialSubscriptionWillReturnStatus(CompletePartialSubscriptionBody(utr = validUtr, knownFacts = SubscriptionRequestKnownFacts(testPostcode)), 500)
 
-      an[Upstream5xxResponse] shouldBe thrownBy(await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(FakeRequest())))
+      an[Upstream5xxResponse] shouldBe thrownBy(await(controller.returnAfterGGCredsCreated(id = Some("thing"))(FakeRequest())))
     }
   }
 }
@@ -220,16 +205,15 @@ trait StartControllerISpec extends BaseISpec {
 class StartControllerTests extends StartControllerISpec {
 
   "returnAfterGGCredsCreated" should {
-    import FixturesForReturnAfterGGCredsCreated.{PartiallySubscribedAgentStub, ValidKnownFactsCached}
 
-    "agent NOT Eligible for mapping, should redirect to /link-clients" ignore new ValidKnownFactsCached(
-      wasEligibleForMapping = Some(false),
-      includeInitialDetails = false) with PartiallySubscribedAgentStub {
+    import FixturesForReturnAfterGGCredsCreated.PartiallySubscribedAgentStub
+
+    "agent NOT Eligible for mapping, should redirect to /link-clients" ignore new PartiallySubscribedAgentStub {
       AgentSubscriptionStub.partialSubscriptionWillSucceed(
         CompletePartialSubscriptionBody(utr = validUtr, knownFacts = SubscriptionRequestKnownFacts(testPostcode)))
 
       implicit val request = FakeRequest()
-      val result = await(controller.returnAfterGGCredsCreated(id = Some(persistedId))(request))
+      val result = await(controller.returnAfterGGCredsCreated(id = Some("thing"))(request))
 
       status(result) shouldBe 303
       redirectLocation(result).head should include(routes.SubscriptionController.showSubscriptionComplete().url)

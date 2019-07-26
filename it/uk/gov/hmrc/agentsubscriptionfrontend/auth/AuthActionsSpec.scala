@@ -41,8 +41,6 @@ class AuthActionsSpec extends BaseISpec with MockitoSugar {
     def withSubscribingOrSubscribedAgent[A]: Result = await(TestController.withSubscribingOrSubscribedAgent(
       _ => Future successful Ok("task list")))
 
-    def storeCheckAnswersComplete: Future[Unit] =
-      sessionStoreService.cacheAgentSession(AgentSession(taskListFlags = TaskListFlags(checkAnswersComplete = true)))
   }
 
   "withSubscribedAgent" should {
@@ -118,7 +116,6 @@ class AuthActionsSpec extends BaseISpec with MockitoSugar {
         TestData.minimalSubscriptionJourneyRecord(AuthProviderId("12345-credId")))
 
       authenticatedAs(subscribingAgentEnrolledForHMRCASAGENT)
-      TestController.storeCheckAnswersComplete
       val result = TestController.withSubscribingOrSubscribedAgent
 
       status(result) shouldBe 200

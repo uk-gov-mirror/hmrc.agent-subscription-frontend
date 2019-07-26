@@ -22,9 +22,8 @@ import play.api.i18n.MessagesApi
 import play.api.mvc.{Action, AnyContent, Request, Result}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, ContinueId, Postcode, TaskListFlags}
-import uk.gov.hmrc.agentsubscriptionfrontend.repository.ChainedSessionDetailsRepository
-import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService, SubscriptionService, SubscriptionState}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, ContinueId, Postcode}
+import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.auth.core.AuthConnector
@@ -35,7 +34,6 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class StartController @Inject()(
   override val authConnector: AuthConnector,
-  chainedSessionDetailsRepository: ChainedSessionDetailsRepository,
   continueUrlActions: ContinueUrlActions,
   val sessionStoreService: SessionStoreService,
   subscriptionService: SubscriptionService,
@@ -90,41 +88,11 @@ class StartController @Inject()(
     }
   }
 
-  // TODO move out the code which handles partial subscription so it can be reused
-  // and then delete this!
-  private def storeAgentSessionAndRedirect(
-    agentSession: AgentSession)(implicit hc: HeaderCarrier, request: Request[_]): Future[Result] =
-    sessionStoreService.cacheAgentSession(agentSession).flatMap { _ =>
-      (agentSession.utr, agentSession.postcode) match {
-        case (Some(utr), Some(postcode)) =>
-          subscriptionService.getSubscriptionStatus(utr, postcode).flatMap { subscriptionProcess =>
-            if (subscriptionProcess.state == SubscriptionState.SubscribedButNotEnrolled) {
-              handlePartialSubscription(utr, postcode.value, agentSession)
-            } else {
-              updateTaskListAndContinue
-            }
-          }
-        case _ =>
-          sessionStoreService
-            .cacheAgentSession(agentSession.copy(taskListFlags = TaskListFlags()))
-            .flatMap(_ => toFuture(Redirect(routes.TaskListController.showTaskList())))
-      }
-    }
-
   def showCannotCreateAccount: Action[AnyContent] = Action { implicit request =>
     Ok(html.cannot_create_account())
   }
 
-  private def updateTaskListAndContinue(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Result] =
-    withValidSession { (_, existingSession) =>
-      sessionStoreService
-        .cacheAgentSession(
-          existingSession
-            .copy(taskListFlags = existingSession.taskListFlags.copy(createTaskComplete = true)))
-        .flatMap(_ => toFuture(Redirect(routes.TaskListController.showTaskList())))
-
-    }
-
+  // TODO review partial subscription handling
   private def handlePartialSubscription(kfcUtr: Utr, kfcPostcode: String, agentSession: AgentSession)(
     implicit request: Request[_],
     hc: HeaderCarrier): Future[Result] =
@@ -132,9 +100,6 @@ class StartController @Inject()(
       .completePartialSubscription(kfcUtr, Postcode(kfcPostcode))
       .flatMap { _ =>
         mark("Count-Subscription-PartialSubscriptionCompleted")
-        sessionStoreService
-          .cacheAgentSession(
-            agentSession.copy(taskListFlags = agentSession.taskListFlags.copy(createTaskComplete = true)))
-          .map(_ => Redirect(routes.SubscriptionController.showSubscriptionComplete()))
+        Redirect(routes.SubscriptionController.showSubscriptionComplete())
       }
 }

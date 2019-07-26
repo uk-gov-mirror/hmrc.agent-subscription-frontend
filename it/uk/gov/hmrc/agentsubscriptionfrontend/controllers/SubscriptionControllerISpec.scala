@@ -63,7 +63,11 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
   val amlsDetails = AMLSDetails("supervisory", Right(RegisteredDetails("123456789", LocalDate.now().plusDays(10))))
 
   val agentSession = Some(
-    AgentSession(Some(BusinessType.SoleTrader), utr = Some(validUtr), postcode = Some(Postcode("AA1 2AA")), registration = Some(testRegistration), amlsDetails = Some(AMLSDetails("supervisory", Left(PendingDetails(LocalDate.now()))))))
+    AgentSession(
+      Some(BusinessType.SoleTrader),
+      utr = Some(validUtr),
+      postcode = Some(Postcode("AA1 2AA")),
+      registration = Some(testRegistration)))
 
   "showCheckAnswers" should {
     behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showCheckAnswers(request))

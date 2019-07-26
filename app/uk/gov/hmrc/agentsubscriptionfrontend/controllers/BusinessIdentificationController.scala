@@ -181,31 +181,22 @@ class BusinessIdentificationController @Inject()(
     val postcode = existingSession.postcode.getOrElse(Postcode(""))
     for {
       subscriptionProcess <- subscriptionService.getSubscriptionStatus(utr, postcode)
-      result <- if (subscriptionProcess.state == SubscriptionState.SubscribedButNotEnrolled) {
-                 hasCleanCreds(agent)(
-                   cachePartialSubscription(existingSession, cleanCreds = false).map(_ =>
-                     routes.TaskListController.showTaskList())
-                 )(
-                   cachePartialSubscription(existingSession, cleanCreds = true).flatMap(
-                     _ =>
-                       subscriptionService
-                         .completePartialSubscription(utr, postcode)
-                         .map { _ =>
-                           mark("Count-Subscription-PartialSubscriptionCompleted")
-                           routes.SubscriptionController.showSubscriptionComplete()
-                       })
-                 )
-               } else notPartiallySubscribedBody
+      result <-
+        if (subscriptionProcess.state == SubscriptionState.SubscribedButNotEnrolled) {
+          hasCleanCreds(agent) {
+            Future.successful(routes.TaskListController.showTaskList())
+          }
+          {
+            subscriptionService
+              .completePartialSubscription(utr, postcode)
+              .map { _ =>
+                mark("Count-Subscription-PartialSubscriptionCompleted")
+                routes.SubscriptionController.showSubscriptionComplete()
+              }
+          }
+        } else notPartiallySubscribedBody
     } yield result
   }
-
-  // TODO we'll need to use tasklistservice instead
-  def cachePartialSubscription(existingSession: AgentSession, cleanCreds: Boolean)(
-    implicit hc: HeaderCarrier): Future[Unit] =
-    sessionStoreService
-      .cacheAgentSession(
-        existingSession.copy(taskListFlags = existingSession.taskListFlags
-          .copy(amlsTaskComplete = true, createTaskComplete = cleanCreds)))
 
   val showBusinessEmailForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>

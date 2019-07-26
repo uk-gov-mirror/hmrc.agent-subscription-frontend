@@ -33,11 +33,7 @@ case class AgentSession(
   dateOfBirth: Option[DateOfBirth] = None,
   registeredForVat: Option[String] = None,
   vatDetails: Option[VatDetails] = None,
-  registration: Option[Registration] = None,
-  checkAmls: Option[String] = None, // TODO remove
-  amlsAppliedFor: Option[String] = None, // TODO remove
-  amlsDetails: Option[AMLSDetails] = None, // TODO remove
-  taskListFlags: TaskListFlags = TaskListFlags()) // TODO remove
+  registration: Option[Registration] = None)
 
 object AgentSession {
   implicit val format: Format[AgentSession] = Json.format[AgentSession]
