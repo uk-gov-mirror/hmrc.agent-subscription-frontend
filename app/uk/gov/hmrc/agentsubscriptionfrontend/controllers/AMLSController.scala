@@ -210,8 +210,8 @@ class AMLSController @Inject()(
     withSubscribingAgent { agent =>
       withManuallyAssuredAgent(agent) {
         for {
-          cachedAmlsData <- agent.getMandatoryAmlsData
-          cachedGoBackUrl   <- sessionStoreService.fetchGoBackUrl
+          cachedAmlsData  <- agent.getMandatoryAmlsData
+          cachedGoBackUrl <- sessionStoreService.fetchGoBackUrl
         } yield {
           cachedAmlsData.pendingDetails match {
             case Some(pendingDetails) =>

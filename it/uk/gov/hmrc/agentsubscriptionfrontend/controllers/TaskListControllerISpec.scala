@@ -43,7 +43,7 @@ class TaskListControllerISpec extends BaseISpec {
       givenSubscriptionJourneyRecordExists(AuthProviderId("12345-credId"),
         TestData.minimalSubscriptionJourneyRecord(AuthProviderId("12345-credId")))
 
-      implicit val request = authenticatedAs(subscribingAgentEnrolledForHMRCASAGENT)
+      implicit val request: FakeRequest[AnyContentAsEmpty.type] = authenticatedAs(subscribingAgentEnrolledForHMRCASAGENT)
 
       val result = await(controller.showTaskList(request))
 
@@ -88,7 +88,7 @@ class TaskListControllerISpec extends BaseISpec {
           )
       )
 
-      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+      implicit val request: FakeRequest[AnyContentAsEmpty.type] = authenticatedAs(subscribingAgentEnrolledForNonMTD)
 
       val result = await(controller.showTaskList(request))
       result should containMessages(
@@ -105,7 +105,7 @@ class TaskListControllerISpec extends BaseISpec {
       givenSubscriptionJourneyRecordExists(AuthProviderId("12345-credId"),
         TestData.minimalSubscriptionJourneyRecord(AuthProviderId("12345-credId")))
 
-      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+      implicit val request: FakeRequest[AnyContentAsEmpty.type] = authenticatedAs(subscribingAgentEnrolledForNonMTD)
 
       val result = await(controller.showTaskList(request))
 
@@ -119,19 +119,19 @@ class TaskListControllerISpec extends BaseISpec {
       givenSubscriptionJourneyRecordExists(AuthProviderId("12345-credId"),
         TestData.minimalSubscriptionJourneyRecord(AuthProviderId("12345-credId")).copy(subscriptionCreated = true))
 
-      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+      implicit val request: FakeRequest[AnyContentAsEmpty.type] = authenticatedAs(subscribingAgentEnrolledForNonMTD)
 
       val result = await(controller.showTaskList(request))
       status(result) shouldBe 200
 
-      checkHtmlResultWithBodyText(result, appConfig.agentMappingFrontendStartUrl)
+      checkHtmlResultWithBodyText(result, "/agent-subscription/begin-mapping")
     }
   }
 
   "savedProgress (GET /saved-progress)" should {
   "contain page title and content" in {
 
-    implicit val request = FakeRequest()
+    implicit val request: FakeRequest[AnyContentAsEmpty.type] = FakeRequest()
     val result = await(controller.savedProgress(backLink = None)(request))
 
     status(result) shouldBe 200

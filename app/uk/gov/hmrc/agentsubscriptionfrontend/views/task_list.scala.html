@@ -85,7 +85,7 @@
             <ul class="app-task-list__items">
                 <li class="app-task-list__item">
                 @if(taskListFlags.checkAnswersComplete) {
-                    <a href=@appConfig.agentMappingFrontendStartUrl>@Messages("task-list.4.copy")</a>
+                    <a href="@routes.SubscriptionController.beginMapping()">@Messages("task-list.4.copy")</a>
                 } else {
                     @Messages("task-list.4.copy")
                 }

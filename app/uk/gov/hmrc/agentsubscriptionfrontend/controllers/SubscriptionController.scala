@@ -21,7 +21,7 @@ import javax.inject.{Inject, Singleton}
 import play.api.Logger
 import play.api.i18n.MessagesApi
 import play.api.mvc.{AnyContent, _}
-import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
+import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.{AddressLookupFrontendConnector, AgentAssuranceConnector}
@@ -32,7 +32,9 @@ import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.HttpException
+import uk.gov.hmrc.play.binders.ContinueUrl
 
+import scala.None
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 
@@ -57,7 +59,7 @@ class SubscriptionController @Inject()(
 
   val desAddressForm = new DesAddressForm(Logger, blacklistedPostCodes)
 
-  val showCheckAnswers: Action[AnyContent] = Action.async { implicit request =>
+  def showCheckAnswers: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { agent =>
       withCleanCreds(agent) {
         val sjr = agent.getMandatorySubscriptionRecord
@@ -96,7 +98,7 @@ class SubscriptionController @Inject()(
     }
   }
 
-  val submitCheckAnswers: Action[AnyContent] = Action.async { implicit request =>
+  def submitCheckAnswers: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { agent =>
       withCleanCreds(agent) {
         val sjr = agent.getMandatorySubscriptionRecord
@@ -114,7 +116,7 @@ class SubscriptionController @Inject()(
     }
   }
 
-  val showBusinessAddressForm: Action[AnyContent] = Action.async { implicit request =>
+  def showBusinessAddressForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { agent =>
         mark("Count-Subscription-AddressLookup-Start")
         addressLookUpConnector
@@ -192,7 +194,8 @@ class SubscriptionController @Inject()(
     }
   }
 
-  val showSubscriptionComplete: Action[AnyContent] = Action.async { implicit request =>
+  def showSubscriptionComplete: Action[AnyContent] = Action.async { implicit request =>
+
     def recoverSessionStoreWithNone[T]: PartialFunction[Throwable, Option[T]] = {
       case NonFatal(ex) =>
         Logger(getClass).warn("Session store service failure", ex)
@@ -201,38 +204,41 @@ class SubscriptionController @Inject()(
 
     withSubscribedAgent { (arn, sjr) =>
         sjr.businessDetails.registration match {
-          case Some(registration) => {
+          case Some(registration) =>
             val agencyName = registration.taxpayerName.getOrElse(
               throw new RuntimeException("agency name is missing from registration"))
             val agencyEmail = registration.emailAddress.getOrElse(
               throw new RuntimeException("agency email is missing from registration"))
-            for {
-              continueUrlOpt <- sessionStoreService.fetchContinueUrl.recover(recoverSessionStoreWithNone)
-            } yield {
-              continueUrlOpt match {
-                case Some(continueUrl) =>
-                  Ok(
-                    html.subscription_complete(
-                      continueUrl.url,
-                      isUrlToASAccount = false,
-                      arn.value,
-                      agencyName,
-                      agencyEmail))
-                case None =>
-                  Ok(
-                    html.subscription_complete(
-                      routes.TaskListController.showTaskList().url,
-                      isUrlToASAccount = false,
-                      arn.value,
-                      agencyName,
-                      agencyEmail))
-              }
-            }
-          }
-          case _ =>
+
+            sessionStoreService.fetchContinueUrl.recover(recoverSessionStoreWithNone)
+              .flatMap {
+                  case Some(continueUrl) =>
+                    for {
+                      _ <- subscriptionJourneyService.deleteJourneyRecord(sjr.authProviderId)
+                      result <- Ok(html.subscription_complete(continueUrl.url, arn.value, agencyName, agencyEmail))
+                    } yield result
+
+                  case None =>
+                    Ok(html.subscription_complete(routes.TaskListController.showTaskList().url, arn.value, agencyName, agencyEmail))
+                }
+
+          case None =>
             Logger.warn("no registration details found in agent session")
             Redirect(routes.BusinessIdentificationController.showNoMatchFound())
         }
     }
   }
+
+  // Temporary endpoint, just used while mapping is the final task in list
+  def beginMapping: Action[AnyContent] = Action.async { implicit request =>
+    withSubscribedAgent { (_, sjr) =>
+      for {
+        _ <- subscriptionJourneyService.deleteJourneyRecord(sjr.authProviderId)
+      } yield Redirect(appConfig.agentMappingFrontendStartUrl)
+    }
+  }
+
 }
+
+
+

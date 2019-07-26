@@ -66,8 +66,7 @@ class TaskListServiceTest extends UnitSpec with MockitoSugar {
     }
 
     "show amls complete when all amls details are entered - registered true" in {
-      val data =
-        Some(AmlsData(amlsRegistered = true, None, Some("HMRC"), None, Some(RegDetails("mem", LocalDate.now()))))
+      val data = Some(AmlsData(amlsRegistered = true, None, Some("HMRC"), None, Some(RegDetails("mem", LocalDate.now()))))
       val flags = await(taskListService.getTaskListFlags(minimalRecord.copy(amlsData = data)))
       flags should be(TaskListFlags(amlsTaskComplete = true))
     }
@@ -85,8 +84,7 @@ class TaskListServiceTest extends UnitSpec with MockitoSugar {
     }
 
     "show amls complete when all amls details are entered - registered false" in {
-      val data =
-        Some(AmlsData(amlsRegistered = false, Some(true), Some("HMRC"), Some(PendingDate(LocalDate.now())), None))
+      val data = Some(AmlsData(amlsRegistered = false, Some(true), Some("HMRC"), Some(PendingDate(LocalDate.now())), None))
       val flags = await(taskListService.getTaskListFlags(minimalRecord.copy(amlsData = data)))
       flags should be(TaskListFlags(amlsTaskComplete = true))
     }

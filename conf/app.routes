@@ -95,6 +95,8 @@ GET         /return-from-address-lookup                    uk.gov.hmrc.agentsubs
 POST        /submit-modified-address                       uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.submitModifiedAddress
 GET         /complete                                      uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showSubscriptionComplete
 
+GET        /begin-mapping                                 uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.beginMapping
+
 GET         /redirect-to-sos                               uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.redirectToSos
 GET         /redirect-to-asaccount                         uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.redirectToASAccountPage
 GET         /start-survey                                  uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.startSurvey

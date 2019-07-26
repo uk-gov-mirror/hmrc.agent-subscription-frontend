@@ -85,25 +85,26 @@ class AgentSubscriptionConnector @Inject()(
       http.GET[Option[SubscriptionJourneyRecord]](url.toString)
     }
 
-  def createOrUpdate(journeyRecord: SubscriptionJourneyRecord)(implicit hc: HeaderCarrier): Future[Unit] =
+  def createOrUpdateJourney(journeyRecord: SubscriptionJourneyRecord)(implicit hc: HeaderCarrier): Future[Unit] =
     monitor("ConsumedAPI-Agent-Subscription-createOrUpdate-POST") {
+      val path =
+        s"/agent-subscription/subscription/journey/primaryId/${encodePathSegment(journeyRecord.authProviderId.id)}"
       http
-        .POST[SubscriptionJourneyRecord, HttpResponse](
-          new URL(
-            baseUrl,
-            s"/agent-subscription/subscription/journey/primaryId/${encodePathSegment(journeyRecord.authProviderId.id)}").toString,
-          journeyRecord)
-        .map(_.status match {
-          case 204 => ()
-          case _   => throw new Exception("what")
-        })
+        .POST[SubscriptionJourneyRecord, HttpResponse](new URL(baseUrl, path).toString, journeyRecord)
+        .map(handleUpdateJourneyResponse(_, path))
     }
 
-  def delete(internalId: AuthProviderId)(implicit hc: HeaderCarrier): Future[Unit] =
+  def deleteJourney(authProviderId: AuthProviderId)(implicit hc: HeaderCarrier): Future[Unit] =
     monitor("ConsumedAPI-Agent-Subscription-delete-DELETE") {
-      val url =
-        new URL(baseUrl, s"/agent-subscription/subscription/journey/primaryId/${encodePathSegment(internalId.id)}")
-      http.DELETE[SubscriptionJourneyRecord](url.toString).map(_ => ())
+      val path = s"/agent-subscription/subscription/journey/primaryId/${encodePathSegment(authProviderId.id)}"
+      val url = new URL(baseUrl, path)
+      http.DELETE[HttpResponse](url.toString).map(handleUpdateJourneyResponse(_, path))
+    }
+
+  private def handleUpdateJourneyResponse(httpResponse: HttpResponse, path: String): Unit =
+    httpResponse.status match {
+      case 204    => ()
+      case status => throw new RuntimeException(s"POST to $path returned $status")
     }
 
   def getRegistration(utr: Utr, postcode: String)(implicit hc: HeaderCarrier): Future[Option[Registration]] =
