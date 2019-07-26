@@ -1,6 +1,6 @@
 #Common
 app.name=Create an agent services account
-servicename.titleSuffix=- Agent services account - GOV.UK
+servicename.titleSuffix=- Create an agent services account - GOV.UK
 
 #Startpage
 startpage.title=Agent services account: sign in or set up
