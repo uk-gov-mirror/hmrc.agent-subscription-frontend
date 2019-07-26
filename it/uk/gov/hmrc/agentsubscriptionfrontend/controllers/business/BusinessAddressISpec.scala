@@ -11,7 +11,8 @@ import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, SampleUser, Tes
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.subscribingCleanAgentWithoutEnrolments
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData.{businessAddress, validUtr, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub._
-import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub.{givenSubscriptionRecordCreated, _}
+import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionJourneyStub.{givenSubscriptionRecordCreated, _}
+import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent
 
 import scala.concurrent.ExecutionContext.Implicits.global

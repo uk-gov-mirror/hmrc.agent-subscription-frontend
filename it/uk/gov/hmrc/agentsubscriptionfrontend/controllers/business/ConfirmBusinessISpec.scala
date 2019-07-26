@@ -8,8 +8,8 @@ import uk.gov.hmrc.agentsubscriptionfrontend.controllers.{BusinessIdentification
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.SubscriptionJourneyRecord
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub._
-import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub._
+import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionJourneyStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.{subscribingAgentEnrolledForNonMTD, subscribingCleanAgentWithoutEnrolments}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData.{businessAddress, testPostcode, utr, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestSetupNoJourneyRecord}
@@ -171,7 +171,7 @@ class ConfirmBusinessISpec extends BaseISpec {
       "redirect to subscription complete if user is partially subscribed with clean creds and there is no continue url" in new TestSetupNoJourneyRecord {
         givenAgentIsNotManuallyAssured(utr.value)
         withPartiallySubscribedAgent(utr, testPostcode)
-        AgentSubscriptionStub.partialSubscriptionWillSucceed(
+        partialSubscriptionWillSucceed(
           CompletePartialSubscriptionBody(utr = utr, knownFacts = SubscriptionRequestKnownFacts(testPostcode)))
 
         implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)

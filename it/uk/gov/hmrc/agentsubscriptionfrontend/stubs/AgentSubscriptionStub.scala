@@ -291,45 +291,4 @@ object AgentSubscriptionStub {
                                       |}""".stripMargin))
   }
 
-  def givenNoSubscriptionJourneyRecordExists(authProviderId: AuthProviderId): StubMapping =
-    stubFor(
-      get(urlEqualTo(
-        s"/agent-subscription/subscription/journey/id/${encodePathSegment(authProviderId.id)}"))
-        .willReturn(
-          aResponse()
-            .withStatus(Status.NO_CONTENT)
-        )
-    )
-
-  def givenSubscriptionJourneyRecordExists(authProviderId: AuthProviderId, subscriptionJourneyRecord: SubscriptionJourneyRecord): StubMapping =
-    stubFor(
-      get(urlEqualTo(
-        s"/agent-subscription/subscription/journey/id/${encodePathSegment(authProviderId.id)}"))
-        .willReturn(
-          aResponse()
-            .withStatus(Status.OK)
-            .withBody(Json.toJson(subscriptionJourneyRecord).toString()))
-    )
-
-  def givenSubscriptionJourneyRecordExists(continueId: ContinueId, subscriptionJourneyRecord: SubscriptionJourneyRecord): StubMapping =
-    stubFor(
-      get(urlEqualTo(
-        s"/agent-subscription/subscription/journey/continueId/${encodePathSegment(continueId.value)}"))
-        .willReturn(
-          aResponse()
-            .withStatus(Status.OK)
-            .withBody(Json.toJson(subscriptionJourneyRecord).toString()))
-    )
-
-  def givenSubscriptionRecordCreated(authProviderId: AuthProviderId, subscriptionJourneyRecord: SubscriptionJourneyRecord) = {
-    stubFor(
-      post(
-        urlEqualTo(s"/agent-subscription/subscription/journey/primaryId/${encodePathSegment(authProviderId.id)}"))
-        .withRequestBody(equalToJson(
-          Json.toJson(subscriptionJourneyRecord).toString(), true, true ))
-        .willReturn(aResponse().withStatus(Status.NO_CONTENT))
-    )
-
-  }
-
 }

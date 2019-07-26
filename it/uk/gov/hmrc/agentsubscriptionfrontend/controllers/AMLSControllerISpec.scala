@@ -28,12 +28,10 @@ import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.SoleTrader
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub.{givenAgentIsManuallyAssured, givenAgentIsNotManuallyAssured}
-import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub.{givenNoSubscriptionJourneyRecordExists, givenSubscriptionJourneyRecordExists, givenSubscriptionRecordCreated}
+import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionJourneyStub.{givenNoSubscriptionJourneyRecordExists, givenSubscriptionJourneyRecordExists, givenSubscriptionRecordCreated}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.{subscribingAgentEnrolledForNonMTD, subscribingCleanAgentWithoutEnrolments}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData._
-import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestData, TestSetupNoJourneyRecord}
-
-import scala.concurrent.ExecutionContext.Implicits.global
+import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestData}
 
 class AMLSControllerISpec extends BaseISpec {
 
@@ -63,12 +61,22 @@ class AMLSControllerISpec extends BaseISpec {
     givenNoSubscriptionJourneyRecordExists(id)
   }
 
+  "GET /change-amls" should {
+    "redirect to the amls registered page and chache changing as true" in {
+      implicit val authenticatedRequest: FakeRequest[AnyContentAsEmpty.type] = authenticatedAs(
+        subscribingAgentEnrolledForNonMTD)
+      val result = await(controller.changeAmlsDetails(authenticatedRequest))
+
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.AMLSController.showAmlsRegisteredPage().url)
+      sessionStoreService.currentSession.changingAnswers shouldBe Some(true)
+    }
+  }
+
   "GET /check-money-laundering-compliance" should {
     behave like anAgentAffinityGroupOnlyEndpoint(controller.showAmlsRegisteredPage(_))
 
     "contain page with expected content" in new Setup {
-      givenSubscriptionJourneyRecordExists(id, TestData.minimalSubscriptionJourneyRecord(id))
-
       val result = await(controller.showAmlsRegisteredPage(authenticatedRequest))
 
       result should containMessages(
@@ -81,6 +89,8 @@ class AMLSControllerISpec extends BaseISpec {
     }
 
     "pre-populate radio button on page when it is present in the BE store" in new Setup {
+      givenSubscriptionJourneyRecordExists(id, TestData.minimalSubscriptionJourneyRecordWithAmls(id))
+
       val result = await(controller.showAmlsRegisteredPage(authenticatedRequest))
 
       result should containMessages(
@@ -461,7 +471,7 @@ class AMLSControllerISpec extends BaseISpec {
       redirectLocation(result).get shouldBe routes.SubscriptionController.showCheckAnswers().url
     }
 
-    "pre-populate amls form if they are coming from /check_answers and also go to /check_answers page when user clicks on 'Go Back' link" in new Setup {
+    "pre-populate amls form if they are coming from /check_answers and also go to /check-money-laundering-compliance page when user clicks on 'Go Back' link" in new Setup {
       def minimalSubscriptionJourneyRecordWithAmls(authProviderId: AuthProviderId) =
         SubscriptionJourneyRecord(
           authProviderId,
@@ -482,7 +492,7 @@ class AMLSControllerISpec extends BaseISpec {
       val result = await(controller.showAmlsDetailsForm(authenticatedRequest))
 
       contentAsString(result) should (include(
-        """<a href="/agent-subscription/check-answers" class="link-back">Back</a>""")
+        """<a href="/agent-subscription/check-money-laundering-compliance" class="link-back">Back</a>""")
         and include("""selected="selected">Insolvency Practitioners Association (IPA)</option>""")
         and include("""value="123456789"""")
         and include(s"""value="${LocalDate.now().getYear.toString}""""))
@@ -741,6 +751,21 @@ class AMLSControllerISpec extends BaseISpec {
 
     "display page with correct content" in new Setup {
       givenSubscriptionJourneyRecordExists(id, TestData.minimalSubscriptionJourneyRecordWithAmls(id))
+
+      val result = await(controller.showAmlsApplicationDatePage(authenticatedRequest))
+
+      result should containMessages(
+        "amls.pending.appliedOn.title",
+        "amls.pending.appliedOn.title"
+      )
+
+      result should containSubmitButton("button.saveContinue","amls-pending-continue")
+      result should containSubmitButton("button.saveComeBackLater","amls-pending-save")
+    }
+
+    "display and pre-populate page when this information is in the store" in new Setup {
+      givenSubscriptionJourneyRecordExists(id, TestData.minimalSubscriptionJourneyRecord(id).copy(amlsData =
+        Some(AmlsData(false, Some(true), Some("supervisory"), Some(PendingDate(LocalDate.now().minusDays(5))), None))))
 
       val result = await(controller.showAmlsApplicationDatePage(authenticatedRequest))
 

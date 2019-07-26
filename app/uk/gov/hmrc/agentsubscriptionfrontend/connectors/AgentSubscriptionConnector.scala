@@ -55,28 +55,6 @@ class AgentSubscriptionConnector @Inject()(
         })
     }
 
-  def getJourneyByPrimaryId(internalId: AuthProviderId)(
-    implicit hc: HeaderCarrier): Future[Option[SubscriptionJourneyRecord]] =
-    monitor(s"ConsumedAPI-Agent-Subscription-getJourneyByPrimaryId-GET") {
-      val url =
-        new URL(baseUrl, s"/agent-subscription/subscription/journey/primaryId/${encodePathSegment(internalId.id)}")
-      http.GET[Option[SubscriptionJourneyRecord]](url.toString)
-    }
-
-  def getJourneyByMappedId(internalId: AuthProviderId)(
-    implicit hc: HeaderCarrier): Future[Option[SubscriptionJourneyRecord]] =
-    monitor(s"ConsumedAPI-Agent-Subscription-getJourneyByMappedId-GET") {
-      val url =
-        new URL(baseUrl, s"/agent-subscription/subscription/journey/mappedId/${encodePathSegment(internalId.id)}")
-      http.GET[Option[SubscriptionJourneyRecord]](url.toString)
-    }
-
-  def getJourneyByUtr(utr: Utr)(implicit hc: HeaderCarrier): Future[Option[SubscriptionJourneyRecord]] =
-    monitor(s"ConsumedAPI-Agent-Subscription-getJourneyByUtr-GET") {
-      val url = new URL(baseUrl, s"/agent-subscription/subscription/journey/primaryId/${encodePathSegment(utr.value)}")
-      http.GET[Option[SubscriptionJourneyRecord]](url.toString)
-    }
-
   def getJourneyByContinueId(continueId: ContinueId)(
     implicit hc: HeaderCarrier): Future[Option[SubscriptionJourneyRecord]] =
     monitor(s"ConsumedAPI-Agent-Subscription-getJourneyByContinueId-GET") {

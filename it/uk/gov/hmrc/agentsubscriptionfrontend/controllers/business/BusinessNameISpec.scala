@@ -9,7 +9,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestSetupNoJour
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.subscribingCleanAgentWithoutEnrolments
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData.{validUtr, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub._
-import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub._
+import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionJourneyStub._
 import uk.gov.hmrc.play.binders.ContinueUrl
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent
 

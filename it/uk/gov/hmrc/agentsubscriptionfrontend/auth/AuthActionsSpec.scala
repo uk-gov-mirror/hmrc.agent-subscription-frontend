@@ -10,7 +10,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.ContinueUrlActions
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, AuthProviderId, TaskListFlags}
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SubscriptionJourneyService
-import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub.givenSubscriptionJourneyRecordExists
+import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionJourneyStub.givenSubscriptionJourneyRecordExists
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestData, TestSetupNoJourneyRecord}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.{subscribingAgentEnrolledForHMRCASAGENT, subscribingCleanAgentWithoutEnrolments}

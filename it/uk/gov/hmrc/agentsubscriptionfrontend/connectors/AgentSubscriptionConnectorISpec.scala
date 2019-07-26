@@ -6,11 +6,14 @@ import java.time.LocalDate
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr, Vrn}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub
-import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, MetricTestSupport}
+import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionJourneyStub
+import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, MetricTestSupport, TestData}
 import uk.gov.hmrc.http._
 import com.kenshoo.play.metrics.Metrics
 import org.scalatest.Assertion
-import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.{AmlsData, RegDetails}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.SoleTrader
+import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.{AmlsData, BusinessDetails, SubscriptionJourneyRecord}
+import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData.{validPostcode, validUtr}
 import uk.gov.hmrc.domain.Nino
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -28,6 +31,74 @@ class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {
   private val crn = CompanyRegistrationNumber("SC123456")
   private val vrn = Vrn("888913457")
   private val dateOfReg = LocalDate.parse("2010-03-31")
+  private val authProviderId = AuthProviderId("cred-12345")
+
+  "getJourneyById" should {
+    "retrieve an existing subscription journey record using the auth provider id" in {
+      AgentSubscriptionJourneyStub.givenSubscriptionJourneyRecordExists(
+        authProviderId,
+        TestData.minimalSubscriptionJourneyRecordWithAmls(authProviderId))
+      val result: Option[SubscriptionJourneyRecord] = await(connector.getJourneyById(authProviderId))
+      result.get.businessDetails shouldBe BusinessDetails(SoleTrader, validUtr, Postcode(validPostcode))
+      result.get.amlsData shouldBe Some(AmlsData.registeredUserNoDataEntered)
+    }
+
+    "return None when there is no existing subscription journey record associated with the auth provider id" in {
+      AgentSubscriptionJourneyStub.givenNoSubscriptionJourneyRecordExists(authProviderId)
+      val result: Option[SubscriptionJourneyRecord] = await(connector.getJourneyById(authProviderId))
+      result shouldBe None
+    }
+  }
+
+  "getJourneyByContinueId" should {
+    "retrieve an existing subscription journey record using the continue id" in {
+      AgentSubscriptionJourneyStub.givenSubscriptionJourneyRecordExists(
+        ContinueId("continue"),
+        TestData.minimalSubscriptionJourneyRecordWithAmls(authProviderId).copy(continueId = Some("continue")))
+      val result: Option[SubscriptionJourneyRecord] = await(connector.getJourneyByContinueId(ContinueId("continue")))
+      result.get.businessDetails shouldBe BusinessDetails(SoleTrader, validUtr, Postcode(validPostcode))
+      result.get.amlsData shouldBe Some(AmlsData.registeredUserNoDataEntered)
+    }
+
+    "return None when there is no existing subscription journey record associated with the auth provider id" in {
+      AgentSubscriptionJourneyStub.givenNoSubscriptionJourneyRecordExists(ContinueId("continue"))
+      val result: Option[SubscriptionJourneyRecord] = await(connector.getJourneyByContinueId(ContinueId("continue")))
+      result shouldBe None
+    }
+  }
+
+  "createOrUpdateJourney" should {
+    "return unit when a record is successfully created" in {
+      AgentSubscriptionJourneyStub
+        .givenSubscriptionRecordCreated(authProviderId, TestData.minimalSubscriptionJourneyRecord(authProviderId))
+      val result = await(connector.createOrUpdateJourney(TestData.minimalSubscriptionJourneyRecord(authProviderId)))
+
+      result shouldBe (())
+    }
+
+    "throw a runtime exception when the endpoint returns a bad request" in {
+      AgentSubscriptionJourneyStub
+        .givenSubscriptionRecordNotCreated(authProviderId, TestData.minimalSubscriptionJourneyRecord(authProviderId))
+      intercept[BadRequestException] {
+        await(connector.createOrUpdateJourney(TestData.minimalSubscriptionJourneyRecord(authProviderId)))
+      }
+    }
+  }
+
+  "deleteJourney" should {
+    "return unit when record is successfully deleted" in {
+      AgentSubscriptionJourneyStub.givenSubscriptionRecordDeleted(authProviderId)
+      val result = await(connector.deleteJourney(authProviderId))
+      result shouldBe (())
+    }
+
+    "throw an exception when there is a problem deleting the record" in {
+      AgentSubscriptionJourneyStub.givenSubscriptionRecordNotDeleted(authProviderId)
+      intercept[Upstream5xxResponse] {
+        await(connector.deleteJourney(authProviderId))
+      }
+    }
+  }
 
   "getRegistration" should {
 
@@ -267,7 +338,7 @@ class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {
   "check citizen details" should {
     val nino = Nino("XX121212B")
     val dob = DateOfBirth(LocalDate.now)
-    val request = CitizenDetailsRequest(nino,dob)
+    val request = CitizenDetailsRequest(nino, dob)
 
     "return true if nino and dob match" in {
       AgentSubscriptionStub.givenAGoodCombinationNinoAndDobMatchCitizenDetails(nino, dob)
@@ -308,7 +379,5 @@ class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {
     )
 
   private val partialSubscriptionRequest =
-    CompletePartialSubscriptionBody(
-      utr = utr,
-      knownFacts = SubscriptionRequestKnownFacts("AA1 2AA"))
+    CompletePartialSubscriptionBody(utr = utr, knownFacts = SubscriptionRequestKnownFacts("AA1 2AA"))
 }

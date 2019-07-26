@@ -65,11 +65,16 @@ class AMLSController @Inject()(
   def showAmlsRegisteredPage: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { agent =>
       withManuallyAssuredAgent(agent) {
-        agent.getMandatorySubscriptionRecord.map { record =>
-          record.amlsData match {
-            case Some(amlsData) =>
-              Ok(check_amls(checkAmlsForm.bind(Map("registeredAmls" -> RadioInputAnswer(amlsData.amlsRegistered)))))
-            case None => Ok(check_amls(checkAmlsForm))
+        sessionStoreService.fetchIsChangingAnswers.flatMap { isChange =>
+          agent.getMandatorySubscriptionRecord.map { record =>
+            record.amlsData match {
+              case Some(amlsData) =>
+                Ok(
+                  check_amls(
+                    checkAmlsForm.bind(Map("registeredAmls" -> RadioInputAnswer(amlsData.amlsRegistered))),
+                    isChange = isChange.getOrElse(false)))
+              case None => Ok(check_amls(checkAmlsForm, isChange.getOrElse(false)))
+            }
           }
         }
       }
@@ -79,36 +84,38 @@ class AMLSController @Inject()(
   def submitAmlsRegistered: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { agent =>
       withManuallyAssuredAgent(agent) {
-        checkAmlsForm
-          .bindFromRequest()
-          .fold(
-            formWithErrors => Ok(html.amls.check_amls(formWithErrors)),
-            validForm => {
-              val continue: Call = validForm match {
-                case Yes =>
-                  routes.AMLSController.showAmlsDetailsForm()
-                case No => routes.AMLSController.showCheckAmlsAlreadyAppliedForm()
-              }
-              val cleanAmlsData = AmlsData(
-                amlsRegistered = RadioInputAnswer.toBoolean(validForm),
-                amlsAppliedFor = None,
-                supervisoryBody = None,
-                pendingDetails = None,
-                registeredDetails = None)
+        sessionStoreService.fetchIsChangingAnswers.flatMap { isChange =>
+          checkAmlsForm
+            .bindFromRequest()
+            .fold(
+              formWithErrors => Ok(html.amls.check_amls(formWithErrors, isChange.getOrElse(false))),
+              validForm => {
+                val continue: Call = validForm match {
+                  case Yes =>
+                    routes.AMLSController.showAmlsDetailsForm()
+                  case No => routes.AMLSController.showCheckAmlsAlreadyAppliedForm()
+                }
+                val cleanAmlsData = AmlsData(
+                  amlsRegistered = RadioInputAnswer.toBoolean(validForm),
+                  amlsAppliedFor = None,
+                  supervisoryBody = None,
+                  pendingDetails = None,
+                  registeredDetails = None)
 
-              updateAmlsJourneyRecord(
-                agent, { amlsData =>
-                  {
-                    if (amlsData.amlsRegistered == RadioInputAnswer.toBoolean(validForm)) Some(amlsData)
-                    else Some(cleanAmlsData)
-                  }
-                },
-                maybeCreateNewAmlsData = Some(cleanAmlsData)
-              ).map(
-                _ => Redirect(continueOrStop(continue, routes.AMLSController.showAmlsRegisteredPage()))
-              )
-            }
-          )
+                updateAmlsJourneyRecord(
+                  agent, { amlsData =>
+                    {
+                      if (amlsData.amlsRegistered == RadioInputAnswer.toBoolean(validForm)) Some(amlsData)
+                      else Some(cleanAmlsData)
+                    }
+                  },
+                  maybeCreateNewAmlsData = Some(cleanAmlsData)
+                ).map(
+                  _ => Redirect(continueOrStop(continue, routes.AMLSController.showAmlsRegisteredPage()))
+                )
+              }
+            )
+        }
       }
     }
   }
@@ -152,8 +159,7 @@ class AMLSController @Inject()(
     withSubscribingAgent { agent =>
       withManuallyAssuredAgent(agent) {
         for {
-          record          <- agent.getMandatoryAmlsData
-          cachedGoBackUrl <- sessionStoreService.fetchGoBackUrl
+          record <- agent.getMandatoryAmlsData
         } yield
           (record.registeredDetails, record.supervisoryBody) match {
             case (Some(details), Some(supervisoryBody)) =>
@@ -164,9 +170,9 @@ class AMLSController @Inject()(
                 "expiry.month"     -> details.membershipExpiresOn.getMonthValue.toString,
                 "expiry.year"      -> details.membershipExpiresOn.getYear.toString
               )
-              Ok(html.amls.amls_details(amlsForm(amlsBodies.keySet).bind(form), amlsBodies, cachedGoBackUrl))
+              Ok(html.amls.amls_details(amlsForm(amlsBodies.keySet).bind(form), amlsBodies))
 
-            case _ => Ok(html.amls.amls_details(amlsForm(amlsBodies.keySet), amlsBodies, cachedGoBackUrl))
+            case _ => Ok(html.amls.amls_details(amlsForm(amlsBodies.keySet), amlsBodies))
           }
       }
     }
@@ -214,8 +220,7 @@ class AMLSController @Inject()(
     withSubscribingAgent { agent =>
       withManuallyAssuredAgent(agent) {
         for {
-          cachedAmlsData  <- agent.getMandatoryAmlsData
-          cachedGoBackUrl <- sessionStoreService.fetchGoBackUrl
+          cachedAmlsData <- agent.getMandatoryAmlsData
         } yield {
           cachedAmlsData.pendingDetails match {
             case Some(pendingDetails) =>
@@ -227,12 +232,12 @@ class AMLSController @Inject()(
               )
               Ok(
                 html.amls
-                  .amls_pending_details(amlsPendingForm.bind(form), cachedGoBackUrl))
+                  .amls_pending_details(amlsPendingForm.bind(form)))
 
             case None =>
               Ok(
                 html.amls
-                  .amls_pending_details(amlsPendingForm, cachedGoBackUrl))
+                  .amls_pending_details(amlsPendingForm))
           }
         }
       }
