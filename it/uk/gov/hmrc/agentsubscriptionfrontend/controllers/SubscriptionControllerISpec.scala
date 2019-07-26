@@ -79,7 +79,6 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
 
     "show subscription answers page if user has not already subscribed and has clean creds and also cache the goBack url" in new TestSetupWithCompleteJourneyRecord {
       implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
-      sessionStoreService.currentSession.agentSession = agentSession
 
       val result = await(controller.showCheckAnswers(request))
       result should containMessages(

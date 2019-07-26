@@ -26,7 +26,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.config.amls.AMLSLoader
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentAssuranceConnector
 import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
-import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.{AmlsData, PendingDate, RegDetails, SubscriptionJourneyRecord}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.{AmlsData, PendingDate, RegDetails}
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
@@ -55,16 +55,20 @@ class AMLSController @Inject()(
 
   private val amlsBodies: Map[String, String] = AMLSLoader.load("/amls.csv")
 
+  def changeAmlsDetails: Action[AnyContent] = Action.async { implicit request =>
+    sessionStoreService
+      .cacheIsChangingAnswers(changing = true)
+      .map(_ => Redirect(routes.AMLSController.showAmlsRegisteredPage()))
+  }
+
   def showAmlsRegisteredPage: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { agent =>
-      withValidSession { (_, existingSession) =>
-        withManuallyAssuredAgent(existingSession) {
-          agent.getMandatorySubscriptionRecord.map { record =>
-            record.amlsData match {
-              case Some(amlsData) =>
-                Ok(check_amls(checkAmlsForm.bind(Map("registeredAmls" -> RadioInputAnswer(amlsData.amlsRegistered)))))
-              case None => Ok(check_amls(checkAmlsForm))
-            }
+      withManuallyAssuredAgent(agent) {
+        agent.getMandatorySubscriptionRecord.map { record =>
+          record.amlsData match {
+            case Some(amlsData) =>
+              Ok(check_amls(checkAmlsForm.bind(Map("registeredAmls" -> RadioInputAnswer(amlsData.amlsRegistered)))))
+            case None => Ok(check_amls(checkAmlsForm))
           }
         }
       }
@@ -73,53 +77,48 @@ class AMLSController @Inject()(
 
   def submitAmlsRegistered: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { agent =>
-      withValidSession { (_, existingSession) =>
-        withManuallyAssuredAgent(existingSession) {
-          checkAmlsForm
-            .bindFromRequest()
-            .fold(
-              formWithErrors => Ok(html.amls.check_amls(formWithErrors)),
-              validForm => {
-                val nextPage: Result = validForm match {
-                  case Yes =>
-                    Redirect(routes.AMLSController.showAmlsDetailsForm())
-                  case No => Redirect(routes.AMLSController.showCheckAmlsAlreadyAppliedForm())
-                }
-                val cleanAmlsData = AmlsData(
-                  amlsRegistered = RadioInputAnswer.toBoolean(validForm),
-                  amlsAppliedFor = None,
-                  supervisoryBody = None,
-                  pendingDetails = None,
-                  registeredDetails = None)
-
-                updateAmlsJourneyRecord(
-                  agent, { amlsData =>
-                    {
-                      if (amlsData.amlsRegistered == RadioInputAnswer.toBoolean(validForm)) Some(amlsData)
-                      else Some(cleanAmlsData)
-                    }
-                  },
-                  nextPage,
-                  maybeCreateNewAmlsData = Some(cleanAmlsData)
-                )
+      withManuallyAssuredAgent(agent) {
+        checkAmlsForm
+          .bindFromRequest()
+          .fold(
+            formWithErrors => Ok(html.amls.check_amls(formWithErrors)),
+            validForm => {
+              val nextPage: Result = validForm match {
+                case Yes =>
+                  Redirect(routes.AMLSController.showAmlsDetailsForm())
+                case No => Redirect(routes.AMLSController.showCheckAmlsAlreadyAppliedForm())
               }
-            )
-        }
+              val cleanAmlsData = AmlsData(
+                amlsRegistered = RadioInputAnswer.toBoolean(validForm),
+                amlsAppliedFor = None,
+                supervisoryBody = None,
+                pendingDetails = None,
+                registeredDetails = None)
 
+              updateAmlsJourneyRecord(
+                agent, { amlsData =>
+                  {
+                    if (amlsData.amlsRegistered == RadioInputAnswer.toBoolean(validForm)) Some(amlsData)
+                    else Some(cleanAmlsData)
+                  }
+                },
+                nextPage,
+                maybeCreateNewAmlsData = Some(cleanAmlsData)
+              )
+            }
+          )
       }
     }
   }
 
   def showCheckAmlsAlreadyAppliedForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { agent =>
-      withValidSession { (_, existingSession) =>
-        withManuallyAssuredAgent(existingSession) {
-          agent.getMandatoryAmlsData.map { data =>
-            data.amlsAppliedFor match {
-              case Some(appliedFor) =>
-                Ok(amls_applied_for(appliedForAmlsForm.bind(Map("amlsAppliedFor" -> RadioInputAnswer(appliedFor)))))
-              case None => Ok(amls_applied_for(appliedForAmlsForm))
-            }
+      withManuallyAssuredAgent(agent) {
+        agent.getMandatoryAmlsData.map { data =>
+          data.amlsAppliedFor match {
+            case Some(appliedFor) =>
+              Ok(amls_applied_for(appliedForAmlsForm.bind(Map("amlsAppliedFor" -> RadioInputAnswer(appliedFor)))))
+            case None => Ok(amls_applied_for(appliedForAmlsForm))
           }
         }
       }
@@ -128,56 +127,52 @@ class AMLSController @Inject()(
 
   def submitCheckAmlsAlreadyAppliedForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { agent =>
-      withValidSession { (_, existingSession) =>
-        withManuallyAssuredAgent(existingSession) {
-          appliedForAmlsForm.bindFromRequest.fold(
-            formWithErrors => Ok(amls_applied_for(formWithErrors)),
-            validForm => {
-              val nextPage = validForm match {
-                case Yes => Redirect(routes.AMLSController.showAmlsApplicationDatePage())
-                case No  => Redirect(routes.AMLSController.showAmlsNotAppliedPage())
-              }
-              updateAmlsJourneyRecord(
-                agent,
-                amlsData => Some(amlsData.copy(amlsAppliedFor = Some(RadioInputAnswer.toBoolean(validForm)))),
-                nextPage)
+      withManuallyAssuredAgent(agent) {
+        appliedForAmlsForm.bindFromRequest.fold(
+          formWithErrors => Ok(amls_applied_for(formWithErrors)),
+          validForm => {
+            val nextPage = validForm match {
+              case Yes => Redirect(routes.AMLSController.showAmlsApplicationDatePage())
+              case No  => Redirect(routes.AMLSController.showAmlsNotAppliedPage())
             }
-          )
-        }
+            updateAmlsJourneyRecord(
+              agent,
+              amlsData => Some(amlsData.copy(amlsAppliedFor = Some(RadioInputAnswer.toBoolean(validForm)))),
+              nextPage)
+          }
+        )
       }
     }
   }
 
   def showAmlsDetailsForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { agent =>
-      withValidSession { (_, existingSession) =>
-        withManuallyAssuredAgent(existingSession) {
-          for {
-            record          <- agent.getMandatoryAmlsData
-            cachedGoBackUrl <- sessionStoreService.fetchGoBackUrl
-          } yield
-            (record.registeredDetails, record.supervisoryBody) match {
-              case (Some(details), Some(supervisoryBody)) =>
-                val form: Map[String, String] = Map(
-                  "amlsCode"         -> amlsBodies.find(_._2 == supervisoryBody).map(_._1).getOrElse(""),
-                  "membershipNumber" -> details.membershipNumber,
-                  "expiry.day"       -> details.membershipExpiresOn.getDayOfMonth.toString,
-                  "expiry.month"     -> details.membershipExpiresOn.getMonthValue.toString,
-                  "expiry.year"      -> details.membershipExpiresOn.getYear.toString
-                )
-                Ok(html.amls.amls_details(amlsForm(amlsBodies.keySet).bind(form), amlsBodies, cachedGoBackUrl))
+      withManuallyAssuredAgent(agent) {
+        for {
+          record          <- agent.getMandatoryAmlsData
+          cachedGoBackUrl <- sessionStoreService.fetchGoBackUrl
+        } yield
+          (record.registeredDetails, record.supervisoryBody) match {
+            case (Some(details), Some(supervisoryBody)) =>
+              val form: Map[String, String] = Map(
+                "amlsCode"         -> amlsBodies.find(_._2 == supervisoryBody).map(_._1).getOrElse(""),
+                "membershipNumber" -> details.membershipNumber,
+                "expiry.day"       -> details.membershipExpiresOn.getDayOfMonth.toString,
+                "expiry.month"     -> details.membershipExpiresOn.getMonthValue.toString,
+                "expiry.year"      -> details.membershipExpiresOn.getYear.toString
+              )
+              Ok(html.amls.amls_details(amlsForm(amlsBodies.keySet).bind(form), amlsBodies, cachedGoBackUrl))
 
-              case _ => Ok(html.amls.amls_details(amlsForm(amlsBodies.keySet), amlsBodies, cachedGoBackUrl))
-            }
-        }
+            case _ => Ok(html.amls.amls_details(amlsForm(amlsBodies.keySet), amlsBodies, cachedGoBackUrl))
+          }
       }
     }
   }
 
   def submitAmlsDetailsForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { agent =>
-      withValidSession { (_, existingSession) =>
-        withManuallyAssuredAgent(existingSession) {
+      withManuallyAssuredAgent(agent) {
+        sessionStoreService.fetchIsChangingAnswers.flatMap { isChanging =>
           amlsForm(amlsBodies.keys.toSet)
             .bindFromRequest()
             .fold(
@@ -195,7 +190,8 @@ class AMLSController @Inject()(
                       amlsData.copy(
                         supervisoryBody = Some(supervisoryBodyData),
                         registeredDetails = Some(RegDetails(validForm.membershipNumber, validForm.expiry)))),
-                  Redirect(routes.TaskListController.showTaskList())
+                  if (isChanging.getOrElse(false)) Redirect(routes.SubscriptionController.showCheckAnswers())
+                  else Redirect(routes.TaskListController.showTaskList())
                 )
               }
             )
@@ -212,29 +208,27 @@ class AMLSController @Inject()(
 
   def showAmlsApplicationDatePage: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { agent =>
-      withValidSession { (_, existingSession) =>
-        withManuallyAssuredAgent(existingSession) {
-          for {
-            cachedAmlsDetails <- agent.getMandatoryAmlsData
-            cachedGoBackUrl   <- sessionStoreService.fetchGoBackUrl
-          } yield {
-            cachedAmlsDetails.pendingDetails match {
-              case Some(pendingDetails) =>
-                val form: Map[String, String] = Map(
-                  "amlsCode"        -> "HMRC",
-                  "appliedOn.day"   -> pendingDetails.appliedOn.getDayOfMonth.toString,
-                  "appliedOn.month" -> pendingDetails.appliedOn.getMonthValue.toString,
-                  "appliedOn.year"  -> pendingDetails.appliedOn.getYear.toString
-                )
-                Ok(
-                  html.amls
-                    .amls_pending_details(amlsPendingForm.bind(form), cachedGoBackUrl))
+      withManuallyAssuredAgent(agent) {
+        for {
+          cachedAmlsData <- agent.getMandatoryAmlsData
+          cachedGoBackUrl   <- sessionStoreService.fetchGoBackUrl
+        } yield {
+          cachedAmlsData.pendingDetails match {
+            case Some(pendingDetails) =>
+              val form: Map[String, String] = Map(
+                "amlsCode"        -> "HMRC",
+                "appliedOn.day"   -> pendingDetails.appliedOn.getDayOfMonth.toString,
+                "appliedOn.month" -> pendingDetails.appliedOn.getMonthValue.toString,
+                "appliedOn.year"  -> pendingDetails.appliedOn.getYear.toString
+              )
+              Ok(
+                html.amls
+                  .amls_pending_details(amlsPendingForm.bind(form), cachedGoBackUrl))
 
-              case None =>
-                Ok(
-                  html.amls
-                    .amls_pending_details(amlsPendingForm, cachedGoBackUrl))
-            }
+            case None =>
+              Ok(
+                html.amls
+                  .amls_pending_details(amlsPendingForm, cachedGoBackUrl))
           }
         }
       }
@@ -243,8 +237,8 @@ class AMLSController @Inject()(
 
   def submitAmlsApplicationDatePage: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { agent =>
-      withValidSession { (_, existingSession) =>
-        withManuallyAssuredAgent(existingSession) {
+      withManuallyAssuredAgent(agent) {
+        sessionStoreService.fetchIsChangingAnswers.flatMap { isChanging =>
           amlsPendingForm
             .bindFromRequest()
             .fold(
@@ -263,7 +257,8 @@ class AMLSController @Inject()(
                       amlsData.copy(
                         supervisoryBody = Some(supervisoryBodyData),
                         pendingDetails = Some(PendingDate(validForm.appliedOn)))),
-                  Redirect(routes.TaskListController.showTaskList())
+                  if (isChanging.getOrElse(false)) Redirect(routes.SubscriptionController.showCheckAnswers())
+                  else Redirect(routes.TaskListController.showTaskList())
                 )
               }
             )
@@ -272,22 +267,14 @@ class AMLSController @Inject()(
     }
   }
 
-  private def withManuallyAssuredAgent(agentSession: AgentSession)(body: => Future[Result])(
-    implicit hc: HeaderCarrier): Future[Result] =
-    agentSession.utr match {
-      case Some(utr) =>
-        agentAssuranceConnector.isManuallyAssuredAgent(utr).flatMap { response =>
-          if (response) {
-            sessionStoreService
-              .cacheAgentSession(agentSession.copy(taskListFlags = agentSession.taskListFlags.copy(isMAA = true)))
-              .flatMap(_ => toFuture(Redirect(routes.SubscriptionController.showCheckAnswers())))
-          } else body
-        }
-      case None =>
-        //redirect to task list ??? What happens if agent is on MAA List?
-        Redirect(routes.BusinessDetailsController.showBusinessDetailsForm())
-      //Redirect(routes.UtrController.showUtrForm())
+  private def withManuallyAssuredAgent(agent: Agent)(body: => Future[Result])(
+    implicit hc: HeaderCarrier): Future[Result] = {
+    val utr = agent.getMandatorySubscriptionRecord.businessDetails.utr
+    agentAssuranceConnector.isManuallyAssuredAgent(utr).flatMap { response =>
+      if (response) toFuture(Redirect(routes.SubscriptionController.showCheckAnswers()))
+      else body
     }
+  }
 
   private def updateAmlsJourneyRecord(
     agent: Agent,

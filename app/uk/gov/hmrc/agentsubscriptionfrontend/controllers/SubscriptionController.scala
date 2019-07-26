@@ -62,33 +62,35 @@ class SubscriptionController @Inject()(
       withCleanCreds(agent) {
         val sjr = agent.getMandatorySubscriptionRecord
         agentAssuranceConnector.isManuallyAssuredAgent(sjr.businessDetails.utr).flatMap { isMAAgent =>
-          (sjr.businessDetails.registration, sjr.amlsData) match {
-            case (Some(registration), Some(amlsData)) =>
-              sessionStoreService
-                .cacheGoBackUrl(routes.SubscriptionController.showCheckAnswers().url)
-                .map { _ =>
-                  Ok(
-                    html.check_answers(
-                      registrationName = registration.taxpayerName.getOrElse(""),
-                      address = registration.address,
-                      emailAddress = registration.emailAddress,
-                      amlsData = Some(amlsData)
-                    ))
-                }
-
-            case (None, _) => Redirect(routes.BusinessDetailsController.showBusinessDetailsForm())
-
-            case (Some(registration), None) if isMAAgent =>
-              Ok(
-                html.check_answers(
-                  registrationName = registration.taxpayerName.getOrElse(""),
-                  address = registration.address,
-                  emailAddress = registration.emailAddress,
-                  amlsData = None
-                ))
-
-            case (_, None) => Redirect(routes.AMLSController.showAmlsRegisteredPage())
+          sessionStoreService.cacheIsChangingAnswers(false).flatMap { _ =>
+    (sjr.businessDetails.registration, sjr.amlsData) match {
+      case (Some(registration), Some(amlsData)) =>
+        sessionStoreService
+          .cacheGoBackUrl(routes.SubscriptionController.showCheckAnswers().url)
+          .map { _ =>
+            Ok(
+              html.check_answers(
+                registrationName = registration.taxpayerName.getOrElse(""),
+                address = registration.address,
+                emailAddress = registration.emailAddress,
+                amlsData = Some(amlsData)
+              ))
           }
+
+      case (None, _) => Redirect(routes.BusinessDetailsController.showBusinessDetailsForm())
+
+      case (Some(registration), None) if isMAAgent =>
+        Ok(
+          html.check_answers(
+            registrationName = registration.taxpayerName.getOrElse(""),
+            address = registration.address,
+            emailAddress = registration.emailAddress,
+            amlsData = None
+          ))
+
+      case (_, None) => Redirect(routes.AMLSController.showAmlsRegisteredPage())
+    }
+  }
         }
       }
     }
@@ -99,9 +101,9 @@ class SubscriptionController @Inject()(
       withCleanCreds(agent) {
         val sjr = agent.getMandatorySubscriptionRecord
         (sjr.businessDetails.utr, sjr.businessDetails.postcode, sjr.businessDetails.registration, sjr.amlsData) match {
-          case (utr, postcode, Some(registration), amlsDetails) =>
+          case (utr, postcode, Some(registration), amlsData) =>
             subscriptionService
-              .subscribe(utr, postcode, registration, amlsDetails)
+              .subscribe(utr, postcode, registration, amlsData)
               .flatMap(redirectSubscriptionResponse(_, agent))
 
           case _ =>

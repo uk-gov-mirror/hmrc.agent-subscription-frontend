@@ -44,6 +44,7 @@ class TaskListService @Inject()(agentAssuranceConnector: AgentAssuranceConnector
   private def isMaaAgent(utr: Utr)(implicit hc: HeaderCarrier): Future[Boolean] =
     agentAssuranceConnector.isManuallyAssuredAgent(utr)
 
+  //TODO: AMLS task is also complete is user is MAA
   private def isAmlsTaskComplete(subscriptionJourneyRecord: SubscriptionJourneyRecord): Boolean =
     subscriptionJourneyRecord.amlsData.fold(false) {
       case AmlsData(true, _, Some(_), _, Some(_))           => true // registered (with details)

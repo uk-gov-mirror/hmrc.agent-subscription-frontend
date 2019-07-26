@@ -247,7 +247,7 @@ object AgentSubscriptionStub {
     post(urlEqualTo(s"/agent-subscription/subscription"))
       .withRequestBody(equalToJson(s"""
                                       |{
-                                      |  "utr": "${request.utr.value}",
+                                      |  "utr": "${utr.value}",
                                       |  "knownFacts": {
                                       |    "postcode": "${request.knownFacts.postcode}"
                                       |  },
