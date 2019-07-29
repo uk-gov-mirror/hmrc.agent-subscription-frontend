@@ -70,17 +70,12 @@ class BusinessDetailsController @Inject()(
           .fold(
             formWithErrors => Ok(html.business_details(formWithErrors, businessType)),
             businessDetails =>
-              if (Utr.isValid(businessDetails.utr.value)) {
-                checkSubscriptionStatusAndUpdateSession(
-                  businessDetails.utr,
-                  Postcode(businessDetails.postcode),
-                  agentSession).map { resultWithSession =>
-                  val sessionData = (request.session.data ++ resultWithSession.session.data.toSeq) + ("businessType" -> businessType.key)
-                  resultWithSession.withSession(sessionData.toSeq: _*)
-                }
-              } else {
-                mark("Count-Subscription-NoAgencyFound")
-                Redirect(routes.BusinessIdentificationController.showNoMatchFound())
+              checkSubscriptionStatusAndUpdateSession(
+                businessDetails.utr,
+                Postcode(businessDetails.postcode),
+                agentSession).map { resultWithSession =>
+                val sessionData = (request.session.data ++ resultWithSession.session.data.toSeq) + ("businessType" -> businessType.key)
+                resultWithSession.withSession(sessionData.toSeq: _*)
             }
           )
       }

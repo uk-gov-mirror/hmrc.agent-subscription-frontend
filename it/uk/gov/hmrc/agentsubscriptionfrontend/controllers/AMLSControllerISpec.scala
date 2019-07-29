@@ -62,6 +62,7 @@ class AMLSControllerISpec extends BaseISpec {
   }
 
   "GET /change-amls" should {
+
     "redirect to the amls registered page and cache changing as true" in {
       implicit val authenticatedRequest: FakeRequest[AnyContentAsEmpty.type] = authenticatedAs(
         subscribingAgentEnrolledForNonMTD)
