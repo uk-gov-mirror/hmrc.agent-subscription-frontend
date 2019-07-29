@@ -60,7 +60,9 @@ class DesAddressFormSpec extends UnitSpec with ResettingMockitoSugar with Either
   private val blacklistedPostcode = "BB1 1BB"
   private val errorsForBlacklistedPostcode = Seq(FormError("postcode", "error.postcode.blacklisted", Seq()))
   private val blacklistedPostcodes: Set[String] =
-    Set(blacklistedPostcode, "CC1 1CC", "DD1 1DD").map(PostcodesLoader.formatPostcode)
+    Set(blacklistedPostcode, "CC1 1CC", "DD1 1DD")
+      .filter(PostcodesLoader.formatPostcode(_).isDefined)
+      .map(PostcodesLoader.formatPostcode(_).get)
 
   private val validCountryCode = "GB"
   private val utr = Utr("1234567890")
