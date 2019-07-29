@@ -19,9 +19,16 @@ package uk.gov.hmrc.agentsubscriptionfrontend.models
 case class RadioInvasiveStartSaAgentCode(hasSaAgentCode: Option[Boolean], saAgentCode: Option[String])
 case class RadioInvasiveTaxPayerOption(variant: Option[String], utr: Option[String], nino: Option[String])
 
-object ValidVariantsTaxPayerOptionForm extends Enumeration {
-  type ValidVariantsTaxPayerOptionForm = String
-  val UtrV = Value("utr")
-  val NinoV = Value("nino")
-  val CannotProvideV = Value("cannotProvide")
+sealed abstract class ValidVariantsTaxPayerOptionForm
+
+object ValidVariantsTaxPayerOptionForm {
+  def findByValue(value: String): ValidVariantsTaxPayerOptionForm = value match {
+    case "utr"           => TaxPayerUtr
+    case "nino"          => TaxPayerNino
+    case "cannotProvide" => TaxPayerCannotProvide
+  }
 }
+
+case object TaxPayerUtr extends ValidVariantsTaxPayerOptionForm
+case object TaxPayerNino extends ValidVariantsTaxPayerOptionForm
+case object TaxPayerCannotProvide extends ValidVariantsTaxPayerOptionForm

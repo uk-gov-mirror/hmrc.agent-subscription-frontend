@@ -16,7 +16,7 @@
 
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 
-@(continueUrl: String, isUrlToASAccount: Boolean, arn: String, agencyName: String, agencyEmail: String)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+@(continueUrl: String, arn: String, agencyName: String, agencyEmail: String)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = Messages("subscriptionComplete.title"), bodyClasses = None) {
 
@@ -41,8 +41,5 @@
     <li>@Messages("subscriptionComplete.bullet-list.2")</li>
 </ul>
 
-@defining(if(isUrlToASAccount) "continueToASAccount" else "continueJourney") { continueMsg =>
-<a href="@continueUrl" class="button" id="continue"
-   role="button">@Messages(s"subscriptionComplete.button.$continueMsg")</a>
-}
+<a href="@continueUrl" class="button" id="continue" role="button">@Messages("subscriptionComplete.button.continueJourney")</a>
 }

@@ -8,6 +8,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData._
+import uk.gov.hmrc.agentsubscriptionfrontend.support.TestSetupNoJourneyRecord
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -25,7 +26,7 @@ class PostcodeControllerWithOutAssuranceFlagISpec extends BaseISpec with Session
 
   "submitPostcodeForm" should {
 
-    "read the form and redirect to /national-insurance-number if businessType is SoleTrader or Partnership" in {
+    "read the form and redirect to /national-insurance-number if businessType is SoleTrader or Partnership" in new TestSetupNoJourneyRecord {
       List(SoleTrader, Partnership).foreach { businessType =>
         withMatchingUtrAndPostcode(validUtr, validPostcode)
 
@@ -38,11 +39,11 @@ class PostcodeControllerWithOutAssuranceFlagISpec extends BaseISpec with Session
 
         redirectLocation(result) shouldBe Some(routes.NationalInsuranceController.showNationalInsuranceNumberForm().url)
 
-        sessionStoreService.currentSession.agentSession.get.registration shouldBe Some(registration.copy(emailAddress = Some("someone@example.com")))
+        sessionStoreService.currentSession.agentSession.get.registration shouldBe Some(testRegistration.copy(emailAddress = Some("someone@example.com")))
       }
     }
 
-    "read the form and redirect to /company-registration-number if businessType is Limited Company or Llp" in {
+    "read the form and redirect to /company-registration-number if businessType is Limited Company or Llp" in new TestSetupNoJourneyRecord{
       List(LimitedCompany, Llp).foreach { businessType =>
         withMatchingUtrAndPostcode(validUtr, validPostcode)
 
@@ -55,11 +56,11 @@ class PostcodeControllerWithOutAssuranceFlagISpec extends BaseISpec with Session
 
         redirectLocation(result) shouldBe Some(routes.CompanyRegistrationController.showCompanyRegNumberForm().url)
 
-        sessionStoreService.currentSession.agentSession.get.registration shouldBe Some(registration.copy(emailAddress = Some("someone@example.com")))
+        sessionStoreService.currentSession.agentSession.get.registration shouldBe Some(testRegistration.copy(emailAddress = Some("someone@example.com")))
       }
     }
 
-    "redirect to already subscribed page when the business registration found by agent-subscription is already subscribed" in {
+    "redirect to already subscribed page when the business registration found by agent-subscription is already subscribed" in new TestSetupNoJourneyRecord{
       withMatchingUtrAndPostcode(validUtr, validPostcode, isSubscribedToAgentServices = true, isSubscribedToETMP = true)
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
@@ -72,7 +73,7 @@ class PostcodeControllerWithOutAssuranceFlagISpec extends BaseISpec with Session
       redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showAlreadySubscribed().url)
     }
 
-    "showSubscriptionComplete for partially subscribed agent" in {
+    "showSubscriptionComplete for partially subscribed agent" in new TestSetupNoJourneyRecord{
       withMatchingUtrAndPostcode(validUtr, validPostcode, isSubscribedToAgentServices = false, isSubscribedToETMP = true)
       partialSubscriptionWillSucceed(CompletePartialSubscriptionBody(validUtr, knownFacts = SubscriptionRequestKnownFacts(validPostcode)), arn = "TARN00023")
 
@@ -84,7 +85,7 @@ class PostcodeControllerWithOutAssuranceFlagISpec extends BaseISpec with Session
       redirectLocation(result) shouldBe Some(routes.SubscriptionController.showSubscriptionComplete().url)
     }
 
-    "redirect to /business-type if businessType is not found in session" in {
+    "redirect to /business-type if businessType is not found in session" in new TestSetupNoJourneyRecord{
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("postcode" -> "AA12 1JN")
 
       val result = await(controller.submitPostcodeForm()(request))
@@ -94,7 +95,7 @@ class PostcodeControllerWithOutAssuranceFlagISpec extends BaseISpec with Session
       redirectLocation(result) shouldBe Some(routes.BusinessTypeController.showBusinessTypeForm().url)
     }
 
-    "handle for with invalid postcodes" in {
+    "handle for with invalid postcodes" in new TestSetupNoJourneyRecord{
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("postcode" -> "sdsds")
       await(sessionStoreService.cacheAgentSession(AgentSession(Some(SoleTrader))))
 

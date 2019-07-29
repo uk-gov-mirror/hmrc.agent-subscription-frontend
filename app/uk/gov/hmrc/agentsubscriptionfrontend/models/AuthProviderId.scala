@@ -16,11 +16,16 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.models
 
-import play.api.libs.json.{Format, Json}
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import play.api.libs.json.Format
+import play.api.libs.functional.syntax._
 
-case class BusinessDetails(utr: Utr, postcode: String)
+/**
+  * An internal id associated with a Government Gateway account.
+  *
+  * @param id
+  */
+final case class AuthProviderId(id: String)
 
-object BusinessDetails {
-  implicit val format: Format[BusinessDetails] = Json.format[BusinessDetails]
+object AuthProviderId {
+  implicit val format: Format[AuthProviderId] = implicitly[Format[String]].inmap(AuthProviderId(_), _.id)
 }

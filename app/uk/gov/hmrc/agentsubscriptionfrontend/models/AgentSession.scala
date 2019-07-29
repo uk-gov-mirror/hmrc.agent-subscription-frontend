@@ -20,6 +20,10 @@ import play.api.libs.json.{Format, Json}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.domain.Nino
 
+/**
+  * Holds data about a non-MTD agent's initial onboarding session before they have a Journey Subscription Record
+  * Just holds data about the business identification step, which occurs before the record is created.
+  */
 case class AgentSession(
   businessType: Option[BusinessType] = None,
   utr: Option[Utr] = None,
@@ -29,11 +33,7 @@ case class AgentSession(
   dateOfBirth: Option[DateOfBirth] = None,
   registeredForVat: Option[String] = None,
   vatDetails: Option[VatDetails] = None,
-  registration: Option[Registration] = None,
-  checkAmls: Option[String] = None,
-  amlsAppliedFor: Option[String] = None,
-  amlsDetails: Option[AMLSDetails] = None,
-  taskListFlags: TaskListFlags = TaskListFlags())
+  registration: Option[Registration] = None)
 
 object AgentSession {
   implicit val format: Format[AgentSession] = Json.format[AgentSession]

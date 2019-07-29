@@ -19,7 +19,7 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
 @import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessEmail
 
-@(businessEmailForm: Form[BusinessEmail], invalidDesEmail: Boolean)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+@(businessEmailForm: Form[BusinessEmail], invalidDesEmail: Boolean, isChange: Boolean)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 @formLabel = @{
     """<h1 class="heading-xlarge">""" + Messages("businessEmail.title") + """</h1>"""+
@@ -37,7 +37,7 @@
     }
 
     @form(
-        action = routes.BusinessIdentificationController.submitBusinessEmailForm(),
+        action = if(isChange) routes.BusinessIdentificationController.submitChangeBusinessEmail else routes.BusinessIdentificationController.submitBusinessEmailForm(),
         'class -> "form js-form") {
 
         <div class="form-group">
@@ -50,7 +50,13 @@
         </div>
 
         <div class="form-field">
+            @if(isChange){
+            <button class="button margin-right-5" type="submit" id="business-email-change-continue" name="continue" value="continue">@Messages("button.saveContinue")</button>
+                    <button class="button--secondary" type="submit" id="business-email-change-save" name="continue" value="save">@Messages("button.saveComeBackLater")</button>
+
+            } else {
             <button class="button" type="submit" id="submit-email">@Messages("businessEmail.continue.button")</button>
+            }
         </div>
     }
 }

@@ -22,8 +22,8 @@ import play.api.i18n.MessagesApi
 import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationForms.businessTypeForm
-import uk.gov.hmrc.agentsubscriptionfrontend.models.AgentSession
-import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, BusinessType}
+import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.auth.core.AuthConnector
@@ -33,12 +33,14 @@ import scala.concurrent.ExecutionContext
 class BusinessTypeController @Inject()(
   override val continueUrlActions: ContinueUrlActions,
   override val authConnector: AuthConnector,
-  val sessionStoreService: SessionStoreService)(
+  val sessionStoreService: SessionStoreService,
+  override val subscriptionJourneyService: SubscriptionJourneyService)(
   implicit override val metrics: Metrics,
   override val appConfig: AppConfig,
   val ec: ExecutionContext,
   override val messagesApi: MessagesApi)
-    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig) with SessionBehaviour {
+    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig, subscriptionJourneyService)
+    with SessionBehaviour {
 
   def redirectToBusinessTypeForm: Action[AnyContent] = Action.async { implicit request =>
     Redirect(routes.BusinessTypeController.showBusinessTypeForm())
@@ -47,14 +49,18 @@ class BusinessTypeController @Inject()(
   def showBusinessTypeForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { implicit agent =>
       continueUrlActions.withMaybeContinueUrlCached {
-        sessionStoreService.fetchAgentSession.flatMap {
-          case Some(agentSession) =>
-            agentSession.businessType match {
-              case Some(businessType) =>
-                Ok(html.business_type(businessTypeForm.fill(businessType)))
+        agent.subscriptionJourneyRecord match {
+          case Some(_) => Redirect(routes.TaskListController.showTaskList())
+          case None =>
+            sessionStoreService.fetchAgentSession.flatMap {
+              case Some(agentSession) =>
+                agentSession.businessType match {
+                  case Some(businessType) =>
+                    Ok(html.business_type(businessTypeForm.fill(businessType)))
+                  case _ => Ok(html.business_type(businessTypeForm))
+                }
               case None => Ok(html.business_type(businessTypeForm))
             }
-          case None => Ok(html.business_type(businessTypeForm))
         }
       }
     }

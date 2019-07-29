@@ -6,6 +6,7 @@ GET         /not-agent                                     uk.gov.hmrc.agentsubs
 GET         /return-after-gg-creds-created                 uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.returnAfterGGCredsCreated(id: Option[String] ?= None)
 
 GET         /task-list                                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.TaskListController.showTaskList
+GET         /progress-saved                                uk.gov.hmrc.agentsubscriptionfrontend.controllers.TaskListController.savedProgress(backLink: Option[String] ?= None)
 
 GET         /business-type                                 uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessTypeController.showBusinessTypeForm
 POST        /business-type                                 uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessTypeController.submitBusinessTypeForm
@@ -41,8 +42,10 @@ POST        /confirm-business                              uk.gov.hmrc.agentsubs
 
 GET         /already-subscribed                            uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showAlreadySubscribed
 
-GET         /check-money-laundering-compliance             uk.gov.hmrc.agentsubscriptionfrontend.controllers.AMLSController.showCheckAmlsPage
-POST        /check-money-laundering-compliance             uk.gov.hmrc.agentsubscriptionfrontend.controllers.AMLSController.submitCheckAmls
+GET         /change-amls                                    uk.gov.hmrc.agentsubscriptionfrontend.controllers.AMLSController.changeAmlsDetails
+
+GET         /check-money-laundering-compliance             uk.gov.hmrc.agentsubscriptionfrontend.controllers.AMLSController.showAmlsRegisteredPage
+POST        /check-money-laundering-compliance             uk.gov.hmrc.agentsubscriptionfrontend.controllers.AMLSController.submitAmlsRegistered
 
 GET         /money-laundering-compliance                   uk.gov.hmrc.agentsubscriptionfrontend.controllers.AMLSController.showAmlsDetailsForm
 POST        /money-laundering-compliance                   uk.gov.hmrc.agentsubscriptionfrontend.controllers.AMLSController.submitAmlsDetailsForm
@@ -78,10 +81,12 @@ POST        /check-answers                                 uk.gov.hmrc.agentsubs
 GET         /business-name                                 uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showBusinessNameForm
 POST        /business-name                                 uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.submitBusinessNameForm
 GET         /change-business-name                          uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.changeBusinessName
+POST        /change-business-name                          uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.submitChangeBusinessName
 
 GET         /business-email                                uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showBusinessEmailForm
 POST        /business-email                                uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.submitBusinessEmailForm
 GET         /change-business-email                         uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.changeBusinessEmail
+POST        /change-business-email                         uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.submitChangeBusinessEmail
 
 GET         /business-address                              uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showBusinessAddressForm
 
@@ -89,6 +94,8 @@ GET         /business-address                              uk.gov.hmrc.agentsubs
 GET         /return-from-address-lookup                    uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.returnFromAddressLookup(id: String ?= "")
 POST        /submit-modified-address                       uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.submitModifiedAddress
 GET         /complete                                      uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showSubscriptionComplete
+
+GET        /begin-mapping                                 uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.beginMapping
 
 GET         /redirect-to-sos                               uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.redirectToSos
 GET         /redirect-to-asaccount                         uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.redirectToASAccountPage

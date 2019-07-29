@@ -22,9 +22,8 @@ import play.api.i18n.MessagesApi
 import play.api.mvc.{Action, AnyContent, Request, Result}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, Postcode, TaskListFlags}
-import uk.gov.hmrc.agentsubscriptionfrontend.repository.ChainedSessionDetailsRepository
-import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionService, SubscriptionState}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, ContinueId, Postcode}
+import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.auth.core.AuthConnector
@@ -35,15 +34,16 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class StartController @Inject()(
   override val authConnector: AuthConnector,
-  chainedSessionDetailsRepository: ChainedSessionDetailsRepository,
   continueUrlActions: ContinueUrlActions,
   val sessionStoreService: SessionStoreService,
-  subscriptionService: SubscriptionService)(
+  subscriptionService: SubscriptionService,
+  subscriptionJourneyService: SubscriptionJourneyService)(
   implicit override implicit val appConfig: AppConfig,
   metrics: Metrics,
   override val messagesApi: MessagesApi,
   val ec: ExecutionContext)
-    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig) with SessionBehaviour {
+    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig, subscriptionJourneyService)
+    with SessionBehaviour {
 
   import uk.gov.hmrc.agentsubscriptionfrontend.support.CallOps._
 
@@ -55,7 +55,10 @@ class StartController @Inject()(
 
   def start: Action[AnyContent] = Action.async { implicit request =>
     continueUrlActions.withMaybeContinueUrl { urlOpt =>
-      Ok(html.start(urlOpt))
+      val nextUrl: String = routes.BusinessTypeController
+        .showBusinessTypeForm()
+        .toURLWithParams("continue" -> urlOpt.map(_.url))
+      Ok(html.start(nextUrl))
     }
   }
 
@@ -66,86 +69,37 @@ class StartController @Inject()(
   }
 
   def returnAfterGGCredsCreated(id: Option[String] = None): Action[AnyContent] = Action.async { implicit request =>
-    continueUrlActions.withMaybeContinueUrlCached {
-      id match {
-        case Some(value) =>
-          chainedSessionDetailsRepository.findChainedSessionDetails(value).flatMap {
-            case Some(chainedSessionDetails) =>
-              chainedSessionDetailsRepository.delete(value).flatMap { _ =>
-                storeAgentSessionAndRedirect(chainedSessionDetails.agentSession)
-              }
+    withSubscribingAgent { agent =>
+      continueUrlActions.withMaybeContinueUrlCached {
+        id match {
+          case Some(continueId) =>
+            // sanity check - they just came back with a brand new Auth Id
+            require(agent.subscriptionJourneyRecord.isEmpty)
 
-            case None => Redirect(routes.TaskListController.showTaskList())
-          }
-        case None => Redirect(routes.TaskListController.showTaskList())
+            for {
+              record <- subscriptionJourneyService.getMandatoryJourneyRecord(ContinueId(continueId))
+              _ <- subscriptionJourneyService.saveJourneyRecord(
+                    record.copy(cleanCredsAuthProviderId = Some(agent.authProviderId)))
+            } yield Redirect(routes.TaskListController.showTaskList())
+
+          case None => Future.successful(Redirect(routes.TaskListController.showTaskList()))
+        }
       }
     }
   }
-
-  private def storeAgentSessionAndRedirect(
-    agentSession: AgentSession)(implicit hc: HeaderCarrier, request: Request[_]): Future[Result] =
-    sessionStoreService.cacheAgentSession(agentSession).flatMap { _ =>
-      (agentSession.utr, agentSession.postcode) match {
-        case (Some(utr), Some(postcode)) =>
-          subscriptionService.getSubscriptionStatus(utr, postcode).flatMap { subscriptionProcess =>
-            if (subscriptionProcess.state == SubscriptionState.SubscribedButNotEnrolled) {
-              handlePartialSubscription(utr, postcode.value, agentSession)
-            } else {
-              updateTaskListAndContinue
-            }
-          }
-        case _ =>
-          sessionStoreService
-            .cacheAgentSession(agentSession.copy(taskListFlags = TaskListFlags()))
-            .flatMap(_ => toFuture(Redirect(routes.TaskListController.showTaskList())))
-      }
-    }
 
   def showCannotCreateAccount: Action[AnyContent] = Action { implicit request =>
     Ok(html.cannot_create_account())
   }
 
-  private def updateTaskListAndContinue(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Result] =
-    withValidSession { (_, existingSession) =>
-      sessionStoreService
-        .cacheAgentSession(
-          existingSession
-            .copy(taskListFlags = existingSession.taskListFlags.copy(createTaskComplete = true)))
-        .flatMap(_ =>
-          sessionStoreService.fetchContinueUrl.flatMap {
-            case Some(_) => toFuture(Redirect(routes.SubscriptionController.showCheckAnswers()))
-            case None    => toFuture(Redirect(routes.TaskListController.showTaskList()))
-        })
-
-    }
-
+  // TODO review partial subscription handling
   private def handlePartialSubscription(kfcUtr: Utr, kfcPostcode: String, agentSession: AgentSession)(
     implicit request: Request[_],
-    hc: HeaderCarrier): Future[Result] = {
+    hc: HeaderCarrier): Future[Result] =
     subscriptionService
       .completePartialSubscription(kfcUtr, Postcode(kfcPostcode))
-      .map { _ =>
+      .flatMap { _ =>
         mark("Count-Subscription-PartialSubscriptionCompleted")
         Redirect(routes.SubscriptionController.showSubscriptionComplete())
       }
-    sessionStoreService.fetchContinueUrl.flatMap {
-      case Some(continueUrl) =>
-        subscriptionService
-          .completePartialSubscription(kfcUtr, Postcode(kfcPostcode))
-          .map { _ =>
-            mark("Count-Subscription-PartialSubscriptionCompleted")
-            Redirect(routes.SubscriptionController.showSubscriptionComplete())
-          }
-      case None =>
-        subscriptionService
-          .completePartialSubscription(kfcUtr, Postcode(kfcPostcode))
-          .flatMap { _ =>
-            mark("Count-Subscription-PartialSubscriptionCompleted")
-            sessionStoreService
-              .cacheAgentSession(
-                agentSession.copy(taskListFlags = agentSession.taskListFlags.copy(createTaskComplete = true)))
-              .map(_ => Redirect(routes.SubscriptionController.showSubscriptionComplete()))
-          }
-    }
-  }
 }

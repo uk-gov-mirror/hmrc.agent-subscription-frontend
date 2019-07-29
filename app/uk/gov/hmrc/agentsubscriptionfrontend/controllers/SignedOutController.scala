@@ -16,63 +16,51 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
-import cats.data.OptionT
-import cats.instances.future._
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
 import play.api.i18n.MessagesApi
 import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.models.ChainedSessionDetails
-import uk.gov.hmrc.agentsubscriptionfrontend.repository.ChainedSessionDetailsRepository
-import uk.gov.hmrc.agentsubscriptionfrontend.repository.StashedChainedSessionDetails.StashedChainnedSessionId
-import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
+import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.CallOps.addParamsToUrl
 import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.http.HeaderCarrier
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
 @Singleton
 class SignedOutController @Inject()(
-  chainedSessionRepository: ChainedSessionDetailsRepository,
   val sessionStoreService: SessionStoreService,
   continueUrlActions: ContinueUrlActions,
-  override val authConnector: AuthConnector)(
+  override val authConnector: AuthConnector,
+  override val subscriptionJourneyService: SubscriptionJourneyService)(
   implicit messagesApi: MessagesApi,
   override val appConfig: AppConfig,
   override val metrics: Metrics,
   override val ec: ExecutionContext)
-    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig) with SessionBehaviour {
+    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig, subscriptionJourneyService)
+    with SessionBehaviour {
 
-  def redirectToSos = Action.async { implicit request =>
-    for {
-      chainedSessionIdOpt    <- prepareChainedSession()
-      agentSubContinueUrlOpt <- sessionStoreService.fetchContinueUrl
-    } yield {
-      val rootContinueUrl: String =
-        if (appConfig.isDevMode) "http://localhost:9437/agent-subscription/return-after-gg-creds-created"
-        else "/agent-subscription/return-after-gg-creds-created"
-      val continueUrl =
-        addParamsToUrl(
-          rootContinueUrl,
-          "id"       -> chainedSessionIdOpt.map(_.toString),
-          "continue" -> agentSubContinueUrlOpt.map(_.url)
-        )
-      SeeOther(addParamsToUrl(appConfig.sosRedirectUrl, "continue" -> Some(continueUrl))).withNewSession
+  def redirectToSos: Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { agent =>
+      for {
+        agentSubContinueUrlOpt <- sessionStoreService.fetchContinueUrl
+        continueId = agent.getMandatorySubscriptionRecord.continueId
+      } yield {
+        val rootContinueUrl: String =
+          if (appConfig.isDevMode) "http://localhost:9437/agent-subscription/return-after-gg-creds-created"
+          else "/agent-subscription/return-after-gg-creds-created"
+        val continueUrl =
+          addParamsToUrl(
+            rootContinueUrl,
+            "id"       -> continueId,
+            "continue" -> agentSubContinueUrlOpt.map(_.url)
+          )
+        SeeOther(addParamsToUrl(appConfig.sosRedirectUrl, "continue" -> Some(continueUrl))).withNewSession
+      }
     }
   }
 
-  private def prepareChainedSession()(implicit hc: HeaderCarrier): Future[Option[StashedChainnedSessionId]] =
-    (for {
-      agentSession <- OptionT(sessionStoreService.fetchAgentSession)
-      id <- OptionT(
-             chainedSessionRepository
-               .create(ChainedSessionDetails(agentSession))
-               .map(id => Option(id)))
-    } yield id).value
-
-  def signOutWithContinueUrl = Action.async { implicit request =>
+  def signOutWithContinueUrl: Action[AnyContent] = Action.async { implicit request =>
     sessionStoreService.fetchContinueUrl.map { maybeContinueUrl =>
       val signOutUrlWithContinueUrl =
         addParamsToUrl(appConfig.companyAuthSignInUrl, "continue" -> maybeContinueUrl.map(_.url))
@@ -80,11 +68,11 @@ class SignedOutController @Inject()(
     }
   }
 
-  def startSurvey = Action { implicit request =>
+  def startSurvey: Action[AnyContent] = Action { implicit request =>
     SeeOther(appConfig.surveyRedirectUrl).withNewSession
   }
 
-  def redirectToASAccountPage = Action { implicit request =>
+  def redirectToASAccountPage: Action[AnyContent] = Action { implicit request =>
     SeeOther(appConfig.agentServicesAccountUrl).withNewSession
   }
 
@@ -92,7 +80,7 @@ class SignedOutController @Inject()(
     Redirect(routes.StartController.start()).withNewSession
   }
 
-  def redirectToBusinessTypeForm = Action { implicit request =>
+  def redirectToBusinessTypeForm: Action[AnyContent] = Action { implicit request =>
     Redirect(routes.BusinessTypeController.showBusinessTypeForm()).withNewSession
   }
 }

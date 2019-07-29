@@ -16,18 +16,37 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend
 
+import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms.{mapping, _}
 import play.api.i18n.Messages
+import play.api.mvc.{AnyContent, Call, Request}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{BusinessDetails, RadioInputAnswer, _}
+import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TaxIdentifierFormatters.normalizeUtr
 import uk.gov.hmrc.agentsubscriptionfrontend.validators.CommonValidators._
 import uk.gov.hmrc.domain.Nino
 import uk.gov.voa.play.form.ConditionalMappings.{mandatoryIfEqual, mandatoryIfTrue}
 
 package object controllers {
+
+  def continueOrStop(next: Call, previous: Call)(implicit request: Request[AnyContent]): Call = {
+
+    val submitAction = request.body.asFormUrlEncoded
+      .fold(Seq.empty: Seq[String])(someMap => someMap.getOrElse("continue", Seq.empty))
+
+    val call = submitAction.headOption match {
+      case Some("continue") => next
+      case Some("save")     => routes.TaskListController.savedProgress(Some(previous.url))
+      case _ => {
+        Logger.warn("unexpected value in submit")
+        routes.TaskListController.showTaskList()
+      }
+    }
+    call
+  }
+
   object BusinessIdentificationForms {
 
     private val businessTypes = List(
@@ -46,12 +65,12 @@ package object controllers {
             ))(input => BusinessType(input))(bType => Some(bType.key))
       )
 
-    def businessDetailsForm(businessType: String): Form[BusinessDetails] =
-      Form[BusinessDetails](
+    def businessDetailsForm(businessType: String): Form[MainBusinessIdentity] =
+      Form[MainBusinessIdentity](
         mapping("utr" -> businessUtr(businessType), "postcode" -> postcode)(
           (utrStr, postcode) =>
             normalizeUtr(utrStr)
-              .map(utr => BusinessDetails(utr, postcode))
+              .map(utr => MainBusinessIdentity(utr, postcode))
               .getOrElse(throw new Exception("Invalid utr found after validation")))(businessDetails =>
           Some((businessDetails.utr.value, businessDetails.postcode))))
 
@@ -103,11 +122,7 @@ package object controllers {
         "variant" -> optional(text).verifying(radioInputSelected("clientDetails.error.no-radio.selected")),
         "utr"     -> mandatoryIfEqual("variant", "utr", clientDetailsUtr),
         "nino"    -> mandatoryIfEqual("variant", "nino", clientDetailsNino)
-      )(RadioInvasiveTaxPayerOption.apply)(RadioInvasiveTaxPayerOption.unapply).verifying(
-        "error.radio-variant.invalid",
-        submittedTaxPayerOption =>
-          ValidVariantsTaxPayerOptionForm.values.exists(_.toString == submittedTaxPayerOption.variant.getOrElse(""))
-      ))
+      )(RadioInvasiveTaxPayerOption.apply)(RadioInvasiveTaxPayerOption.unapply))
 
     val invasiveCheckStartSaAgentCode: Form[RadioInvasiveStartSaAgentCode] = Form[RadioInvasiveStartSaAgentCode](
       mapping(

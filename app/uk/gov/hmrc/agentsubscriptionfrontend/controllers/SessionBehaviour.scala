@@ -18,8 +18,9 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import play.api.mvc.{Call, Result}
 import play.api.mvc.Results._
+import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.SubscriptionJourneyRecord
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, BusinessType}
-import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
+import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -29,6 +30,7 @@ trait SessionBehaviour extends CommonRouting {
 
   val sessionStoreService: SessionStoreService
   implicit val ec: ExecutionContext
+  val subscriptionJourneyService: SubscriptionJourneyService
 
   protected def withValidSession(body: (BusinessType, AgentSession) => Future[Result])(
     implicit hc: HeaderCarrier): Future[Result] =
@@ -47,4 +49,10 @@ trait SessionBehaviour extends CommonRouting {
     sessionStoreService
       .cacheAgentSession(updatedSession)
       .map(_ => Redirect(redirectTo))
+
+  protected def updateSubscriptionJourneyRecordAndRedirect(subscriptionJourneyRecord: SubscriptionJourneyRecord)(
+    redirectTo: Call)(
+    implicit hc: HeaderCarrier
+  ): Future[Result] =
+    subscriptionJourneyService.saveJourneyRecord(subscriptionJourneyRecord).map(_ => Redirect(redirectTo))
 }

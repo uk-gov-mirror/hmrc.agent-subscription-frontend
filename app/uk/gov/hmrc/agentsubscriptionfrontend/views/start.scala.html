@@ -15,16 +15,11 @@
  *@
 
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-@import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes.BusinessTypeController
 @import uk.gov.hmrc.play.binders.ContinueUrl
 @import java.net.URLEncoder
-@import uk.gov.hmrc.agentsubscriptionfrontend.support.CallOps._
 
-@(continueUrlOpt: Option[ContinueUrl])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
-@continueUrl = @{
-    BusinessTypeController.showBusinessTypeForm().toURLWithParams("continue" -> continueUrlOpt.map(_.url))
-}
+@(nextUrl: String)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = Messages("startpage.title"), bodyClasses = None, userIsLoggedIn = false) {
 
@@ -37,7 +32,7 @@
         <li>@Messages("startpage.l1.2")</li>
     </ul>
 
-    <a class="button button-start button--get-started" id="start" href="@continueUrl" role="button">@Messages("startpage.continue")</a>
+    <a class="button button-start button--get-started" id="start" href="@nextUrl" role="button">@Messages("startpage.continue")</a>
 
     <h2 class="heading-medium">@Messages("startpage.h2")</h2>
 

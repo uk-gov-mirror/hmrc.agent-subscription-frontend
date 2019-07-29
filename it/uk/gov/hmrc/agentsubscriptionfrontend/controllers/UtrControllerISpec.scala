@@ -12,13 +12,14 @@ import play.api.i18n.Messages.Implicits.applicationMessages
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.SoleTrader
+import uk.gov.hmrc.agentsubscriptionfrontend.support.TestSetupNoJourneyRecord
 
 class UtrControllerISpec extends BaseISpec with SessionDataMissingSpec {
   lazy val controller: UtrController = app.injector.instanceOf[UtrController]
 
   "showUtrFormPage" should {
     validBusinessTypes.foreach { businessType =>
-      s"display the page as expected when is business type is $businessType" in {
+      s"display the page as expected when is business type is $businessType" in  new TestSetupNoJourneyRecord{
         implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         await(sessionStoreService.cacheAgentSession(AgentSession(Some(businessType))))
 
@@ -34,7 +35,7 @@ class UtrControllerISpec extends BaseISpec with SessionDataMissingSpec {
       }
     }
 
-    "pre-populate the utr if one is already stored in the session" in {
+    "pre-populate the utr if one is already stored in the session" in  new TestSetupNoJourneyRecord {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
       await(sessionStoreService.cacheAgentSession(AgentSession(Some(SoleTrader), Some(Utr("abcd")))))
 
@@ -48,7 +49,7 @@ class UtrControllerISpec extends BaseISpec with SessionDataMissingSpec {
   }
 
   "submitUtrFormPage" should {
-    "display the page as expected when the form is valid and redirect to /postcode page" in {
+    "display the page as expected when the form is valid and redirect to /postcode page" in  new TestSetupNoJourneyRecord{
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("utr" -> validUtr.value)
       sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(BusinessType.SoleTrader)))
 
@@ -58,7 +59,7 @@ class UtrControllerISpec extends BaseISpec with SessionDataMissingSpec {
       redirectLocation(result) shouldBe Some(routes.PostcodeController.showPostcodeForm().url)
     }
 
-    "redirect to /business-type if businessType missing in the session" in {
+    "redirect to /business-type if businessType missing in the session" in  new TestSetupNoJourneyRecord{
       val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("utr" -> validUtr.value)
       val result = await(controller.submitUtrForm()(request))
 
@@ -66,7 +67,7 @@ class UtrControllerISpec extends BaseISpec with SessionDataMissingSpec {
       redirectLocation(result) shouldBe Some(routes.BusinessTypeController.showBusinessTypeForm().url)
     }
 
-    "handle form with errors and show the same again" in {
+    "handle form with errors and show the same again" in  new TestSetupNoJourneyRecord{
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("utr" -> "invalidUtr")
       sessionStoreService.currentSession.agentSession = Some(AgentSession(Some(BusinessType.SoleTrader)))
 

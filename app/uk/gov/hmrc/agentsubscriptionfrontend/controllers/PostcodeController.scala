@@ -43,12 +43,14 @@ class PostcodeController @Inject()(
   val sessionStoreService: SessionStoreService,
   subscriptionService: SubscriptionService,
   assuranceService: AssuranceService,
-  auditService: AuditService)(
+  auditService: AuditService,
+  override val subscriptionJourneyService: SubscriptionJourneyService)(
   implicit override val metrics: Metrics,
   override val appConfig: AppConfig,
   val ec: ExecutionContext,
   override val messagesApi: MessagesApi)
-    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig) with SessionBehaviour {
+    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig, subscriptionJourneyService)
+    with SessionBehaviour {
 
   def showPostcodeForm(): Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { implicit agent =>
@@ -85,10 +87,10 @@ class PostcodeController @Inject()(
     request: Request[AnyContent],
     agent: Agent): Future[Result] =
     subscriptionService.getSubscriptionStatus(utr, postcode).flatMap {
-      case SubscriptionProcess(SubscriptionState.Unsubscribed, Some(registrationDetails)) =>
+      case SubscriptionProcess(Unsubscribed, Some(registrationDetails)) =>
         checkAssuranceAndUpdateSession(utr, postcode, registrationDetails, agentSession)
 
-      case SubscriptionProcess(SubscriptionState.SubscribedButNotEnrolled, Some(reg)) =>
+      case SubscriptionProcess(SubscribedButNotEnrolled, Some(reg)) =>
         for {
           _ <- sessionStoreService.cacheAgentSession(
                 agentSession.copy(postcode = Some(postcode), registration = Some(reg)))
@@ -102,7 +104,7 @@ class PostcodeController @Inject()(
                    }
         } yield result
 
-      case SubscriptionProcess(SubscriptionState.SubscribedAndEnrolled, _) =>
+      case SubscriptionProcess(SubscribedAndEnrolled, _) =>
         mark("Count-Subscription-AlreadySubscribed-RegisteredInETMP")
         Redirect(routes.BusinessIdentificationController.showAlreadySubscribed())
 

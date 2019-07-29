@@ -6,7 +6,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.{LimitedCompany
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, Postcode}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub._
-import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
+import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestSetupNoJourneyRecord}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.subscribingAgentEnrolledForNonMTD
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData._
 
@@ -26,7 +26,7 @@ class PostcodeControllerWithAssuranceFlagISpec extends BaseISpec with SessionDat
 
   "submitPostcodeForm" should {
 
-    "read the form and redirect to /national-insurance-number if businessType is SoleTrader or Partnership" in {
+    "read the form and redirect to /national-insurance-number if businessType is SoleTrader or Partnership" in new TestSetupNoJourneyRecord {
       List(SoleTrader, Partnership).foreach { businessType =>
         withMatchingUtrAndPostcode(validUtr, validPostcode)
         givenUserIsAnAgentWithAnAcceptableNumberOfClients("IR-PAYE")
@@ -45,11 +45,13 @@ class PostcodeControllerWithAssuranceFlagISpec extends BaseISpec with SessionDat
 
         redirectLocation(result) shouldBe Some(routes.NationalInsuranceController.showNationalInsuranceNumberForm().url)
 
-        sessionStoreService.currentSession.agentSession shouldBe Some(agentSession.copy(postcode = Some(Postcode(validPostcode)), nino = None, registration = Some(registration.copy(emailAddress = Some("someone@example.com")))))
+        sessionStoreService.currentSession.agentSession shouldBe
+          Some(agentSession.copy(postcode = Some(Postcode(validPostcode)), nino = None,
+            registration = Some(testRegistration.copy(emailAddress = Some("someone@example.com")))))
       }
     }
 
-    "read the form and redirect to /company-registration-number if businessType is Limited Company or Llp" in {
+    "read the form and redirect to /company-registration-number if businessType is Limited Company or Llp" in new TestSetupNoJourneyRecord {
       List(LimitedCompany, Llp).foreach { businessType =>
         withMatchingUtrAndPostcode(validUtr, validPostcode)
         givenUserIsAnAgentWithAnAcceptableNumberOfClients("IR-PAYE")
@@ -68,11 +70,11 @@ class PostcodeControllerWithAssuranceFlagISpec extends BaseISpec with SessionDat
 
         redirectLocation(result) shouldBe Some(routes.CompanyRegistrationController.showCompanyRegNumberForm().url)
 
-        sessionStoreService.currentSession.agentSession.get.registration shouldBe Some(registration.copy(emailAddress = Some("someone@example.com")))
+        sessionStoreService.currentSession.agentSession.get.registration shouldBe Some(testRegistration.copy(emailAddress = Some("someone@example.com")))
       }
     }
 
-    "redirect to /business-type if businessType is not found in session" in {
+    "redirect to /business-type if businessType is not found in session" in new TestSetupNoJourneyRecord {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("postcode" -> "AA12 1JN")
 
       val result = await(controller.submitPostcodeForm()(request))
@@ -82,7 +84,7 @@ class PostcodeControllerWithAssuranceFlagISpec extends BaseISpec with SessionDat
       redirectLocation(result) shouldBe Some(routes.BusinessTypeController.showBusinessTypeForm().url)
     }
 
-    "handle for with invalid postcodes" in {
+    "handle for with invalid postcodes" in new TestSetupNoJourneyRecord {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("postcode" -> "sdsds")
       await(sessionStoreService.cacheAgentSession(AgentSession(Some(SoleTrader))))
 

@@ -15,10 +15,12 @@
  */
 
 package uk.gov.hmrc.agentsubscriptionfrontend.models
+
 import play.api.libs.json.{Format, Json}
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 
-case class ChainedSessionDetails(agentSession: AgentSession)
+case class MainBusinessIdentity(utr: Utr, postcode: String)
 
-object ChainedSessionDetails {
-  implicit val format: Format[ChainedSessionDetails] = Json.format[ChainedSessionDetails]
+object MainBusinessIdentity {
+  implicit val format: Format[MainBusinessIdentity] = Json.format[MainBusinessIdentity]
 }

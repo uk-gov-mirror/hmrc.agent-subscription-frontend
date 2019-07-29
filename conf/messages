@@ -1,6 +1,6 @@
 #Common
 app.name=Create an agent services account
-servicename.titleSuffix=- Agent services account - GOV.UK
+servicename.titleSuffix=- Create an agent services account - GOV.UK
 
 #Startpage
 startpage.title=Agent services account: sign in or set up
@@ -140,8 +140,7 @@ alreadySubscribed.p1=Contact your administrator to get access to your business''
 task-list.header=Create an agent services account
 task-list.subheader=Complete each section in turn. You will not be able to save your progress so have all your information together before you start.
 task-list.1.number=1.
-task-list.1.header=Enter your business details
-task-list.1.identify-business=Identify your business
+task-list.1.header=Enter your money laundering compliance details
 task-list.1.amls=Enter your money laundering compliance details
 task-list.2.number=2.
 task-list.2.header=Create your new user ID
@@ -152,6 +151,17 @@ task-list.4.number=4.
 task-list.4.header=Copy across your existing client relationships
 task-list.4.copy=Copy across your existing Self Assessment and VAT clients to your new agent services account.
 task-list.completed=COMPLETED
+
+#Saved Progress
+saved-progress.title=Your progress has been saved for 30 days
+saved-progress.p1=What you need to do next
+saved-progress.p2=You need to come back and complete this form within 30 days.
+saved-progress.p3=To complete this form later, go to the {0} on GOV.UK and sign in to this service again.
+saved-progress.link=guidance page about creating an agent services account (open in a new window or tab)
+saved-progress.p4=You will need to sign in with the same Government Gateway user ID you used when you started filling out this form.
+saved-progress.continue=Continue where you left off
+saved-progress.finish=Finish and sign out
+
 
 #Check business type
 businessType.title=What type of business are you?
@@ -302,6 +312,8 @@ subscriptionComplete.button.continueJourney=Continue
 #Common
 button.startAgain=Try again
 button.continue=Continue
+button.saveContinue=Save and continue
+button.saveComeBackLater=Save and come back later
 button.yes=Yes
 button.no=No
 button.createAccount=Create account

@@ -22,6 +22,7 @@ import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
+import uk.gov.hmrc.agentsubscriptionfrontend.service.SubscriptionJourneyService
 import uk.gov.hmrc.agentsubscriptionfrontend.support.Monitoring
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.HeaderCarrier
@@ -32,7 +33,10 @@ import uk.gov.hmrc.play.bootstrap.controller.BaseController
 class AgentSubscriptionBaseController @Inject()(
   val authConnector: AuthConnector,
   val continueUrlActions: ContinueUrlActions,
-  val appConfig: AppConfig)(implicit val messagesApi: MessagesApi, val metrics: Metrics)
+  val appConfig: AppConfig,
+  val subscriptionJourneyService: SubscriptionJourneyService)(
+  implicit val messagesApi: MessagesApi,
+  val metrics: Metrics)
     extends BaseController with AuthActions with I18nSupport with Monitoring {
 
   override implicit def hc(implicit rh: RequestHeader): HeaderCarrier =

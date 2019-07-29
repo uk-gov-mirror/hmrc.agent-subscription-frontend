@@ -17,10 +17,10 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 @import uk.gov.hmrc.play.views.html.helpers.{form, input, errorSummary}
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
-@import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessDetails
+@import uk.gov.hmrc.agentsubscriptionfrontend.models.MainBusinessIdentity
 @import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType
 
-@(businessDetailsForm: Form[BusinessDetails], businessTypeIdentifier: BusinessType)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+@(businessDetailsForm: Form[MainBusinessIdentity], businessTypeIdentifier: BusinessType)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = error_prefix(businessDetailsForm) + Messages("businessDetails.title"), bodyClasses = None) {
 <a href="@routes.BusinessTypeController.showBusinessTypeForm()" class="link-back">@Messages("button.back")</a>

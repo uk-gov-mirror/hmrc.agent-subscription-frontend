@@ -42,15 +42,17 @@ class BusinessDetailsController @Inject()(
   val sessionStoreService: SessionStoreService,
   val subscriptionService: SubscriptionService,
   val assuranceService: AssuranceService,
-  val auditService: AuditService)(
+  val auditService: AuditService,
+  override val subscriptionJourneyService: SubscriptionJourneyService)(
   implicit override val metrics: Metrics,
   override val appConfig: AppConfig,
   val ec: ExecutionContext,
   override val messagesApi: MessagesApi)
-    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig) with SessionBehaviour {
+    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig, subscriptionJourneyService)
+    with SessionBehaviour {
 
   def showBusinessDetailsForm: Action[AnyContent] = Action.async { implicit request =>
-    withSubscribingAgent { implicit agent =>
+    withSubscribingAgent { _ =>
       continueUrlActions.withMaybeContinueUrlCached {
         withValidSession { (businessType, _) =>
           mark("Count-Subscription-BusinessDetails-Start")
@@ -68,17 +70,12 @@ class BusinessDetailsController @Inject()(
           .fold(
             formWithErrors => Ok(html.business_details(formWithErrors, businessType)),
             businessDetails =>
-              if (Utr.isValid(businessDetails.utr.value)) {
-                checkSubscriptionStatusAndUpdateSession(
-                  businessDetails.utr,
-                  Postcode(businessDetails.postcode),
-                  agentSession).map { resultWithSession =>
-                  val sessionData = (request.session.data ++ resultWithSession.session.data.toSeq) + ("businessType" -> businessType.key)
-                  resultWithSession.withSession(sessionData.toSeq: _*)
-                }
-              } else {
-                mark("Count-Subscription-NoAgencyFound")
-                Redirect(routes.BusinessIdentificationController.showNoMatchFound())
+              checkSubscriptionStatusAndUpdateSession(
+                businessDetails.utr,
+                Postcode(businessDetails.postcode),
+                agentSession).map { resultWithSession =>
+                val sessionData = (request.session.data ++ resultWithSession.session.data.toSeq) + ("businessType" -> businessType.key)
+                resultWithSession.withSession(sessionData.toSeq: _*)
             }
           )
       }
@@ -89,36 +86,21 @@ class BusinessDetailsController @Inject()(
     implicit hc: HeaderCarrier,
     request: Request[AnyContent],
     agent: Agent): Future[Result] =
-    sessionStoreService.fetchContinueUrl.flatMap(continueUrl =>
-      subscriptionService.getSubscriptionStatus(utr, postcode).flatMap {
-        case SubscriptionProcess(SubscriptionState.Unsubscribed, Some(registrationDetails)) =>
-          checkAssuranceAndUpdateSession(utr, postcode, registrationDetails, agentSession)
+    subscriptionService.getSubscriptionStatus(utr, postcode).flatMap {
+      case SubscriptionProcess(Unsubscribed, Some(registrationDetails)) =>
+        checkAssuranceAndUpdateSession(utr, postcode, registrationDetails, agentSession)
 
-        case SubscriptionProcess(SubscriptionState.SubscribedButNotEnrolled, Some(reg)) if continueUrl.isDefined =>
-          for {
-            _ <- sessionStoreService.cacheAgentSession(
-                  agentSession.copy(postcode = Some(postcode), utr = Some(utr), registration = Some(reg)))
-            result <- withCleanCreds(agent) {
-                       subscriptionService
-                         .completePartialSubscription(utr, postcode)
-                         .map { _ =>
-                           mark("Count-Subscription-PartialSubscriptionCompleted")
-                           Redirect(routes.SubscriptionController.showSubscriptionComplete())
-                         }
-                     }
-          } yield result
+      case SubscriptionProcess(SubscribedButNotEnrolled, Some(registrationDetails)) =>
+        checkAssuranceAndUpdateSession(utr, postcode, registrationDetails, agentSession)
 
-        case SubscriptionProcess(SubscriptionState.SubscribedButNotEnrolled, Some(registrationDetails)) =>
-          checkAssuranceAndUpdateSession(utr, postcode, registrationDetails, agentSession)
+      case SubscriptionProcess(SubscribedAndEnrolled, _) =>
+        mark("Count-Subscription-AlreadySubscribed-RegisteredInETMP")
+        Redirect(routes.BusinessIdentificationController.showAlreadySubscribed())
 
-        case SubscriptionProcess(SubscriptionState.SubscribedAndEnrolled, _) =>
-          mark("Count-Subscription-AlreadySubscribed-RegisteredInETMP")
-          Redirect(routes.BusinessIdentificationController.showAlreadySubscribed())
-
-        case _ =>
-          mark("Count-Subscription-NoAgencyFound")
-          Redirect(routes.BusinessIdentificationController.showNoMatchFound())
-    })
+      case _ =>
+        mark("Count-Subscription-NoAgencyFound")
+        Redirect(routes.BusinessIdentificationController.showNoMatchFound())
+    }
 
   private def checkAssuranceAndUpdateSession(
     utr: Utr,

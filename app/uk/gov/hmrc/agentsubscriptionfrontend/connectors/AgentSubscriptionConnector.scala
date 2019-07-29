@@ -22,10 +22,11 @@ import java.time.LocalDate
 import com.codahale.metrics.MetricRegistry
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Named, Singleton}
-import play.api.libs.json.JsValue
+import play.api.libs.json.{JsValue, Json}
 import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr, Vrn}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
+import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.SubscriptionJourneyRecord
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.encoding.UriPathEncoding.encodePathSegment
 
@@ -34,10 +35,55 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class AgentSubscriptionConnector @Inject()(
   @Named("agent-subscription-baseUrl") baseUrl: URL,
-  http: HttpGet with HttpPost with HttpPut,
+  http: HttpGet with HttpPost with HttpPut with HttpDelete,
   metrics: Metrics)(implicit ec: ExecutionContext)
     extends HttpAPIMonitor {
+
   override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
+
+  def getJourneyById(internalId: AuthProviderId)(
+    implicit hc: HeaderCarrier): Future[Option[SubscriptionJourneyRecord]] =
+    monitor(s"ConsumedAPI-Agent-Subscription-getJourneyByPrimaryId-GET") {
+      val url =
+        new URL(baseUrl, s"/agent-subscription/subscription/journey/id/${encodePathSegment(internalId.id)}")
+      http
+        .GET[HttpResponse](url.toString)
+        .map(response =>
+          response.status match {
+            case 200 => Some(Json.parse(response.body).as[SubscriptionJourneyRecord])
+            case 204 => None
+        })
+    }
+
+  def getJourneyByContinueId(continueId: ContinueId)(
+    implicit hc: HeaderCarrier): Future[Option[SubscriptionJourneyRecord]] =
+    monitor(s"ConsumedAPI-Agent-Subscription-getJourneyByContinueId-GET") {
+      val url =
+        new URL(baseUrl, s"/agent-subscription/subscription/journey/continueId/${encodePathSegment(continueId.value)}")
+      http.GET[Option[SubscriptionJourneyRecord]](url.toString)
+    }
+
+  def createOrUpdateJourney(journeyRecord: SubscriptionJourneyRecord)(implicit hc: HeaderCarrier): Future[Unit] =
+    monitor("ConsumedAPI-Agent-Subscription-createOrUpdate-POST") {
+      val path =
+        s"/agent-subscription/subscription/journey/primaryId/${encodePathSegment(journeyRecord.authProviderId.id)}"
+      http
+        .POST[SubscriptionJourneyRecord, HttpResponse](new URL(baseUrl, path).toString, journeyRecord)
+        .map(handleUpdateJourneyResponse(_, path))
+    }
+
+  def deleteJourney(authProviderId: AuthProviderId)(implicit hc: HeaderCarrier): Future[Unit] =
+    monitor("ConsumedAPI-Agent-Subscription-delete-DELETE") {
+      val path = s"/agent-subscription/subscription/journey/primaryId/${encodePathSegment(authProviderId.id)}"
+      val url = new URL(baseUrl, path)
+      http.DELETE[HttpResponse](url.toString).map(handleUpdateJourneyResponse(_, path))
+    }
+
+  private def handleUpdateJourneyResponse(httpResponse: HttpResponse, path: String): Unit =
+    httpResponse.status match {
+      case 204    => ()
+      case status => throw new RuntimeException(s"POST to $path returned $status")
+    }
 
   def getRegistration(utr: Utr, postcode: String)(implicit hc: HeaderCarrier): Future[Option[Registration]] =
     monitor(s"ConsumedAPI-Agent-Subscription-hasAcceptableNumberOfClients-GET") {

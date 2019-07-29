@@ -23,9 +23,9 @@ args: (Symbol,Any)*
 @import play.api.i18n._
 @import views.html.helper._
 
-@elements = @{ new FieldElements(field.id, field, null, args.toMap, messages) }
+@elements = @{ new FieldElements(field.id, field, Html(""), args.toMap, messages) }
 
-@value = @{ field.value match { case Some(x) => x case None => "" case x => x }}
+@value = @{ field.value match { case Some(x) => x case None => "" }}
 
 <label for="@elements.field.name"
        class="@elements.args.get('_labelClass) @elements.args.get('_groupClass)@if(elements.hasErrors){ form-field--error}">

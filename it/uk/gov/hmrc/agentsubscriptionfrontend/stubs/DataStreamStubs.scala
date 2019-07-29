@@ -1,13 +1,12 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.stubs
 
+import com.github.tomakehurst.wiremock.client.WireMock._
+import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import org.scalatest.concurrent.Eventually
 import org.scalatest.time.{Millis, Seconds, Span}
 import play.api.libs.json.Json
-import com.github.tomakehurst.wiremock.client.WireMock._
-import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
-import uk.gov.hmrc.agentsubscriptionfrontend.audit.AgentSubscriptionFrontendEvent
-import uk.gov.hmrc.agentsubscriptionfrontend.audit.AgentSubscriptionFrontendEvent.AgentSubscriptionFrontendEvent
+import uk.gov.hmrc.agentsubscriptionfrontend.audit.{AgentAssurance, AgentSubscriptionFrontendEvent}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.WireMockSupport
 import uk.gov.hmrc.domain.{Nino, TaxIdentifier}
@@ -70,7 +69,7 @@ trait DataStreamStubs extends Eventually {
 
     verifyAuditRequestSent(
       1,
-      AgentSubscriptionFrontendEvent.AgentAssurance,
+      AgentAssurance,
       detail = Map(
         "utr" -> validUtr.value,
         "postcode" -> validPostcode,
@@ -99,7 +98,7 @@ trait DataStreamStubs extends Eventually {
 
     verifyAuditRequestSent(
       1,
-      AgentSubscriptionFrontendEvent.AgentAssurance,
+      AgentAssurance,
       detail = Map(
         "utr" -> validUtr.value,
         "postcode" -> validPostcode,

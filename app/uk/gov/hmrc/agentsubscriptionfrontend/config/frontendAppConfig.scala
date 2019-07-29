@@ -23,7 +23,7 @@ import play.api.{Configuration, Environment, Mode}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.blacklistedpostcodes.PostcodesLoader
 import uk.gov.hmrc.play.config.ServicesConfig
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 trait AppConfig {
   val environment: Environment
@@ -76,7 +76,7 @@ class FrontendAppConfig @Inject()(val environment: Environment, val configuratio
   override val journeyName: String = getServicesConfStringOrFail("address-lookup-frontend.journeyName")
   override val agentServicesAccountUrl: String = s"$servicesAccountUrl$servicesAccountPath"
   override val domainWhiteList: Set[String] =
-    runModeConfiguration.getStringList("continueUrl.domainWhiteList").getOrElse(emptyList()).toSet
+    runModeConfiguration.getStringList("continueUrl.domainWhiteList").getOrElse(emptyList()).asScala.toSet
   override val agentAssuranceRun: Boolean = getConfBooleanOrFail("features.agent-assurance-run")
   override val addressLookupContinueUrl: String = getServicesConfStringOrFail(
     "address-lookup-frontend.new-address-callback.url")

@@ -14,6 +14,55 @@ lazy val scoverageSettings = {
   )
 }
 
+lazy val wartRemoverSettings = {
+  val wartRemoverWarning = {
+    val warningWarts = Seq(
+      Wart.JavaSerializable,
+      //Wart.StringPlusAny,
+      Wart.AsInstanceOf,
+      Wart.IsInstanceOf
+      //Wart.Any
+    )
+    wartremoverWarnings in (Compile, compile) ++= warningWarts
+  }
+
+  val wartRemoverError = {
+    // Error
+    val errorWarts = Seq(
+      Wart.ArrayEquals,
+      Wart.AnyVal,
+      Wart.EitherProjectionPartial,
+      Wart.Enumeration,
+      Wart.ExplicitImplicitTypes,
+      Wart.FinalVal,
+      Wart.JavaConversions,
+      Wart.JavaSerializable,
+      //Wart.LeakingSealed,
+      Wart.MutableDataStructures,
+      Wart.Null,
+      //Wart.OptionPartial,
+      Wart.Recursion,
+      Wart.Return,
+      //Wart.TraversableOps,
+      Wart.TryPartial,
+      Wart.Var,
+      Wart.While)
+
+    wartremoverErrors in (Compile, compile) ++= errorWarts
+  }
+
+  Seq(
+    wartRemoverError,
+    wartRemoverWarning,
+    wartremoverErrors in (Test, compile) --= Seq(Wart.Any, Wart.Equals, Wart.Null, Wart.NonUnitStatements, Wart.PublicInference),
+    wartremoverExcluded ++=
+    routes.in(Compile).value ++
+    (baseDirectory.value / "it").get ++
+    (baseDirectory.value / "test").get ++
+    Seq(sourceManaged.value / "main" / "sbt-buildinfo" / "BuildInfo.scala")
+  )
+}
+
 lazy val compileDeps = Seq(
   ws,
   "uk.gov.hmrc" %% "bootstrap-play-25" % "4.12.0",
@@ -40,8 +89,9 @@ def testDeps(scope: String) = Seq(
   "org.scalatest" %% "scalatest" % "3.0.7" % scope,
   "org.mockito" % "mockito-core" % "2.27.0" % scope,
   "org.scalatestplus.play" %% "scalatestplus-play" % "2.0.1" % scope,
-  "com.github.tomakehurst" % "wiremock" % "2.23.2" % scope,
+  "com.github.tomakehurst" % "wiremock" % "2.24.0" % scope,
   "uk.gov.hmrc" %% "reactivemongo-test" % "4.14.0-play-25" % scope,
+  "org.scalamock" %% "scalamock" % "4.1.0" % scope,
   "org.jsoup" % "jsoup" % "1.12.1" % scope
 )
 
@@ -84,6 +134,7 @@ lazy val root = Project("agent-subscription-frontend", file("."))
     testGrouping in IntegrationTest := oneForkedJvmPerTest((definedTests in IntegrationTest).value),
     scalafmtOnCompile in IntegrationTest := true
   )
+  .settings(wartRemoverSettings: _*)
   .enablePlugins(PlayScala, SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin, SbtArtifactory)
 
 inConfig(IntegrationTest)(scalafmtCoreSettings)
