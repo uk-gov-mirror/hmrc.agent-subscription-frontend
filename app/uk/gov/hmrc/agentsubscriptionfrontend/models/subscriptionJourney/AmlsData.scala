@@ -33,7 +33,6 @@ package uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney
  */
 
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 
 import play.api.libs.json._
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{AMLSDetails, PendingDetails, RegisteredDetails}
@@ -62,7 +61,7 @@ object AmlsData {
   val registeredUserNoDataEntered = AmlsData(amlsRegistered = true, None, None, None, None)
   val nonRegisteredUserNoDataEntered = AmlsData(amlsRegistered = false, None, None, None, None)
 
-  implicit val localDateFormat = new Format[LocalDate] {
+  implicit val localDateFormat: Format[LocalDate] = new Format[LocalDate] {
     override def reads(json: JsValue): JsResult[LocalDate] =
       json.validate[String].map(LocalDate.parse)
     override def writes(o: LocalDate): JsValue = Json.toJson(o.toString)

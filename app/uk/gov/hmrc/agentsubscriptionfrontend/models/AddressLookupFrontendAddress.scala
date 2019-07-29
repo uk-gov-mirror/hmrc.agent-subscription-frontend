@@ -24,7 +24,8 @@ case class AddressLookupFrontendAddress(lines: Seq[String], postcode: Option[Str
 
 object AddressLookupFrontendAddress {
 
-  implicit val formatCountry = Json.format[Country]
-  implicit val formatAddressLookupAddress = Json.format[AddressLookupFrontendAddress]
+  implicit val formatCountry: OFormat[Country] = Json.format[Country]
+  implicit val formatAddressLookupAddress: OFormat[AddressLookupFrontendAddress] =
+    Json.format[AddressLookupFrontendAddress]
 
 }

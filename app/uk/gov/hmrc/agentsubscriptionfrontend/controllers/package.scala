@@ -32,7 +32,11 @@ import uk.gov.voa.play.form.ConditionalMappings.{mandatoryIfEqual, mandatoryIfTr
 package object controllers {
 
   def continueOrStop(next: Call, previous: Call)(implicit request: Request[AnyContent]): Call = {
-    val call = request.body.asFormUrlEncoded.get("continue").headOption match {
+
+    val submitAction = request.body.asFormUrlEncoded
+      .fold(Seq.empty: Seq[String])(someMap => someMap.getOrElse("continue", Seq.empty))
+
+    val call = submitAction.headOption match {
       case Some("continue") => next
       case Some("save")     => routes.TaskListController.savedProgress(Some(previous.url))
       case _ => {
@@ -42,6 +46,7 @@ package object controllers {
     }
     call
   }
+
   object BusinessIdentificationForms {
 
     private val businessTypes = List(
@@ -117,11 +122,7 @@ package object controllers {
         "variant" -> optional(text).verifying(radioInputSelected("clientDetails.error.no-radio.selected")),
         "utr"     -> mandatoryIfEqual("variant", "utr", clientDetailsUtr),
         "nino"    -> mandatoryIfEqual("variant", "nino", clientDetailsNino)
-      )(RadioInvasiveTaxPayerOption.apply)(RadioInvasiveTaxPayerOption.unapply).verifying(
-        "error.radio-variant.invalid",
-        submittedTaxPayerOption =>
-          ValidVariantsTaxPayerOptionForm.values.exists(_.toString == submittedTaxPayerOption.variant.getOrElse(""))
-      ))
+      )(RadioInvasiveTaxPayerOption.apply)(RadioInvasiveTaxPayerOption.unapply))
 
     val invasiveCheckStartSaAgentCode: Form[RadioInvasiveStartSaAgentCode] = Form[RadioInvasiveStartSaAgentCode](
       mapping(

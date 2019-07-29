@@ -159,8 +159,9 @@ class SubscriptionController @Inject()(
                   validDesAddress => {
                     mark("Count-Subscription-AddressLookup-Success")
                     val updatedSjr = sjr.copy(businessDetails = sjr.businessDetails.copy(
-                      registration = Some(sjr.businessDetails.registration.get.copy(
-                      address = BusinessAddress(validDesAddress)))))
+                      registration = Some(sjr.businessDetails.registration
+                        .getOrElse(throw new RuntimeException("missing registration data"))
+                        .copy(address = BusinessAddress(validDesAddress)))))
                     for {
                     _ <- subscriptionJourneyService.saveJourneyRecord(updatedSjr)
                     goto <- Redirect(routes.SubscriptionController.showCheckAnswers())

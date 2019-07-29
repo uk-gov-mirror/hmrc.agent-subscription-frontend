@@ -98,8 +98,8 @@
 }
 
 @mainContentHeader = {
-    @if(contentHeader.isDefined) {
-        @uiLayouts.main_content_header(contentHeader = contentHeader.get)
+    @contentHeader.map { header =>
+      @uiLayouts.main_content_header(contentHeader = header)
     }
 }
 

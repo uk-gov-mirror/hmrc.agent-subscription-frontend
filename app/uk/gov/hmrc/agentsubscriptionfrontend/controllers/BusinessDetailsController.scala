@@ -87,13 +87,13 @@ class BusinessDetailsController @Inject()(
     request: Request[AnyContent],
     agent: Agent): Future[Result] =
     subscriptionService.getSubscriptionStatus(utr, postcode).flatMap {
-      case SubscriptionProcess(SubscriptionState.Unsubscribed, Some(registrationDetails)) =>
+      case SubscriptionProcess(Unsubscribed, Some(registrationDetails)) =>
         checkAssuranceAndUpdateSession(utr, postcode, registrationDetails, agentSession)
 
-      case SubscriptionProcess(SubscriptionState.SubscribedButNotEnrolled, Some(registrationDetails)) =>
+      case SubscriptionProcess(SubscribedButNotEnrolled, Some(registrationDetails)) =>
         checkAssuranceAndUpdateSession(utr, postcode, registrationDetails, agentSession)
 
-      case SubscriptionProcess(SubscriptionState.SubscribedAndEnrolled, _) =>
+      case SubscriptionProcess(SubscribedAndEnrolled, _) =>
         mark("Count-Subscription-AlreadySubscribed-RegisteredInETMP")
         Redirect(routes.BusinessIdentificationController.showAlreadySubscribed())
 

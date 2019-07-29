@@ -50,7 +50,7 @@
 
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title =  error_prefix(amlsPendingForm) + Messages("amls.pending.appliedOn.title"), bodyClasses = None) {
 
-<a href="@mayBeGoBackUrl.getOrElse(routes.AMLSController.showCheckAmlsAlreadyAppliedForm)" class="link-back">@Messages("button.back")</a>
+<a href="@mayBeGoBackUrl.getOrElse(routes.AMLSController.showCheckAmlsAlreadyAppliedForm.url)" class="link-back">@Messages("button.back")</a>
 
     @if(amlsPendingForm.hasErrors) {
         @errorSummary(Messages("error.summary.heading"), amlsPendingForm, Seq.empty, Some("amls-pending-details"))

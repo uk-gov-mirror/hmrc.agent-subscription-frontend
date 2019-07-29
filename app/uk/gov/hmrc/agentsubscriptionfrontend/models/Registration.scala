@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.models
 
-import play.api.libs.json.{Format, Json}
+import play.api.libs.json.{Format, Json, OFormat}
 
 case class BusinessAddress(
   addressLine1: String,
@@ -27,7 +27,7 @@ case class BusinessAddress(
   countryCode: String)
 
 object BusinessAddress {
-  implicit val format = Json.format[BusinessAddress]
+  implicit val format: OFormat[BusinessAddress] = Json.format[BusinessAddress]
 
   def apply(desAddress: DesAddress): BusinessAddress =
     BusinessAddress(
@@ -48,6 +48,7 @@ case class Registration(
   emailAddress: Option[String])
 
 object Registration {
+
   implicit val formats: Format[Registration] = Json.format[Registration]
 }
 

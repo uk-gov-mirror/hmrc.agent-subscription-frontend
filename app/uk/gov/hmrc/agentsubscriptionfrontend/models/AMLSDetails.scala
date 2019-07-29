@@ -24,13 +24,13 @@ import play.api.libs.json._
 case class RegisteredDetails(membershipNumber: String, membershipExpiresOn: LocalDate)
 
 object RegisteredDetails {
-  implicit val format = Json.format[RegisteredDetails]
+  implicit val format: OFormat[RegisteredDetails] = Json.format
 }
 
 case class PendingDetails(appliedOn: LocalDate)
 
 object PendingDetails {
-  implicit val format = Json.format[PendingDetails]
+  implicit val format: OFormat[PendingDetails] = Json.format
 }
 
 // TODO replace this with AmlsData which include the extra field
@@ -40,7 +40,7 @@ object AMLSDetails {
 
   val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 
-  implicit val format = new Format[AMLSDetails] {
+  implicit val format: Format[AMLSDetails] = new Format[AMLSDetails] {
     override def reads(json: JsValue): JsResult[AMLSDetails] = {
       val supervisoryBody = (json \ "supervisoryBody").as[String]
 

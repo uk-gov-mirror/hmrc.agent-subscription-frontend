@@ -23,9 +23,8 @@ import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationForms.{clientDetailsForm, invasiveCheckStartSaAgentCode}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{BusinessType, RadioInvasiveTaxPayerOption, TaxPayerNino, TaxPayerUtr, ValidVariantsTaxPayerOptionForm}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.{LimitedCompany, Llp, Partnership, SoleTrader}
-import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidVariantsTaxPayerOptionForm.{NinoV, UtrV}
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{BusinessType, ValidVariantsTaxPayerOptionForm}
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{AssuranceService, SessionStoreService, SubscriptionJourneyService}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TaxIdentifierFormatters
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
@@ -118,9 +117,9 @@ class AssuranceChecksController @Inject()(
                   .flatMap(TaxIdentifierFormatters.normalizeNino)
                   .getOrElse(throw new Exception("nino should not be empty"))
 
-              ValidVariantsTaxPayerOptionForm.withName(retrievedVariant) match {
-                case UtrV if Utr.isValid(utr.value) => checkAndRedirect(utr, "utr", businessType)
-                case NinoV                          => checkAndRedirect(nino, "nino", businessType)
+              ValidVariantsTaxPayerOptionForm.findByValue(retrievedVariant) match {
+                case TaxPayerUtr if Utr.isValid(utr.value) => checkAndRedirect(utr, "utr", businessType)
+                case TaxPayerNino                          => checkAndRedirect(nino, "nino", businessType)
                 case _ =>
                   mark("Count-Subscription-InvasiveCheck-Could-Not-Provide-Tax-Payer-Identifier")
                   Redirect(routes.StartController.showCannotCreateAccount())

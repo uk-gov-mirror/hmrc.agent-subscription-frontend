@@ -32,12 +32,13 @@ import scala.concurrent.{ExecutionContext, Future}
 
 case class SubscriptionReturnedHttpError(httpStatusCode: Int) extends Product with Serializable
 
-object SubscriptionState extends Enumeration {
-  type SubscriptionState = Value
-  val Unsubscribed, SubscribedButNotEnrolled, SubscribedAndEnrolled, NoRegistrationFound = Value
-}
+sealed abstract class SubscriptionState
+case object Unsubscribed extends SubscriptionState
+case object SubscribedButNotEnrolled extends SubscriptionState
+case object SubscribedAndEnrolled extends SubscriptionState
+case object NoRegistrationFound extends SubscriptionState
 
-case class SubscriptionProcess(state: SubscriptionState.Value, details: Option[Registration])
+case class SubscriptionProcess(state: SubscriptionState, details: Option[Registration])
 
 @Singleton
 class SubscriptionService @Inject()(
@@ -102,18 +103,18 @@ class SubscriptionService @Inject()(
     agentSubscriptionConnector.getRegistration(utr, postcode.value).map {
 
       case Some(reg) if reg.isSubscribedToAgentServices =>
-        SubscriptionProcess(SubscriptionState.SubscribedAndEnrolled, Some(reg))
+        SubscriptionProcess(SubscribedAndEnrolled, Some(reg))
 
       case Some(Registration(None, _, _, _, _)) =>
         throw new IllegalStateException(s"The agency with UTR ${utr.value} has a missing organisation/individual name.")
 
       case Some(reg) if !reg.isSubscribedToAgentServices && reg.isSubscribedToETMP =>
-        SubscriptionProcess(SubscriptionState.SubscribedButNotEnrolled, Some(reg))
+        SubscriptionProcess(SubscribedButNotEnrolled, Some(reg))
 
       case Some(reg) if !reg.isSubscribedToAgentServices && !reg.isSubscribedToETMP =>
-        SubscriptionProcess(SubscriptionState.Unsubscribed, Some(reg))
+        SubscriptionProcess(Unsubscribed, Some(reg))
 
-      case None => SubscriptionProcess(SubscriptionState.NoRegistrationFound, None)
+      case None => SubscriptionProcess(NoRegistrationFound, None)
     }
 
   def checkDobAndNino(nino: Nino, dateOfBirth: DateOfBirth)(

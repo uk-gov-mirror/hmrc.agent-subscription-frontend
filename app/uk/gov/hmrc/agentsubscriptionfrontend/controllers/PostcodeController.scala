@@ -87,10 +87,10 @@ class PostcodeController @Inject()(
     request: Request[AnyContent],
     agent: Agent): Future[Result] =
     subscriptionService.getSubscriptionStatus(utr, postcode).flatMap {
-      case SubscriptionProcess(SubscriptionState.Unsubscribed, Some(registrationDetails)) =>
+      case SubscriptionProcess(Unsubscribed, Some(registrationDetails)) =>
         checkAssuranceAndUpdateSession(utr, postcode, registrationDetails, agentSession)
 
-      case SubscriptionProcess(SubscriptionState.SubscribedButNotEnrolled, Some(reg)) =>
+      case SubscriptionProcess(SubscribedButNotEnrolled, Some(reg)) =>
         for {
           _ <- sessionStoreService.cacheAgentSession(
                 agentSession.copy(postcode = Some(postcode), registration = Some(reg)))
@@ -104,7 +104,7 @@ class PostcodeController @Inject()(
                    }
         } yield result
 
-      case SubscriptionProcess(SubscriptionState.SubscribedAndEnrolled, _) =>
+      case SubscriptionProcess(SubscribedAndEnrolled, _) =>
         mark("Count-Subscription-AlreadySubscribed-RegisteredInETMP")
         Redirect(routes.BusinessIdentificationController.showAlreadySubscribed())
 

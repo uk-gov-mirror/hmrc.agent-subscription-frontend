@@ -30,14 +30,11 @@ import uk.gov.hmrc.play.audit.AuditExtensions.auditHeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.DataEvent
 
-import scala.collection.JavaConversions
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 
-object AgentSubscriptionFrontendEvent extends Enumeration {
-  val AgentAssurance = Value
-  type AgentSubscriptionFrontendEvent = Value
-}
+sealed abstract class AgentSubscriptionFrontendEvent
+case object AgentAssurance extends AgentSubscriptionFrontendEvent
 
 class AuditData {
 
@@ -48,15 +45,13 @@ class AuditData {
     this
   }
 
-  private[audit] def getDetails: Map[String, Any] =
-    JavaConversions.mapAsScalaMap(details).toMap
+  import scala.collection.JavaConverters._
 
+  private[audit] def getDetails: Map[String, Any] = details.asScala.toMap
 }
 
 @Singleton
 class AuditService @Inject()(val auditConnector: AuditConnector)(implicit ec: ExecutionContext) {
-
-  import AgentSubscriptionFrontendEvent._
 
   val agentAssuranceDetailsFields: Seq[(String, Option[Any])] = Seq(
     ("utr", None),

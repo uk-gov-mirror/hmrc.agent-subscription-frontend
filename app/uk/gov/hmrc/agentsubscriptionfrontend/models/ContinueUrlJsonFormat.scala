@@ -28,5 +28,5 @@ object ContinueUrlJsonFormat {
   private val continueUrlReads: Reads[ContinueUrl] =
     (__ \ "continueUrl").read[String].map(ContinueUrl.apply)
 
-  implicit val continueUrlFormat = Format[ContinueUrl](continueUrlReads, continueUrlWrites)
+  implicit val continueUrlFormat: Format[ContinueUrl] = Format[ContinueUrl](continueUrlReads, continueUrlWrites)
 }

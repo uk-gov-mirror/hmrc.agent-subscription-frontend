@@ -29,11 +29,11 @@
 @serviceInfoContent = {}
 
 @sidebar = {
-    @if(sidebarLinks.isDefined) {
-        @layouts.sidebar(sidebarLinks.get, Some("sidebar"))
+    @sidebarLinks match {
+       case Some(links) => { @layouts.sidebar(links, Some("sidebar")) }
+       case None => { }
     }
 }
-
 
 @govuk_wrapper(appConfig = appConfig,
                title = title,

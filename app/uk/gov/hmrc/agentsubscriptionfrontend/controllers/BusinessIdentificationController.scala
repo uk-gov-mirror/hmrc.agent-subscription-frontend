@@ -33,6 +33,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidationResult.FailureReason._
 import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidationResult.{Failure, Pass}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
+import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.SubscriptionJourneyRecord
 import uk.gov.hmrc.agentsubscriptionfrontend.service._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TaxIdentifierFormatters
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
@@ -181,7 +182,7 @@ class BusinessIdentificationController @Inject()(
     val postcode = existingSession.postcode.getOrElse(Postcode(""))
     for {
       subscriptionProcess <- subscriptionService.getSubscriptionStatus(utr, postcode)
-      result <- if (subscriptionProcess.state == SubscriptionState.SubscribedButNotEnrolled) {
+      result <- if (subscriptionProcess.state == SubscribedButNotEnrolled) {
                  hasCleanCreds(agent) {
                    Future.successful(routes.TaskListController.showTaskList())
                  } {
@@ -231,15 +232,20 @@ class BusinessIdentificationController @Inject()(
       businessEmailForm
         .bindFromRequest()
         .fold(
-          formWithErrors =>
-            Ok(
-              html.business_email(
-                formWithErrors,
-                hasInvalidEmail(currentSjr.businessDetails.registration),
-                isChange = true)),
+
+          formWithErrors => Ok(
+            html.business_email(
+              formWithErrors,
+              hasInvalidEmail(currentSjr.businessDetails.registration),
+              isChange = true)),
           validForm => {
-            val updatedSjr = currentSjr.copy(businessDetails = currentSjr.businessDetails.copy(registration =
-              Some(currentSjr.businessDetails.registration.get.copy(emailAddress = Some(validForm.email)))))
+
+            val updatedSjr: SubscriptionJourneyRecord = currentSjr.copy(
+              businessDetails = currentSjr.businessDetails.copy(
+                registration = Some(
+                  currentSjr.businessDetails.registration
+                    .getOrElse(throw new RuntimeException("missing registration data"))
+                    .copy(emailAddress = Some(validForm.email)))))
             for {
               _ <- subscriptionJourneyService.saveJourneyRecord(updatedSjr)
               goto <- Redirect(
@@ -312,8 +318,12 @@ class BusinessIdentificationController @Inject()(
                 hasInvalidBusinessName(currentSjr.businessDetails.registration),
                 isChange = true)),
           validForm => {
-            val updatedSjr = currentSjr.copy(businessDetails = currentSjr.businessDetails.copy(registration =
-              Some(currentSjr.businessDetails.registration.get.copy(taxpayerName = Some(validForm.name)))))
+            val updatedSjr = currentSjr
+              .copy(businessDetails = currentSjr.businessDetails
+                .copy(registration =
+              Some(currentSjr.businessDetails.registration
+                  .getOrElse(throw new RuntimeException("missing registration data"))
+                  .copy(taxpayerName = Some(validForm.name)))))
 
             for {
               _ <- subscriptionJourneyService.saveJourneyRecord(updatedSjr)

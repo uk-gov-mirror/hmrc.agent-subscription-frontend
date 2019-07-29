@@ -15,16 +15,16 @@
  */
 
 package uk.gov.hmrc.agentsubscriptionfrontend.models
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, OFormat}
 
 case class BusinessName(name: String)
 
 object BusinessName {
-  implicit val format = Json.format[BusinessName]
+  implicit val format: OFormat[BusinessName] = Json.format[BusinessName]
 }
 
 case class BusinessEmail(email: String)
 
 object BusinessEmail {
-  implicit val format = Json.format[BusinessEmail]
+  implicit val format: OFormat[BusinessEmail] = Json.format[BusinessEmail]
 }
