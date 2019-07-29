@@ -50,7 +50,13 @@
         </div>
 
         <div class="form-field">
+            @if(isChange){
+            <button class="button margin-right-5" type="submit" id="business-email-change-continue" name="continue" value="continue">@Messages("button.saveContinue")</button>
+                    <button class="button--secondary" type="submit" id="business-email-change-save" name="continue" value="save">@Messages("button.saveComeBackLater")</button>
+
+            } else {
             <button class="button" type="submit" id="submit-email">@Messages("businessEmail.continue.button")</button>
+            }
         </div>
     }
 }

@@ -67,4 +67,20 @@ object TestData {
         Some("test@gmail.com")))), Some(AmlsData(true, Some(false), Some("supervisory"), None, Some(RegDetails("123456789", LocalDate.now().plusDays(10))))),
     cleanCredsAuthProviderId = Some(id))
 
+  def completeJourneyRecordWithUpdatedBusinessName(newBusinessName: String) =
+    completeJourneyRecord.copy(businessDetails = BusinessDetails(SoleTrader,
+      validUtr,
+      Postcode(validPostcode),
+      Some(Registration(Some(newBusinessName), true, true,
+        businessAddress,
+        Some("test@gmail.com")))))
+
+  def completeJourneyRecordWithUpdatedBusinessEmail(newBusinessEmail: String) =
+    completeJourneyRecord.copy(businessDetails = BusinessDetails(SoleTrader,
+      validUtr,
+      Postcode(validPostcode),
+      Some(Registration(Some(registrationName), true, true,
+        businessAddress,
+        Some(newBusinessEmail)))))
+
 }
