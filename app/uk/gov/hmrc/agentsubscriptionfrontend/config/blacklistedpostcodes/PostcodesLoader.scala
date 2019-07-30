@@ -31,12 +31,10 @@ object PostcodesLoader {
       items.getLines().drop(header).toSeq
     } match {
       case Success(postcodes) =>
-        val invalidPostcodes =
+        val invalidPostcodes: Seq[String] =
           postcodes
-            .map(formatPostcode)
-            .filter {
-              case Some(postcode) => postcodeWithoutSpacesRegex.unapplySeq(postcode).isEmpty
-              case None           => false
+            .filter { postcode =>
+              postcodeWithoutSpacesRegex.unapplySeq(postcode).isEmpty && formatPostcode(postcode).isDefined
             }
 
         if (invalidPostcodes.isEmpty)

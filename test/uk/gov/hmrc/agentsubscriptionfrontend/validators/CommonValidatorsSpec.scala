@@ -183,10 +183,6 @@ class CommonValidatorsSpec extends UnitSpec with EitherValues {
       shouldAcceptFieldValue("A1A 1AA")
     }
 
-    "give \"error.postcode.empty\" error when it is set to null" in {
-      bind(null).left.value should contain only FormError("testKey", List("error.postcode.empty"))
-    }
-
     "give \"error.postcode.empty\" error when it is not supplied" in {
       postcodeMapping.bind(Map.empty).left.value should contain only FormError("testKey", "error.postcode.empty")
     }
@@ -246,7 +242,9 @@ class CommonValidatorsSpec extends UnitSpec with EitherValues {
   "postcodeWithBlacklist bind" should {
     val blacklistedPostcode = "BB1 1BB"
     val blacklistedPostcodes: Set[String] =
-      Set(blacklistedPostcode, "CC1 1CC", "DD1 1DD").map(PostcodesLoader.formatPostcode)
+      Set(blacklistedPostcode, "CC1 1CC", "DD1 1DD")
+        .filter(code => PostcodesLoader.formatPostcode(code).isDefined)
+        .map(PostcodesLoader.formatPostcode(_).get)
 
     val unprefixedPostcodeMapping = postcodeWithBlacklist(blacklistedPostcodes)
     val postcodeMapping = unprefixedPostcodeMapping.withPrefix("testKey")
@@ -255,8 +253,11 @@ class CommonValidatorsSpec extends UnitSpec with EitherValues {
 
     def bind(fieldValue: String): Either[Seq[FormError], String] = postcodeMapping.bind(Map("testKey" -> fieldValue))
 
-    def shouldRejectFieldValueContainingMessage(fieldValue: String, messageKey: String) =
-      bind(fieldValue).left.get should contain(FormError("testKey", List(messageKey), Seq()))
+    def shouldRejectFieldValueContainingMessage(fieldValue: String, messageKey: String) = {
+      val errors: Seq[FormError] =
+        bind(fieldValue).left.getOrElse(fail(s"No error found when binding field value '$fieldValue'"))
+      errors should contain(FormError("testKey", List(messageKey), Seq()))
+    }
 
     "return an error if the postcode is blacklisted" in {
       shouldRejectFieldValueContainingMessage(blacklistedPostcode, "error.postcode.blacklisted")

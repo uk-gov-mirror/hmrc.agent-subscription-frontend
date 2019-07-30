@@ -238,7 +238,10 @@ object CommonValidators {
     }
 
   def validateBlacklist(postcode: String, blacklistedPostcodes: Set[String]): Boolean =
-    !blacklistedPostcodes.contains(PostcodesLoader.formatPostcode(postcode).getOrElse(""))
+    PostcodesLoader.formatPostcode(postcode) match {
+      case Some(p) => !blacklistedPostcodes.contains(p)
+      case None    => false
+    }
 
   private val saAgentCodeConstraint: Constraint[String] = Constraint[String] { fieldValue: String =>
     val formattedCode = fieldValue.replace(" ", "")
