@@ -148,14 +148,12 @@ class AMLSControllerISpec extends BaseISpec {
       val completeAmlsData = AmlsData(
         false,
         None,
-        Some("Insolvency Practitioners Association (IPA)"),
-        None,
-        Some(RegDetails("123456789", LocalDate.now())))
+        Some(AmlsDetails("Insolvency Practitioners Association (IPA)", Right(RegisteredDetails("123456789", LocalDate.now())))))
 
       givenSubscriptionJourneyRecordExists(id, record.copy(amlsData = Some(completeAmlsData)))
       givenSubscriptionRecordCreated(
         id,
-        record.copy(amlsData = Some(AmlsData(amlsRegistered = true, None, None, None, None))))
+        record.copy(amlsData = Some(AmlsData(amlsRegistered = true, None, None))))
 
       val result =
         await(controller.submitAmlsRegistered(authenticatedRequest.withFormUrlEncodedBody("registeredAmls" -> "yes", "continue" -> "continue")))
@@ -167,16 +165,14 @@ class AMLSControllerISpec extends BaseISpec {
     "redirect to /progress-saved page and clear amls data in store when field is pre-populated with no " +
       "but user changes answer to yes and saves" in new Setup {
       val completeAmlsData = AmlsData(
-        false,
+        amlsRegistered = false,
         None,
-        Some("Insolvency Practitioners Association (IPA)"),
-        None,
-        Some(RegDetails("123456789", LocalDate.now())))
+        Some(AmlsDetails("Insolvency Practitioners Association (IPA)", Right(RegisteredDetails("123456789", LocalDate.now())))))
 
       givenSubscriptionJourneyRecordExists(id, record.copy(amlsData = Some(completeAmlsData)))
       givenSubscriptionRecordCreated(
         id,
-        record.copy(amlsData = Some(AmlsData(amlsRegistered = true, None, None, None, None))))
+        record.copy(amlsData = Some(AmlsData(amlsRegistered = true, None, None))))
 
       val result =
         await(controller.submitAmlsRegistered(authenticatedRequest.withFormUrlEncodedBody("registeredAmls" -> "yes", "continue" -> "save")))
@@ -187,11 +183,9 @@ class AMLSControllerISpec extends BaseISpec {
 
     "redirect to /money-laundering-compliance page and clear amls data in store when user submits pre-populated field and continues" in new Setup {
       val completeAmlsData = AmlsData(
-        true,
+        amlsRegistered = true,
         None,
-        Some("Insolvency Practitioners Association (IPA)"),
-        None,
-        Some(RegDetails("123456789", LocalDate.now())))
+        Some(AmlsDetails("Insolvency Practitioners Association (IPA)", Right(RegisteredDetails("123456789", LocalDate.now())))))
 
       givenSubscriptionJourneyRecordExists(id, record.copy(amlsData = Some(completeAmlsData)))
       givenSubscriptionRecordCreated(id, record.copy(amlsData = Some(completeAmlsData)))
@@ -255,7 +249,7 @@ class AMLSControllerISpec extends BaseISpec {
         id,
         TestData
           .minimalSubscriptionJourneyRecordWithAmls(id)
-          .copy(amlsData = Some(AmlsData(false, amlsAppliedFor = Some(true), None, None, None))))
+          .copy(amlsData = Some(AmlsData(amlsRegistered = false, amlsAppliedFor = Some(true), None))))
 
       val result = await(controller.showCheckAmlsAlreadyAppliedForm(authenticatedRequest))
 
@@ -472,19 +466,17 @@ class AMLSControllerISpec extends BaseISpec {
       redirectLocation(result).get shouldBe routes.SubscriptionController.showCheckAnswers().url
     }
 
-    "pre-populate amls form if they are coming from /check_answers and also go to /check-money-laundering-compliance page when user clicks on 'Go Back' link" in new Setup {
+    "pre-populate amls form if they are coming from /check_answers and also go to /check-money-laundering-compliance page when user clicks on 'Go Back' link" in
+      new Setup {
       def minimalSubscriptionJourneyRecordWithAmls(authProviderId: AuthProviderId) =
         SubscriptionJourneyRecord(
           authProviderId,
           businessDetails = BusinessDetails(SoleTrader, validUtr, Postcode(validPostcode)),
           amlsData = Some(
             AmlsData(
-              true,
+              amlsRegistered = true,
               None,
-              Some("Insolvency Practitioners Association (IPA)"),
-              None,
-              Some(RegDetails("123456789", LocalDate.now()))))
-        )
+              Some(AmlsDetails("Insolvency Practitioners Association (IPA)", Right(RegisteredDetails("123456789", LocalDate.now())))))))
 
       givenSubscriptionJourneyRecordExists(id, minimalSubscriptionJourneyRecordWithAmls(id))
 
@@ -516,8 +508,7 @@ class AMLSControllerISpec extends BaseISpec {
         id,
         record.copy(
           amlsData = Some(AmlsData.registeredUserNoDataEntered
-            .copy(supervisoryBody = Some(amlsBody), registeredDetails = Some(RegDetails("12345", expiryDate)))))
-      )
+            .copy(amlsDetails = Some(AmlsDetails(amlsBody, Right(RegisteredDetails("12345", expiryDate))))))))
 
       implicit val request = authenticatedRequest.withFormUrlEncodedBody(
         "amlsCode"         -> "AAT",
@@ -535,14 +526,13 @@ class AMLSControllerISpec extends BaseISpec {
     }
 
     "store AMLS form in temporary store after successful submission, and redirect to change answers when change flag is true" in new Setup {
-      val amlsBody = amlsBodies.getOrElse("AAT", throw new Exception("Invalid AMLS code"))
+      val amlsBody: String = amlsBodies.getOrElse("AAT", throw new Exception("Invalid AMLS code"))
       givenSubscriptionJourneyRecordExists(id, TestData.minimalSubscriptionJourneyRecordWithAmls(id))
       givenSubscriptionRecordCreated(
         id,
         record.copy(
           amlsData = Some(AmlsData.registeredUserNoDataEntered
-            .copy(supervisoryBody = Some(amlsBody), registeredDetails = Some(RegDetails("12345", expiryDate)))))
-      )
+            .copy(amlsDetails = Some(AmlsDetails(amlsBody, Right(RegisteredDetails("12345", expiryDate))))))))
 
       implicit val request = authenticatedRequest.withFormUrlEncodedBody(
         "amlsCode"         -> "AAT",
@@ -766,7 +756,7 @@ class AMLSControllerISpec extends BaseISpec {
 
     "display and pre-populate page when this information is in the store" in new Setup {
       givenSubscriptionJourneyRecordExists(id, TestData.minimalSubscriptionJourneyRecord(id).copy(amlsData =
-        Some(AmlsData(false, Some(true), Some("supervisory"), Some(PendingDate(LocalDate.now().minusDays(5))), None))))
+        Some(AmlsData(false, Some(true), Some(AmlsDetails("supervisory", Left(PendingDetails(LocalDate.now().minusDays(5)))))))))
 
       val result = await(controller.showAmlsApplicationDatePage(authenticatedRequest))
 
@@ -794,8 +784,7 @@ class AMLSControllerISpec extends BaseISpec {
         record.copy(
           amlsData = Some(
             AmlsData.registeredUserNoDataEntered.copy(
-              supervisoryBody = Some("Association of AccountingTechnicians (AAT)"),
-              pendingDetails = Some(PendingDate(appliedOnDate)))))
+              amlsDetails = Some(AmlsDetails("Association of AccountingTechnicians (AAT)", Left(PendingDetails(appliedOnDate)))))))
       )
       implicit val request = authenticatedRequest.withFormUrlEncodedBody(
         "amlsCode"        -> "AAT",
@@ -818,8 +807,7 @@ class AMLSControllerISpec extends BaseISpec {
         record.copy(
           amlsData = Some(
             AmlsData.registeredUserNoDataEntered.copy(
-              supervisoryBody = Some("Association of AccountingTechnicians (AAT)"),
-              pendingDetails = Some(PendingDate(appliedOnDate)))))
+              amlsDetails = Some(AmlsDetails("Association of AccountingTechnicians (AAT)", Left(PendingDetails(appliedOnDate)))))))
       )
       implicit val request = authenticatedRequest.withFormUrlEncodedBody(
         "amlsCode"        -> "AAT",

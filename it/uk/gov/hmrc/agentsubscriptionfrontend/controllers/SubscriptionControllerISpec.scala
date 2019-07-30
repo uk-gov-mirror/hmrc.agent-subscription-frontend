@@ -25,7 +25,7 @@ import play.api.mvc.{AnyContent, Request}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{AMLSDetails, _}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AmlsDetails, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AddressLookupFrontendStubs._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionJourneyStub.{givenSubscriptionJourneyRecordExists, givenSubscriptionRecordCreated}
@@ -60,7 +60,7 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
 
   protected lazy val redirectUrl = "https://www.gov.uk/"
 
-  val amlsDetails = AMLSDetails("supervisory", Right(RegisteredDetails("123456789", LocalDate.now().plusDays(10))))
+  val amlsDetails = AmlsDetails("supervisory", Right(RegisteredDetails("123456789", LocalDate.now().plusDays(10))))
 
   val agentSession = Some(
     AgentSession(
@@ -595,7 +595,7 @@ class SubscriptionControllerTests extends SubscriptionControllerISpec {
       }
 
       "amlsDetails are passed in" in new TestSetupWithCompleteJourneyRecordAndCreate {
-        val amlsDetails = Some(AMLSDetails("supervisory", Right(RegisteredDetails("123", LocalDate.now()))))
+        val amlsDetails = Some(AmlsDetails("supervisory", Right(RegisteredDetails("123", LocalDate.now()))))
         AgentSubscriptionStub.subscriptionWillSucceed(validUtr, subscriptionRequestWithNoEdit())
 
         implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)

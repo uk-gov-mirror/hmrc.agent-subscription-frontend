@@ -4,7 +4,7 @@ import java.time.LocalDate
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.{LimitedCompany, SoleTrader}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
-import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.{AmlsData, BusinessDetails, RegDetails, SubscriptionJourneyRecord}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.{AmlsData, BusinessDetails, SubscriptionJourneyRecord}
 import uk.gov.hmrc.domain.Nino
 
 object TestData {
@@ -64,7 +64,7 @@ object TestData {
       Postcode(validPostcode),
       Some(Registration(Some(registrationName), true, true,
         businessAddress,
-        Some("test@gmail.com")))), Some(AmlsData(true, Some(false), Some("supervisory"), None, Some(RegDetails("123456789", LocalDate.now().plusDays(10))))),
+        Some("test@gmail.com")))), Some(AmlsData(true, Some(false), Some(AmlsDetails("supervisory", Right(RegisteredDetails("123456789", LocalDate.now().plusDays(10))))))),
     cleanCredsAuthProviderId = Some(id))
 
   def completeJourneyRecordWithUpdatedBusinessName(newBusinessName: String) =

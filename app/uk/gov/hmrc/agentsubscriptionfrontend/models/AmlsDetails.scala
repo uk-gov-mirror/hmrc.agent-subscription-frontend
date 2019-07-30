@@ -34,14 +34,14 @@ object PendingDetails {
 }
 
 // TODO replace this with AmlsData which include the extra field
-case class AMLSDetails(supervisoryBody: String, details: Either[PendingDetails, RegisteredDetails])
+case class AmlsDetails(supervisoryBody: String, details: Either[PendingDetails, RegisteredDetails])
 
-object AMLSDetails {
+object AmlsDetails {
 
   val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 
-  implicit val format: Format[AMLSDetails] = new Format[AMLSDetails] {
-    override def reads(json: JsValue): JsResult[AMLSDetails] = {
+  implicit val format: Format[AmlsDetails] = new Format[AmlsDetails] {
+    override def reads(json: JsValue): JsResult[AmlsDetails] = {
       val supervisoryBody = (json \ "supervisoryBody").as[String]
 
       val mayBeMembershipNumber = (json \ "membershipNumber").asOpt[String]
@@ -50,15 +50,15 @@ object AMLSDetails {
 
         case Some(membershipNumber) =>
           val membershipExpiresOn = LocalDate.parse((json \ "membershipExpiresOn").as[String], formatter)
-          JsSuccess(AMLSDetails(supervisoryBody, Right(RegisteredDetails(membershipNumber, membershipExpiresOn))))
+          JsSuccess(AmlsDetails(supervisoryBody, Right(RegisteredDetails(membershipNumber, membershipExpiresOn))))
 
         case None =>
           val appliedOn = LocalDate.parse((json \ "appliedOn").as[String], formatter)
-          JsSuccess(AMLSDetails(supervisoryBody, Left(PendingDetails(appliedOn))))
+          JsSuccess(AmlsDetails(supervisoryBody, Left(PendingDetails(appliedOn))))
       }
     }
 
-    override def writes(amlsDetails: AMLSDetails): JsValue = {
+    override def writes(amlsDetails: AmlsDetails): JsValue = {
 
       val detailsJson = amlsDetails.details match {
         case Right(registeredDetails) => Json.toJson(registeredDetails)

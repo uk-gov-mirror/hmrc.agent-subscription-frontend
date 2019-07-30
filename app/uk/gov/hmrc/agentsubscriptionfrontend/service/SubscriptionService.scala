@@ -73,7 +73,10 @@ class SubscriptionService @Inject()(
       subscriptionDetails.utr,
       SubscriptionRequestKnownFacts(subscriptionDetails.knownFactsPostcode),
       Agency(name = subscriptionDetails.name, email = subscriptionDetails.email, address = address),
-      AmlsData.amlsDataToDetails(subscriptionDetails.amlsData)
+      subscriptionDetails.amlsData match {
+        case Some(amlsData) => amlsData.amlsDetails
+        case None           => None
+      }
     )
 
     agentSubscriptionConnector.subscribeAgencyToMtd(request).map[Either[Int, Arn]] { arn =>

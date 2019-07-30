@@ -18,7 +18,6 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
-import play.api.Logger
 import play.api.i18n.MessagesApi
 import play.api.mvc.{AnyContent, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent
@@ -27,7 +26,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.config.amls.AMLSLoader
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentAssuranceConnector
 import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
-import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.{AmlsData, PendingDate, RegDetails}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.AmlsData
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
@@ -98,9 +97,7 @@ class AMLSController @Inject()(
                 val cleanAmlsData = AmlsData(
                   amlsRegistered = RadioInputAnswer.toBoolean(validForm),
                   amlsAppliedFor = None,
-                  supervisoryBody = None,
-                  pendingDetails = None,
-                  registeredDetails = None)
+                  amlsDetails = None)
 
                 updateAmlsJourneyRecord(
                   agent, { amlsData =>
@@ -161,17 +158,20 @@ class AMLSController @Inject()(
         for {
           record <- agent.getMandatoryAmlsData
         } yield
-          (record.registeredDetails, record.supervisoryBody) match {
-            case (Some(details), Some(supervisoryBody)) =>
-              val form: Map[String, String] = Map(
-                "amlsCode"         -> amlsBodies.find(_._2 == supervisoryBody).map(_._1).getOrElse(""),
-                "membershipNumber" -> details.membershipNumber,
-                "expiry.day"       -> details.membershipExpiresOn.getDayOfMonth.toString,
-                "expiry.month"     -> details.membershipExpiresOn.getMonthValue.toString,
-                "expiry.year"      -> details.membershipExpiresOn.getYear.toString
-              )
-              Ok(html.amls.amls_details(amlsForm(amlsBodies.keySet).bind(form), amlsBodies))
-
+          record.amlsDetails match {
+            case Some(amlsDetails) =>
+              amlsDetails.details match {
+                case Left(PendingDetails(_)) => Ok(html.amls.amls_details(amlsForm(amlsBodies.keySet), amlsBodies))
+                case Right(RegisteredDetails(membershipNumber, membershipExpiresOn)) =>
+                  val form: Map[String, String] = Map(
+                    "amlsCode"         -> amlsBodies.find(_._2 == amlsDetails.supervisoryBody).map(_._1).getOrElse(""),
+                    "membershipNumber" -> membershipNumber,
+                    "expiry.day"       -> membershipExpiresOn.getDayOfMonth.toString,
+                    "expiry.month"     -> membershipExpiresOn.getMonthValue.toString,
+                    "expiry.year"      -> membershipExpiresOn.getYear.toString
+                  )
+                  Ok(html.amls.amls_details(amlsForm(amlsBodies.keySet).bind(form), amlsBodies))
+              }
             case _ => Ok(html.amls.amls_details(amlsForm(amlsBodies.keySet), amlsBodies))
           }
       }
@@ -197,9 +197,9 @@ class AMLSController @Inject()(
                   agent,
                   amlsData =>
                     Some(
-                      amlsData.copy(
-                        supervisoryBody = Some(supervisoryBodyData),
-                        registeredDetails = Some(RegDetails(validForm.membershipNumber, validForm.expiry))))
+                      amlsData.copy(amlsDetails = Some(AmlsDetails(
+                        supervisoryBodyData,
+                        Right(RegisteredDetails(validForm.membershipNumber, validForm.expiry))))))
                 ).map(
                   _ => Redirect(continueOrStop(continue, routes.AMLSController.showAmlsDetailsForm()))
                 )
@@ -220,24 +220,24 @@ class AMLSController @Inject()(
     withSubscribingAgent { agent =>
       withManuallyAssuredAgent(agent) {
         for {
-          cachedAmlsData <- agent.getMandatoryAmlsData
+          amlsData <- agent.getMandatoryAmlsData
         } yield {
-          cachedAmlsData.pendingDetails match {
-            case Some(pendingDetails) =>
-              val form: Map[String, String] = Map(
-                "amlsCode"        -> "HMRC",
-                "appliedOn.day"   -> pendingDetails.appliedOn.getDayOfMonth.toString,
-                "appliedOn.month" -> pendingDetails.appliedOn.getMonthValue.toString,
-                "appliedOn.year"  -> pendingDetails.appliedOn.getYear.toString
-              )
-              Ok(
-                html.amls
-                  .amls_pending_details(amlsPendingForm.bind(form)))
-
-            case None =>
-              Ok(
-                html.amls
-                  .amls_pending_details(amlsPendingForm))
+          amlsData.amlsDetails match {
+            case Some(amlsDetails) =>
+              amlsDetails.details match {
+                case Left(PendingDetails(appliedOn)) =>
+                  val form: Map[String, String] = Map(
+                    "amlsCode"        -> "HMRC",
+                    "appliedOn.day"   -> appliedOn.getDayOfMonth.toString,
+                    "appliedOn.month" -> appliedOn.getMonthValue.toString,
+                    "appliedOn.year"  -> appliedOn.getYear.toString
+                  )
+                  Ok(
+                    html.amls
+                      .amls_pending_details(amlsPendingForm.bind(form)))
+                case Right(RegisteredDetails(_, _)) => Ok(html.amls.amls_pending_details(amlsPendingForm))
+              }
+            case _ => Ok(html.amls.amls_pending_details(amlsPendingForm))
           }
         }
       }
@@ -263,10 +263,8 @@ class AMLSController @Inject()(
                 updateAmlsJourneyRecord(
                   agent,
                   amlsData =>
-                    Some(
-                      amlsData.copy(
-                        supervisoryBody = Some(supervisoryBodyData),
-                        pendingDetails = Some(PendingDate(validForm.appliedOn))))
+                    Some(amlsData.copy(
+                      amlsDetails = Some(AmlsDetails(supervisoryBodyData, Left(PendingDetails(validForm.appliedOn))))))
                 ).map(
                   _ => Redirect(continueOrStop(continue, routes.AMLSController.showAmlsApplicationDatePage()))
                 )

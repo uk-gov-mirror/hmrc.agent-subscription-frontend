@@ -47,9 +47,9 @@ class TaskListService @Inject()(agentAssuranceConnector: AgentAssuranceConnector
   //TODO: AMLS task is also complete is user is MAA
   private def isAmlsTaskComplete(subscriptionJourneyRecord: SubscriptionJourneyRecord): Boolean =
     subscriptionJourneyRecord.amlsData.fold(false) {
-      case AmlsData(true, _, Some(_), _, Some(_))           => true // registered (with details)
-      case AmlsData(false, Some(true), Some(_), Some(_), _) => true // not registered, but applied for (with details)
-      case _                                                => false
+      case AmlsData(true, _, Some(_))           => true // registered (with details)
+      case AmlsData(false, Some(true), Some(_)) => true // not registered, but applied for (with details)
+      case _                                    => false
     }
 
   private def isCreateTaskComplete(subscriptionJourneyRecord: SubscriptionJourneyRecord): Boolean =

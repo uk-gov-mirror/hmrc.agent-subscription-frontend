@@ -23,7 +23,7 @@ import org.scalatestplus.mockito.MockitoSugar
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentAssuranceConnector
 import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney._
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{AuthProviderId, BusinessType, Postcode, TaskListFlags}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AmlsDetails, AuthProviderId, BusinessType, PendingDetails, Postcode, RegisteredDetails, TaskListFlags}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 
@@ -60,33 +60,41 @@ class TaskListServiceTest extends UnitSpec with MockitoSugar {
     }
 
     "show amls incomplete when some (incomplete) amls details are entered - registered true" in {
-      val data = Some(AmlsData(amlsRegistered = true, None, None, None, None))
+      val data = Some(AmlsData(amlsRegistered = true, None, None))
       val flags = await(taskListService.getTaskListFlags(minimalRecord.copy(amlsData = data)))
       flags should be(TaskListFlags())
     }
 
     "show amls complete when all amls details are entered - registered true" in {
       val data =
-        Some(AmlsData(amlsRegistered = true, None, Some("HMRC"), None, Some(RegDetails("mem", LocalDate.now()))))
+        Some(
+          AmlsData(
+            amlsRegistered = true,
+            None,
+            Some(AmlsDetails("HMRC", Right(RegisteredDetails("mem", LocalDate.now()))))))
       val flags = await(taskListService.getTaskListFlags(minimalRecord.copy(amlsData = data)))
       flags should be(TaskListFlags(amlsTaskComplete = true))
     }
 
     "show amls incomplete when some (incomplete) amls details are entered - registered false" in {
-      val data = Some(AmlsData(amlsRegistered = false, None, None, None, None))
+      val data = Some(AmlsData(amlsRegistered = false, None, None))
       val flags = await(taskListService.getTaskListFlags(minimalRecord.copy(amlsData = data)))
       flags should be(TaskListFlags())
     }
 
     "show amls incomplete when amls is not applied for" in {
-      val data = Some(AmlsData(amlsRegistered = false, Some(false), None, None, None))
+      val data = Some(AmlsData(amlsRegistered = false, Some(false), None))
       val flags = await(taskListService.getTaskListFlags(minimalRecord.copy(amlsData = data)))
       flags should be(TaskListFlags())
     }
 
     "show amls complete when all amls details are entered - registered false" in {
       val data =
-        Some(AmlsData(amlsRegistered = false, Some(true), Some("HMRC"), Some(PendingDate(LocalDate.now())), None))
+        Some(
+          AmlsData(
+            amlsRegistered = false,
+            Some(true),
+            Some(AmlsDetails("HMRC", Left(PendingDetails(LocalDate.now()))))))
       val flags = await(taskListService.getTaskListFlags(minimalRecord.copy(amlsData = data)))
       flags should be(TaskListFlags(amlsTaskComplete = true))
     }

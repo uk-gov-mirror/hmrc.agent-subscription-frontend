@@ -21,7 +21,7 @@ import java.time.format.DateTimeFormatter
 import play.api.i18n.Messages
 import play.api.mvc.Call
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
-import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessAddress
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{BusinessAddress, PendingDetails, RegisteredDetails}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.AmlsData
 
 case class CheckYourAnswers(
@@ -59,21 +59,28 @@ object CheckYourAnswers {
       ),
       maybeAmlsDataRow = amlsData.map { data =>
         AnswerRow(
-          question = (data.pendingDetails, data.registeredDetails) match {
-            case (Some(_), None) => Messages("checkAnswers.amlsDetails.pending.label")
-            case (None, Some(_)) => Messages("checkAnswers.amlsDetails.label")
-            case _               => throw new Exception("AMLS details incomplete")
+          question = (data.amlsDetails) match {
+            case Some(amlsDetails) =>
+              amlsDetails.details match {
+                case Left(PendingDetails(appliedOn)) => Messages("checkAnswers.amlsDetails.pending.label")
+                case Right(RegisteredDetails(membershipNumber, membershipExpiresOn)) =>
+                  Messages("checkAnswers.amlsDetails.label")
+              }
+            case None => throw new Exception("AMLS details incomplete")
           },
-          answerLines = (data.pendingDetails, data.registeredDetails) match {
-            case (Some(_), None) =>
-              List(data.pendingDetails.get.appliedOn.format(DateTimeFormatter.ofPattern("dd MMMM yyyy")))
-            case (None, Some(_)) =>
-              List(
-                data.supervisoryBody.getOrElse(""),
-                data.registeredDetails.get.membershipNumber,
-                data.registeredDetails.get.membershipExpiresOn.format(DateTimeFormatter.ofPattern("dd MM yyyy"))
-              )
-            case _ => throw new Exception("AMLS details incomplete")
+          answerLines = (data.amlsDetails) match {
+            case Some(amlsDetails) =>
+              amlsDetails.details match {
+                case Left(PendingDetails(appliedOn)) =>
+                  List(appliedOn.format(DateTimeFormatter.ofPattern("dd MMMM yyyy")))
+                case Right(RegisteredDetails(membershipNumber, membershipExpiresOn)) =>
+                  List(
+                    amlsDetails.supervisoryBody,
+                    membershipNumber,
+                    membershipExpiresOn.format(DateTimeFormatter.ofPattern("dd MM yyyy"))
+                  )
+              }
+            case None => throw new Exception("AMLS details incomplete")
           },
           changeLink = routes.AMLSController.changeAmlsDetails()
         )
