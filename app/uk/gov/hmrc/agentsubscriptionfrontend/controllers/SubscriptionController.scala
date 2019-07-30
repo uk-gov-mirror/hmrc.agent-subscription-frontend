@@ -24,6 +24,7 @@ import play.api.mvc.{AnyContent, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
+import uk.gov.hmrc.agentsubscriptionfrontend.config.view.CheckYourAnswers
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.{AddressLookupFrontendConnector, AgentAssuranceConnector}
 import uk.gov.hmrc.agentsubscriptionfrontend.form.DesAddressForm
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
@@ -32,9 +33,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.HttpException
-import uk.gov.hmrc.play.binders.ContinueUrl
 
-import scala.None
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 
@@ -64,18 +63,18 @@ class SubscriptionController @Inject()(
       withCleanCreds(agent) {
         val sjr = agent.getMandatorySubscriptionRecord
         agentAssuranceConnector.isManuallyAssuredAgent(sjr.businessDetails.utr).flatMap { isMAAgent =>
-          sessionStoreService.cacheIsChangingAnswers(false).flatMap { _ =>
+          sessionStoreService.cacheIsChangingAnswers(changing = false).flatMap { _ =>
     (sjr.businessDetails.registration, sjr.amlsData) match {
       case (Some(registration), Some(amlsData)) =>
         sessionStoreService
           .cacheGoBackUrl(routes.SubscriptionController.showCheckAnswers().url)
           .map { _ =>
             Ok(
-              html.check_answers(
+              html.check_answers(CheckYourAnswers(
                 registrationName = registration.taxpayerName.getOrElse(""),
                 address = registration.address,
                 emailAddress = registration.emailAddress,
-                amlsData = Some(amlsData)
+                amlsData = Some(amlsData))
               ))
           }
 
@@ -83,11 +82,11 @@ class SubscriptionController @Inject()(
 
       case (Some(registration), None) if isMAAgent =>
         Ok(
-          html.check_answers(
+          html.check_answers(CheckYourAnswers(
             registrationName = registration.taxpayerName.getOrElse(""),
             address = registration.address,
             emailAddress = registration.emailAddress,
-            amlsData = None
+            amlsData = None)
           ))
 
       case (_, None) => Redirect(routes.AMLSController.showAmlsRegisteredPage())

@@ -22,90 +22,44 @@
 @import java.time.format.DateTimeFormatter
 
 @import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.AmlsData
-@(registrationName: String, address: BusinessAddress, emailAddress: Option[String], amlsData: Option[AmlsData])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+@import uk.gov.hmrc.agentsubscriptionfrontend.config.view.CheckYourAnswers
+@import uk.gov.hmrc.agentsubscriptionfrontend.config.view.AnswerRow
+@(checkYourAnswers: CheckYourAnswers)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+
+@checkAnswerBlock(id: String, answerRow: AnswerRow) = {
+    <div class="app-check-your-answers__contents">
+        <dt class="app-check-your-answers__question">@answerRow.question</dt>
+        <dd class="app-check-your-answers__answer" id="@id">
+          @for(line <- answerRow.answerLines) { <div>@line</div> }
+        </dd>
+        <dd class="app-check-your-answers__change">
+            <a href="@answerRow.changeLink">@Messages("checkAnswers.change.button")
+                <span class="visuallyhidden"> @answerRow.question</span></a>
+        </dd>
+    </div>
+}
 
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = Messages("checkAnswers.title"), bodyClasses = None) {
 
     <h1 class="heading-xlarge margin-bottom-20">@Messages("checkAnswers.title")</h1>
+
             <p>@Messages("checkAnswers.description.p1")</p>
             <p>@Messages("checkAnswers.description.p2")</p>
 
-
             <dl class="app-check-your-answers app-check-your-answers--long margin-top-30">
-                <div class="app-check-your-answers__contents">
-                    <dt class="app-check-your-answers__question">
-                        @Messages("checkAnswers.businessName.label")
-                    </dt>
-                    <dd class="app-check-your-answers__answer" id="registration-name">
-                        @registrationName
-                    </dd>
-                    <dd class="app-check-your-answers__change">
-                        <a href="@routes.BusinessIdentificationController.changeBusinessName()">@Messages("checkAnswers.change.button") <span class="visuallyhidden"> @Messages("checkAnswers.businessName.label")</span></a>
-                    </dd>
-                </div>
-                <div class="app-check-your-answers__contents">
-                    <dt class="app-check-your-answers__question">
-                        @Messages("checkAnswers.businessAddress.label")
-                    </dt>
-                    <dd class="app-check-your-answers__answer" id="postcode">
-                        <p>
-                            @address.addressLine1 <br />
-                            @address.addressLine2 @if(address.addressLine2.nonEmpty) {
-                                <br />
-                            }
-                            @address.addressLine3 @if(address.addressLine3.nonEmpty) {
-                                <br />
-                            }
-                            @address.addressLine4 @if(address.addressLine4.nonEmpty) {
-                                <br />
-                            }
-                            @address.postalCode
-                        </p>
-                    </dd>
-                    <dd class="app-check-your-answers__change" >
-                        <a href="@routes.SubscriptionController.showBusinessAddressForm()">@Messages("checkAnswers.change.button") <span class="visuallyhidden"> @Messages("checkAnswers.businessAddress.label")</span></a>
-                    </dd>
-                </div>
-                <div class="app-check-your-answers__contents">
-                    <dt class="app-check-your-answers__question">
-                        @Messages("checkAnswers.businessEmailAddress.label")
-                    </dt>
-                    <dd class="app-check-your-answers__answer" id="utr">
-                        @emailAddress
-                    </dd>
-                    <dd class="app-check-your-answers__change">
-                        <a href="@routes.BusinessIdentificationController.changeBusinessEmail()">@Messages("checkAnswers.change.button") <span class="visuallyhidden"> @Messages("checkAnswers.businessEmailAddress.label")</span></a>
-                    </dd>
-                </div>
 
-                @if(amlsData.isDefined) {
-                <div class="app-check-your-answers__contents">
-                    <dt class="app-check-your-answers__question">
-                        @{(amlsData.get.pendingDetails, amlsData.get.registeredDetails) match {
-                        case (Some(pendingDetails), None) => Messages("checkAnswers.amlsDetails.pending.label")
-                        case (None, Some(regDetails)) => Messages("checkAnswers.amlsDetails.label")
-                        case _ => throw new Exception("AMLS details incomplete")
-                    }}
-                    </dt>
-                    <dd class="app-check-your-answers__answer" id="amls">
-                        @{(amlsData.get.pendingDetails, amlsData.get.registeredDetails) match {
-                        case (Some(pendingDetails), None) =>
-                            amlsData.get.pendingDetails.get.appliedOn.format(DateTimeFormatter.ofPattern("dd MMMM yyyy"))
-                        case (None, Some(regDetails)) =>
-                            Html(amlsData.get.supervisoryBody + "<br/>" + amlsData.get.registeredDetails.get.membershipNumber + "<br/>" + amlsData.get.registeredDetails.get.membershipExpiresOn.format(DateTimeFormatter.ofPattern("dd MM yyyy")))
-                        case _ => throw new Exception("AMLS details incomplete")
-                    }}
-                    </dd>
-                    <dd class="app-check-your-answers__change">
-                        <a href="@routes.AMLSController.changeAmlsDetails()">@Messages("checkAnswers.change.button") <span class="visuallyhidden"> @Messages("checkAnswers.amlsDetails.label")</span></a>
-                    </dd>
-                </div>
+                @checkAnswerBlock("registration-name", checkYourAnswers.businessNameRow)
+                @checkAnswerBlock("address", checkYourAnswers.businessAddressRow)
+                @checkAnswerBlock("email", checkYourAnswers.businessEmailRow)
+
+                @for(amlsRow <- checkYourAnswers.maybeAmlsDataRow) {
+                    @checkAnswerBlock("amls", amlsRow)
                 }
+
             </dl>
+    <br />
 
-                <br />
-
-            <p>@Messages("checkAnswers.description.p3")</p>
+    <p>@Messages("checkAnswers.description.p3")</p>
 
     @form(
         action = routes.SubscriptionController.submitCheckAnswers(),
