@@ -15,7 +15,6 @@
  */
 
 package uk.gov.hmrc.agentsubscriptionfrontend.models
-import play.api.libs.json.{Json, OFormat}
 
 /**
   * Simple data structure which represents the user's journey state on the task list page
@@ -29,12 +28,7 @@ case class TaskListFlags(
   checkAnswersComplete: Boolean = false) {
 
   def cannotEditAmls: Boolean = isMAA || checkAnswersComplete
-  def mustCreateCleanCreds: Boolean = amlsTaskComplete && !createTaskComplete && !checkAnswersComplete && !isMAA
+  def mustCreateCleanCreds: Boolean = amlsTaskComplete && !createTaskComplete && !checkAnswersComplete
   def mustCheckAnswers: Boolean = createTaskComplete && !checkAnswersComplete
 
-}
-
-// TODO remove when no longer needed in AgentSession
-object TaskListFlags {
-  implicit val formats: OFormat[TaskListFlags] = Json.format
 }

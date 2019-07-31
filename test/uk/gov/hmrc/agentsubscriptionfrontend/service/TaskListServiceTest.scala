@@ -19,6 +19,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.service
 import java.time.LocalDate
 
 import org.mockito.Mockito._
+import org.mockito.stubbing.OngoingStubbing
 import org.scalatestplus.mockito.MockitoSugar
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentAssuranceConnector
@@ -36,11 +37,11 @@ class TaskListServiceTest extends UnitSpec with MockitoSugar {
 
   private val stubAssuranceConnector = mock[AgentAssuranceConnector]
 
-  private def givenNotManuallyAssured =
+  private def givenNotManuallyAssured: OngoingStubbing[Future[Boolean]] =
     when(stubAssuranceConnector.isManuallyAssuredAgent(Utr("12345")))
       .thenReturn(Future.successful(false))
 
-  private def givenManuallyAssured =
+  private def givenManuallyAssured: OngoingStubbing[Future[Boolean]] =
     when(stubAssuranceConnector.isManuallyAssuredAgent(Utr("12345")))
       .thenReturn(Future.successful(true))
 
@@ -64,12 +65,18 @@ class TaskListServiceTest extends UnitSpec with MockitoSugar {
       givenManuallyAssured
       val flags = await(taskListService.getTaskListFlags(minimalRecord))
       flags should be(TaskListFlags(isMAA = true, amlsTaskComplete = true))
+      flags.mustCreateCleanCreds should be(true) // next task
+      flags.mustCheckAnswers should be(false)
+      flags.cannotEditAmls should be(true)
     }
 
     "show amls incomplete when no amls details are entered" in {
       givenNotManuallyAssured
       val flags = await(taskListService.getTaskListFlags(minimalRecord))
       flags should be(TaskListFlags())
+      flags.mustCreateCleanCreds should be(false)
+      flags.mustCheckAnswers should be(false)
+      flags.cannotEditAmls should be(false)
     }
 
     "show amls incomplete when some (incomplete) amls details are entered - registered true" in {
@@ -77,6 +84,9 @@ class TaskListServiceTest extends UnitSpec with MockitoSugar {
       val data = Some(AmlsData(amlsRegistered = true, None, None))
       val flags = await(taskListService.getTaskListFlags(minimalRecord.copy(amlsData = data)))
       flags should be(TaskListFlags())
+      flags.mustCreateCleanCreds should be(false)
+      flags.mustCheckAnswers should be(false)
+      flags.cannotEditAmls should be(false)
     }
 
     "show amls complete when all amls details are entered - registered true" in {
@@ -89,6 +99,9 @@ class TaskListServiceTest extends UnitSpec with MockitoSugar {
             Some(AmlsDetails("HMRC", Right(RegisteredDetails("mem", LocalDate.now()))))))
       val flags = await(taskListService.getTaskListFlags(minimalRecord.copy(amlsData = data)))
       flags should be(TaskListFlags(amlsTaskComplete = true))
+      flags.mustCreateCleanCreds should be(true) // next task
+      flags.mustCheckAnswers should be(false)
+      flags.cannotEditAmls should be(false)
     }
 
     "show amls incomplete when some (incomplete) amls details are entered - registered false" in {
@@ -96,6 +109,9 @@ class TaskListServiceTest extends UnitSpec with MockitoSugar {
       val data = Some(AmlsData(amlsRegistered = false, None, None))
       val flags = await(taskListService.getTaskListFlags(minimalRecord.copy(amlsData = data)))
       flags should be(TaskListFlags())
+      flags.mustCreateCleanCreds should be(false)
+      flags.mustCheckAnswers should be(false)
+      flags.cannotEditAmls should be(false)
     }
 
     "show amls incomplete when amls is not applied for" in {
@@ -103,6 +119,9 @@ class TaskListServiceTest extends UnitSpec with MockitoSugar {
       val data = Some(AmlsData(amlsRegistered = false, Some(false), None))
       val flags = await(taskListService.getTaskListFlags(minimalRecord.copy(amlsData = data)))
       flags should be(TaskListFlags())
+      flags.mustCreateCleanCreds should be(false)
+      flags.mustCheckAnswers should be(false)
+      flags.cannotEditAmls should be(false)
     }
 
     "show amls complete when all amls details are entered - registered false" in {
@@ -115,6 +134,28 @@ class TaskListServiceTest extends UnitSpec with MockitoSugar {
             Some(AmlsDetails("HMRC", Left(PendingDetails(LocalDate.now()))))))
       val flags = await(taskListService.getTaskListFlags(minimalRecord.copy(amlsData = data)))
       flags should be(TaskListFlags(amlsTaskComplete = true))
+      flags.mustCreateCleanCreds should be(true) // next task
+      flags.mustCheckAnswers should be(false)
+      flags.cannotEditAmls should be(false)
+    }
+
+    "cannot edit amls once check answers is complete" in {
+      givenNotManuallyAssured
+      val data =
+        Some(
+          AmlsData(
+            amlsRegistered = true,
+            None,
+            Some(AmlsDetails("HMRC", Right(RegisteredDetails("mem", LocalDate.now()))))))
+      val flags = await(
+        taskListService.getTaskListFlags(
+          minimalRecord
+            .copy(amlsData = data, subscriptionCreated = true, cleanCredsAuthProviderId = Some(AuthProviderId("test")))
+        ))
+      flags should be(TaskListFlags(amlsTaskComplete = true, createTaskComplete = true, checkAnswersComplete = true))
+      flags.mustCreateCleanCreds should be(false)
+      flags.mustCheckAnswers should be(false)
+      flags.cannotEditAmls should be(true) // they have checked answers and created sub
     }
 
   }
