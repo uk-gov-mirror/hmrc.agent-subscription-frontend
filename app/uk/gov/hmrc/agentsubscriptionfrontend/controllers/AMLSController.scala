@@ -283,7 +283,7 @@ class AMLSController @Inject()(
     implicit hc: HeaderCarrier): Future[Result] = {
     val utr = agent.getMandatorySubscriptionRecord.businessDetails.utr
     agentAssuranceConnector.isManuallyAssuredAgent(utr).flatMap { response =>
-      if (response) toFuture(Redirect(routes.SubscriptionController.showCheckAnswers()))
+      if (response) toFuture(Redirect(routes.TaskListController.showTaskList()))
       else body
     }
   }

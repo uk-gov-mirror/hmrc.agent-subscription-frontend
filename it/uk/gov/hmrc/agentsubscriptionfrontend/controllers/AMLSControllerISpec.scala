@@ -457,13 +457,13 @@ class AMLSControllerISpec extends BaseISpec {
       elForm.attr("method") shouldBe "POST"
     }
 
-    "redirect to /check-answers page if the agent is manually assured" in new Setup {
+    "redirect to /task-list page if the agent is manually assured" in new Setup {
       givenAgentIsManuallyAssured(utr.value)
 
       val result = await(controller.showAmlsDetailsForm(authenticatedRequest))
 
       status(result) shouldBe 303
-      redirectLocation(result).get shouldBe routes.SubscriptionController.showCheckAnswers().url
+      redirectLocation(result).get shouldBe routes.TaskListController.showTaskList().url
     }
 
     "pre-populate amls form if they are coming from /check_answers and also go to /check-money-laundering-compliance page when user clicks on 'Go Back' link" in
@@ -708,13 +708,13 @@ class AMLSControllerISpec extends BaseISpec {
         "error.moneyLaunderingCompliance.year.empty")
     }
 
-    "redirect to /check-answers page if the agent is manually assured" in new Setup {
+    "redirect to /task-list page if the agent is manually assured" in new Setup {
       givenAgentIsManuallyAssured(utr.value)
 
       val result = await(controller.submitAmlsDetailsForm(authenticatedRequest))
 
       status(result) shouldBe 303
-      redirectLocation(result).get shouldBe routes.SubscriptionController.showCheckAnswers().url
+      redirectLocation(result).get shouldBe routes.TaskListController.showTaskList().url
     }
   }
 
@@ -916,13 +916,13 @@ class AMLSControllerISpec extends BaseISpec {
         "error.amls.pending.appliedOn.year.empty")
     }
 
-    "redirect to /check-answers page if the agent is manually assured" in new Setup {
+    "redirect to /task-list page if the agent is manually assured" in new Setup {
       givenAgentIsManuallyAssured(utr.value)
 
       val result = await(controller.submitAmlsApplicationDatePage(authenticatedRequest))
 
       status(result) shouldBe 303
-      redirectLocation(result).get shouldBe routes.SubscriptionController.showCheckAnswers().url
+      redirectLocation(result).get shouldBe routes.TaskListController.showTaskList().url
     }
 
   }
