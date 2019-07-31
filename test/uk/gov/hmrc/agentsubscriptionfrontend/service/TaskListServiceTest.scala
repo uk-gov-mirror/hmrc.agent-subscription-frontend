@@ -36,8 +36,13 @@ class TaskListServiceTest extends UnitSpec with MockitoSugar {
 
   private val stubAssuranceConnector = mock[AgentAssuranceConnector]
 
-  when(stubAssuranceConnector.isManuallyAssuredAgent(Utr("12345")))
-    .thenReturn(Future.successful(false))
+  private def givenNotManuallyAssured =
+    when(stubAssuranceConnector.isManuallyAssuredAgent(Utr("12345")))
+      .thenReturn(Future.successful(false))
+
+  private def givenManuallyAssured =
+    when(stubAssuranceConnector.isManuallyAssuredAgent(Utr("12345")))
+      .thenReturn(Future.successful(true))
 
   private val taskListService = new TaskListService(stubAssuranceConnector)
 
@@ -54,18 +59,28 @@ class TaskListServiceTest extends UnitSpec with MockitoSugar {
   )
 
   "task list service" should {
+
+    "show amls complete when agent is manually assured" in {
+      givenManuallyAssured
+      val flags = await(taskListService.getTaskListFlags(minimalRecord))
+      flags should be(TaskListFlags(isMAA = true, amlsTaskComplete = true))
+    }
+
     "show amls incomplete when no amls details are entered" in {
+      givenNotManuallyAssured
       val flags = await(taskListService.getTaskListFlags(minimalRecord))
       flags should be(TaskListFlags())
     }
 
     "show amls incomplete when some (incomplete) amls details are entered - registered true" in {
+      givenNotManuallyAssured
       val data = Some(AmlsData(amlsRegistered = true, None, None))
       val flags = await(taskListService.getTaskListFlags(minimalRecord.copy(amlsData = data)))
       flags should be(TaskListFlags())
     }
 
     "show amls complete when all amls details are entered - registered true" in {
+      givenNotManuallyAssured
       val data =
         Some(
           AmlsData(
@@ -77,18 +92,21 @@ class TaskListServiceTest extends UnitSpec with MockitoSugar {
     }
 
     "show amls incomplete when some (incomplete) amls details are entered - registered false" in {
+      givenNotManuallyAssured
       val data = Some(AmlsData(amlsRegistered = false, None, None))
       val flags = await(taskListService.getTaskListFlags(minimalRecord.copy(amlsData = data)))
       flags should be(TaskListFlags())
     }
 
     "show amls incomplete when amls is not applied for" in {
+      givenNotManuallyAssured
       val data = Some(AmlsData(amlsRegistered = false, Some(false), None))
       val flags = await(taskListService.getTaskListFlags(minimalRecord.copy(amlsData = data)))
       flags should be(TaskListFlags())
     }
 
     "show amls complete when all amls details are entered - registered false" in {
+      givenNotManuallyAssured
       val data =
         Some(
           AmlsData(

@@ -32,10 +32,8 @@ package uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney
  * limitations under the License.
  */
 
-import java.time.LocalDate
-
 import play.api.libs.json._
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{AmlsDetails, PendingDetails, RegisteredDetails}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.AmlsDetails
 
 case class AmlsData(amlsRegistered: Boolean, amlsAppliedFor: Option[Boolean], amlsDetails: Option[AmlsDetails])
 

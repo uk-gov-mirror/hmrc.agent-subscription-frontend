@@ -74,7 +74,8 @@ class SubscriptionController @Inject()(
                 registrationName = registration.taxpayerName.getOrElse(""),
                 address = registration.address,
                 emailAddress = registration.emailAddress,
-                amlsData = Some(amlsData))
+                amlsData = Some(amlsData),
+                isManuallyAssured = isMAAgent)
               ))
           }
 
@@ -86,7 +87,8 @@ class SubscriptionController @Inject()(
             registrationName = registration.taxpayerName.getOrElse(""),
             address = registration.address,
             emailAddress = registration.emailAddress,
-            amlsData = None)
+            amlsData = None,
+            isManuallyAssured = isMAAgent)
           ))
 
       case (_, None) => Redirect(routes.AMLSController.showAmlsRegisteredPage())

@@ -35,28 +35,34 @@ class TaskListService @Inject()(agentAssuranceConnector: AgentAssuranceConnector
       manuallyAssured <- isMaaAgent(subscriptionJourneyRecord.businessDetails.utr)
     } yield
       TaskListFlags(
-        amlsTaskComplete = isAmlsTaskComplete(subscriptionJourneyRecord),
+        amlsTaskComplete = isAmlsTaskComplete(subscriptionJourneyRecord, manuallyAssured),
         isMAA = manuallyAssured,
-        createTaskComplete = isCreateTaskComplete(subscriptionJourneyRecord),
-        checkAnswersComplete = isCheckAnswersComplete(subscriptionJourneyRecord)
+        createTaskComplete = isCreateTaskComplete(subscriptionJourneyRecord, manuallyAssured),
+        checkAnswersComplete = isCheckAnswersComplete(subscriptionJourneyRecord, manuallyAssured)
       )
 
   private def isMaaAgent(utr: Utr)(implicit hc: HeaderCarrier): Future[Boolean] =
     agentAssuranceConnector.isManuallyAssuredAgent(utr)
 
-  //TODO: AMLS task is also complete is user is MAA
-  private def isAmlsTaskComplete(subscriptionJourneyRecord: SubscriptionJourneyRecord): Boolean =
-    subscriptionJourneyRecord.amlsData.fold(false) {
+  private def isAmlsTaskComplete(
+    subscriptionJourneyRecord: SubscriptionJourneyRecord,
+    isManuallyAssured: Boolean): Boolean =
+    isManuallyAssured || subscriptionJourneyRecord.amlsData.fold(false) {
       case AmlsData(true, _, Some(_))           => true // registered (with details)
       case AmlsData(false, Some(true), Some(_)) => true // not registered, but applied for (with details)
       case _                                    => false
     }
 
-  private def isCreateTaskComplete(subscriptionJourneyRecord: SubscriptionJourneyRecord): Boolean =
+  private def isCreateTaskComplete(
+    subscriptionJourneyRecord: SubscriptionJourneyRecord,
+    isManuallyAssured: Boolean): Boolean =
     subscriptionJourneyRecord.cleanCredsAuthProviderId.fold(false)(_ => true) && isAmlsTaskComplete(
-      subscriptionJourneyRecord)
+      subscriptionJourneyRecord,
+      isManuallyAssured)
 
-  private def isCheckAnswersComplete(subscriptionJourneyRecord: SubscriptionJourneyRecord): Boolean =
+  private def isCheckAnswersComplete(
+    subscriptionJourneyRecord: SubscriptionJourneyRecord,
+    isManuallyAssured: Boolean): Boolean =
     subscriptionJourneyRecord.subscriptionCreated
 
 }

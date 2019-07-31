@@ -35,7 +35,8 @@ object CheckYourAnswers {
     registrationName: String,
     address: BusinessAddress,
     emailAddress: Option[String],
-    amlsData: Option[AmlsData])(implicit messages: Messages): CheckYourAnswers =
+    amlsData: Option[AmlsData],
+    isManuallyAssured: Boolean)(implicit messages: Messages): CheckYourAnswers =
     CheckYourAnswers(
       businessNameRow = AnswerRow(
         question = Messages("checkAnswers.businessName.label"),
@@ -57,33 +58,38 @@ object CheckYourAnswers {
         answerLines = List(emailAddress).flatten,
         changeLink = routes.BusinessIdentificationController.changeBusinessEmail()
       ),
-      maybeAmlsDataRow = amlsData.map { data =>
-        AnswerRow(
-          question = (data.amlsDetails) match {
-            case Some(amlsDetails) =>
-              amlsDetails.details match {
-                case Left(PendingDetails(appliedOn)) => Messages("checkAnswers.amlsDetails.pending.label")
-                case Right(RegisteredDetails(membershipNumber, membershipExpiresOn)) =>
-                  Messages("checkAnswers.amlsDetails.label")
-              }
-            case None => throw new Exception("AMLS details incomplete")
-          },
-          answerLines = (data.amlsDetails) match {
-            case Some(amlsDetails) =>
-              amlsDetails.details match {
-                case Left(PendingDetails(appliedOn)) =>
-                  List(appliedOn.format(DateTimeFormatter.ofPattern("dd MMMM yyyy")))
-                case Right(RegisteredDetails(membershipNumber, membershipExpiresOn)) =>
-                  List(
-                    amlsDetails.supervisoryBody,
-                    membershipNumber,
-                    membershipExpiresOn.format(DateTimeFormatter.ofPattern("dd MM yyyy"))
-                  )
-              }
-            case None => throw new Exception("AMLS details incomplete")
-          },
-          changeLink = routes.AMLSController.changeAmlsDetails()
-        )
+      maybeAmlsDataRow = if (isManuallyAssured) {
+        None
+      } else {
+        amlsData.map {
+          data =>
+            AnswerRow(
+              question = (data.amlsDetails) match {
+                case Some(amlsDetails) =>
+                  amlsDetails.details match {
+                    case Left(PendingDetails(appliedOn)) => Messages("checkAnswers.amlsDetails.pending.label")
+                    case Right(RegisteredDetails(membershipNumber, membershipExpiresOn)) =>
+                      Messages("checkAnswers.amlsDetails.label")
+                  }
+                case None => throw new Exception("AMLS details incomplete")
+              },
+              answerLines = (data.amlsDetails) match {
+                case Some(amlsDetails) =>
+                  amlsDetails.details match {
+                    case Left(PendingDetails(appliedOn)) =>
+                      List(appliedOn.format(DateTimeFormatter.ofPattern("dd MMMM yyyy")))
+                    case Right(RegisteredDetails(membershipNumber, membershipExpiresOn)) =>
+                      List(
+                        amlsDetails.supervisoryBody,
+                        membershipNumber,
+                        membershipExpiresOn.format(DateTimeFormatter.ofPattern("dd MM yyyy"))
+                      )
+                  }
+                case None => throw new Exception("AMLS details incomplete")
+              },
+              changeLink = routes.AMLSController.changeAmlsDetails()
+            )
+        }
       }
     )
 }
