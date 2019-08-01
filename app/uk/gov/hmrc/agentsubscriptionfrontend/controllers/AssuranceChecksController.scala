@@ -22,7 +22,7 @@ import play.api.mvc.{Action, AnyContent, Request, Result}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationForms.{clientDetailsForm, invasiveCheckStartSaAgentCode}
+import uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationForms.{clientDetailsForm, invasiveCheckStartSaAgentCodeForm}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{BusinessType, RadioInvasiveTaxPayerOption, TaxPayerNino, TaxPayerUtr, ValidVariantsTaxPayerOptionForm}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.{LimitedCompany, Llp, Partnership, SoleTrader}
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{AssuranceService, SessionStoreService, SubscriptionJourneyService}
@@ -52,7 +52,7 @@ class AssuranceChecksController @Inject()(
   def invasiveCheckStart: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
       withValidSession { (_, _) =>
-        Ok(invasive_check_start(invasiveCheckStartSaAgentCode))
+        Ok(invasive_check_start(invasiveCheckStartSaAgentCodeForm))
       }
     }
   }
@@ -60,28 +60,20 @@ class AssuranceChecksController @Inject()(
   def invasiveSaAgentCodePost: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
       withValidSession { (_, _) =>
-        invasiveCheckStartSaAgentCode
+        invasiveCheckStartSaAgentCodeForm
           .bindFromRequest()
           .fold(
             formWithErrors => {
               Ok(invasive_check_start(formWithErrors))
             },
             correctForm => {
-              correctForm.hasSaAgentCode
-                .map {
-                  case true =>
-                    val saAgentCode = correctForm.saAgentCode
-                      .getOrElse(throw new IllegalStateException(
-                        "Form validation should enforce saAgentCode is always defined if hasSaAgentCode is true"))
-                    Redirect(routes.AssuranceChecksController.showClientDetailsForm())
-                      .withSession(request.session + ("saAgentReferenceToCheck" -> saAgentCode))
-
-                  case false =>
-                    mark("Count-Subscription-InvasiveCheck-Declined")
-                    Redirect(routes.StartController.showCannotCreateAccount())
-                }
-                .getOrElse(throw new IllegalStateException(
-                  "InvasiveCheck invasiveCheckStartSaAgentCode.hasSaAgentCode should always be defined"))
+              if (correctForm.hasSaAgentCode) {
+                Redirect(routes.AssuranceChecksController.showClientDetailsForm())
+                  .withSession(request.session + ("saAgentReferenceToCheck" -> correctForm.saAgentCode))
+              } else {
+                mark("Count-Subscription-InvasiveCheck-Declined")
+                Redirect(routes.StartController.showCannotCreateAccount())
+              }
             }
           )
       }
@@ -104,22 +96,9 @@ class AssuranceChecksController @Inject()(
           .fold(
             formWithErrors => Ok(html.client_details(formWithErrors)),
             correctForm => {
-              val retrievedVariant = correctForm.variant
-                .getOrElse(throw new IllegalStateException(
-                  "Form validation should return error when submitting unavailable variant"))
-
-              def utr: Utr =
-                correctForm.utr
-                  .flatMap(TaxIdentifierFormatters.normalizeUtr)
-                  .getOrElse(throw new Exception("utr should not be empty"))
-              def nino: Nino =
-                correctForm.nino
-                  .flatMap(TaxIdentifierFormatters.normalizeNino)
-                  .getOrElse(throw new Exception("nino should not be empty"))
-
-              ValidVariantsTaxPayerOptionForm.findByValue(retrievedVariant) match {
-                case TaxPayerUtr if Utr.isValid(utr.value) => checkAndRedirect(utr, "utr", businessType)
-                case TaxPayerNino                          => checkAndRedirect(nino, "nino", businessType)
+              ValidVariantsTaxPayerOptionForm.findByValue(correctForm.variant) match {
+                case TaxPayerUtr  => checkAndRedirect(Utr(correctForm.utr), "utr", businessType)
+                case TaxPayerNino => checkAndRedirect(Nino(correctForm.nino), "nino", businessType)
                 case _ =>
                   mark("Count-Subscription-InvasiveCheck-Could-Not-Provide-Tax-Payer-Identifier")
                   Redirect(routes.StartController.showCannotCreateAccount())

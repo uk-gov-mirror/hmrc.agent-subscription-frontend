@@ -15,8 +15,11 @@
  */
 
 package uk.gov.hmrc.agentsubscriptionfrontend.support
+import play.api.data.Forms.of
+import play.api.data.Mapping
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.domain.Nino
+import play.api.data.format.Formats._
 
 object TaxIdentifierFormatters {
 
@@ -29,6 +32,8 @@ object TaxIdentifierFormatters {
     if (isNumber(formattedUtr) && formattedUtr.size == UtrMaxLength) Some(Utr(formattedUtr))
     else None
   }
+
+  val normalizedText: Mapping[String] = of[String].transform(_.replaceAll("\\s", ""), identity)
 
   def prettify(utr: Utr): String =
     if (utr.value.trim.length == 10) {

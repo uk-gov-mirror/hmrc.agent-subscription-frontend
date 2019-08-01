@@ -9,6 +9,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestSetupNoJourneyRecord
+import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -83,6 +84,16 @@ class PostcodeControllerWithOutAssuranceFlagISpec extends BaseISpec with Session
 
       val result = await(controller.submitPostcodeForm()(request))
       redirectLocation(result) shouldBe Some(routes.SubscriptionController.showSubscriptionComplete().url)
+    }
+
+    "redirect to no match found when the subscription status is strange" in new TestSetupNoJourneyRecord {
+      withNonMatchingUtrAndPostcode(validUtr, validPostcode)
+      implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+        .withFormUrlEncodedBody("postcode" -> validPostcode)
+      sessionStoreService.currentSession.agentSession = Some(agentSession)
+
+      val result = await(controller.submitPostcodeForm()(request))
+      redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showNoMatchFound().url)
     }
 
     "redirect to /business-type if businessType is not found in session" in new TestSetupNoJourneyRecord{

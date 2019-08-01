@@ -23,6 +23,7 @@ import play.api.data.format.Formatter
 import play.api.data.validation._
 import play.api.data.{FormError, Mapping}
 import play.api.i18n.Messages
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.config.blacklistedpostcodes.PostcodesLoader
 import uk.gov.hmrc.domain.Nino
 
@@ -146,6 +147,14 @@ object CommonValidators {
   def radioInputSelected[T](message: String = "error.no-radio-selected"): Constraint[Option[T]] =
     Constraint[Option[T]] { fieldValue: Option[T] =>
       if (fieldValue.isDefined)
+        Valid
+      else
+        Invalid(ValidationError(message))
+    }
+
+  def radioInputStringSelected(message: String = "error.no-radio-selected"): Constraint[String] =
+    Constraint[String] { fieldValue: String =>
+      if (fieldValue.nonEmpty)
         Valid
       else
         Invalid(ValidationError(message))
@@ -289,6 +298,8 @@ object CommonValidators {
       Constraints.nonEmpty(formattedField) match {
         case _: Invalid => Invalid(ValidationError(blank))
         case _ if !isNumber(formattedField) || formattedField.length != UtrMaxLength =>
+          Invalid(ValidationError(invalid))
+        case _ if !Utr.isValid(formattedField) =>
           Invalid(ValidationError(invalid))
         case _ => Valid
       }

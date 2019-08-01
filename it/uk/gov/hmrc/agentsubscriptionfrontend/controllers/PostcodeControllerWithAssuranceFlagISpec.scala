@@ -24,7 +24,18 @@ class PostcodeControllerWithAssuranceFlagISpec extends BaseISpec with SessionDat
 
   lazy val controller: PostcodeController = app.injector.instanceOf[PostcodeController]
 
-  "submitPostcodeForm" should {
+  "GET /postcode" should {
+    "display the postcode page" in new TestSetupNoJourneyRecord {
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+      sessionStoreService.currentSession.agentSession = Some(agentSession.copy(postcode = None, nino = None))
+      val result = await(controller.showPostcodeForm()(request))
+
+      status(result) shouldBe 200
+      checkHtmlResultWithBodyText(result, "What is the postcode of your registered address?")
+    }
+  }
+
+  "POST /postcode" should {
 
     "read the form and redirect to /national-insurance-number if businessType is SoleTrader or Partnership" in new TestSetupNoJourneyRecord {
       List(SoleTrader, Partnership).foreach { businessType =>
@@ -36,7 +47,8 @@ class PostcodeControllerWithAssuranceFlagISpec extends BaseISpec with SessionDat
         givenRefusalToDealWithUtrIsNotForbidden(validUtr.value)
         givenAgentIsNotManuallyAssured(validUtr.value)
 
-        implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("postcode" -> validPostcode)
+        implicit val request =
+          authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("postcode" -> validPostcode)
         sessionStoreService.currentSession.agentSession = Some(agentSession.copy(postcode = None, nino = None))
 
         val result = await(controller.submitPostcodeForm()(request))
@@ -46,8 +58,11 @@ class PostcodeControllerWithAssuranceFlagISpec extends BaseISpec with SessionDat
         redirectLocation(result) shouldBe Some(routes.NationalInsuranceController.showNationalInsuranceNumberForm().url)
 
         sessionStoreService.currentSession.agentSession shouldBe
-          Some(agentSession.copy(postcode = Some(Postcode(validPostcode)), nino = None,
-            registration = Some(testRegistration.copy(emailAddress = Some("someone@example.com")))))
+          Some(
+            agentSession.copy(
+              postcode = Some(Postcode(validPostcode)),
+              nino = None,
+              registration = Some(testRegistration.copy(emailAddress = Some("someone@example.com")))))
       }
     }
 
@@ -61,8 +76,10 @@ class PostcodeControllerWithAssuranceFlagISpec extends BaseISpec with SessionDat
         givenRefusalToDealWithUtrIsNotForbidden(validUtr.value)
         givenAgentIsNotManuallyAssured(validUtr.value)
 
-        implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("postcode" -> validPostcode)
-        sessionStoreService.currentSession.agentSession = Some(agentSession.copy(businessType = Some(businessType), postcode = None, nino = None))
+        implicit val request =
+          authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("postcode" -> validPostcode)
+        sessionStoreService.currentSession.agentSession =
+          Some(agentSession.copy(businessType = Some(businessType), postcode = None, nino = None))
 
         val result = await(controller.submitPostcodeForm()(request))
 
@@ -70,12 +87,14 @@ class PostcodeControllerWithAssuranceFlagISpec extends BaseISpec with SessionDat
 
         redirectLocation(result) shouldBe Some(routes.CompanyRegistrationController.showCompanyRegNumberForm().url)
 
-        sessionStoreService.currentSession.agentSession.get.registration shouldBe Some(testRegistration.copy(emailAddress = Some("someone@example.com")))
+        sessionStoreService.currentSession.agentSession.get.registration shouldBe Some(
+          testRegistration.copy(emailAddress = Some("someone@example.com")))
       }
     }
 
     "redirect to /business-type if businessType is not found in session" in new TestSetupNoJourneyRecord {
-      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("postcode" -> "AA12 1JN")
+      implicit val request =
+        authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("postcode" -> "AA12 1JN")
 
       val result = await(controller.submitPostcodeForm()(request))
 
@@ -84,8 +103,37 @@ class PostcodeControllerWithAssuranceFlagISpec extends BaseISpec with SessionDat
       redirectLocation(result) shouldBe Some(routes.BusinessTypeController.showBusinessTypeForm().url)
     }
 
+    "redirect to /utr if there is no utr in the session" in new TestSetupNoJourneyRecord {
+      implicit val request =
+        authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("postcode" -> "AA12 1JN")
+      sessionStoreService.currentSession.agentSession =
+        Some(agentSession.copy(postcode = None, nino = None, utr = None))
+
+      val result = await(controller.submitPostcodeForm()(request))
+
+      status(result) shouldBe 303
+
+      redirectLocation(result) shouldBe Some(routes.UtrController.showUtrForm().url)
+    }
+
+    "redirect to cannot create account if user is on the refusal to deal with list" in new TestSetupNoJourneyRecord {
+      givenRefusalToDealWithUtrIsForbidden(validUtr.value)
+      withMatchingUtrAndPostcode(validUtr, validPostcode)
+
+      implicit val request =
+        authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("postcode" -> validPostcode)
+      sessionStoreService.currentSession.agentSession = Some(agentSession.copy(postcode = None, nino = None))
+
+      val result = await(controller.submitPostcodeForm()(request))
+
+      status(result) shouldBe 303
+
+      redirectLocation(result) shouldBe Some(routes.StartController.showCannotCreateAccount().url)
+    }
+
     "handle for with invalid postcodes" in new TestSetupNoJourneyRecord {
-      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("postcode" -> "sdsds")
+      implicit val request =
+        authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("postcode" -> "sdsds")
       await(sessionStoreService.cacheAgentSession(AgentSession(Some(SoleTrader))))
 
       val result = await(controller.submitPostcodeForm()(request))

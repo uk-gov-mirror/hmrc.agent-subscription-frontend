@@ -20,7 +20,6 @@ import java.time.LocalDate
 
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
-import org.apache.http.cookie.SM
 import play.api.data.Forms.{mapping, of, optional, text, _}
 import play.api.data.format.Formats._
 import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}

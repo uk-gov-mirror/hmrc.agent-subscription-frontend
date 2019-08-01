@@ -24,7 +24,7 @@ import play.api.mvc.{AnyContent, Call, Request}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
-import uk.gov.hmrc.agentsubscriptionfrontend.support.TaxIdentifierFormatters.normalizeUtr
+import uk.gov.hmrc.agentsubscriptionfrontend.support.TaxIdentifierFormatters.{normalizeUtr, normalizedText}
 import uk.gov.hmrc.agentsubscriptionfrontend.validators.CommonValidators._
 import uk.gov.hmrc.domain.Nino
 import uk.gov.voa.play.form.ConditionalMappings.{mandatoryIfEqual, mandatoryIfTrue}
@@ -119,16 +119,25 @@ package object controllers {
     //uses variant "cannotProvide" to determine action if user cannot provide allowed options: utr or nino
     val clientDetailsForm: Form[RadioInvasiveTaxPayerOption] = Form[RadioInvasiveTaxPayerOption](
       mapping(
-        "variant" -> optional(text).verifying(radioInputSelected("clientDetails.error.no-radio.selected")),
-        "utr"     -> mandatoryIfEqual("variant", "utr", clientDetailsUtr),
-        "nino"    -> mandatoryIfEqual("variant", "nino", clientDetailsNino)
+        "variant" -> optional(text)
+          .transform[String](_.getOrElse(""), s => Some(s))
+          .verifying(radioInputStringSelected("clientDetails.error.no-radio.selected")),
+        "utr" -> mandatoryIfEqual("variant", "utr", clientDetailsUtr)
+          .transform[String](u => u.getOrElse("").replace(" ", "").toUpperCase(), s => Some(s)),
+        "nino" -> mandatoryIfEqual("variant", "nino", clientDetailsNino)
+          .transform[String](n => n.getOrElse("").replace(" ", "").toUpperCase(), s => Some(s))
       )(RadioInvasiveTaxPayerOption.apply)(RadioInvasiveTaxPayerOption.unapply))
 
-    val invasiveCheckStartSaAgentCode: Form[RadioInvasiveStartSaAgentCode] = Form[RadioInvasiveStartSaAgentCode](
+    val invasiveCheckStartSaAgentCodeForm: Form[RadioInvasiveStartSaAgentCode] = Form[RadioInvasiveStartSaAgentCode](
       mapping(
-        "hasSaAgentCode" -> optional(boolean).verifying(radioInputSelected("invasive.error.no-radio.selected")),
-        "saAgentCode"    -> mandatoryIfTrue("hasSaAgentCode", saAgentCode)
-      )(RadioInvasiveStartSaAgentCode.apply)(RadioInvasiveStartSaAgentCode.unapply))
+        "hasSaAgentCode" -> optional(normalizedText)
+          .transform[String](_.getOrElse(""), s => Some(s))
+          .verifying(radioInputStringSelected("invasive.error.no-radio.selected")),
+        "saAgentCode" -> mandatoryIfTrue("hasSaAgentCode", saAgentCode)
+          .transform[String](_.getOrElse(""), s => Some(s))
+      )((hasSaAgentCode, saAgentCode) => RadioInvasiveStartSaAgentCode(hasSaAgentCode.toBoolean, saAgentCode))(
+        radioInvasiveStartSaAgentCode =>
+          Some((radioInvasiveStartSaAgentCode.hasSaAgentCode.toString, radioInvasiveStartSaAgentCode.saAgentCode))))
   }
 
   object SubscriptionControllerForms {

@@ -16,8 +16,11 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.models
 
-case class RadioInvasiveStartSaAgentCode(hasSaAgentCode: Option[Boolean], saAgentCode: Option[String])
-case class RadioInvasiveTaxPayerOption(variant: Option[String], utr: Option[String], nino: Option[String])
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.domain.Nino
+
+case class RadioInvasiveStartSaAgentCode(hasSaAgentCode: Boolean, saAgentCode: String)
+case class RadioInvasiveTaxPayerOption(variant: String, utr: String, nino: String)
 
 sealed abstract class ValidVariantsTaxPayerOptionForm
 
