@@ -67,6 +67,23 @@ class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {
     }
   }
 
+  "getJourneyByUtr" should {
+    "retrieve an existing subscription journey record using a utr" in {
+      AgentSubscriptionJourneyStub.givenSubscriptionJourneyRecordExists(
+        validUtr,
+        TestData.minimalSubscriptionJourneyRecordWithAmls(authProviderId)
+      )
+      val result: Option[SubscriptionJourneyRecord] = await(connector.getJourneyByUtr(validUtr))
+      result.get.businessDetails shouldBe BusinessDetails(SoleTrader, validUtr, Postcode(validPostcode))
+      result.get.amlsData shouldBe Some(AmlsData.registeredUserNoDataEntered)
+    }
+    "return None when there is no existing subscription journey record associated with a utr" in {
+      AgentSubscriptionJourneyStub.givenNoSubscriptionJourneyRecordExists(validUtr)
+      val result: Option[SubscriptionJourneyRecord] = await(connector.getJourneyByUtr(validUtr))
+      result shouldBe None
+    }
+  }
+
   "createOrUpdateJourney" should {
     "return unit when a record is successfully created" in {
       AgentSubscriptionJourneyStub

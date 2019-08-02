@@ -49,6 +49,13 @@ class BusinessIdentificationControllerISpec extends BaseISpec {
     givenSubscriptionJourneyRecordExists(id, TestData.minimalSubscriptionJourneyRecord(id))
   }
 
+  "show existing journey found for utr route" should {
+    "display warning page" in new TestSetupNoJourneyRecord {
+      val result = await(controller.showExistingJourneyFound(authenticatedAs(subscribingAgentEnrolledForNonMTD)))
+      result should containMessages("existingJourneyFound.p1")
+    }
+  }
+
   "showCreateNewAccount" should {
 
     behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showCreateNewAccount(request))

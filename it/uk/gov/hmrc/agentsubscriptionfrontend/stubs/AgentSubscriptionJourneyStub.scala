@@ -60,6 +60,24 @@ object AgentSubscriptionJourneyStub {
             .withBody(Json.toJson(subscriptionJourneyRecord).toString()))
     )
 
+  def givenSubscriptionJourneyRecordExists(utr: Utr, subscriptionJourneyRecord: SubscriptionJourneyRecord): StubMapping =
+    stubFor(
+      get(urlEqualTo(
+        s"/agent-subscription/subscription/journey/utr/${encodePathSegment(utr.value)}"))
+        .willReturn(
+          aResponse()
+            .withStatus(Status.OK)
+            .withBody(Json.toJson(subscriptionJourneyRecord).toString()))
+    )
+
+  def givenNoSubscriptionJourneyRecordExists(utr: Utr): StubMapping =
+    stubFor(
+      get(urlEqualTo(
+        s"/agent-subscription/subscription/journey/utr/${encodePathSegment(utr.value)}"))
+        .willReturn(
+          aResponse()
+            .withStatus(Status.NO_CONTENT)))
+
   def givenNoSubscriptionJourneyRecordExists(continueId: ContinueId): StubMapping =
     stubFor(
       get(urlEqualTo(

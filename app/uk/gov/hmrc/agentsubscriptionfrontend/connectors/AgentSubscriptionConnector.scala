@@ -63,6 +63,13 @@ class AgentSubscriptionConnector @Inject()(
       http.GET[Option[SubscriptionJourneyRecord]](url.toString)
     }
 
+  def getJourneyByUtr(utr: Utr)(implicit hc: HeaderCarrier): Future[Option[SubscriptionJourneyRecord]] =
+    monitor(s"ConsumedAPI-Agent-Subscription-getJourneyByUtr-GET") {
+      val url =
+        new URL(baseUrl, s"/agent-subscription/subscription/journey/utr/${encodePathSegment(utr.value)}")
+      http.GET[Option[SubscriptionJourneyRecord]](url.toString)
+    }
+
   def createOrUpdateJourney(journeyRecord: SubscriptionJourneyRecord)(implicit hc: HeaderCarrier): Future[Unit] =
     monitor("ConsumedAPI-Agent-Subscription-createOrUpdate-POST") {
       val path =

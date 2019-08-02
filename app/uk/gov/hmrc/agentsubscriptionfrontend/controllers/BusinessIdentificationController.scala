@@ -64,25 +64,25 @@ class BusinessIdentificationController @Inject()(
 
   import BusinessIdentificationForms._
 
-  val showCreateNewAccount: Action[AnyContent] = Action.async { implicit request =>
+  def showCreateNewAccount: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
       Ok(html.create_new_account())
     }
   }
 
-  val showNoMatchFound: Action[AnyContent] = Action.async { implicit request =>
+  def showNoMatchFound: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
       Ok(html.no_match_found())
     }
   }
 
-  val setupIncomplete: Action[AnyContent] = Action.async { implicit request =>
+  def setupIncomplete: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
       Ok(html.cannot_create_account())
     }
   }
 
-  val showConfirmBusinessForm: Action[AnyContent] = Action.async { implicit request =>
+  def showConfirmBusinessForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
       withValidSession { (_, existingSession) =>
         getConfirmBusinessPage(existingSession)
@@ -376,7 +376,7 @@ class BusinessIdentificationController @Inject()(
     }
   }
 
-  val showUpdateBusinessAddressForm: Action[AnyContent] = Action.async { implicit request =>
+  def showUpdateBusinessAddressForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
       withValidSession { (_, existingSession) =>
         existingSession.registration match {
@@ -390,7 +390,7 @@ class BusinessIdentificationController @Inject()(
     }
   }
 
-  val submitUpdateBusinessAddressForm: Action[AnyContent] = Action.async { implicit request =>
+  def submitUpdateBusinessAddressForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { agent =>
       withValidSession { (_, existingSession) =>
         updateBusinessAddressForm
@@ -424,15 +424,21 @@ class BusinessIdentificationController @Inject()(
     }
   }
 
-  val showPostcodeNotAllowed: Action[AnyContent] = Action.async { implicit request =>
+  def showPostcodeNotAllowed: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
       Ok(html.postcode_not_allowed())
     }
   }
 
-  val showAlreadySubscribed: Action[AnyContent] = Action.async { implicit request =>
+  def showAlreadySubscribed: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
       Ok(html.already_subscribed())
+    }
+  }
+
+  def showExistingJourneyFound: Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { _ =>
+      Ok(html.existing_journey_found())
     }
   }
 

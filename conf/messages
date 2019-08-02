@@ -136,6 +136,10 @@ noAgencyFound.p2=Check the details and try again.
 alreadySubscribed.title=Your business already has an agent services account
 alreadySubscribed.p1=Contact your administrator to get access to your business''s agent services account.
 
+#Existing (temp store) journey found for UTR
+existingJourneyFound.title=Your business has already begun a setup process for this UTR
+existingJourneyFound.p1=Please log in using the original credentials with which you started the process.
+
 #Task list
 task-list.header=Create an agent services account
 task-list.subheader=Complete each section in turn. You will not be able to save your progress so have all your information together before you start.

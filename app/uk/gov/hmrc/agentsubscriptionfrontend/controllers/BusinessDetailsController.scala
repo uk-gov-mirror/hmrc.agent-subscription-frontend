@@ -85,22 +85,36 @@ class BusinessDetailsController @Inject()(
   private def checkSubscriptionStatusAndUpdateSession(utr: Utr, postcode: Postcode, agentSession: AgentSession)(
     implicit hc: HeaderCarrier,
     request: Request[AnyContent],
-    agent: Agent): Future[Result] =
-    subscriptionService.getSubscriptionStatus(utr, postcode).flatMap {
-      case SubscriptionProcess(Unsubscribed, Some(registrationDetails)) =>
-        checkAssuranceAndUpdateSession(utr, postcode, registrationDetails, agentSession)
+    agent: Agent): Future[Result] = {
 
-      case SubscriptionProcess(SubscribedButNotEnrolled, Some(registrationDetails)) =>
-        checkAssuranceAndUpdateSession(utr, postcode, registrationDetails, agentSession)
+    def checkAndRedirect(utr: Utr, postcode: Postcode): Future[Result] =
+      subscriptionService.getSubscriptionStatus(utr, postcode).flatMap {
 
-      case SubscriptionProcess(SubscribedAndEnrolled, _) =>
-        mark("Count-Subscription-AlreadySubscribed-RegisteredInETMP")
-        Redirect(routes.BusinessIdentificationController.showAlreadySubscribed())
+        case SubscriptionProcess(Unsubscribed, Some(registrationDetails)) =>
+          checkAssuranceAndUpdateSession(utr, postcode, registrationDetails, agentSession)
 
-      case _ =>
-        mark("Count-Subscription-NoAgencyFound")
-        Redirect(routes.BusinessIdentificationController.showNoMatchFound())
-    }
+        case SubscriptionProcess(SubscribedButNotEnrolled, Some(registrationDetails)) =>
+          checkAssuranceAndUpdateSession(utr, postcode, registrationDetails, agentSession)
+
+        case SubscriptionProcess(SubscribedAndEnrolled, _) =>
+          mark("Count-Subscription-AlreadySubscribed-RegisteredInETMP")
+          Redirect(routes.BusinessIdentificationController.showAlreadySubscribed())
+
+        case _ =>
+          mark("Count-Subscription-NoAgencyFound")
+          Redirect(routes.BusinessIdentificationController.showNoMatchFound())
+      }
+
+    subscriptionJourneyService
+      .existsJourneyForUtr(utr)
+      .flatMap(journeyExists =>
+        if (journeyExists) {
+          Redirect(routes.BusinessIdentificationController.showExistingJourneyFound())
+        } else {
+          checkAndRedirect(utr, postcode)
+      })
+
+  }
 
   private def checkAssuranceAndUpdateSession(
     utr: Utr,

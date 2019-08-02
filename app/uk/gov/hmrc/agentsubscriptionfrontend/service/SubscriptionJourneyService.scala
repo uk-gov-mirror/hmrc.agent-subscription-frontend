@@ -16,15 +16,14 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.service
 
-import java.util.UUID
-
 import javax.inject.{Inject, Singleton}
 import play.api.Logger
-import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent._
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent
+import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent._
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentSubscriptionConnector
+import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.SubscriptionJourneyRecord
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, AuthProviderId, ContinueId}
-import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.{AmlsData, SubscriptionJourneyRecord}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -38,6 +37,9 @@ class SubscriptionJourneyService @Inject()(agentSubscriptionConnector: AgentSubs
     for {
       record <- agentSubscriptionConnector.getJourneyByContinueId(continueId)
     } yield extractMandatoryRecord(record)
+
+  def existsJourneyForUtr(utr: Utr)(implicit hc: HeaderCarrier): Future[Boolean] =
+    agentSubscriptionConnector.getJourneyByUtr(utr).map(_.isDefined)
 
   def getJourneyRecord(internalId: AuthProviderId)(
     implicit hc: HeaderCarrier): Future[Option[SubscriptionJourneyRecord]] =

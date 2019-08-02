@@ -139,7 +139,7 @@ trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring
       }
 
   // only for the task list?
-  //
+  // TODO remove once copy/map step moved to step 2
   def withSubscribingOrSubscribedAgent[A](body: Agent => Future[Result])(
     implicit request: Request[A],
     hc: HeaderCarrier,
