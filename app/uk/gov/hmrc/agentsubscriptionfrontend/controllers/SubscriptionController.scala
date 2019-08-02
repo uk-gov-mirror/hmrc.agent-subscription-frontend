@@ -221,7 +221,7 @@ class SubscriptionController @Inject()(
                     } yield result
 
                   case None =>
-                    Ok(html.subscription_complete(routes.TaskListController.showTaskList().url, arn.value, agencyName, agencyEmail))
+                    Ok(html.subscription_complete(appConfig.agentServicesAccountUrl, arn.value, agencyName, agencyEmail))
                 }
 
           case None =>
@@ -230,16 +230,6 @@ class SubscriptionController @Inject()(
         }
     }
   }
-
-  // Temporary endpoint, just used while mapping is the final task in list
-  def beginMapping: Action[AnyContent] = Action.async { implicit request =>
-    withSubscribedAgent { (_, sjr) =>
-      for {
-        _ <- subscriptionJourneyService.deleteJourneyRecord(sjr.authProviderId)
-      } yield Redirect(appConfig.agentMappingFrontendStartUrl)
-    }
-  }
-
 }
 
 

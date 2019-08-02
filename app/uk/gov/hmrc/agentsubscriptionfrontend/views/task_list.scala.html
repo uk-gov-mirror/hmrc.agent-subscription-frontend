@@ -17,13 +17,33 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 @import uk.gov.hmrc.play.views.html.helpers._
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
+@import uk.gov.hmrc.agentsubscriptionfrontend.models.Task
 @import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType
 
-@import uk.gov.hmrc.agentsubscriptionfrontend.models.TaskListFlags
-@(taskListFlags: TaskListFlags)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+@(tasks: List[Task])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 @completedMark = {
     <strong class="govuk-tag app-task-list__task-completed">@Messages("task-list.completed")</strong>
+}
+
+@listItem(number: Int, task: Task) = {
+    <li>
+        <h2>
+            <span class="app-task-list__section-number">@Messages(s"task-list.$number.number")</span>@Messages(s"task-list.${task.taskKey}.header")
+        </h2>
+        <ul class="app-task-list__items">
+            <li class="app-task-list__item">
+                @if(task.showLink) {
+                    <a href=@task.link>@Messages(s"task-list.${task.taskKey}")</a>
+                } else {
+                    @Messages(s"task-list.${task.taskKey}")
+                }
+                @if(task.isComplete) {
+                    @completedMark
+                }
+            </li>
+        </ul>
+    </li>
 }
 
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = Messages("task-list.header"), bodyClasses = None) {
@@ -33,65 +53,8 @@
     <p>@Messages("task-list.subheader")</p>
 
     <ol class="list">
-        <li>
-            <h2>
-                <span class="app-task-list__section-number">@Messages("task-list.1.number")</span>@Messages("task-list.1.header")
-            </h2>
-            <ul class="app-task-list__items">
-                <li class="app-task-list__item">
-                    @if(taskListFlags.cannotEditAmls) {
-                        @Messages("task-list.1.amls")
-                    } else {
-                        <a href=@routes.AMLSController.showAmlsRegisteredPage()>@Messages("task-list.1.amls")</a>
-                    }
-                    @if(taskListFlags.amlsTaskComplete) { @completedMark }
-                </li>
-            </ul>
-        </li>
-        <li>
-            <h2>
-                <span class="app-task-list__section-number">@Messages("task-list.2.number")</span>@Messages("task-list.2.header")
-            </h2>
-            <ul class="app-task-list__items">
-                <li class="app-task-list__item">
-                    @if(taskListFlags.mustCreateCleanCreds) {
-                        <a href=@routes.BusinessIdentificationController.showCreateNewAccount()>@Messages("task-list.2.create")</a>
-                    } else {
-                        @Messages("task-list.2.create")
-                    }
-                    @if(taskListFlags.createTaskComplete) { @completedMark }
-                </li>
-            </ul>
-        </li>
-        <li>
-            <h2>
-                <span class="app-task-list__section-number">@Messages("task-list.3.number")</span>@Messages("task-list.3.header")
-            </h2>
-            <ul class="app-task-list__items">
-                <li class="app-task-list__item">
-                    @if(taskListFlags.mustCheckAnswers) {
-                        <a href=@routes.SubscriptionController.showCheckAnswers()>@Messages("task-list.3.header")</a>
-                    } else {
-                        @Messages("task-list.3.header")
-                    }
-                    @if(taskListFlags.checkAnswersComplete) { @completedMark }
-                </li>
-            </ul>
-        </li>
-        <li>
-            <h2>
-                <span class="app-task-list__section-number">@Messages("task-list.4.number")</span>@Messages("task-list.4.header")
-            </h2>
-            <ul class="app-task-list__items">
-                <li class="app-task-list__item">
-                @if(taskListFlags.checkAnswersComplete) {
-                    <a href="@routes.SubscriptionController.beginMapping()">@Messages("task-list.4.copy")</a>
-                } else {
-                    @Messages("task-list.4.copy")
-                }
-                </li>
-            </ul>
-        </li>
+    @for((task, number) <- tasks.zip(Stream from 1)) {
+      @listItem(number, task)
+    }
     </ol>
-
 }

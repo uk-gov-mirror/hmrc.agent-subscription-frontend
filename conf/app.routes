@@ -4,6 +4,7 @@ GET         /                                              uk.gov.hmrc.agentsubs
 GET         /start                                         uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.start
 GET         /not-agent                                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.showNotAgent
 GET         /return-after-gg-creds-created                 uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.returnAfterGGCredsCreated(id: Option[String] ?= None)
+GET         /return-after-mapping                          uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.returnAfterMapping(id: Option[String] ?= None)
 
 GET         /task-list                                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.TaskListController.showTaskList
 GET         /progress-saved                                uk.gov.hmrc.agentsubscriptionfrontend.controllers.TaskListController.savedProgress(backLink: Option[String] ?= None)
@@ -96,8 +97,6 @@ GET         /business-address                              uk.gov.hmrc.agentsubs
 GET         /return-from-address-lookup                    uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.returnFromAddressLookup(id: String ?= "")
 POST        /submit-modified-address                       uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.submitModifiedAddress
 GET         /complete                                      uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showSubscriptionComplete
-
-GET        /begin-mapping                                 uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.beginMapping
 
 GET         /redirect-to-sos                               uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.redirectToSos
 GET         /redirect-to-asaccount                         uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.redirectToASAccountPage

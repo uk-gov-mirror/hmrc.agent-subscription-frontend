@@ -183,12 +183,12 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       bodyOf(result) should include(hasMessage("subscriptionComplete.p2", "test@gmail.com"))
       bodyOf(result) should include(hasMessage("subscriptionComplete.p3", "https://www.gov.uk/guidance/get-an-hmrc-agent-services-account"))
     }
-    "continue button redirects to task list if the create task flag is true" in new AuthRequest with TestSetupWithCompleteJourneyRecord {
+    "continue button redirects to agent services account if there is no continue url" in new AuthRequest with TestSetupWithCompleteJourneyRecord {
       val result = resultOf(request)
       result should containMessages(
         "subscriptionComplete.button.continueJourney"
       )
-      checkHtmlResultWithBodyText(result, "agent-subscription/task-list")
+      checkHtmlResultWithBodyText(result, "/agent-services-account")
     }
   }
 

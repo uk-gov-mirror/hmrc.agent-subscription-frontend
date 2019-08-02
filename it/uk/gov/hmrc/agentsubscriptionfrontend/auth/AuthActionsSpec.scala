@@ -8,12 +8,11 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.ContinueUrlActions
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, AuthProviderId, TaskListFlags}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.AuthProviderId
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SubscriptionJourneyService
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionJourneyStub.givenSubscriptionJourneyRecordExists
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestData, TestSetupNoJourneyRecord}
-import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.{subscribingAgentEnrolledForHMRCASAGENT, subscribingCleanAgentWithoutEnrolments}
 import uk.gov.hmrc.auth.core.{AuthConnector, InsufficientEnrolments}
 import uk.gov.hmrc.http.{HeaderCarrier, SessionKeys}
 
@@ -37,9 +36,6 @@ class AuthActionsSpec extends BaseISpec with MockitoSugar {
 
     def withSubscribedAgent[A]: Result =
       await(super.withSubscribedAgent { (arn, sjr) => Future.successful(Ok(arn.value)) })
-
-    def withSubscribingOrSubscribedAgent[A]: Result = await(TestController.withSubscribingOrSubscribedAgent(
-      _ => Future successful Ok("task list")))
 
   }
 
@@ -99,27 +95,6 @@ class AuthActionsSpec extends BaseISpec with MockitoSugar {
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some("/agent-subscription/finish-sign-out")
-    }
-  }
-
-  "withSubscribingOrSubscribedAgent" should {
-    "call body with a valid unsubscribed agent" in new TestSetupNoJourneyRecord {
-      authenticatedAs(subscribingCleanAgentWithoutEnrolments)
-      val result = TestController.withSubscribingOrSubscribedAgent
-
-      status(result) shouldBe 200
-      bodyOf(result) shouldBe "task list"
-    }
-    "return the taskListSubscribed result when there is a check answers complete true flag in the session" in {
-
-      givenSubscriptionJourneyRecordExists(AuthProviderId("12345-credId"),
-        TestData.minimalSubscriptionJourneyRecord(AuthProviderId("12345-credId")))
-
-      authenticatedAs(subscribingAgentEnrolledForHMRCASAGENT)
-      val result = TestController.withSubscribingOrSubscribedAgent
-
-      status(result) shouldBe 200
-      bodyOf(result) shouldBe "task list"
     }
   }
 }

@@ -142,18 +142,19 @@ existingJourneyFound.p1=Please log in using the original credentials with which 
 
 #Task list
 task-list.header=Create an agent services account
-task-list.subheader=Complete each section in turn. You will not be able to save your progress so have all your information together before you start.
+task-list.subheader=Complete each section in turn. You can save your progress as you go.
 task-list.1.number=1.
-task-list.1.header=Enter your money laundering compliance details
-task-list.1.amls=Enter your money laundering compliance details
+task-list.amlsTask.header=Enter your money laundering compliance details
+task-list.amlsTask=Enter your money laundering compliance details
 task-list.2.number=2.
-task-list.2.header=Create your new user ID
-task-list.2.create=Create your user ID for your agent services account
+task-list.mappingTask.header=Copy across your existing client relationships
+task-list.mappingTask=Copy across VAT and Self Assessment clients to your new account
 task-list.3.number=3.
-task-list.3.header=Check your answers and create your account
+task-list.createIDTask.header=Create your new user ID
+task-list.createIDTask=Create your user ID for your agent services account
 task-list.4.number=4.
-task-list.4.header=Copy across your existing client relationships
-task-list.4.copy=Copy across your existing Self Assessment and VAT clients to your new agent services account.
+task-list.checkAnswersTask.header=Check your answers and create your account
+task-list.checkAnswersTask=You can check your answers once you have completed the other sections.
 task-list.completed=COMPLETED
 
 #Saved Progress

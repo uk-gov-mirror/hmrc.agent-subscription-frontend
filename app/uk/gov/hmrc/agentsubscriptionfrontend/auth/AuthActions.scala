@@ -138,32 +138,6 @@ trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring
         handleException
       }
 
-  // only for the task list?
-  // TODO remove once copy/map step moved to step 2
-  def withSubscribingOrSubscribedAgent[A](body: Agent => Future[Result])(
-    implicit request: Request[A],
-    hc: HeaderCarrier,
-    ec: ExecutionContext): Future[Result] =
-    authorised(AuthProviders(GovernmentGateway) and AffinityGroup.Agent)
-      .retrieve(allEnrolments and credentials) {
-        case enrolments ~ maybeCredentials =>
-          if (isEnrolledForHmrcAsAgent(enrolments)) {
-            continueUrlActions.extractContinueUrl.flatMap {
-              case Some(continueUrl) =>
-                mark("Count-Subscription-AlreadySubscribed-HasEnrolment-ContinueUrl")
-                Future successful Redirect(continueUrl.url)
-              case None =>
-                mark("Count-Subscription-AlreadySubscribed-HasEnrolment-AgentServicesAccount")
-                bodyWithJourneyRecord(enrolments, maybeCredentials)(body)
-            }
-          } else {
-            bodyWithJourneyRecord(enrolments, maybeCredentials)(body)
-          }
-      }
-      .recover {
-        handleException
-      }
-
   def bodyWithJourneyRecord(enrolments: Enrolments, maybeCredentials: Option[Credentials])(
     body: Agent => Future[Result])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Result] =
     subscriptionJourneyService

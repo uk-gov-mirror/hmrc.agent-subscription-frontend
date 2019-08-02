@@ -88,6 +88,22 @@ class StartController @Inject()(
     }
   }
 
+  def returnAfterMapping(id: Option[String] = None): Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { agent =>
+      continueUrlActions.withMaybeContinueUrlCached {
+        id match {
+          case Some(continueId) =>
+            for {
+              record <- subscriptionJourneyService.getMandatoryJourneyRecord(ContinueId(continueId))
+              _      <- subscriptionJourneyService.saveJourneyRecord(record.copy(mappingComplete = true))
+            } yield Redirect(routes.TaskListController.showTaskList())
+
+          case None => Future.successful(Redirect(routes.TaskListController.showTaskList()))
+        }
+      }
+    }
+  }
+
   def showCannotCreateAccount: Action[AnyContent] = Action { implicit request =>
     Ok(html.cannot_create_account())
   }

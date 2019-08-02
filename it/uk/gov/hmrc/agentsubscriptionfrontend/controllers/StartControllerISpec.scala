@@ -15,7 +15,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestData}
 import uk.gov.hmrc.http.{Upstream4xxResponse, Upstream5xxResponse}
 
-trait StartControllerISpec extends BaseISpec {
+class StartControllerISpec extends BaseISpec {
 
   protected lazy val controller: StartController = app.injector.instanceOf[StartController]
   protected lazy val configuredGovernmentGatewayUrl = "http://configured-government-gateway.gov.uk/"
@@ -32,7 +32,7 @@ trait StartControllerISpec extends BaseISpec {
     val amlsSDetails = AmlsDetails("supervisory", Right(RegisteredDetails("123456789", LocalDate.now())))
 
     val agentSession =
-      AgentSession(Some(BusinessType.SoleTrader), utr = Some(validUtr), postcode = Some(Postcode(testPostcode)), registration = Some(testRegistration) )
+      AgentSession(Some(BusinessType.SoleTrader), utr = Some(validUtr), postcode = Some(Postcode(testPostcode)), registration = Some(testRegistration))
 
     trait UnsubscribedAgentStub {
       AgentSubscriptionStub.withMatchingUtrAndPostcode(validUtr, testPostcode)
@@ -183,7 +183,7 @@ trait StartControllerISpec extends BaseISpec {
       an[Upstream4xxResponse] shouldBe thrownBy(await(controller.returnAfterGGCredsCreated(id = Some("thing"))(FakeRequest())))
     }
 
-    "throw Upstream4xxResponse if agent-subscription returns 409 when completing partial subscription" ignore new  PartiallySubscribedAgentStub {
+    "throw Upstream4xxResponse if agent-subscription returns 409 when completing partial subscription" ignore new PartiallySubscribedAgentStub {
       AgentSubscriptionStub
         .partialSubscriptionWillReturnStatus(CompletePartialSubscriptionBody(utr = validUtr, knownFacts = SubscriptionRequestKnownFacts(testPostcode)), 409)
 
@@ -197,23 +197,33 @@ trait StartControllerISpec extends BaseISpec {
       an[Upstream5xxResponse] shouldBe thrownBy(await(controller.returnAfterGGCredsCreated(id = Some("thing"))(FakeRequest())))
     }
   }
-}
 
-class StartControllerTests extends StartControllerISpec {
+  "returnAfterMapping" should {
 
-  "returnAfterGGCredsCreated" should {
+    "given a valid subscription journey record" when {
 
-    import FixturesForReturnAfterGGCredsCreated.PartiallySubscribedAgentStub
+      "redirect to the /task-list page and update journey record with mappingComplete as true" in new SetupUnsubscribed {
+        givenSubscriptionRecordCreated(record.authProviderId, record.copy(continueId = Some(continueId.value), mappingComplete = true))
 
-    "agent NOT Eligible for mapping, should redirect to /link-clients" ignore new PartiallySubscribedAgentStub {
-      AgentSubscriptionStub.partialSubscriptionWillSucceed(
-        CompletePartialSubscriptionBody(utr = validUtr, knownFacts = SubscriptionRequestKnownFacts(testPostcode)))
+        implicit val request = FakeRequest()
 
-      implicit val request = FakeRequest()
-      val result = await(controller.returnAfterGGCredsCreated(id = Some("thing"))(request))
+        val result = await(controller.returnAfterMapping(id = Some(continueId.value))(request))
 
-      status(result) shouldBe 303
-      redirectLocation(result).head should include(routes.SubscriptionController.showSubscriptionComplete().url)
+        status(result) shouldBe 303
+        redirectLocation(result).head should include(routes.TaskListController.showTaskList().url)
+      }
+
+      "redirect to the /task-list page when there is no continueId" in {
+        implicit val authenticatedRequest: FakeRequest[AnyContentAsEmpty.type] = authenticatedAs(
+          subscribingAgentEnrolledForNonMTD)
+        givenNoSubscriptionJourneyRecordExists(id)
+        implicit val request = FakeRequest()
+
+        val result = await(controller.returnAfterMapping()(request))
+
+        status(result) shouldBe 303
+        redirectLocation(result) shouldBe Some(routes.TaskListController.showTaskList().url)
+      }
     }
   }
 }

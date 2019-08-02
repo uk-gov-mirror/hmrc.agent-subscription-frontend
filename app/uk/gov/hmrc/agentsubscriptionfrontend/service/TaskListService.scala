@@ -17,52 +17,40 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.service
 
 import javax.inject.{Inject, Singleton}
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentAssuranceConnector
-import uk.gov.hmrc.agentsubscriptionfrontend.models.TaskListFlags
-import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.{AmlsData, SubscriptionJourneyRecord}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.SubscriptionJourneyRecord
+import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class TaskListService @Inject()(agentAssuranceConnector: AgentAssuranceConnector) {
+class TaskListService @Inject()(agentAssuranceConnector: AgentAssuranceConnector, appConfig: AppConfig) {
 
-  def getTaskListFlags(subscriptionJourneyRecord: SubscriptionJourneyRecord)(
+  def createTasks(subscriptionJourneyRecord: SubscriptionJourneyRecord)(
     implicit hc: HeaderCarrier,
-    ec: ExecutionContext): Future[TaskListFlags] =
+    ec: ExecutionContext): Future[List[Task]] =
     for {
-      manuallyAssured <- isMaaAgent(subscriptionJourneyRecord.businessDetails.utr)
-    } yield
-      TaskListFlags(
-        amlsTaskComplete = isAmlsTaskComplete(subscriptionJourneyRecord, manuallyAssured),
-        isMAA = manuallyAssured,
-        createTaskComplete = isCreateTaskComplete(subscriptionJourneyRecord, manuallyAssured),
-        checkAnswersComplete = isCheckAnswersComplete(subscriptionJourneyRecord, manuallyAssured)
-      )
-
-  private def isMaaAgent(utr: Utr)(implicit hc: HeaderCarrier): Future[Boolean] =
-    agentAssuranceConnector.isManuallyAssuredAgent(utr)
-
-  private def isAmlsTaskComplete(
-    subscriptionJourneyRecord: SubscriptionJourneyRecord,
-    isManuallyAssured: Boolean): Boolean =
-    isManuallyAssured || subscriptionJourneyRecord.amlsData.fold(false) {
-      case AmlsData(true, _, Some(_))           => true // registered (with details)
-      case AmlsData(false, Some(true), Some(_)) => true // not registered, but applied for (with details)
-      case _                                    => false
+      maa <- agentAssuranceConnector.isManuallyAssuredAgent(subscriptionJourneyRecord.businessDetails.utr)
+    } yield {
+      if (isCleanCredsAgent(subscriptionJourneyRecord)) {
+        val amlsTask = AmlsTask(maa, subscriptionJourneyRecord.amlsData)
+        val checkAnswersTask = CheckAnswersTask(amlsTask)
+        List(amlsTask, checkAnswersTask)
+      } else {
+        val amlsTask = AmlsTask(maa, subscriptionJourneyRecord.amlsData)
+        val mappingTask = MappingTask(
+          subscriptionJourneyRecord.cleanCredsAuthProviderId,
+          subscriptionJourneyRecord.mappingComplete,
+          amlsTask,
+          appConfig)
+        val createIDTask = CreateIDTask(subscriptionJourneyRecord.cleanCredsAuthProviderId, mappingTask)
+        val checkAnswersTask = CheckAnswersTask(createIDTask)
+        List(amlsTask, mappingTask, createIDTask, checkAnswersTask)
+      }
     }
 
-  private def isCreateTaskComplete(
-    subscriptionJourneyRecord: SubscriptionJourneyRecord,
-    isManuallyAssured: Boolean): Boolean =
-    subscriptionJourneyRecord.cleanCredsAuthProviderId.fold(false)(_ => true) && isAmlsTaskComplete(
-      subscriptionJourneyRecord,
-      isManuallyAssured)
-
-  private def isCheckAnswersComplete(
-    subscriptionJourneyRecord: SubscriptionJourneyRecord,
-    isManuallyAssured: Boolean): Boolean =
-    subscriptionJourneyRecord.subscriptionCreated
-
+  def isCleanCredsAgent(subscriptionJourneyRecord: SubscriptionJourneyRecord) =
+    subscriptionJourneyRecord.cleanCredsAuthProviderId.contains(subscriptionJourneyRecord.authProviderId)
 }
