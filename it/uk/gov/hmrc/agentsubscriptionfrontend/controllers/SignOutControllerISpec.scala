@@ -79,7 +79,7 @@ class SignOutControllerISpec extends BaseISpec {
       val result = await(controller.startSurvey(fakeRequest))
 
       status(result) shouldBe 303
-      redirectLocation(result).head should include("feedback-survey")
+      redirectLocation(result).head should include("feedback/AGENTSUB")
     }
   }
 

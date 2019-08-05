@@ -139,7 +139,7 @@ class TaskListControllerISpec extends BaseISpec {
       )
 
       result should containLink("saved-progress.continue", routes.TaskListController.showTaskList().url)
-      result should containLink("saved-progress.finish", routes.SignedOutController.signOut().url)
+      result should containLink("saved-progress.finish", routes.SignedOutController.startSurvey().url)
     }
   }
 }

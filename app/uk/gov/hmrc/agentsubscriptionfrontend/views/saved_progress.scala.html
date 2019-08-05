@@ -34,7 +34,7 @@
     <p>@Html(s"${Messages("saved-progress.p3",s"<a href='https://www.gov.uk/guidance/get-an-hmrc-agent-services-account' target='_blank'>${Messages("saved-progress.link")}</a>")}")</p>
     <p>@Messages("saved-progress.p4")</p>
     <p><a href="@backLink.getOrElse(routes.TaskListController.showTaskList().url)">@Messages("saved-progress.continue")</a></p>
-    <p><a href="@routes.SignedOutController.signOut()">@Messages("saved-progress.finish")</a></p>
+    <p><a href="@routes.SignedOutController.startSurvey()">@Messages("saved-progress.finish")</a></p>
 
 
 
