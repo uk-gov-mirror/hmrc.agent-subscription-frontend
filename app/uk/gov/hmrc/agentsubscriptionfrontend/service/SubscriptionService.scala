@@ -18,15 +18,21 @@ package uk.gov.hmrc.agentsubscriptionfrontend.service
 
 import java.time.LocalDate
 
+import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
 import play.api.Logger
 import play.api.http.Status
+import play.api.mvc.Result
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr, Vrn}
+import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentSubscriptionConnector
+import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
-import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.AmlsData
+import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.{AmlsData, SubscriptionJourneyRecord}
 import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.http.{HeaderCarrier, Upstream4xxResponse}
+import play.api.mvc.Results.Redirect
+import uk.gov.hmrc.agentsubscriptionfrontend.support.Monitoring
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -43,7 +49,9 @@ case class SubscriptionProcess(state: SubscriptionState, details: Option[Registr
 @Singleton
 class SubscriptionService @Inject()(
   agentSubscriptionConnector: AgentSubscriptionConnector,
-  sessionStoreService: SessionStoreService) {
+  sessionStoreService: SessionStoreService,
+  val metrics: Metrics)
+    extends Monitoring {
 
   import SubscriptionDetails._
 
@@ -135,4 +143,19 @@ class SubscriptionService @Inject()(
     ec: ExecutionContext): Future[Boolean] =
     agentSubscriptionConnector.matchVatKnownFacts(vrn, vatRegistrationDate)
 
+  def checkPartaillySubscribed(agent: Agent, agentUtr: Utr, agentPostcode: Postcode)(
+    notPartiallySubscribedBody: => Future[Result])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Result] = {
+    val utr = agentUtr
+    val postcode = agentPostcode
+    for {
+      subscriptionProcess <- getSubscriptionStatus(utr, postcode)
+      result <- if (subscriptionProcess.state == SubscribedButNotEnrolled) {
+                 completePartialSubscription(utr, postcode)
+                   .map { _ =>
+                     mark("Count-Subscription-PartialSubscriptionCompleted")
+                     Redirect(routes.SubscriptionController.showSubscriptionComplete())
+                   }
+               } else notPartiallySubscribedBody
+    } yield result
+  }
 }

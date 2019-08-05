@@ -20,6 +20,7 @@ import play.api.mvc.Results._
 import play.api.mvc.{Request, Result}
 import play.api.{Configuration, Environment, Logger}
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent.hasNonEmptyEnrolments
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.{ContinueUrlActions, routes}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.AuthProviderId
@@ -52,6 +53,11 @@ class Agent(
   def getMandatoryAmlsData: AmlsData =
     getMandatorySubscriptionRecord.amlsData.getOrElse(throw new RuntimeException("No AMLS data found in record"))
 
+  def hasCleanCreds(uncleanCredsBody: => Future[Result])(cleanCredsBody: => Future[Result]): Future[Result] =
+    this match {
+      case hasNonEmptyEnrolments(_) => uncleanCredsBody
+      case _                        => cleanCredsBody
+    }
 }
 
 object Agent {
@@ -80,7 +86,7 @@ trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring
   /**
     * For a user logged in as a subscribed agent (finished journey)
     * */
-  def withSubscribedAgent[A](body: (Arn, SubscriptionJourneyRecord) => Future[Result])(
+  def withSubscribedAgent[A](body: (Arn, Option[SubscriptionJourneyRecord]) => Future[Result])(
     implicit request: Request[A],
     hc: HeaderCarrier,
     ec: ExecutionContext): Future[Result] =
@@ -89,16 +95,13 @@ trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring
         case enrolments ~ creds =>
           creds match {
             case Some(c) =>
-              subscriptionJourneyService.getJourneyRecord(AuthProviderId(c.providerId)).flatMap {
-                case Some(sjr) =>
-                  body(
-                    getEnrolmentValue(enrolments, "HMRC-AS-AGENT", "AgentReferenceNumber")
-                      .map(Arn(_))
-                      .getOrElse(
-                        throw InsufficientEnrolments("could not find the HMRC-AS-AGENT enrolment to continue")),
-                    sjr
-                  )
-                case None => throw new RuntimeException("subscription journey record expected")
+              subscriptionJourneyService.getJourneyRecord(AuthProviderId(c.providerId)).flatMap { sjrOpt =>
+                body(
+                  getEnrolmentValue(enrolments, "HMRC-AS-AGENT", "AgentReferenceNumber")
+                    .map(Arn(_))
+                    .getOrElse(throw InsufficientEnrolments("could not find the HMRC-AS-AGENT enrolment to continue")),
+                  sjrOpt
+                )
               }
             case None => throw new UnsupportedCredentialRole("credentials expected but not found")
           }

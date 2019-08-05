@@ -1,10 +1,11 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 import org.jsoup.Jsoup
 import play.api.test.Helpers.{LOCATION, defaultAwaitTimeout, redirectLocation}
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, AuthProviderId}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, AuthProviderId, CompletePartialSubscriptionBody, SubscriptionRequestKnownFacts}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.SoleTrader
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub.userIsAuthenticated
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionJourneyStub._
+import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestData, TestSetupNoJourneyRecord}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.{subscribingAgentEnrolledForNonMTD, subscribingCleanAgentWithoutEnrolments}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData.validBusinessTypes
@@ -79,6 +80,28 @@ class BusinessTypeControllerISpec extends BaseISpec with SessionDataMissingSpec 
       givenSubscriptionJourneyRecordExists(AuthProviderId("12345-credId"),
         TestData.minimalSubscriptionJourneyRecord(AuthProviderId("12345-credId")))
       val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+      val result = await(controller.showBusinessTypeForm(request))
+
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.TaskListController.showTaskList().url)
+    }
+
+    "redirect to subscription complete if the agent has a subscription journey record has clean creds and is partially subscribed" in {
+      givenSubscriptionJourneyRecordExists(AuthProviderId("12345-credId"),
+        TestData.minimalSubscriptionJourneyRecord(AuthProviderId("12345-credId")))
+      withPartiallySubscribedAgent(TestData.validUtr, TestData.validPostcode)
+      partialSubscriptionWillSucceed(CompletePartialSubscriptionBody(TestData.validUtr, SubscriptionRequestKnownFacts(TestData.validPostcode)))
+      val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+      val result = await(controller.showBusinessTypeForm(request))
+
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.SubscriptionController.showSubscriptionComplete().url)
+    }
+
+    "redirect to task list if the agent has clean creds and is not partially subscribed" in {
+      givenSubscriptionJourneyRecordExists(AuthProviderId("12345-credId"),
+        TestData.minimalSubscriptionJourneyRecord(AuthProviderId("12345-credId")))
+      val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
       val result = await(controller.showBusinessTypeForm(request))
 
       status(result) shouldBe 303

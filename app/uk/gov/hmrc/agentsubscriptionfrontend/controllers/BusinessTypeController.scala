@@ -22,8 +22,8 @@ import play.api.i18n.MessagesApi
 import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationForms.businessTypeForm
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, BusinessType}
-import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.AgentSession
+import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.auth.core.AuthConnector
@@ -34,6 +34,7 @@ class BusinessTypeController @Inject()(
   override val continueUrlActions: ContinueUrlActions,
   override val authConnector: AuthConnector,
   val sessionStoreService: SessionStoreService,
+  subscriptionService: SubscriptionService,
   override val subscriptionJourneyService: SubscriptionJourneyService)(
   implicit override val metrics: Metrics,
   override val appConfig: AppConfig,
@@ -50,7 +51,13 @@ class BusinessTypeController @Inject()(
     withSubscribingAgent { implicit agent =>
       continueUrlActions.withMaybeContinueUrlCached {
         agent.subscriptionJourneyRecord match {
-          case Some(_) => Redirect(routes.TaskListController.showTaskList())
+          case Some(sjr) =>
+            agent.hasCleanCreds(uncleanCredsBody = Redirect(routes.TaskListController.showTaskList()))(
+              cleanCredsBody = subscriptionService.checkPartaillySubscribed(
+                agent,
+                sjr.businessDetails.utr,
+                sjr.businessDetails.postcode)(Redirect(routes.TaskListController.showTaskList())))
+
           case None =>
             sessionStoreService.fetchAgentSession.flatMap {
               case Some(agentSession) =>

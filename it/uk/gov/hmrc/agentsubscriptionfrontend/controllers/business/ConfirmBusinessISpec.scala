@@ -168,7 +168,7 @@ class ConfirmBusinessISpec extends BaseISpec {
 
         result.header.headers(LOCATION) shouldBe routes.TaskListController.showTaskList().url
       }
-      "redirect to subscription complete if user is partially subscribed with clean creds and there is no continue url" in new TestSetupNoJourneyRecord {
+      "redirect to subscription complete if user is partially subscribed with clean creds" in new TestSetupNoJourneyRecord {
         givenAgentIsNotManuallyAssured(utr.value)
         withPartiallySubscribedAgent(utr, testPostcode)
         partialSubscriptionWillSucceed(
@@ -189,23 +189,24 @@ class ConfirmBusinessISpec extends BaseISpec {
 
       }
 
-      "redirect to task list if the user is partially subscribed with unclean creds and there is no continue url" in new TestSetupNoJourneyRecord {
+      "redirect to task list if the user is partially subscribed with unclean creds" in new TestSetupNoJourneyRecord {
+        val agentSession = AgentSession(
+          Some(BusinessType.SoleTrader),
+          utr = Some(utr),
+          registration = Some(testRegistration.copy(isSubscribedToETMP = true)),
+          postcode = Some(Postcode(testPostcode)))
         givenAgentIsNotManuallyAssured(utr.value)
         withPartiallySubscribedAgent(utr, testPostcode)
+        val sjr = SubscriptionJourneyRecord.fromAgentSession(agentSession, AuthProviderId("12345-credId"))
+        givenSubscriptionRecordCreated(AuthProviderId("12345-credId"), sjr.copy(continueId = None))
 
         implicit val request: FakeRequest[AnyContentAsFormUrlEncoded] = authenticatedAs(subscribingAgentEnrolledForNonMTD)
           .withFormUrlEncodedBody("confirmBusiness" -> "yes")
-        sessionStoreService.currentSession.agentSession = Some(
-          AgentSession(
-            Some(BusinessType.SoleTrader),
-            utr = Some(utr),
-            registration = Some(testRegistration.copy(isSubscribedToETMP = true)),
-            postcode = Some(Postcode(testPostcode))))
+        sessionStoreService.currentSession.agentSession = Some(agentSession)
 
         val result = await(controller.submitConfirmBusinessForm(request))
 
         result.header.headers(LOCATION) shouldBe routes.TaskListController.showTaskList().url
-
       }
 
       "redirect to showBusinessEmailForm if the user has clean creds and isSubscribedToAgentServices=false and ETMP record contains empty email" in new TestSetupNoJourneyRecord {

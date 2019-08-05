@@ -25,7 +25,6 @@ import play.api.mvc.{AnyContent, Request, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.audit.AuditService
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent
-import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent.hasNonEmptyEnrolments
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentAssuranceConnector
 import uk.gov.hmrc.agentsubscriptionfrontend.models
@@ -141,7 +140,7 @@ class BusinessIdentificationController @Inject()(
                   if (existingSession.registration.exists(_.isSubscribedToAgentServices)) {
                     mark("Count-Subscription-AlreadySubscribed-RegisteredInETMP")
                     Redirect(routes.BusinessIdentificationController.showAlreadySubscribed())
-                  } else validatedBusinessDetailsAndRedirect(existingSession, agent).map(Redirect)
+                  } else validatedBusinessDetailsAndRedirect(existingSession, agent)
 
                 case No =>
                   //Redirect(routes.UtrController.showUtrForm())
@@ -154,48 +153,25 @@ class BusinessIdentificationController @Inject()(
   }
 
   private def validatedBusinessDetailsAndRedirect(existingSession: AgentSession, agent: Agent)(
-    implicit hc: HeaderCarrier): Future[Call] =
+    implicit hc: HeaderCarrier): Future[Result] =
     businessDetailsValidator.validate(existingSession.registration) match {
       case Failure(responses) if responses.contains(InvalidBusinessName) =>
-        routes.BusinessIdentificationController.showBusinessNameForm()
+        Redirect(routes.BusinessIdentificationController.showBusinessNameForm())
       case Failure(responses) if responses.exists(r => r == InvalidBusinessAddress || r == DisallowedPostcode) =>
-        routes.BusinessIdentificationController.showUpdateBusinessAddressForm()
+        Redirect(routes.BusinessIdentificationController.showUpdateBusinessAddressForm())
       case Failure(responses) if responses.contains(InvalidEmail) =>
-        routes.BusinessIdentificationController.showBusinessEmailForm()
+        Redirect(routes.BusinessIdentificationController.showBusinessEmailForm())
       case _ =>
-        checkPartaillySubscribed(agent, existingSession)(
+        agent.hasCleanCreds(uncleanCredsBody = subscriptionJourneyService
+          .createJourneyRecord(existingSession, agent)
+          .map(_ => Redirect(routes.TaskListController.showTaskList())))(
+          cleanCredsBody = subscriptionService.checkPartaillySubscribed(agent,
+            existingSession.utr.getOrElse(Utr("")), existingSession.postcode.getOrElse(Postcode("")))(
+            notPartiallySubscribedBody =
           subscriptionJourneyService
             .createJourneyRecord(existingSession, agent)
-            .map(_ => routes.TaskListController.showTaskList()))
-
+            .map(_ => Redirect(routes.TaskListController.showTaskList()))))
     }
-
-  def hasCleanCreds(agent: Agent)(uncleanCredsBody: => Future[Call])(cleanCredsBody: => Future[Call]): Future[Call] =
-    agent match {
-      case hasNonEmptyEnrolments(_) => uncleanCredsBody
-      case _                        => cleanCredsBody
-    }
-
-  def checkPartaillySubscribed(agent: Agent, existingSession: AgentSession)(
-    notPartiallySubscribedBody: => Future[Call])(implicit hc: HeaderCarrier): Future[Call] = {
-    val utr = existingSession.utr.getOrElse(Utr(""))
-    val postcode = existingSession.postcode.getOrElse(Postcode(""))
-    for {
-      subscriptionProcess <- subscriptionService.getSubscriptionStatus(utr, postcode)
-      result <- if (subscriptionProcess.state == SubscribedButNotEnrolled) {
-                 hasCleanCreds(agent) {
-                   Future.successful(routes.TaskListController.showTaskList())
-                 } {
-                   subscriptionService
-                     .completePartialSubscription(utr, postcode)
-                     .map { _ =>
-                       mark("Count-Subscription-PartialSubscriptionCompleted")
-                       routes.SubscriptionController.showSubscriptionComplete()
-                     }
-                 }
-               } else notPartiallySubscribedBody
-    } yield result
-  }
 
   def showBusinessEmailForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
@@ -372,7 +348,7 @@ class BusinessIdentificationController @Inject()(
           .cacheIsChangingAnswers(false)
           .map(_ => Redirect(routes.SubscriptionController.showCheckAnswers()))
 
-      case _ => validatedBusinessDetailsAndRedirect(updatedSession, agent).map(Redirect)
+      case _ => validatedBusinessDetailsAndRedirect(updatedSession, agent)
     }
   }
 

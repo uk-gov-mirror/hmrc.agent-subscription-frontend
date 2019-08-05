@@ -29,8 +29,9 @@ import uk.gov.hmrc.agentsubscriptionfrontend.models.{AmlsDetails, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AddressLookupFrontendStubs._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionJourneyStub.{givenSubscriptionJourneyRecordExists, givenSubscriptionRecordCreated}
+import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub.{partialSubscriptionWillSucceed, withPartiallySubscribedAgent}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.{AgentSubscriptionStub, AuthStub}
-import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestSetupNoJourneyRecord}
+import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestData, TestSetupNoJourneyRecord}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData._
 import uk.gov.hmrc.play.binders.ContinueUrl
@@ -606,6 +607,17 @@ class SubscriptionControllerTests extends SubscriptionControllerISpec {
 
         verifySubscriptionRequestSent(subscriptionRequestWithNoEdit())
         metricShouldExistAndBeUpdated("Count-Subscription-Complete")
+      }
+    }
+    "partially subscribe user and redirect to subscription complete" when {
+      "user is partially subscribed" in new TestSetupWithCompleteJourneyRecordAndCreate {
+        withPartiallySubscribedAgent(TestData.validUtr, TestData.validPostcode)
+        partialSubscriptionWillSucceed(CompletePartialSubscriptionBody(TestData.validUtr, SubscriptionRequestKnownFacts(TestData.validPostcode)))
+        implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+        val result = await(controller.submitCheckAnswers(request))
+
+        status(result) shouldBe 303
+        redirectLocation(result).head shouldBe routes.SubscriptionController.showSubscriptionComplete().url
       }
     }
   }
