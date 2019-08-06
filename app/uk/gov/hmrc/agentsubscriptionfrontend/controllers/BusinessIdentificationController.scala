@@ -162,15 +162,21 @@ class BusinessIdentificationController @Inject()(
       case Failure(responses) if responses.contains(InvalidEmail) =>
         Redirect(routes.BusinessIdentificationController.showBusinessEmailForm())
       case _ =>
-        agent.hasCleanCreds(uncleanCredsBody = subscriptionJourneyService
+
+        def createRecordAndRedirectToTasklist(): Future[Result] = subscriptionJourneyService
           .createJourneyRecord(existingSession, agent)
-          .map(_ => Redirect(routes.TaskListController.showTaskList())))(
-          cleanCredsBody = subscriptionService.checkPartaillySubscribed(agent,
-            existingSession.utr.getOrElse(Utr("")), existingSession.postcode.getOrElse(Postcode("")))(
-            notPartiallySubscribedBody =
-          subscriptionJourneyService
-            .createJourneyRecord(existingSession, agent)
-            .map(_ => Redirect(routes.TaskListController.showTaskList()))))
+          .map(_ => Redirect(routes.TaskListController.showTaskList()))
+
+        agent.cleanCredsFold(
+
+          isDirty = createRecordAndRedirectToTasklist())(
+
+          isClean = subscriptionService.handlePartiallySubscribedAndRedirect(
+            agent,
+            existingSession.utr.getOrElse(Utr("")),
+            existingSession.postcode.getOrElse(Postcode("")))(
+            whenNotPartiallySubscribed = createRecordAndRedirectToTasklist())
+          )
     }
 
   def showBusinessEmailForm: Action[AnyContent] = Action.async { implicit request =>

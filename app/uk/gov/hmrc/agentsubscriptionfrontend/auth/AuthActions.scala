@@ -53,11 +53,15 @@ class Agent(
   def getMandatoryAmlsData: AmlsData =
     getMandatorySubscriptionRecord.amlsData.getOrElse(throw new RuntimeException("No AMLS data found in record"))
 
-  def hasCleanCreds(uncleanCredsBody: => Future[Result])(cleanCredsBody: => Future[Result]): Future[Result] =
+  def cleanCredsFold[A](isDirty: A)(isClean: A): A =
     this match {
-      case hasNonEmptyEnrolments(_) => uncleanCredsBody
-      case _                        => cleanCredsBody
+      case hasNonEmptyEnrolments(_) => isDirty
+      case _                        => isClean
     }
+
+  val maybeCleanCredsAuthProviderId: Option[AuthProviderId] =
+    cleanCredsFold(None: Option[AuthProviderId])(Some(this.authProviderId))
+
 }
 
 object Agent {

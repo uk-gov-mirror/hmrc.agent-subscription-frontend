@@ -106,8 +106,8 @@ class SubscriptionController @Inject()(
         val sjr = agent.getMandatorySubscriptionRecord
         (sjr.businessDetails.utr, sjr.businessDetails.postcode, sjr.businessDetails.registration, sjr.amlsData) match {
           case (utr, postcode, Some(registration), amlsData) =>
-            subscriptionService.checkPartaillySubscribed(agent, sjr.businessDetails.utr, sjr.businessDetails.postcode)(
-              notPartiallySubscribedBody = subscriptionService
+            subscriptionService.handlePartiallySubscribedAndRedirect(agent, sjr.businessDetails.utr, sjr.businessDetails.postcode)(
+              whenNotPartiallySubscribed = subscriptionService
               .subscribe(utr, postcode, registration, amlsData)
               .flatMap(redirectSubscriptionResponse(_, agent)))
 

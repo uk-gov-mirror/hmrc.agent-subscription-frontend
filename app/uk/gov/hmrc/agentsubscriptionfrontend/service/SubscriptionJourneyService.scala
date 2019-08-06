@@ -21,9 +21,9 @@ import play.api.Logger
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent._
-import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentSubscriptionConnector
 import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.SubscriptionJourneyRecord
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, AuthProviderId, ContinueId}
+import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentSubscriptionConnector
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -69,12 +69,10 @@ class SubscriptionJourneyService @Inject()(agentSubscriptionConnector: AgentSubs
     }
 
   def createJourneyRecord(agentSession: AgentSession, agent: Agent)(implicit hc: HeaderCarrier): Future[Unit] = {
-    val cleanCredsAuthProviderIdOpt = agent match {
-      case hasNonEmptyEnrolments(_) => None
-      case _                        => Some(agent.authProviderId)
-    }
     val sjr =
-      SubscriptionJourneyRecord.fromAgentSession(agentSession, agent.authProviderId, cleanCredsAuthProviderIdOpt)
+      SubscriptionJourneyRecord
+        .fromAgentSession(agentSession, agent.authProviderId, agent.maybeCleanCredsAuthProviderId)
     saveJourneyRecord(sjr)
   }
+
 }

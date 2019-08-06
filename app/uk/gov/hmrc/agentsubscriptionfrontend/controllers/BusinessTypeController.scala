@@ -28,7 +28,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.auth.core.AuthConnector
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 class BusinessTypeController @Inject()(
   override val continueUrlActions: ContinueUrlActions,
@@ -52,11 +52,10 @@ class BusinessTypeController @Inject()(
       continueUrlActions.withMaybeContinueUrlCached {
         agent.subscriptionJourneyRecord match {
           case Some(sjr) =>
-            agent.hasCleanCreds(uncleanCredsBody = Redirect(routes.TaskListController.showTaskList()))(
-              cleanCredsBody = subscriptionService.checkPartaillySubscribed(
-                agent,
-                sjr.businessDetails.utr,
-                sjr.businessDetails.postcode)(Redirect(routes.TaskListController.showTaskList())))
+            agent.cleanCredsFold(isDirty = Future.successful(Redirect(routes.TaskListController.showTaskList())))(
+              isClean = subscriptionService
+                .handlePartiallySubscribedAndRedirect(agent, sjr.businessDetails.utr, sjr.businessDetails.postcode)(
+                  whenNotPartiallySubscribed = Redirect(routes.TaskListController.showTaskList())))
 
           case None =>
             sessionStoreService.fetchAgentSession.flatMap {

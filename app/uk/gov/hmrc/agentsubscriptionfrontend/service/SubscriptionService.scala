@@ -143,8 +143,8 @@ class SubscriptionService @Inject()(
     ec: ExecutionContext): Future[Boolean] =
     agentSubscriptionConnector.matchVatKnownFacts(vrn, vatRegistrationDate)
 
-  def checkPartaillySubscribed(agent: Agent, agentUtr: Utr, agentPostcode: Postcode)(
-    notPartiallySubscribedBody: => Future[Result])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Result] = {
+  def handlePartiallySubscribedAndRedirect(agent: Agent, agentUtr: Utr, agentPostcode: Postcode)(
+    whenNotPartiallySubscribed: => Future[Result])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Result] = {
     val utr = agentUtr
     val postcode = agentPostcode
     for {
@@ -155,7 +155,7 @@ class SubscriptionService @Inject()(
                      mark("Count-Subscription-PartialSubscriptionCompleted")
                      Redirect(routes.SubscriptionController.showSubscriptionComplete())
                    }
-               } else notPartiallySubscribedBody
+               } else whenNotPartiallySubscribed
     } yield result
   }
 }
