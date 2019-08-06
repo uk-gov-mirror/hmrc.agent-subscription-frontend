@@ -136,9 +136,10 @@ noAgencyFound.p2=Check the details and try again.
 alreadySubscribed.title=Your business already has an agent services account
 alreadySubscribed.p1=Contact your administrator to get access to your business''s agent services account.
 
-#Existing (temp store) journey found for UTR
-existingJourneyFound.title=Your business has already begun a setup process for this UTR
-existingJourneyFound.p1=Please log in using the original credentials with which you started the process.
+#Existing (temp store) journey found for entered UTR
+existingJourneyFound.p1=Your business has already started creating an agent services account using a different Government Gateway user ID.
+existingJourneyFound.p2=You can only create one account for your business.
+existingJourneyFound.p3=To finish this step, sign in again with the user ID you used to start creating your agent services account.
 
 #Task list
 task-list.header=Create an agent services account
@@ -325,6 +326,7 @@ button.createAccount=Create account
 button.register=Continue
 button.back=Back
 button.finishSignOut=Finish and sign out
+button.signIn=Sign in
 
 #Setup Incomplete
 setupIncomplete.title=We could not confirm your identity
