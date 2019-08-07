@@ -73,16 +73,17 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
   "showCheckAnswers" should {
     behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showCheckAnswers(request))
 
-    "redirect to unclean credentials page if user has enrolled in any other services" in new TestSetupNoJourneyRecord {
+    "redirect to sign in with a new user ID page if user has enrolled in any other services" in new TestSetupNoJourneyRecord {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
 
       val result = await(controller.showCheckAnswers(request))
       status(result) shouldBe 303
-      result.header.headers("Location") should include("/agent-subscription/create-new-account")
+      result.header.headers("Location") should include("/agent-subscription/sign-in-with-new-user-id")
       noMetricExpectedAtThisPoint()
     }
 
-    "show subscription answers page if user has not already subscribed and has clean creds and also cache the goBack url" in new TestSetupWithCompleteJourneyRecord {
+    "show subscription answers page if user has not already subscribed and has clean creds and also cache the goBack url" in
+      new TestSetupWithCompleteJourneyRecord {
       implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
 
       val result = await(controller.showCheckAnswers(request))
@@ -97,7 +98,8 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         "checkAnswers.businessAddress.label"
       )
 
-      result should containSubstrings(registrationName, testRegistration.emailAddress.get, testRegistration.address.addressLine1, testRegistration.address.postalCode.get)
+      result should containSubstrings(
+        registrationName, testRegistration.emailAddress.get, testRegistration.address.addressLine1, testRegistration.address.postalCode.get)
 
       sessionStoreService.fetchGoBackUrl.futureValue shouldBe Some(routes.SubscriptionController.showCheckAnswers().url)
     }
@@ -124,12 +126,12 @@ trait SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
   "submitCheckAnswers" should {
     behave like anAgentAffinityGroupOnlyEndpoint(request => controller.submitCheckAnswers(request))
 
-    "redirect to unclean credentials page if user has enrolled in any other services" in new TestSetupNoJourneyRecord {
+    "redirect to sign in with a new user id page if user has enrolled in any other services" in new TestSetupNoJourneyRecord {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
 
       val result = await(controller.submitCheckAnswers(request))
       status(result) shouldBe 303
-      result.header.headers("Location") should include("/agent-subscription/create-new-account")
+      result.header.headers("Location") should include("/agent-subscription/sign-in-with-new-user-id")
       noMetricExpectedAtThisPoint()
     }
 
@@ -619,6 +621,18 @@ class SubscriptionControllerTests extends SubscriptionControllerISpec {
         status(result) shouldBe 303
         redirectLocation(result).head shouldBe routes.SubscriptionController.showSubscriptionComplete().url
       }
+    }
+  }
+
+  "GET /sign-in-with-new-user-id" should {
+    "show the sign in with new user id error page" in new TestSetupNoJourneyRecord {
+      implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+
+      val result = await(controller.showSignInWithNewID(request))
+
+      status(result) shouldBe 200
+      checkHtmlResultWithBodyText(result, "Sign in with your new user ID",
+        "You have not finished creating your agent services account.")
     }
   }
 }

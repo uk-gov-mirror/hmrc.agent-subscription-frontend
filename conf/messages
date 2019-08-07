@@ -421,3 +421,10 @@ postcodeNotAllowed.title=There is a problem
 postcodeNotAllowed.p1=You cannot use this postcode to create an agent services account.
 postcodeNotAllowed.p2=Use a different postcode and try again.
 postcodeNotAllowed.button=Try Again
+
+#sign in with a new ID error page
+sign-in-new-id.header=Sign in with your new user ID
+sign-in-new-id.p1=You have not finished creating your agent services account.
+sign-in-new-id.p2=To finish this step, sign in again using the new user ID you created for your agent services account.
+sign-in-new-id.button=Sign in with new user ID
+

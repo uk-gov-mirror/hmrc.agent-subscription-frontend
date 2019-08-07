@@ -31,6 +31,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService, SubscriptionReturnedHttpError, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
+import uk.gov.hmrc.agentsubscriptionfrontend.views.html.sign_in_new_id
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.HttpException
 import uk.gov.hmrc.play.binders.ContinueUrl
@@ -61,7 +62,7 @@ class SubscriptionController @Inject()(
 
   def showCheckAnswers: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { agent =>
-      withCleanCreds(agent) {
+      agent.withCleanCredsOrSignIn {
         val sjr = agent.getMandatorySubscriptionRecord
         agentAssuranceConnector.isManuallyAssuredAgent(sjr.businessDetails.utr).flatMap { isMAAgent =>
           sessionStoreService.cacheIsChangingAnswers(changing = false).flatMap { _ =>
@@ -102,7 +103,7 @@ class SubscriptionController @Inject()(
 
   def submitCheckAnswers: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { agent =>
-      withCleanCreds(agent) {
+      agent.withCleanCredsOrSignIn {
         val sjr = agent.getMandatorySubscriptionRecord
         (sjr.businessDetails.utr, sjr.businessDetails.postcode, sjr.businessDetails.registration, sjr.amlsData) match {
           case (utr, postcode, Some(registration), amlsData) =>
@@ -242,6 +243,12 @@ class SubscriptionController @Inject()(
           case None => throw new RuntimeException("no record found for agent")
         }
       }
+    }
+  }
+
+  def showSignInWithNewID: Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { _ =>
+      Ok(sign_in_new_id())
     }
   }
 }
