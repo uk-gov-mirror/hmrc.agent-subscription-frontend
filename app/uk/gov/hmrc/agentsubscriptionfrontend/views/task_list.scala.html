@@ -34,7 +34,7 @@
         <ul class="app-task-list__items">
             <li class="app-task-list__item">
                 @if(task.showLink) {
-                    <a href=@task.link>@Messages(s"task-list.${task.taskKey}")</a>
+                    <a class="app-task-list__name" href="@task.link">@Messages(s"task-list.${task.taskKey}")</a>
                 } else {
                     @Messages(s"task-list.${task.taskKey}")
                 }

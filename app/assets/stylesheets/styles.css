@@ -108,6 +108,19 @@
     padding-top: 10px;
     padding-bottom: 10px;
 }
+
+.app-task-list__item:after {
+     content: "";
+     display: block;
+     clear: both;
+ }
+
+.app-task-list__name {
+    display: block;
+    float: left;
+    width: 75%;
+}
+
 .app-task-list__task-completed {
     float: right;
     margin-top: 0;
