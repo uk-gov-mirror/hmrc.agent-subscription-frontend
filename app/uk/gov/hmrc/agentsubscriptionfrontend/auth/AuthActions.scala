@@ -27,6 +27,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.models.AuthProviderId
 import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.{AmlsData, SubscriptionJourneyRecord}
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SubscriptionJourneyService
 import uk.gov.hmrc.agentsubscriptionfrontend.support.Monitoring
+import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{allEnrolments, authorisedEnrolments, credentials}
@@ -61,6 +62,14 @@ class Agent(
 
   val maybeCleanCredsAuthProviderId: Option[AuthProviderId] =
     cleanCredsFold(None: Option[AuthProviderId])(Some(this.authProviderId))
+
+  def withCleanCredsOrCreateNewAccount(cleanCredsBody: => Future[Result]): Future[Result] =
+    this.cleanCredsFold(isDirty = toFuture(Redirect(routes.BusinessIdentificationController.showCreateNewAccount())))(
+      isClean = cleanCredsBody)
+
+  def withCleanCredsOrSignIn(cleanCredsBody: => Future[Result]): Future[Result] =
+    this.cleanCredsFold(isDirty = toFuture(Redirect(routes.SubscriptionController.showSignInWithNewID())))(
+      isClean = cleanCredsBody)
 
 }
 

@@ -26,7 +26,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
 
-trait SessionBehaviour extends CommonRouting {
+trait SessionBehaviour {
 
   val sessionStoreService: SessionStoreService
   implicit val ec: ExecutionContext
