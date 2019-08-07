@@ -53,7 +53,7 @@ class Agent(
   def getMandatoryAmlsData: AmlsData =
     getMandatorySubscriptionRecord.amlsData.getOrElse(throw new RuntimeException("No AMLS data found in record"))
 
-  def cleanCredsFold[A](isDirty: A)(isClean: A): A =
+  def cleanCredsFold[A](isDirty: => A)(isClean: => A): A =
     this match {
       case hasNonEmptyEnrolments(_) => isDirty
       case _                        => isClean
