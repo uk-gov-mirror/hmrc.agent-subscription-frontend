@@ -85,7 +85,7 @@ class TaskListControllerISpec extends BaseISpec {
 
       checkHtmlResultWithBodyText(
         result,
-        "<a href=/agent-subscription/check-money-laundering-compliance>Enter your money laundering compliance details</a>")
+        "href=\"/agent-subscription/check-money-laundering-compliance\">Enter your money laundering compliance details</a>")
     }
 
     "contain a url to the mapping journey when user has completed amls" in {
