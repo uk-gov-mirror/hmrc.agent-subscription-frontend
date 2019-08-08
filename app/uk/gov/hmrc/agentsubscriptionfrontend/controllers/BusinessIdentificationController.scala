@@ -167,16 +167,11 @@ class BusinessIdentificationController @Inject()(
           .createJourneyRecord(existingSession, agent)
           .map(_ => Redirect(routes.TaskListController.showTaskList()))
 
-        agent.cleanCredsFold(
-
-          isDirty = createRecordAndRedirectToTasklist())(
-
-          isClean = subscriptionService.handlePartiallySubscribedAndRedirect(
+          subscriptionService.handlePartiallySubscribedAndRedirect(
             agent,
             existingSession.utr.getOrElse(Utr("")),
             existingSession.postcode.getOrElse(Postcode("")))(
             whenNotPartiallySubscribed = createRecordAndRedirectToTasklist())
-          )
     }
 
   def showBusinessEmailForm: Action[AnyContent] = Action.async { implicit request =>

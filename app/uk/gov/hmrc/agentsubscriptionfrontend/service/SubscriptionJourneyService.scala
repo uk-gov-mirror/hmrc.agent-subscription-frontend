@@ -63,11 +63,6 @@ class SubscriptionJourneyService @Inject()(agentSubscriptionConnector: AgentSubs
     implicit hc: HeaderCarrier): Future[Unit] =
     agentSubscriptionConnector.createOrUpdateJourney(subscriptionJourneyRecord)
 
-  def deleteJourneyRecord(authProviderId: AuthProviderId)(implicit hc: HeaderCarrier): Future[Unit] =
-    agentSubscriptionConnector.deleteJourney(authProviderId).recover {
-      case NonFatal(ex) => Logger(getClass).warn("Failed to delete journey record", ex)
-    }
-
   def createJourneyRecord(agentSession: AgentSession, agent: Agent)(implicit hc: HeaderCarrier): Future[Unit] = {
     val sjr =
       SubscriptionJourneyRecord

@@ -79,13 +79,6 @@ class AgentSubscriptionConnector @Inject()(
         .map(handleUpdateJourneyResponse(_, path))
     }
 
-  def deleteJourney(authProviderId: AuthProviderId)(implicit hc: HeaderCarrier): Future[Unit] =
-    monitor("ConsumedAPI-Agent-Subscription-delete-DELETE") {
-      val path = s"/agent-subscription/subscription/journey/primaryId/${encodePathSegment(authProviderId.id)}"
-      val url = new URL(baseUrl, path)
-      http.DELETE[HttpResponse](url.toString).map(handleUpdateJourneyResponse(_, path))
-    }
-
   private def handleUpdateJourneyResponse(httpResponse: HttpResponse, path: String): Unit =
     httpResponse.status match {
       case 204    => ()

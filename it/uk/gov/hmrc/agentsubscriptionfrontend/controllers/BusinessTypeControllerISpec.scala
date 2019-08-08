@@ -86,18 +86,6 @@ class BusinessTypeControllerISpec extends BaseISpec with SessionDataMissingSpec 
       redirectLocation(result) shouldBe Some(routes.TaskListController.showTaskList().url)
     }
 
-    "redirect to subscription complete if the agent has a subscription journey record has clean creds and is partially subscribed" in {
-      givenSubscriptionJourneyRecordExists(AuthProviderId("12345-credId"),
-        TestData.minimalSubscriptionJourneyRecord(AuthProviderId("12345-credId")))
-      withPartiallySubscribedAgent(TestData.validUtr, TestData.validPostcode)
-      partialSubscriptionWillSucceed(CompletePartialSubscriptionBody(TestData.validUtr, SubscriptionRequestKnownFacts(TestData.validPostcode)))
-      val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
-      val result = await(controller.showBusinessTypeForm(request))
-
-      status(result) shouldBe 303
-      redirectLocation(result) shouldBe Some(routes.SubscriptionController.showSubscriptionComplete().url)
-    }
-
     "redirect to task list if the agent has clean creds and is not partially subscribed" in {
       givenSubscriptionJourneyRecordExists(AuthProviderId("12345-credId"),
         TestData.minimalSubscriptionJourneyRecord(AuthProviderId("12345-credId")))

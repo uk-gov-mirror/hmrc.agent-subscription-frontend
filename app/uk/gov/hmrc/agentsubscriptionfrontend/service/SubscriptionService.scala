@@ -149,13 +149,17 @@ class SubscriptionService @Inject()(
     val postcode = agentPostcode
     for {
       subscriptionProcess <- getSubscriptionStatus(utr, postcode)
-      result <- if (subscriptionProcess.state == SubscribedButNotEnrolled) {
-                 completePartialSubscription(utr, postcode)
-                   .map { _ =>
-                     mark("Count-Subscription-PartialSubscriptionCompleted")
-                     Redirect(routes.SubscriptionController.showSubscriptionComplete())
-                   }
-               } else whenNotPartiallySubscribed
+      result <- if (subscriptionProcess.state == SubscribedButNotEnrolled)
+                 agent.cleanCredsFold(
+                   isDirty =
+                     Future successful Redirect(routes.SubscriptionController.showSignInWithNewID()))(
+                   isClean = completePartialSubscription(utr, postcode)
+                     .map { _ =>
+                       mark("Count-Subscription-PartialSubscriptionCompleted")
+                       Redirect(routes.SubscriptionController.showSubscriptionComplete())
+                     }
+                 )
+               else whenNotPartiallySubscribed
     } yield result
   }
 }

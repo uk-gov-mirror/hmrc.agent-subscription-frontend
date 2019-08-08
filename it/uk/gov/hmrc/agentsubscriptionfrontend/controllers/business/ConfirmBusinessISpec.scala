@@ -189,7 +189,7 @@ class ConfirmBusinessISpec extends BaseISpec {
 
       }
 
-      "redirect to task list if the user is partially subscribed with unclean creds" in new TestSetupNoJourneyRecord {
+      "redirect to sign in with new user ID if the user is partially subscribed with unclean creds" in new TestSetupNoJourneyRecord {
         val agentSession = AgentSession(
           Some(BusinessType.SoleTrader),
           utr = Some(utr),
@@ -206,7 +206,7 @@ class ConfirmBusinessISpec extends BaseISpec {
 
         val result = await(controller.submitConfirmBusinessForm(request))
 
-        result.header.headers(LOCATION) shouldBe routes.TaskListController.showTaskList().url
+        result.header.headers(LOCATION) shouldBe routes.SubscriptionController.showSignInWithNewID().url
       }
 
       "redirect to showBusinessEmailForm if the user has clean creds and isSubscribedToAgentServices=false and ETMP record contains empty email" in new TestSetupNoJourneyRecord {

@@ -51,12 +51,7 @@ class BusinessTypeController @Inject()(
     withSubscribingAgent { implicit agent =>
       continueUrlActions.withMaybeContinueUrlCached {
         agent.subscriptionJourneyRecord match {
-          case Some(sjr) =>
-            agent.cleanCredsFold(isDirty = Future.successful(Redirect(routes.TaskListController.showTaskList())))(
-              isClean = subscriptionService
-                .handlePartiallySubscribedAndRedirect(agent, sjr.businessDetails.utr, sjr.businessDetails.postcode)(
-                  whenNotPartiallySubscribed = Redirect(routes.TaskListController.showTaskList())))
-
+          case Some(_) => Future.successful(Redirect(routes.TaskListController.showTaskList()))
           case None =>
             sessionStoreService.fetchAgentSession.flatMap {
               case Some(agentSession) =>

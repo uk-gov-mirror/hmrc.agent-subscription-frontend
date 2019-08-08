@@ -102,21 +102,6 @@ class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {
     }
   }
 
-  "deleteJourney" should {
-    "return unit when record is successfully deleted" in {
-      AgentSubscriptionJourneyStub.givenSubscriptionRecordDeleted(authProviderId)
-      val result = await(connector.deleteJourney(authProviderId))
-      result shouldBe (())
-    }
-
-    "throw an exception when there is a problem deleting the record" in {
-      AgentSubscriptionJourneyStub.givenSubscriptionRecordNotDeleted(authProviderId)
-      intercept[Upstream5xxResponse] {
-        await(connector.deleteJourney(authProviderId))
-      }
-    }
-  }
-
   "getRegistration" should {
 
     "return a subscribed Registration when agent-subscription returns a 200 response (for a matching UTR and postcode)" in {

@@ -107,15 +107,4 @@ class StartController @Inject()(
   def showCannotCreateAccount: Action[AnyContent] = Action { implicit request =>
     Ok(html.cannot_create_account())
   }
-
-  // TODO review partial subscription handling
-  private def handlePartialSubscription(kfcUtr: Utr, kfcPostcode: String, agentSession: AgentSession)(
-    implicit request: Request[_],
-    hc: HeaderCarrier): Future[Result] =
-    subscriptionService
-      .completePartialSubscription(kfcUtr, Postcode(kfcPostcode))
-      .flatMap { _ =>
-        mark("Count-Subscription-PartialSubscriptionCompleted")
-        Redirect(routes.SubscriptionController.showSubscriptionComplete())
-      }
 }

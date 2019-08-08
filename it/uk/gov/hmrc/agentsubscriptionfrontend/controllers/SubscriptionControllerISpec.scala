@@ -611,17 +611,6 @@ class SubscriptionControllerTests extends SubscriptionControllerISpec {
         metricShouldExistAndBeUpdated("Count-Subscription-Complete")
       }
     }
-    "partially subscribe user and redirect to subscription complete" when {
-      "user is partially subscribed" in new TestSetupWithCompleteJourneyRecordAndCreate {
-        withPartiallySubscribedAgent(TestData.validUtr, TestData.validPostcode)
-        partialSubscriptionWillSucceed(CompletePartialSubscriptionBody(TestData.validUtr, SubscriptionRequestKnownFacts(TestData.validPostcode)))
-        implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
-        val result = await(controller.submitCheckAnswers(request))
-
-        status(result) shouldBe 303
-        redirectLocation(result).head shouldBe routes.SubscriptionController.showSubscriptionComplete().url
-      }
-    }
   }
 
   "GET /sign-in-with-new-user-id" should {

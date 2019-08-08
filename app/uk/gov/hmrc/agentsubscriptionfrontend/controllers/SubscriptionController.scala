@@ -33,7 +33,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html.sign_in_new_id
 import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.http.HttpException
+import uk.gov.hmrc.http.{HeaderCarrier, HttpException}
 import uk.gov.hmrc.play.binders.ContinueUrl
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -101,16 +101,32 @@ class SubscriptionController @Inject()(
     }
   }
 
+  //helper function to copy record details to session before the record is deleted allowing them to be displayed on subscription complete page
+  private def updateSessionBeforeSubscribing(registration: Registration)(implicit hc: HeaderCarrier) = {
+    val agencyName = registration.taxpayerName
+    val agencyEmail = registration.emailAddress
+    val agencyAddress = registration.address
+
+    sessionStoreService.cacheAgentSession(AgentSession(registration = Some(
+      Registration(taxpayerName = agencyName,
+        isSubscribedToAgentServices = false,
+        isSubscribedToETMP = false,
+        agencyAddress,
+        agencyEmail))))
+  }
+
   def submitCheckAnswers: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { agent =>
       agent.withCleanCredsOrSignIn {
         val sjr = agent.getMandatorySubscriptionRecord
         (sjr.businessDetails.utr, sjr.businessDetails.postcode, sjr.businessDetails.registration, sjr.amlsData) match {
           case (utr, postcode, Some(registration), amlsData) =>
-            subscriptionService.handlePartiallySubscribedAndRedirect(agent, sjr.businessDetails.utr, sjr.businessDetails.postcode)(
-              whenNotPartiallySubscribed = subscriptionService
-              .subscribe(utr, postcode, registration, amlsData)
-              .flatMap(redirectSubscriptionResponse(_, agent)))
+                    for {
+                    _ <- updateSessionBeforeSubscribing(registration)
+                    subscriptionResponse <- subscriptionService
+                      .subscribe(utr, postcode, registration, amlsData)
+                    result <- redirectSubscriptionResponse(subscriptionResponse, agent)
+                    }yield result
 
           case _ =>
             Logger(getClass).warn(s"Missing data in session, redirecting back to /business-type")
@@ -135,9 +151,6 @@ class SubscriptionController @Inject()(
       case Right((_, _)) =>
         mark("Count-Subscription-Complete")
         for {
-          sjr <- agent.getMandatorySubscriptionRecord
-          newRecord <- sjr.copy(subscriptionCreated = true)
-          _ <- subscriptionJourneyService.saveJourneyRecord(newRecord)
           gotoComplete <- Redirect(routes.SubscriptionController.showSubscriptionComplete())
         } yield gotoComplete
 
@@ -207,7 +220,7 @@ class SubscriptionController @Inject()(
         None
     }
 
-    def handleRegistrationAndGoToComplete(registration: Option[Registration], result: (String, String, ContinueUrl) => Future[Result]): Future[Result] = {
+    def handleRegistrationAndGoToComplete(registration: Option[Registration], result: (String, String, ContinueUrl) => Result): Future[Result] = {
       registration match {
         case Some(registration) =>
           val agencyName = registration.taxpayerName.getOrElse(
@@ -231,14 +244,12 @@ class SubscriptionController @Inject()(
 
     withSubscribedAgent { (arn, sjrOpt) =>
       sjrOpt match {
-        case Some(sjr) => handleRegistrationAndGoToComplete(sjr.businessDetails.registration, (agencyName, agencyEmail, continueUrl) => for {
-                          _ <- subscriptionJourneyService.deleteJourneyRecord(sjr.authProviderId)
-                          result <- Ok(html.subscription_complete(continueUrl.url, arn.value, agencyName, agencyEmail))
-                        } yield result)
+        case Some(sjr) => handleRegistrationAndGoToComplete(sjr.businessDetails.registration, (agencyName, agencyEmail, continueUrl) =>
+                          Ok(html.subscription_complete(continueUrl.url, arn.value, agencyName, agencyEmail)))
 
         case None => sessionStoreService.fetchAgentSession.flatMap {
           case Some(agentSession) => handleRegistrationAndGoToComplete(agentSession.registration, (agencyName, agencyEmail, continueUrl) =>
-            Future successful Ok(html.subscription_complete(continueUrl.url, arn.value, agencyName, agencyEmail)))
+            Ok(html.subscription_complete(continueUrl.url, arn.value, agencyName, agencyEmail)))
 
           case None => throw new RuntimeException("no record found for agent")
         }

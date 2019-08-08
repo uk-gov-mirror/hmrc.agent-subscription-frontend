@@ -9,11 +9,10 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers.{contentType, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{AmlsDetails, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionJourneyStub._
-import uk.gov.hmrc.agentsubscriptionfrontend.stubs.{AgentSubscriptionStub, AuthStub}
+import uk.gov.hmrc.agentsubscriptionfrontend.stubs.{AgentSubscriptionJourneyStub, AgentSubscriptionStub, AuthStub}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.{individual, subscribingAgentEnrolledForNonMTD}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestData}
-import uk.gov.hmrc.http.{Upstream4xxResponse, Upstream5xxResponse}
 
 class StartControllerISpec extends BaseISpec {
 
@@ -32,18 +31,31 @@ class StartControllerISpec extends BaseISpec {
     val amlsSDetails = AmlsDetails("supervisory", Right(RegisteredDetails("123456789", LocalDate.now())))
 
     val agentSession =
-      AgentSession(Some(BusinessType.SoleTrader), utr = Some(validUtr), postcode = Some(Postcode(testPostcode)), registration = Some(testRegistration))
+      AgentSession(
+        Some(BusinessType.SoleTrader),
+        utr = Some(validUtr),
+        postcode = Some(Postcode(testPostcode)),
+        registration = Some(testRegistration))
 
     trait UnsubscribedAgentStub {
       AgentSubscriptionStub.withMatchingUtrAndPostcode(validUtr, testPostcode)
     }
 
     trait SubscribedAgentStub {
-      AgentSubscriptionStub.withMatchingUtrAndPostcode(validUtr, testPostcode, isSubscribedToAgentServices = true, isSubscribedToETMP = true)
+      AgentSubscriptionStub.withMatchingUtrAndPostcode(
+        validUtr,
+        testPostcode,
+        isSubscribedToAgentServices = true,
+        isSubscribedToETMP = true)
     }
 
     trait PartiallySubscribedAgentStub {
-      AgentSubscriptionStub.withMatchingUtrAndPostcode(validUtr, testPostcode, isSubscribedToAgentServices = false, isSubscribedToETMP = true)
+      AgentSubscriptionStub.withMatchingUtrAndPostcode(
+        validUtr,
+        testPostcode,
+        isSubscribedToAgentServices = false,
+        isSubscribedToETMP = true)
+      AgentSubscriptionJourneyStub.givenNoSubscriptionJourneyRecordExists(AuthProviderId("12345-credId"))
     }
 
   }
@@ -148,8 +160,8 @@ class StartControllerISpec extends BaseISpec {
       }
 
       "redirect to the /task-list page when there is no continueId" in {
-        implicit val authenticatedRequest: FakeRequest[AnyContentAsEmpty.type] = authenticatedAs(
-          subscribingAgentEnrolledForNonMTD)
+        implicit val authenticatedRequest: FakeRequest[AnyContentAsEmpty.type] =
+          authenticatedAs(subscribingAgentEnrolledForNonMTD)
         givenNoSubscriptionJourneyRecordExists(id)
         implicit val request = FakeRequest()
 
@@ -160,70 +172,45 @@ class StartControllerISpec extends BaseISpec {
       }
     }
 
-    // TODO: move partial subscription test when decision made on where to complete partial subscription
-    "redirect to correct page if given a valid StashedChainedSessionDetails ID and agent is partially subscribed (subscribed in ETMP but not enrolled)" when {
+    "returnAfterMapping" should {
 
-      "agent was not eligible for mapping, should redirect to /subscription-complete" ignore new PartiallySubscribedAgentStub {
-        AgentSubscriptionStub.partialSubscriptionWillSucceed(
-          CompletePartialSubscriptionBody(utr = validUtr, knownFacts = SubscriptionRequestKnownFacts(testPostcode)),
-          arn = "TARN00023")
+      "given a valid subscription journey record" when {
 
-        implicit val request = FakeRequest()
-        val result = await(controller.returnAfterGGCredsCreated(id = Some("thing"))(request))
+        "redirect to the /task-list page and update journey record with mappingComplete as true" in new SetupUnsubscribed {
+          givenSubscriptionRecordCreated(
+            record.authProviderId,
+            record.copy(continueId = Some(continueId.value), mappingComplete = true))
 
-        status(result) shouldBe 303
-        redirectLocation(result).head should include(routes.SubscriptionController.showSubscriptionComplete().url)
+          implicit val request = FakeRequest()
+
+          val result = await(controller.returnAfterMapping(id = Some(continueId.value))(request))
+
+          status(result) shouldBe 303
+          redirectLocation(result).head should include(routes.TaskListController.showTaskList().url)
+        }
+
+        "redirect to the /task-list page when there is no continueId" in {
+          givenNoSubscriptionJourneyRecordExists(id)
+          implicit val request = FakeRequest()
+
+          val result = await(controller.returnAfterMapping()(request))
+
+          status(result) shouldBe 303
+          redirectLocation(result) shouldBe Some(routes.TaskListController.showTaskList().url)
+        }
       }
-    }
-
-    "throw Upstream4xxResponse if agent-subscription returns 403 when completing partial subscription" ignore new PartiallySubscribedAgentStub {
-      AgentSubscriptionStub
-        .partialSubscriptionWillReturnStatus(CompletePartialSubscriptionBody(utr = validUtr, knownFacts = SubscriptionRequestKnownFacts(testPostcode)), 403)
-
-      an[Upstream4xxResponse] shouldBe thrownBy(await(controller.returnAfterGGCredsCreated(id = Some("thing"))(FakeRequest())))
-    }
-
-    "throw Upstream4xxResponse if agent-subscription returns 409 when completing partial subscription" ignore new PartiallySubscribedAgentStub {
-      AgentSubscriptionStub
-        .partialSubscriptionWillReturnStatus(CompletePartialSubscriptionBody(utr = validUtr, knownFacts = SubscriptionRequestKnownFacts(testPostcode)), 409)
-
-      an[Upstream4xxResponse] shouldBe thrownBy(await(controller.returnAfterGGCredsCreated(id = Some("thing"))(FakeRequest())))
-    }
-
-    "throw Upstream5xxResponse, 500 when executing partialSubscriptionFix" ignore new PartiallySubscribedAgentStub {
-      AgentSubscriptionStub
-        .partialSubscriptionWillReturnStatus(CompletePartialSubscriptionBody(utr = validUtr, knownFacts = SubscriptionRequestKnownFacts(testPostcode)), 500)
-
-      an[Upstream5xxResponse] shouldBe thrownBy(await(controller.returnAfterGGCredsCreated(id = Some("thing"))(FakeRequest())))
     }
   }
 
-  "returnAfterMapping" should {
+  "GET /cannot-create-account" should {
+    "display the cannot create account page" in {
+      implicit val request = FakeRequest()
 
-    "given a valid subscription journey record" when {
+      val result = await(controller.showCannotCreateAccount()(request))
 
-      "redirect to the /task-list page and update journey record with mappingComplete as true" in new SetupUnsubscribed {
-        givenSubscriptionRecordCreated(record.authProviderId, record.copy(continueId = Some(continueId.value), mappingComplete = true))
-
-        implicit val request = FakeRequest()
-
-        val result = await(controller.returnAfterMapping(id = Some(continueId.value))(request))
-
-        status(result) shouldBe 303
-        redirectLocation(result).head should include(routes.TaskListController.showTaskList().url)
-      }
-
-      "redirect to the /task-list page when there is no continueId" in {
-        implicit val authenticatedRequest: FakeRequest[AnyContentAsEmpty.type] = authenticatedAs(
-          subscribingAgentEnrolledForNonMTD)
-        givenNoSubscriptionJourneyRecordExists(id)
-        implicit val request = FakeRequest()
-
-        val result = await(controller.returnAfterMapping()(request))
-
-        status(result) shouldBe 303
-        redirectLocation(result) shouldBe Some(routes.TaskListController.showTaskList().url)
-      }
+      status(result) shouldBe 200
+      checkHtmlResultWithBodyText(result, "We could not confirm your identity",
+        "Before you can create an agent services account, we need to be sure that a client has authorised you to deal with HMRC.")
     }
   }
 }
