@@ -77,7 +77,9 @@ class SubscriptionController @Inject()(
                         address = registration.address,
                         emailAddress = registration.emailAddress,
                         amlsData = Some(amlsData),
-                        isManuallyAssured = isMAAgent)
+                        isManuallyAssured = isMAAgent,
+                        userMappings = sjr.userMappings,
+                        appConfig)
                       ))
                   }
 
@@ -90,7 +92,9 @@ class SubscriptionController @Inject()(
                     address = registration.address,
                     emailAddress = registration.emailAddress,
                     amlsData = None,
-                    isManuallyAssured = isMAAgent)
+                    isManuallyAssured = isMAAgent,
+                    userMappings = sjr.userMappings,
+                    appConfig)
                   ))
 
               case (_, None) => Redirect(routes.AMLSController.showAmlsRegisteredPage())

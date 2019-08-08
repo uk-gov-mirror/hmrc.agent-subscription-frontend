@@ -33,7 +33,7 @@
           @for(line <- answerRow.answerLines) { <div>@line</div> }
         </dd>
         <dd class="app-check-your-answers__change">
-            <a href="@answerRow.changeLink">@Messages("checkAnswers.change.button")
+            <a href="@answerRow.changeLink">@answerRow.buttonText
                 <span class="visuallyhidden"> @answerRow.question</span></a>
         </dd>
     </div>
@@ -54,6 +54,10 @@
 
                 @for(amlsRow <- checkYourAnswers.maybeAmlsDataRow) {
                     @checkAnswerBlock("amls", amlsRow)
+                }
+
+                @for(mappingRow <- checkYourAnswers.maybeMappingRow) {
+                    @checkAnswerBlock("mappings", mappingRow)
                 }
 
             </dl>

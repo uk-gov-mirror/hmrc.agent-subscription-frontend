@@ -115,7 +115,7 @@ class BusinessIdentificationControllerISpec extends BaseISpec {
     }
 
     "pre-populate the business name data into the form when it is present in the BE store" in new Setup {
-      givenSubscriptionJourneyRecordExists(id, TestData.completeJourneyRecord)
+      givenSubscriptionJourneyRecordExists(id, TestData.completeJourneyRecordNoMappings)
 
       val result = await(controller.changeBusinessName(authenticatedRequest))
 
@@ -127,7 +127,7 @@ class BusinessIdentificationControllerISpec extends BaseISpec {
       behave like anAgentAffinityGroupOnlyEndpoint(controller.submitChangeBusinessName(_))
 
       "redirect to /check-answers when user inputs valid data and continues" in new Setup {
-        givenSubscriptionJourneyRecordExists(id, TestData.completeJourneyRecord)
+        givenSubscriptionJourneyRecordExists(id, TestData.completeJourneyRecordNoMappings)
         givenSubscriptionRecordCreated(id,TestData.completeJourneyRecordWithUpdatedBusinessName("New Agency Name"))
 
         val result = await(
@@ -139,7 +139,7 @@ class BusinessIdentificationControllerISpec extends BaseISpec {
       }
 
       "redirect to /progress-saved when user inputs valid data and saves" in new Setup {
-        givenSubscriptionJourneyRecordExists(id, TestData.completeJourneyRecord)
+        givenSubscriptionJourneyRecordExists(id, TestData.completeJourneyRecordNoMappings)
         givenSubscriptionRecordCreated(id,TestData.completeJourneyRecordWithUpdatedBusinessName("New Agency Name"))
 
         val result = await(
@@ -170,7 +170,7 @@ class BusinessIdentificationControllerISpec extends BaseISpec {
     }
 
     "pre-populate the business email data into the form when it is present in the BE store" in new Setup {
-      givenSubscriptionJourneyRecordExists(id, TestData.completeJourneyRecord)
+      givenSubscriptionJourneyRecordExists(id, TestData.completeJourneyRecordNoMappings)
 
       val result = await(controller.changeBusinessEmail(authenticatedRequest))
 
@@ -182,7 +182,7 @@ class BusinessIdentificationControllerISpec extends BaseISpec {
     behave like anAgentAffinityGroupOnlyEndpoint(controller.submitChangeBusinessEmail(_))
 
     "redirect to /check-answers when user inputs valid data and continues" in new Setup {
-      givenSubscriptionJourneyRecordExists(id, TestData.completeJourneyRecord)
+      givenSubscriptionJourneyRecordExists(id, TestData.completeJourneyRecordNoMappings)
       givenSubscriptionRecordCreated(id,TestData.completeJourneyRecordWithUpdatedBusinessEmail("new@gmail.com"))
 
       val result = await(
@@ -194,7 +194,7 @@ class BusinessIdentificationControllerISpec extends BaseISpec {
     }
 
     "redirect to /progress-saved when user inputs valid data and saves" in new Setup {
-      givenSubscriptionJourneyRecordExists(id, TestData.completeJourneyRecord)
+      givenSubscriptionJourneyRecordExists(id, TestData.completeJourneyRecordNoMappings)
       givenSubscriptionRecordCreated(id,TestData.completeJourneyRecordWithUpdatedBusinessEmail("new@gmail.com"))
 
       val result = await(
