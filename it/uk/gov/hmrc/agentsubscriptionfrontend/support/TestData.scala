@@ -82,8 +82,8 @@ object TestData {
   val completeJourneyRecordWithMappings: SubscriptionJourneyRecord = completeJourneyRecordNoMappings
     .copy(
       userMappings = List(
-        UserMapping(AuthProviderId("map-1"),List(AgentCode("ACODE")), 20, "1234"),
-        UserMapping(AuthProviderId("map-2"),List(AgentCode("BCODE")), 20, "5678")
+        UserMapping(AuthProviderId("map-1"),Some(AgentCode("ACODE")), List.empty, 20, "1234"),
+        UserMapping(AuthProviderId("map-2"),Some(AgentCode("BCODE")), List.empty, 20, "5678")
       )
   )
 

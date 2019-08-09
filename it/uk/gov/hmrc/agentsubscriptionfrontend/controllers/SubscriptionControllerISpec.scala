@@ -51,7 +51,7 @@ trait TestSetupWithCompleteJourneyRecordWithMapping {
 trait TestSetupWithCompleteJourneyRecordAndCreate {
   givenSubscriptionJourneyRecordExists(AuthProviderId("12345-credId"), completeJourneyRecordNoMappings)
   givenAgentIsNotManuallyAssured(utr.value)
-  givenSubscriptionRecordCreated(id, completeJourneyRecordNoMappings.copy(subscriptionCreated = true))
+  givenSubscriptionRecordCreated(id, completeJourneyRecordNoMappings)
 }
 
 class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec with ScalaFutures {
