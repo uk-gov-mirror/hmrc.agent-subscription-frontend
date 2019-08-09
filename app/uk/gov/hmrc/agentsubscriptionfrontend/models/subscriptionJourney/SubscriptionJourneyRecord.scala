@@ -21,7 +21,6 @@ import java.util.UUID
 
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{JsPath, OFormat}
-import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, AuthProviderId}
 
 /**
@@ -37,7 +36,6 @@ final case class SubscriptionJourneyRecord(
   userMappings: List[UserMapping] = List.empty,
   mappingComplete: Boolean = false,
   cleanCredsAuthProviderId: Option[AuthProviderId] = None,
-  subscriptionCreated: Boolean = false,
   lastModifiedDate: Option[LocalDateTime] = None)
 
 object SubscriptionJourneyRecord {
@@ -52,7 +50,6 @@ object SubscriptionJourneyRecord {
       (JsPath \ "userMappings").format[List[UserMapping]] and
       (JsPath \ "mappingComplete").format[Boolean] and
       (JsPath \ "cleanCredsAuthProviderId").formatNullable[AuthProviderId] and
-      (JsPath \ "subscriptionCreated").format[Boolean] and
       (JsPath \ "lastModifiedDate")
         .formatNullable[LocalDateTime])(SubscriptionJourneyRecord.apply, unlift(SubscriptionJourneyRecord.unapply))
 

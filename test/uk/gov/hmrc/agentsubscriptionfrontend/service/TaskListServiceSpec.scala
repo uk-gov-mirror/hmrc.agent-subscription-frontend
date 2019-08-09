@@ -58,7 +58,6 @@ class TaskListServiceSpec extends UnitSpec with MockitoSugar {
     List.empty,
     mappingComplete = false,
     None,
-    subscriptionCreated = false,
     None
   )
 
@@ -70,7 +69,6 @@ class TaskListServiceSpec extends UnitSpec with MockitoSugar {
     List.empty,
     mappingComplete = false,
     Some(AuthProviderId("cred-1234")),
-    subscriptionCreated = false,
     None
   )
 
