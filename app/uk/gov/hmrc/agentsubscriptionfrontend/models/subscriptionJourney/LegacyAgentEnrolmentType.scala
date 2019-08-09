@@ -16,22 +16,6 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney
 
-/*
- * Copyright 2019 HM Revenue & Customs
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import play.api.libs.json._
 
 /**
@@ -41,7 +25,7 @@ import play.api.libs.json._
   */
 sealed abstract class LegacyAgentEnrolmentType {
   val key: String = this match {
-    case IRAgentReference     => " IR-SA-AGENT"
+    case IRAgentReference     => "IR-SA-AGENT"
     case AgentRefNo           => "HMCE-VAT-AGNT"
     case AgentCharId          => "HMRC-CHAR-AGENT"
     case HmrcGtsAgentRef      => "HMRC-GTS-AGNT"
@@ -71,7 +55,7 @@ object LegacyAgentEnrolmentType {
 
   def find(key: String): Option[LegacyAgentEnrolmentType] =
     key match {
-      case " IR-SA-AGENT"    => Some(IRAgentReference)
+      case "IR-SA-AGENT"     => Some(IRAgentReference)
       case "HMCE-VAT-AGNT"   => Some(AgentRefNo)
       case "HMRC-CHAR-AGENT" => Some(AgentCharId)
       case "HMRC-GTS-AGNT"   => Some(HmrcGtsAgentRef)
