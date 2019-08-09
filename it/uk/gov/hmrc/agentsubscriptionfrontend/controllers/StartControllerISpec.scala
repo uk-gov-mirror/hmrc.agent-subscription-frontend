@@ -176,28 +176,24 @@ class StartControllerISpec extends BaseISpec {
 
       "given a valid subscription journey record" when {
 
-        "redirect to the /task-list page and update journey record with mappingComplete as true" in new SetupUnsubscribed {
-          givenSubscriptionRecordCreated(
-            record.authProviderId,
-            record.copy(continueId = Some(continueId.value), mappingComplete = true))
+        "redirect to the /task-list page and update journey record with mappingComplete as true" in {
+          implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+          givenSubscriptionJourneyRecordExists(id, record)
+          givenSubscriptionRecordCreated(record.authProviderId, record.copy(continueId = None, mappingComplete = true))
 
-          implicit val request = FakeRequest()
-
-          val result = await(controller.returnAfterMapping(id = Some(continueId.value))(request))
+          val result = await(controller.returnAfterMapping()(request))
 
           status(result) shouldBe 303
           redirectLocation(result).head should include(routes.TaskListController.showTaskList().url)
         }
 
-        "redirect to the /task-list page when there is no continueId" in {
+        "throw a runtime exception when there is no record" in {
           implicit val authenticatedRequest: FakeRequest[AnyContentAsEmpty.type] =
             authenticatedAs(subscribingAgentEnrolledForNonMTD)
           givenNoSubscriptionJourneyRecordExists(id)
-
-          val result = await(controller.returnAfterMapping()(authenticatedRequest))
-
-          status(result) shouldBe 303
-          redirectLocation(result) shouldBe Some(routes.TaskListController.showTaskList().url)
+          intercept[RuntimeException] {
+            await(controller.returnAfterMapping()(authenticatedRequest))
+          }.getMessage shouldBe "Expected Journey Record missing"
         }
       }
     }
@@ -210,8 +206,11 @@ class StartControllerISpec extends BaseISpec {
       val result = await(controller.showCannotCreateAccount()(request))
 
       status(result) shouldBe 200
-      checkHtmlResultWithBodyText(result, "We could not confirm your identity",
-        "Before you can create an agent services account, we need to be sure that a client has authorised you to deal with HMRC.")
+      checkHtmlResultWithBodyText(
+        result,
+        "We could not confirm your identity",
+        "Before you can create an agent services account, we need to be sure that a client has authorised you to deal with HMRC."
+      )
     }
   }
 }

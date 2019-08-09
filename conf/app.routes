@@ -4,7 +4,7 @@ GET         /                                              uk.gov.hmrc.agentsubs
 GET         /start                                         uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.start
 GET         /not-agent                                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.showNotAgent
 GET         /return-after-gg-creds-created                 uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.returnAfterGGCredsCreated(id: Option[String] ?= None)
-GET         /return-after-mapping                          uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.returnAfterMapping(id: Option[String] ?= None)
+GET         /return-after-mapping                          uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.returnAfterMapping
 
 GET         /task-list                                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.TaskListController.showTaskList
 GET         /progress-saved                                uk.gov.hmrc.agentsubscriptionfrontend.controllers.TaskListController.savedProgress(backLink: Option[String] ?= None)

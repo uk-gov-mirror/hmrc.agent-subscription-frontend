@@ -88,18 +88,13 @@ class StartController @Inject()(
     }
   }
 
-  def returnAfterMapping(id: Option[String] = None): Action[AnyContent] = Action.async { implicit request =>
+  def returnAfterMapping(): Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { agent =>
+      val sjr = agent.getMandatorySubscriptionRecord
       continueUrlActions.withMaybeContinueUrlCached {
-        id match {
-          case Some(continueId) =>
-            for {
-              record <- subscriptionJourneyService.getMandatoryJourneyRecord(ContinueId(continueId))
-              _      <- subscriptionJourneyService.saveJourneyRecord(record.copy(mappingComplete = true))
-            } yield Redirect(routes.TaskListController.showTaskList())
-
-          case None => Future.successful(Redirect(routes.TaskListController.showTaskList()))
-        }
+        subscriptionJourneyService
+          .saveJourneyRecord(sjr.copy(mappingComplete = true))
+          .map(_ => Redirect(routes.TaskListController.showTaskList()))
       }
     }
   }
