@@ -28,6 +28,6 @@
 
     <p>
      <a class="button margin-right-5" href="@SignedOutController.redirectToSos" role="button" id="buttonGoToGg">@Messages("button.register")</a>
-     <a class="button--secondary" href="@routes.TaskListController.showTaskList()">@Messages("button.saveComeBackLater")</a>
+     <a class="button--secondary" href="@routes.TaskListController.savedProgress(Some(routes.BusinessIdentificationController.showCreateNewAccount().url))">@Messages("button.saveComeBackLater")</a>
     </p>
 }
