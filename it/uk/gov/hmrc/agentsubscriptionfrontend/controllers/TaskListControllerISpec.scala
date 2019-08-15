@@ -94,14 +94,14 @@ class TaskListControllerISpec extends BaseISpec {
         AuthProviderId("12345-credId"),
         TestData.minimalSubscriptionJourneyRecord(AuthProviderId("12345-credId"))
           .copy(amlsData = Some(AmlsData(amlsRegistered = true, None,
-            Some(AmlsDetails("supervisory", Left(PendingDetails(LocalDate.now().minusDays(20)))))))))
+            Some(AmlsDetails("supervisory", Left(PendingDetails(LocalDate.now().minusDays(20))))))), continueId = Some("continue-id")))
 
       implicit val request: FakeRequest[AnyContentAsEmpty.type] = authenticatedAs(subscribingAgentEnrolledForNonMTD)
 
       val result = await(controller.showTaskList(request))
       status(result) shouldBe 200
 
-      checkHtmlResultWithBodyText(result, "/agent-mapping/task-list/start")
+      checkHtmlResultWithBodyText(result, "/agent-mapping/task-list/start/?continueId=continue-id")
     }
 
     "redirect to business type if there is no record for this agents auth provider id" in {

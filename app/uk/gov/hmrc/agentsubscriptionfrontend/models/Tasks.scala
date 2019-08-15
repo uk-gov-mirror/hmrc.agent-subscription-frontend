@@ -42,13 +42,14 @@ final case class AmlsTask(isMaa: Boolean, amlsData: Option[AmlsData]) extends Ta
 final case class MappingTask(
   cleanCredsAuthProviderId: Option[AuthProviderId],
   mappingComplete: Boolean,
+  continueId: String,
   previousTask: Task,
   appConfig: AppConfig)
     extends Task {
   override val taskKey: String = "mappingTask"
   override val showLink: Boolean = previousTask.isComplete
   override val isComplete: Boolean = mappingComplete && previousTask.isComplete
-  override val link: String = appConfig.agentMappingFrontendStartUrl
+  override val link: String = s"${appConfig.agentMappingFrontendStartUrl}/?continueId=$continueId"
 }
 
 final case class CreateIDTask(cleanCredsAuthProviderId: Option[AuthProviderId], previousTask: Task) extends Task {

@@ -43,8 +43,10 @@ class TaskListService @Inject()(agentAssuranceConnector: AgentAssuranceConnector
         val mappingTask = MappingTask(
           subscriptionJourneyRecord.cleanCredsAuthProviderId,
           subscriptionJourneyRecord.mappingComplete,
+          subscriptionJourneyRecord.continueId.getOrElse(" "),
           amlsTask,
-          appConfig)
+          appConfig
+        )
         val createIDTask = CreateIDTask(subscriptionJourneyRecord.cleanCredsAuthProviderId, mappingTask)
         val checkAnswersTask = CheckAnswersTask(createIDTask)
         List(amlsTask, mappingTask, createIDTask, checkAnswersTask)
