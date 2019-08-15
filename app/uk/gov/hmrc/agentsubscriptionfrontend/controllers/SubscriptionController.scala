@@ -130,7 +130,7 @@ class SubscriptionController @Inject()(
                     subscriptionResponse <- subscriptionService
                       .subscribe(utr, postcode, registration, amlsData)
                     result <- redirectSubscriptionResponse(subscriptionResponse, agent)
-                    }yield result
+                    } yield result
 
           case _ =>
             Logger(getClass).warn(s"Missing data in session, redirecting back to /business-type")
@@ -164,7 +164,7 @@ class SubscriptionController @Inject()(
 
       case Left(SubscriptionReturnedHttpError(status)) =>
         mark("Count-Subscription-Failed")
-        throw new HttpException("Subscription failed", status)
+        throw new HttpException(s"Subscription failed: HTTP status $status from agent-subscription service ", status)
     }
 
   def returnFromAddressLookup(id: String): Action[AnyContent] = Action.async { implicit request =>

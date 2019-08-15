@@ -91,8 +91,11 @@ class SubscriptionService @Inject()(
       Right(arn)
     } recover {
       case e: Upstream4xxResponse if Seq(Status.FORBIDDEN, Status.CONFLICT) contains e.upstreamResponseCode =>
+        Logger.warn("Upstream error (in agent-subscription): see agent-subscription log for details")
         Left(e.upstreamResponseCode)
-      case e => throw e
+      case e =>
+        Logger.error("Upstream error (in agent-subscription): see agent-subscription log for details", e)
+        throw e
     }
   }
 
