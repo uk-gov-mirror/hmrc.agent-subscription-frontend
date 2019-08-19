@@ -134,7 +134,7 @@ class TaskListControllerISpec extends BaseISpec {
 
       result should containSubstrings(
         "To complete this form later, go to the",
-        "guidance page about creating an agent services account (open in a new window or tab)",
+        "guidance page about creating an agent services account (opens in a new window or tab)",
         "on GOV.UK and sign in to this service again."
       )
 
