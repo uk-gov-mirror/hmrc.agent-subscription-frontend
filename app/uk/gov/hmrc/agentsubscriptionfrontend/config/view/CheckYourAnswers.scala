@@ -41,6 +41,7 @@ object CheckYourAnswers {
     amlsData: Option[AmlsData],
     isManuallyAssured: Boolean,
     userMappings: List[UserMapping],
+    continueId: String,
     appConfig: AppConfig)(implicit messages: Messages): CheckYourAnswers =
     CheckYourAnswers(
       businessNameRow = makeBusinessNameRow(registrationName),
@@ -55,7 +56,7 @@ object CheckYourAnswers {
             AnswerRow(
               question = Messages("checkAnswers.userMapping.label"),
               answerLines = List(userMappings.map(_.count).sum.toString),
-              changeLink = Call("GET", url = appConfig.agentMappingFrontendStartUrl),
+              changeLink = Call("GET", url = appConfig.agentMappingFrontendStartUrl(continueId)),
               buttonText = Messages("checkAnswers.addMore.button")
             ))
     )
