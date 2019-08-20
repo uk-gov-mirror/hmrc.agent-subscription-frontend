@@ -79,6 +79,7 @@ class SubscriptionController @Inject()(
                         amlsData = Some(amlsData),
                         isManuallyAssured = isMAAgent,
                         userMappings = sjr.userMappings,
+                        continueId = sjr.continueId,
                         appConfig)
                       ))
                   }
@@ -94,6 +95,7 @@ class SubscriptionController @Inject()(
                     amlsData = None,
                     isManuallyAssured = isMAAgent,
                     userMappings = sjr.userMappings,
+                    continueId = sjr.continueId,
                     appConfig)
                   ))
 

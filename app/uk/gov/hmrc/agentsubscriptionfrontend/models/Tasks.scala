@@ -49,7 +49,7 @@ final case class MappingTask(
   override val taskKey: String = "mappingTask"
   override val showLink: Boolean = previousTask.isComplete
   override val isComplete: Boolean = mappingComplete && previousTask.isComplete
-  override val link: String = s"${appConfig.agentMappingFrontendStartUrl}/?continueId=$continueId"
+  override val link: String = appConfig.agentMappingFrontendStartUrl(continueId)
 }
 
 final case class CreateIDTask(cleanCredsAuthProviderId: Option[AuthProviderId], previousTask: Task) extends Task {

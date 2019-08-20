@@ -51,7 +51,8 @@ class ViewsSpec extends MixedPlaySpec {
     override val chainedSessionDetailsTtl: Int = 900
     override val cacheableSessionDomain: String = "cacheableSessionDomain"
     override val isDevMode: Boolean = true
-    override val agentMappingFrontendStartUrl: String = "http://localhost:9438/agent-mapping/start"
+    override def agentMappingFrontendStartUrl(continueId: String): String =
+      s"http://localhost:9438/agent-mapping/start?continueId=$continueId"
   }
 
   "error_template view" should {
