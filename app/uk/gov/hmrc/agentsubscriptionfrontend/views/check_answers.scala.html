@@ -56,8 +56,12 @@
                     @checkAnswerBlock("amls", amlsRow)
                 }
 
-                @for(mappingRow <- checkYourAnswers.maybeMappingRow) {
-                    @checkAnswerBlock("mappings", mappingRow)
+                @for(mappingClientNumberRow <- checkYourAnswers.maybeMappingClientNumberRow) {
+                    @checkAnswerBlock("mappings", mappingClientNumberRow)
+                }
+
+                @for(mappingGGIdRow <- checkYourAnswers.maybeMappingGGIdsRow) {
+                  @checkAnswerBlock("ggIds", mappingGGIdRow)
                 }
 
             </dl>

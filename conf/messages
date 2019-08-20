@@ -398,6 +398,8 @@ checkAnswers.amlsDetails.label=Money laundering compliance details and expiry da
 checkAnswers.amlsDetails.pending.label=Date you applied to register for money laundering supervision with HMRC
 checkAnswers.userMapping.label=Number of client relationships copied
 checkAnswers.addMore.button=Add more
+checkAnswers.ggId.label=Government Gateway user IDs entered (for your security only the last 4 numbers are shown)
+checkAnswers.ggId.xs=XXXX-XXXX-{0}
 
 businessName.title=What is your business name?
 businessName.updated.title=Update your business name

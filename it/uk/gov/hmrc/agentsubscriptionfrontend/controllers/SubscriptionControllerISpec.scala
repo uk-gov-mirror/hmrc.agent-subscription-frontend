@@ -147,7 +147,8 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         "checkAnswers.businessName.label",
         "checkAnswers.businessEmailAddress.label",
         "checkAnswers.businessAddress.label",
-        "checkAnswers.userMapping.label"
+        "checkAnswers.userMapping.label",
+        "checkAnswers.ggId.label"
       )
       result should not(containMessages("checkAnswers.amlsDetails.pending.label"))
     }
