@@ -33,7 +33,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub.{partia
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.{AgentSubscriptionStub, AuthStub}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestData, TestSetupNoJourneyRecord}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser._
-import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData._
+import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData.{utr, _}
 import uk.gov.hmrc.play.binders.ContinueUrl
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -131,7 +131,8 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       result should not(containMessages("checkAnswers.amlsDetails.pending.label"))
     }
 
-    "show subscription answers page with mapping " in new TestSetupWithCompleteJourneyRecordWithMapping {
+    "show subscription answers page with mapping " in {
+      givenSubscriptionJourneyRecordExists(AuthProviderId("12345-credId"), completeJourneyRecordWithMappings.copy(continueId = Some("continue-id")))
       givenAgentIsManuallyAssured(validUtr.value)
       implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments
       )
@@ -149,6 +150,14 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         "checkAnswers.userMapping.label"
       )
       result should not(containMessages("checkAnswers.amlsDetails.pending.label"))
+    }
+
+    "throw an exception when there is no continue url in the record" in new TestSetupWithCompleteJourneyRecordWithMapping {
+      implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+
+      intercept[RuntimeException] {
+        await(controller.showCheckAnswers(request))
+      }.getMessage shouldBe "no continueId found in record"
     }
   }
 

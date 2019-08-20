@@ -101,7 +101,7 @@ class TaskListControllerISpec extends BaseISpec {
       val result = await(controller.showTaskList(request))
       status(result) shouldBe 200
 
-      checkHtmlResultWithBodyText(result, "/agent-mapping/task-list/start/?continueId=continue-id")
+      checkHtmlResultWithBodyText(result, "/agent-mapping/task-list/start?continueId=continue-id")
     }
 
     "redirect to business type if there is no record for this agents auth provider id" in {
