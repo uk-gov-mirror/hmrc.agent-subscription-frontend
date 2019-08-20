@@ -432,3 +432,5 @@ sign-in-new-id.p1=You have not finished creating your agent services account.
 sign-in-new-id.p2=To finish this step, sign in again using the new user ID you created for your agent services account.
 sign-in-new-id.button=Sign in with new user ID
 
+footer.links.accessibility.text=Accessibility
+footer.links.accessibility.url=/agent-subscription/accessibility
