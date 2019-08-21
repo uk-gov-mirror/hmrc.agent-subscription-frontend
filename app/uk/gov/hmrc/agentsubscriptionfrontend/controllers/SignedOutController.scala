@@ -55,7 +55,7 @@ class SignedOutController @Inject()(
             "id"       -> continueId,
             "continue" -> agentSubContinueUrlOpt.map(_.url)
           )
-        SeeOther(addParamsToUrl(appConfig.sosRedirectUrl, "continue" -> Some(continueUrl))).withNewSession
+        SeeOther(addParamsToUrl(appConfig.ggRegistrationFrontendExternalUrl, "continue" -> Some(continueUrl))).withNewSession
       }
     }
   }
