@@ -54,10 +54,7 @@ trait AppConfig {
 }
 
 @Singleton
-class FrontendAppConfig @Inject()(
-  val environment: Environment,
-  val configuration: Configuration,
-  @Named("government-gateway-registration-frontend-baseUrl") ggRegistrationFrontendBaseUrl: URL)
+class FrontendAppConfig @Inject()(val environment: Environment, val configuration: Configuration)
     extends AppConfig with ServicesConfig {
 
   override val runModeConfiguration: Configuration = configuration
@@ -94,7 +91,8 @@ class FrontendAppConfig @Inject()(
   override def agentMappingFrontendStartUrl(continueId: String): String =
     s"${getServicesConfStringOrFail("agent-mapping-frontend.external-url")}${getServicesConfStringOrFail(
       "agent-mapping-frontend.start.path")}?continueId=$continueId"
-  override val ggRegistrationFrontendExternalUrl: String = s"$ggRegistrationFrontendBaseUrl$ssoRedirectUrl"
+  override val ggRegistrationFrontendExternalUrl: String =
+    s"${getConfStringOrFail(s"$env.microservice.services.government-gateway-registration-frontend.externalUrl")}$ssoRedirectUrl"
 
   def getServicesConfStringOrFail(key: String): String =
     getConfString(key, throw new Exception(s"Property not found $key"))
