@@ -95,7 +95,13 @@
 }
 
 .app-task-list__items {
-    padding-left: 30px;
+    padding-left: 22px;
+}
+
+@media (min-width: 48.0625em) {
+    .app-task-list__items {
+        padding-left: 30px;
+    }
 }
 
 .app-task-list__item:first-child {

@@ -32,28 +32,30 @@
 @errorSummary(Messages("error.summary.heading"), checkAmlsForm, Seq.empty, Some("check-amls"))
 }
 
-<h1 class="heading-xlarge margin-bottom-20">@Messages(s"check-amls.title")</h1>
-
-
 @form(
 action = routes.AMLSController.submitAmlsRegistered(), 'class -> "form js-form") {
 
-<div class="form-group margin-top-30">
-    @input_radio_group(
-    checkAmlsForm("registeredAmls"),
-    Seq(
-    "yes" -> Messages("button.yes"),
-    "no" -> Messages("button.no")
-    ),
-    '_groupDivClass -> "soft--ends",
-    '_legendClass -> "visuallyhidden",
-    '_fieldsetAttributes -> Html("""id='checkAmls'""")
-    )
-</div>
+    <fieldset>
+        <legend>
+            <h1 class="heading-xlarge margin-bottom-20">@Messages(s"check-amls.title")</h1>
+        </legend>
+        <div class="form-group margin-top-30">
+            @input_radio_group(
+            checkAmlsForm("registeredAmls"),
+            Seq(
+            "yes" -> Messages("button.yes"),
+            "no" -> Messages("button.no")
+            ),
+            '_groupDivClass -> "soft--ends",
+            '_fieldsetAttributes -> Html("""id='checkAmls'""")
+            )
+        </div>
+    </fieldset>
 
-<div class="form-field">
-    <button class="button margin-right-5" type="submit" id="check-amls-continue" name="continue" value="continue">@Messages("button.saveContinue")</button>
-    <button class="button--secondary" type="submit" id="check-amls-save" name="continue" value="save">@Messages("button.saveComeBackLater")</button>
-</div>
+    <div class="form-field">
+        <button class="button margin-right-5" type="submit" id="check-amls-continue" name="continue" value="continue">@Messages("button.saveContinue")</button>
+        <button class="button--secondary" type="submit" id="check-amls-save" name="continue" value="save">@Messages("button.saveComeBackLater")</button>
+    </div>
+
 }
 }
