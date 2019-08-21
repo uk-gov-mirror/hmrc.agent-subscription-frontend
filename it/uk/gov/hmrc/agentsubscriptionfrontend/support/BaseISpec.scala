@@ -40,6 +40,8 @@ abstract class BaseISpec
         "microservice.services.sso.port"                     -> wireMockPort,
         "microservice.services.agent-assurance.port"         -> wireMockPort,
         "microservice.services.agent-mapping.port"         -> wireMockPort,
+        "microservice.services.government-gateway-registration-frontend.host"         -> wireMockHost,
+        "microservice.services.government-gateway-registration-frontend.port"         -> wireMockPort,
         "auditing.enabled"                                   -> true,
         "auditing.consumer.baseUri.host"                     -> wireMockHost,
         "auditing.consumer.baseUri.port"                     -> wireMockPort
