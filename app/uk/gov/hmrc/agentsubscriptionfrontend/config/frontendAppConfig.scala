@@ -16,11 +16,9 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.config
 
-import java.net.URL
-
-import javax.inject.{Inject, Named, Singleton}
 import java.util.Collections.emptyList
 
+import javax.inject.{Inject, Singleton}
 import play.api.{Configuration, Environment, Mode}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.blacklistedpostcodes.PostcodesLoader
 import uk.gov.hmrc.play.config.ServicesConfig
@@ -45,12 +43,12 @@ trait AppConfig {
   val agentAssuranceRun: Boolean
   val addressLookupContinueUrl: String
   val surveyRedirectUrl: String
-  val ssoRedirectUrl: String
   val companyAuthSignInUrl: String
   val chainedSessionDetailsTtl: Int
   val cacheableSessionDomain: String
   def agentMappingFrontendStartUrl(continueId: String): String
   val ggRegistrationFrontendExternalUrl: String
+  val rootContinueUrl: String
 }
 
 @Singleton
@@ -84,15 +82,23 @@ class FrontendAppConfig @Inject()(val environment: Environment, val configuratio
   override val addressLookupContinueUrl: String = getServicesConfStringOrFail(
     "address-lookup-frontend.new-address-callback.url")
   override val surveyRedirectUrl: String = getConfStringOrFail(s"$env.surveyRedirectUrl")
-  override val ssoRedirectUrl: String = getConfStringOrFail(s"$env.sosRedirectUrl")
+
   override val companyAuthSignInUrl: String = getConfStringOrFail(s"$env.companyAuthSignInUrl")
   override val chainedSessionDetailsTtl: Int = getConfIntOrFail(s"$env.mongodb.chainedsessiondetails.ttl")
   override val cacheableSessionDomain: String = getServicesConfStringOrFail("cachable.session-cache.domain")
   override def agentMappingFrontendStartUrl(continueId: String): String =
     s"${getServicesConfStringOrFail("agent-mapping-frontend.external-url")}${getServicesConfStringOrFail(
       "agent-mapping-frontend.start.path")}?continueId=$continueId"
+
+  val ssoRedirectUrl: String = "/government-gateway-registration-frontend?accountType=agent&origin=unknown"
+
   override val ggRegistrationFrontendExternalUrl: String =
     s"${getConfStringOrFail(s"$env.microservice.services.government-gateway-registration-frontend.externalUrl")}$ssoRedirectUrl"
+
+  private val returnAfterGGCredsCreatedPath: String = "/agent-subscription/return-after-gg-creds-created"
+
+  override val rootContinueUrl: String =
+    if (isDevMode) s"http://localhost:9437$returnAfterGGCredsCreatedPath" else returnAfterGGCredsCreatedPath
 
   def getServicesConfStringOrFail(key: String): String =
     getConfString(key, throw new Exception(s"Property not found $key"))

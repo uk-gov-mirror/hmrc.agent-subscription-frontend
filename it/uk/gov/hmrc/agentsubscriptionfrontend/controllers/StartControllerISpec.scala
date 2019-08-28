@@ -117,7 +117,7 @@ class StartControllerISpec extends BaseISpec {
         val result = await(controller.showNotAgent(authenticatedAs(individual)))
 
         status(result) shouldBe 200
-        bodyOf(result) should include("/redirect-to-sos")
+        bodyOf(result) should include("/create-clean-creds")
       }
     }
 

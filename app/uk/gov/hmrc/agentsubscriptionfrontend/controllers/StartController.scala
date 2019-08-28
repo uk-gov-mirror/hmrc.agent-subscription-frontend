@@ -19,15 +19,13 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
 import play.api.i18n.MessagesApi
-import play.api.mvc.{Action, AnyContent, Request, Result}
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, ContinueId, Postcode}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.ContinueId
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -47,7 +45,7 @@ class StartController @Inject()(
 
   import uk.gov.hmrc.agentsubscriptionfrontend.support.CallOps._
 
-  val root: Action[AnyContent] = Action.async { implicit request =>
+  def root: Action[AnyContent] = Action.async { implicit request =>
     continueUrlActions.withMaybeContinueUrl { urlOpt =>
       Redirect(routes.StartController.start().toURLWithParams("continue" -> urlOpt.map(_.url)))
     }
@@ -62,7 +60,7 @@ class StartController @Inject()(
     }
   }
 
-  val showNotAgent: Action[AnyContent] = Action.async { implicit request =>
+  def showNotAgent: Action[AnyContent] = Action.async { implicit request =>
     withAuthenticatedUser {
       Ok(html.not_agent())
     }

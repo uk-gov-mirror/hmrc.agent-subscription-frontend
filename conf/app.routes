@@ -96,10 +96,13 @@ GET         /business-address                              uk.gov.hmrc.agentsubs
 
 GET         /return-from-address-lookup                    uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.returnFromAddressLookup(id: String ?= "")
 POST        /submit-modified-address                       uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.submitModifiedAddress
-GET         /complete                                      uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showSubscriptionComplete
+GET         /complete                                        uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showSubscriptionComplete
 GET         /sign-in-with-new-user-id                      uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showSignInWithNewID
 
-GET         /redirect-to-sos                               uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.redirectToSos
+GET         /create-clean-creds                            uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.redirectUserToCreateCleanCreds
+
+GET         /redirect-to-sos                               uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.redirectTaskListUserToCreateCleanCreds
+
 GET         /redirect-to-asaccount                         uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.redirectToASAccountPage
 GET         /start-survey                                  uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.startSurvey
 GET         /sign-out                                      uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.signOutWithContinueUrl
