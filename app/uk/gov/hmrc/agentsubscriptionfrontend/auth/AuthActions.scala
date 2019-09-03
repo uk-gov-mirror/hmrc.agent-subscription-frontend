@@ -42,8 +42,8 @@ class Agent(
   private val maybeCredentials: Option[Credentials],
   val subscriptionJourneyRecord: Option[SubscriptionJourneyRecord]) {
 
-  def hasIRPAYEAGENT: Option[Enrolment] = enrolments.find(e => e.key == "IR-PAYE-AGENT" && e.isActivated)
-  def hasIRSAAGENT: Option[Enrolment] = enrolments.find(e => e.key == "IR-SA-AGENT" && e.isActivated)
+  def hasIrPayeAgent: Option[Enrolment] = enrolments.find(e => e.key == "IR-PAYE-AGENT" && e.isActivated)
+  def hasIrsaAgent: Option[Enrolment] = enrolments.find(e => e.key == "IR-SA-AGENT" && e.isActivated)
 
   def authProviderId: AuthProviderId = AuthProviderId(maybeCredentials.fold("unknown")(_.providerId))
   def authProviderType: String = "GovernmentGateway"
@@ -75,11 +75,6 @@ class Agent(
 
 object Agent {
 
-  object hasHmrcAsAgentEnrolment {
-    def unapply(agent: Agent): Option[Unit] =
-      if (agent.enrolments.exists(_.key == "HMRC-AS-AGENT")) Some(()) else None
-  }
-
   object hasNonEmptyEnrolments {
     def unapply(agent: Agent): Option[Unit] =
       if (agent.enrolments.nonEmpty) Some(()) else None
@@ -109,14 +104,17 @@ trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring
           creds match {
             case Some(c) =>
               subscriptionJourneyService.getJourneyRecord(AuthProviderId(c.providerId)).flatMap { sjrOpt =>
-                body(
-                  getEnrolmentValue(enrolments, "HMRC-AS-AGENT", "AgentReferenceNumber")
-                    .map(Arn(_))
-                    .getOrElse(throw InsufficientEnrolments("could not find the HMRC-AS-AGENT enrolment to continue")),
-                  sjrOpt
-                )
+                getArn(enrolments) match {
+                  case Some(arn) =>
+                    body(arn, sjrOpt)
+                  case None =>
+                    Logger.warn("could not find the Arn for the logged in agent to continue")
+                    Future successful Forbidden
+                }
               }
-            case None => throw new UnsupportedCredentialRole("credentials expected but not found")
+            case None =>
+              Logger.warn("User does not have the correct credentials")
+              Redirect(routes.SignedOutController.signOut())
           }
       }
       .recover {
@@ -154,19 +152,6 @@ trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring
         handleException
       }
 
-  def bodyWithJourneyRecord(enrolments: Enrolments, maybeCredentials: Option[Credentials])(
-    body: Agent => Future[Result])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Result] =
-    subscriptionJourneyService
-      .getJourneyRecord(AuthProviderId(maybeCredentials.fold("unknown")(_.providerId)))
-      .flatMap(maybeRecord => body(new Agent(enrolments.enrolments, maybeCredentials, maybeRecord)))
-
-  def withAuthenticatedAgent[A](
-    body: => Future[Result])(implicit request: Request[A], hc: HeaderCarrier, ec: ExecutionContext): Future[Result] =
-    authorised(AuthProviders(GovernmentGateway) and AffinityGroup.Agent)(body)
-      .recover {
-        handleException
-      }
-
   def withAuthenticatedUser[A](
     body: => Future[Result])(implicit request: Request[A], hc: HeaderCarrier, ec: ExecutionContext): Future[Result] =
     authorised(AuthProviders(GovernmentGateway))(body)
@@ -177,11 +162,11 @@ trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring
   private def isEnrolledForHmrcAsAgent(enrolments: Enrolments): Boolean =
     enrolments.enrolments.find(_.key equals "HMRC-AS-AGENT").exists(_.isActivated)
 
-  private def getEnrolmentValue(enrolments: Enrolments, serviceName: String, identifierKey: String) =
+  private def getArn(enrolments: Enrolments) =
     for {
-      enrolment  <- enrolments.getEnrolment(serviceName)
-      identifier <- enrolment.getIdentifier(identifierKey)
-    } yield identifier.value
+      enrolment  <- enrolments.getEnrolment("HMRC-AS-AGENT")
+      identifier <- enrolment.getIdentifier("AgentReferenceNumber")
+    } yield Arn(identifier.value)
 
   private def handleException(implicit ec: ExecutionContext, request: Request[_]): PartialFunction[Throwable, Result] = {
 
@@ -192,12 +177,12 @@ trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring
     case _: NoActiveSession =>
       toGGLogin(if (appConfig.isDevMode) s"http://${request.host}${request.uri}" else s"${request.uri}")
 
+    case _: InsufficientEnrolments =>
+      Logger.warn(s"Logged in user does not have required enrolments")
+      Forbidden
+
     case _: UnsupportedAuthProvider =>
       Logger.warn("User is not logged in via  GovernmentGateway, signing out and redirecting")
-      Redirect(routes.SignedOutController.signOut())
-
-    case _: UnsupportedCredentialRole =>
-      Logger.warn("User does not have the correct credentials")
       Redirect(routes.SignedOutController.signOut())
   }
 }

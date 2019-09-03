@@ -93,10 +93,10 @@ class AuditService @Inject()(val auditConnector: AuditConnector)(implicit ec: Ex
     assuranceResults.hasAcceptableNumberOfVatDecOrgClients.foreach(auditData.set("passVatDecOrgAgentAssuranceCheck", _))
     assuranceResults.hasAcceptableNumberOfIRCTClients.foreach(auditData.set("passIRCTAgentAssuranceCheck", _))
 
-    val payeEnrolmentOpt = agent.hasIRPAYEAGENT
+    val payeEnrolmentOpt = agent.hasIrPayeAgent
     auditData.set("isEnrolledPAYEAgent", payeEnrolmentOpt.isDefined)
 
-    val saEnrolmentOpt = agent.hasIRSAAGENT
+    val saEnrolmentOpt = agent.hasIrsaAgent
     auditData.set("isEnrolledSAAgent", saEnrolmentOpt.isDefined)
 
     for {
