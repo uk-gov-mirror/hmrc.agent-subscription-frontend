@@ -1,14 +1,12 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
-import org.jsoup.Jsoup
 import play.api.test.Helpers.{redirectLocation, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.SoleTrader
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, CompanyRegistrationNumber}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub
-import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.subscribingAgentEnrolledForNonMTD
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData._
-import uk.gov.hmrc.agentsubscriptionfrontend.support.TestSetupNoJourneyRecord
+import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestSetupNoJourneyRecord}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -33,11 +31,7 @@ class CompanyRegistrationControllerISpec extends BaseISpec with SessionDataMissi
 
       val result = await(controller.showCompanyRegNumberForm()(request))
 
-      val doc = Jsoup.parse(bodyOf(result))
-
-      val link = doc.getElementById("crn")
-      link.attr("value") shouldBe "12345"
-
+      result should containInputElement("crn", "text", Some("12345"))
     }
   }
 

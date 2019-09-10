@@ -91,11 +91,7 @@ class BusinessIdentificationControllerISpec extends BaseISpec {
       val result = await(controller.showAlreadySubscribed(authenticatedAs(subscribingCleanAgentWithoutEnrolments)))
 
       result should containMessages("alreadySubscribed.title")
-      val doc = Jsoup.parse(bodyOf(result))
-      val signOutButton = doc.getElementById("finishSignOut")
-      signOutButton.attr("href") shouldBe routes.SignedOutController.redirectToBusinessTypeForm().url
-      signOutButton.text() shouldBe htmlEscapedMessage("button.finishSignOut")
-
+      result should containLink("button.finishSignOut", routes.SignedOutController.redirectToBusinessTypeForm().url)
     }
   }
 
@@ -108,10 +104,8 @@ class BusinessIdentificationControllerISpec extends BaseISpec {
       result should containMessages(
         "businessName.title"
       )
-
       result should containSubmitButton("button.saveContinue", "business-name-change-continue")
       result should containSubmitButton("button.saveComeBackLater", "business-name-change-save")
-
     }
 
     "pre-populate the business name data into the form when it is present in the BE store" in new Setup {

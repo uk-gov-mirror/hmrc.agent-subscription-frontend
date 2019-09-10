@@ -36,16 +36,9 @@ class DateOfBirthControllerISpec extends BaseISpec with SessionDataMissingSpec {
 
       val result = await(controller.showDateOfBirthForm()(request))
 
-      val doc = Jsoup.parse(bodyOf(result))
-
-      var link = doc.getElementById("dob.day")
-      link.attr("value") shouldBe "1"
-
-      link = doc.getElementById("dob.month")
-      link.attr("value") shouldBe "1"
-
-      link = doc.getElementById("dob.year")
-      link.attr("value") shouldBe "2010"
+      result should containInputElement("dob.day", "tel", Some("1"))
+      result should containInputElement("dob.month", "tel", Some("1"))
+      result should containInputElement("dob.year", "tel", Some("2010"))
     }
   }
 

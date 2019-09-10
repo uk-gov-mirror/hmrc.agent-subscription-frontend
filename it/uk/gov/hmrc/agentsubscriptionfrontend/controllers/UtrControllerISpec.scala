@@ -1,18 +1,15 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
-import org.jsoup.Jsoup
 import play.api.i18n.Messages
-import play.api.test.Helpers.redirectLocation
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, BusinessType}
-import uk.gov.hmrc.agentsubscriptionfrontend.support.BaseISpec
-import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.subscribingAgentEnrolledForNonMTD
-import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData.{validBusinessTypes, validUtr}
-
-import scala.concurrent.ExecutionContext.Implicits.global
 import play.api.i18n.Messages.Implicits.applicationMessages
-import play.api.test.Helpers._
+import play.api.test.Helpers.{redirectLocation, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.SoleTrader
-import uk.gov.hmrc.agentsubscriptionfrontend.support.TestSetupNoJourneyRecord
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, BusinessType}
+import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.subscribingAgentEnrolledForNonMTD
+import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData.{validBusinessTypes, validUtr}
+import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestSetupNoJourneyRecord}
+
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class UtrControllerISpec extends BaseISpec with SessionDataMissingSpec {
   lazy val controller: UtrController = app.injector.instanceOf[UtrController]
@@ -41,11 +38,8 @@ class UtrControllerISpec extends BaseISpec with SessionDataMissingSpec {
 
       val result = await(controller.showUtrForm()(request))
 
-      val doc = Jsoup.parse(bodyOf(result))
-      val link = doc.getElementById("utr")
-      link.attr("value") shouldBe "abcd"
+      result should containInputElement("utr", "text", Some("abcd"))
     }
-
   }
 
   "submitUtrFormPage" should {

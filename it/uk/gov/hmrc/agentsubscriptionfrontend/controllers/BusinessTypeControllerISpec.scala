@@ -59,10 +59,8 @@ class BusinessTypeControllerISpec extends BaseISpec with SessionDataMissingSpec 
     "contain a link to sign out" in new TestSetupNoJourneyRecord{
       val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
       val result = await(controller.showBusinessTypeForm(request))
-      val doc = Jsoup.parse(bodyOf(result))
-      val signOutLink = doc.getElementById("sign-out")
-      signOutLink.attr("href") shouldBe routes.SignedOutController.signOutWithContinueUrl.url
-      signOutLink.text() shouldBe htmlEscapedMessage("businessType.progressive.content.link")
+
+      result should containLink("businessType.progressive.content.link",  routes.SignedOutController.signOutWithContinueUrl.url)
     }
 
     "pre-populate the business type if one is already stored in the session" in new TestSetupNoJourneyRecord{

@@ -29,12 +29,11 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.language.higherKinds
 import scala.util.{Failure, Success, Try}
 
-
 /**
-* RedirectUrl class provides methods to validate a continue url provided as a query parameter.
-* To retrieve the url from the RedirectUrl class you need to provide a RedirectUrlPolicy which defines a set of rules
- * to validate the url.
- */
+  * RedirectUrl class provides methods to validate a continue url provided as a query parameter.
+  * To retrieve the url from the RedirectUrl class you need to provide a RedirectUrlPolicy which defines a set of rules
+  * to validate the url.
+  */
 
 @Singleton
 class RedirectUrlActions @Inject()(sessionStoreService: SessionStoreService, ssoConnector: SsoConnector)(

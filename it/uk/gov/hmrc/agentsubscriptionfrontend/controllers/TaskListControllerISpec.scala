@@ -83,9 +83,7 @@ class TaskListControllerISpec extends BaseISpec {
       val result = await(controller.showTaskList(request))
       result should containMessages("task-list.header", "task-list.amlsTask", "task-list.completed")
 
-      checkHtmlResultWithBodyText(
-        result,
-        "href=\"/agent-subscription/check-money-laundering-compliance\">Enter your money laundering compliance details</a>")
+      result should containLink("task-list.amlsTask", routes.AMLSController.showAmlsRegisteredPage().url)
     }
 
     "contain a url to the mapping journey when user has completed amls" in {

@@ -2,7 +2,6 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import java.time.LocalDate
 
-import org.jsoup.Jsoup
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
@@ -89,10 +88,7 @@ class StartControllerISpec extends BaseISpec {
 
     "contain a start button pointing to /business-type" in {
       val result = await(controller.start(FakeRequest()))
-      val doc = Jsoup.parse(bodyOf(result))
-      val startLink = doc.getElementById("start")
-      startLink.attr("href") shouldBe routes.BusinessTypeController.showBusinessTypeForm().url
-      startLink.text() shouldBe htmlEscapedMessage("startpage.continue")
+      result should containLink("startpage.continue", routes.BusinessTypeController.showBusinessTypeForm().url)
     }
 
     behave like aPageWithFeedbackLinks(request => controller.start(request))
@@ -145,8 +141,6 @@ class StartControllerISpec extends BaseISpec {
   }
 
   "returnAfterGGCredsCreated" should {
-
-    import FixturesForReturnAfterGGCredsCreated._
 
     "given a valid subscription journey record" when {
 

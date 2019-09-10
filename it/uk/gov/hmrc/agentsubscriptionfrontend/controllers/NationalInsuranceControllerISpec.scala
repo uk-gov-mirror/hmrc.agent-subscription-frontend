@@ -1,13 +1,12 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
-import org.jsoup.Jsoup
 import play.api.test.Helpers.{redirectLocation, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.SoleTrader
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, BusinessType}
-import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestSetupNoJourneyRecord}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.subscribingAgentEnrolledForNonMTD
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData.agentSession
+import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestSetupNoJourneyRecord}
 import uk.gov.hmrc.domain.Nino
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -35,9 +34,7 @@ class NationalInsuranceControllerISpec extends BaseISpec with SessionDataMissing
 
       val result = await(controller.showNationalInsuranceNumberForm()(request))
 
-      val doc = Jsoup.parse(bodyOf(result))
-      val link = doc.getElementById("nino")
-      link.attr("value") shouldBe "AE123456C"
+      result should containInputElement("nino", "text", Some("AE123456C"))
     }
   }
 

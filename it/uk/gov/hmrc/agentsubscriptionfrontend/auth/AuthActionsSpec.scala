@@ -13,8 +13,8 @@ import uk.gov.hmrc.agentsubscriptionfrontend.service.SubscriptionJourneyService
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionJourneyStub.givenSubscriptionJourneyRecordExists
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData.minimalSubscriptionJourneyRecord
-import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestData, TestSetupNoJourneyRecord}
-import uk.gov.hmrc.auth.core.{AuthConnector, InsufficientEnrolments}
+import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestSetupNoJourneyRecord}
+import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.{HeaderCarrier, SessionKeys}
 
 import scala.concurrent.Future

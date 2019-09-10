@@ -137,7 +137,7 @@ abstract class BaseISpec
     }
   }
 
-  protected def containInputElement(expectedElementId: String, expectedInputType: String): Matcher[Result] = {
+  protected def containInputElement(expectedElementId: String, expectedInputType: String, expectedValue: Option[String] = None): Matcher[Result] = {
     new Matcher[Result] {
       override def apply(result: Result): MatchResult = {
         val doc = Jsoup.parse(bodyOf(result))
@@ -146,10 +146,11 @@ abstract class BaseISpec
 
         val isAsExpected = Option(foundElement) match {
           case None => false
-          case Some(elAmls) => {
-            val isExpectedTag = elAmls.tagName() == "input"
-            val isExpectedType = elAmls.attr("type") == expectedInputType
-            isExpectedTag && isExpectedType
+          case Some(el) => {
+            val isExpectedTag = el.tagName() == "input"
+            val isExpectedType = el.attr("type") == expectedInputType
+            val isExpectedValue = expectedValue.fold(true)(el.attr("value") == _)
+            isExpectedTag && isExpectedType && isExpectedValue
           }
         }
 
