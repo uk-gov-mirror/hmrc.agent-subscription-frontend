@@ -29,12 +29,10 @@ import uk.gov.hmrc.agentsubscriptionfrontend.models.{AmlsDetails, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AddressLookupFrontendStubs._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionJourneyStub.{givenSubscriptionJourneyRecordExists, givenSubscriptionRecordCreated}
-import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub.{partialSubscriptionWillSucceed, withPartiallySubscribedAgent}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.{AgentSubscriptionStub, AuthStub}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestData, TestSetupNoJourneyRecord}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData.{utr, _}
-import uk.gov.hmrc.play.binders.ContinueUrl
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -497,7 +495,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         AgentSubscriptionStub.subscriptionWillSucceed(validUtr, subscriptionRequestWithNoEdit(), arn = "TARN00023")
 
         implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
-        sessionStoreService.currentSession.continueUrl = Some(ContinueUrl("/some/url"))
+        sessionStoreService.currentSession.continueUrl = Some("/some/url")
 
         val result = await(controller.submitCheckAnswers(request))
         status(result) shouldBe 303
@@ -511,7 +509,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         AgentSubscriptionStub.subscriptionWillSucceed(validUtr, subscriptionRequestWithNoEdit())
 
         implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
-        sessionStoreService.currentSession.continueUrl = Some(ContinueUrl("/some/url"))
+        sessionStoreService.currentSession.continueUrl = Some("/some/url")
 
         val result = await(controller.submitCheckAnswers(request))
         status(result) shouldBe 303
@@ -526,7 +524,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         AgentSubscriptionStub.subscriptionWillSucceed(validUtr, subscriptionRequestWithNoEdit())
 
         implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
-        sessionStoreService.currentSession.continueUrl = Some(ContinueUrl("/some/url"))
+        sessionStoreService.currentSession.continueUrl = Some("/some/url")
         val result = await(controller.submitCheckAnswers(request))
         status(result) shouldBe 303
         redirectLocation(result).head shouldBe routes.SubscriptionController.showSubscriptionComplete().url

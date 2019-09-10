@@ -7,7 +7,7 @@ import play.api.mvc.{AnyContentAsEmpty, Result}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.controllers.ContinueUrlActions
+import uk.gov.hmrc.agentsubscriptionfrontend.controllers.RedirectUrlActions
 import uk.gov.hmrc.agentsubscriptionfrontend.models.AuthProviderId
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SubscriptionJourneyService
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionJourneyStub.givenSubscriptionJourneyRecordExists
@@ -31,7 +31,7 @@ class AuthActionsSpec extends BaseISpec with MockitoSugar {
 
     override def authConnector: AuthConnector = app.injector.instanceOf[AuthConnector]
     override def appConfig: AppConfig = app.injector.instanceOf[AppConfig]
-    override def continueUrlActions: ContinueUrlActions = app.injector.instanceOf[ContinueUrlActions]
+    override def redirectUrlActions: RedirectUrlActions = app.injector.instanceOf[RedirectUrlActions]
     override def metrics: Metrics = app.injector.instanceOf[Metrics]
     override def subscriptionJourneyService: SubscriptionJourneyService = app.injector.instanceOf[SubscriptionJourneyService]
 

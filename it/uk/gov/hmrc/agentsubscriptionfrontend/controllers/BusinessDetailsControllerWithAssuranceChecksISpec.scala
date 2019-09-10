@@ -4,12 +4,11 @@ import com.google.inject.AbstractModule
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers.{redirectLocation, _}
-import uk.gov.hmrc.agentsubscriptionfrontend.connectors.SsoConnector
+import uk.gov.hmrc.agentsubscriptionfrontend.models.AgentSession
 import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.SoleTrader
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, BusinessAddress, Postcode, Registration}
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
-import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub._
+import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.subscribingAgentEnrolledForNonMTD
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestSetupNoJourneyRecord}
@@ -19,7 +18,6 @@ class BusinessDetailsControllerWithAssuranceChecksISpec extends BaseISpec {
   private class TestGuiceModule extends AbstractModule {
     override def configure(): Unit = {
       bind(classOf[SessionStoreService]).toInstance(sessionStoreService)
-      bind(classOf[SsoConnector]).toInstance(testSsoConnector)
     }
   }
 

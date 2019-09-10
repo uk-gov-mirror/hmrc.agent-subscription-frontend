@@ -10,8 +10,6 @@ import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.subscribingClean
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData.{validUtr, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionJourneyStub._
-import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent
-import uk.gov.hmrc.play.binders.ContinueUrl
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -90,7 +88,7 @@ class BusinessEmailISpec extends BaseISpec {
       implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments).withFormUrlEncodedBody(
         "email" -> "newagent@example.com")
       sessionStoreService.currentSession.agentSession = Some(agentSession)
-      sessionStoreService.currentSession.continueUrl = Some(ContinueUrl("/continue/url"))
+      sessionStoreService.currentSession.continueUrl = Some("/continue/url")
 
       val result = await(controller.submitBusinessEmailForm(request))
       status(result) shouldBe 303

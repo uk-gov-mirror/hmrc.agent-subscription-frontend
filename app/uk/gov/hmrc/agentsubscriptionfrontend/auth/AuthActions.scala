@@ -22,7 +22,7 @@ import play.api.{Configuration, Environment, Logger}
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent.hasNonEmptyEnrolments
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.controllers.{ContinueUrlActions, routes}
+import uk.gov.hmrc.agentsubscriptionfrontend.controllers.{RedirectUrlActions, routes}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.AuthProviderId
 import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.{AmlsData, SubscriptionJourneyRecord}
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SubscriptionJourneyService
@@ -83,7 +83,7 @@ object Agent {
 
 trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring {
 
-  def continueUrlActions: ContinueUrlActions
+  def redirectUrlActions: RedirectUrlActions
   def appConfig: AppConfig
 
   def env: Environment = appConfig.environment
@@ -132,10 +132,10 @@ trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring
       .retrieve(allEnrolments and credentials) {
         case enrolments ~ creds =>
           if (isEnrolledForHmrcAsAgent(enrolments)) {
-            continueUrlActions.extractContinueUrl.map {
-              case Some(continueUrl) =>
+            redirectUrlActions.withMaybeRedirectUrl {
+              case Some(redirectUrl) =>
                 mark("Count-Subscription-AlreadySubscribed-HasEnrolment-ContinueUrl")
-                Redirect(continueUrl.url) // end of journey; back to calling service
+                Redirect(redirectUrl) // end of journey; back to calling service
               case None =>
                 mark("Count-Subscription-AlreadySubscribed-HasEnrolment-AgentServicesAccount")
                 Redirect(appConfig.agentServicesAccountUrl) // dashboard

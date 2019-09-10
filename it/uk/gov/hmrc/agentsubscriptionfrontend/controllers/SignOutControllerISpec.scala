@@ -12,7 +12,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestData}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.HeaderCarrierConverter
-import uk.gov.hmrc.play.binders.ContinueUrl
+import uk.gov.hmrc.play.bootstrap.binders.RedirectUrl
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -51,9 +51,9 @@ class SignOutControllerISpec extends BaseISpec {
         s"continue=%2Fagent-subscription%2Freturn-after-gg-creds-created%3Fid%3Dfoo")
     }
 
-    def assertContinueUrl(result: Result, continueUrl: ContinueUrl): Assertion = {
+    def assertContinueUrl(result: Result, continueUrl: String): Assertion = {
       val sosContinueValueUnencoded =
-        s"/agent-subscription/return-after-gg-creds-created?continue=${continueUrl.encodedUrl}"
+        s"/agent-subscription/return-after-gg-creds-created?continue=${URLEncoder.encode(continueUrl, "UTF-8")}"
       val sosContinueValueEncoded = URLEncoder.encode(sosContinueValueUnencoded, "UTF-8")
       val expectedSosContinueParam = s"continue=$sosContinueValueEncoded"
       redirectLocation(result).head should include(expectedSosContinueParam)
@@ -61,7 +61,7 @@ class SignOutControllerISpec extends BaseISpec {
 
     "include a continue URL on user clean creds redirect if a continue URL exists in the session store" in {
 
-      val ourContinueUrl = ContinueUrl("/test-continue-url")
+      val ourContinueUrl = "/test-continue-url"
       implicit val request: FakeRequest[AnyContentAsEmpty.type] = authenticatedAs(individual)
       sessionStoreService.currentSession.continueUrl = Some(ourContinueUrl)
 
@@ -76,7 +76,7 @@ class SignOutControllerISpec extends BaseISpec {
 
       givenSubscriptionJourneyRecordExists(id, TestData.minimalSubscriptionJourneyRecordWithAmls(id).copy(continueId = None))
 
-      val ourContinueUrl = ContinueUrl("/test-continue-url")
+      val ourContinueUrl = "/test-continue-url"
       implicit val request: FakeRequest[AnyContentAsEmpty.type] = authenticatedAs(subscribingAgentEnrolledForNonMTD)
       sessionStoreService.currentSession.continueUrl = Some(ourContinueUrl)
 
@@ -88,14 +88,14 @@ class SignOutControllerISpec extends BaseISpec {
     }
 
     "include both an ID and a continue URL in the SOS redirect URL if both a continue URL and KnownFacts exist in the session store" in new TestSetup {
-      val ourContinueUrl = ContinueUrl("/test-continue-url")
+      val ourContinueUrl = "/test-continue-url"
       implicit val request: FakeRequest[AnyContentAsEmpty.type] = authenticatedAs(subscribingAgentEnrolledForNonMTD)
       sessionStoreService.currentSession.continueUrl = Some(ourContinueUrl)
 
       private val result = await(controller.redirectTaskListUserToCreateCleanCreds(request))
 
       val sosContinueValueUnencoded =
-        s"/agent-subscription/return-after-gg-creds-created?id=foo&continue=${ourContinueUrl.encodedUrl}"
+        s"/agent-subscription/return-after-gg-creds-created?id=foo&continue=${URLEncoder.encode(ourContinueUrl, "UTF-8")}"
       val sosContinueValueEncoded: String = URLEncoder.encode(sosContinueValueUnencoded, "UTF-8")
       val expectedSosContinueParam = s"continue=$sosContinueValueEncoded"
       redirectLocation(result).head should include(expectedSosContinueParam)
@@ -135,16 +135,16 @@ class SignOutControllerISpec extends BaseISpec {
     "logout and redirect to /gg/sign-in?continue=... when continue URL is present in the session" in {
       testLogoutAndRedirect(
         expectedRedirectUrl = "/gg/sign-in?continue=%2Ftest-continue-url",
-        maybeContinueUrl = Some(ContinueUrl("/test-continue-url"))
+        maybeContinueUrl = Some("/test-continue-url")
       )
     }
 
-    def testLogoutAndRedirect(expectedRedirectUrl: String, maybeContinueUrl: Option[ContinueUrl] = None): Assertion = {
+    def testLogoutAndRedirect(expectedRedirectUrl: String, maybeContinueUrl: Option[String] = None): Assertion = {
       implicit val request: FakeRequest[AnyContentAsEmpty.type] = fakeRequest.withSession("sessionId" -> "SomeSession")
 
       maybeContinueUrl.map{ continueUrl =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromHeadersAndSession(request.headers, Some(request.session))
-        sessionStoreService.cacheContinueUrl(continueUrl)
+        sessionStoreService.cacheContinueUrl(RedirectUrl(continueUrl))
       }
 
       request.session.get("sessionId") should not be empty

@@ -18,20 +18,20 @@ package uk.gov.hmrc.agentsubscriptionfrontend.service
 
 import javax.inject.{Inject, Singleton}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.AgentSession
-import uk.gov.hmrc.agentsubscriptionfrontend.models.ContinueUrlJsonFormat._
+import uk.gov.hmrc.agentsubscriptionfrontend.models.RedirectUrlJsonFormat._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.cache.client.SessionCache
-import uk.gov.hmrc.play.binders.ContinueUrl
+import uk.gov.hmrc.play.bootstrap.binders.RedirectUrl
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class SessionStoreService @Inject()(sessionCache: SessionCache) {
 
-  def fetchContinueUrl(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[ContinueUrl]] =
-    sessionCache.fetchAndGetEntry[ContinueUrl]("continueUrl")
+  def fetchContinueUrl(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[RedirectUrl]] =
+    sessionCache.fetchAndGetEntry[RedirectUrl]("continueUrl")
 
-  def cacheContinueUrl(url: ContinueUrl)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
+  def cacheContinueUrl(url: RedirectUrl)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
     sessionCache.cache("continueUrl", url).map(_ => ())
 
   def cacheGoBackUrl(url: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =

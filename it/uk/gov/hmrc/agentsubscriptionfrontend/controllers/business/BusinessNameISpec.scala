@@ -10,8 +10,6 @@ import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.subscribingClean
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData.{validUtr, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionJourneyStub._
-import uk.gov.hmrc.play.binders.ContinueUrl
-import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent
 
 class BusinessNameISpec extends BaseISpec {
 
@@ -90,7 +88,7 @@ class BusinessNameISpec extends BaseISpec {
       implicit val request =
         authenticatedAs(subscribingCleanAgentWithoutEnrolments).withFormUrlEncodedBody("name" -> "new Agent name")
       sessionStoreService.currentSession.agentSession = Some(agentSession)
-      sessionStoreService.currentSession.continueUrl = Some(ContinueUrl("/continue/url"))
+      sessionStoreService.currentSession.continueUrl = Some("/continue/url")
 
       val result = await(controller.submitBusinessNameForm(request))
       status(result) shouldBe 303

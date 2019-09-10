@@ -18,13 +18,14 @@ package uk.gov.hmrc.agentsubscriptionfrontend.connectors
 
 import java.net.URL
 
-import javax.inject.{Inject, Singleton}
 import com.codahale.metrics.MetricRegistry
 import com.google.inject.name.Named
 import com.kenshoo.play.metrics.Metrics
+import javax.inject.{Inject, Singleton}
 import play.api.Logger
+import play.api.libs.json.JsObject
 import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
-import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpGet}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpGet}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -34,17 +35,18 @@ class SsoConnector @Inject()(http: HttpGet, @Named("sso-baseUrl") baseUrl: URL, 
     extends HttpAPIMonitor {
   override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
 
-  def validateExternalDomain(domain: String)(implicit hc: HeaderCarrier): Future[Boolean] =
-    monitor(s"ConsumedAPI-SSO-validateExternalDomain-GET") {
-      val url = new URL(baseUrl, s"/sso/validate/domain/$domain")
+  def getWhitelistedDomains()(implicit hc: HeaderCarrier): Future[Set[String]] =
+    monitor(s"ConsumedAPI-SSO-getExternalDomains-GET") {
+      val url = new URL(baseUrl, s"/sso/domains")
       http
-        .GET(url.toString)
-        .map(_ => true)
+        .GET[JsObject](url.toString)
+        .map(jsObj => {
+          (jsObj \ "externalDomains").as[Set[String]] ++ (jsObj \ "internalDomains").as[Set[String]]
+        })
         .recover {
-          case _: BadRequestException => false
-          case e: Exception =>
-            Logger(getClass).error(s"Unable to validate domain $domain", e)
-            false
+          case e =>
+            Logger.error(s"retrieval of whitelisted domains failed: $e")
+            Set.empty[String]
         }
     }
 }

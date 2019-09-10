@@ -21,7 +21,7 @@ import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, Postcode}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.SoleTrader
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.binders.ContinueUrl
+import uk.gov.hmrc.play.bootstrap.binders.RedirectUrl
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -38,17 +38,17 @@ class SessionStoreServiceSpec extends UnitSpec with MockFactory {
   "cacheContinueUrl and fetchContinueUrl" should {
     "cache a continue url and fetch it back" in {
       (mockSessionStoreService
-        .cacheContinueUrl(_: ContinueUrl)(_: HeaderCarrier, _: ExecutionContext))
-        .expects(ContinueUrl("/continue/url"), hc, *)
+        .cacheContinueUrl(_: RedirectUrl)(_: HeaderCarrier, _: ExecutionContext))
+        .expects(RedirectUrl("/continue/url"), hc, *)
         .returns(Future(()))
       (mockSessionStoreService
         .fetchContinueUrl(_: HeaderCarrier, _: ExecutionContext))
         .expects(hc, *)
-        .returns(Future(Some(ContinueUrl("/continue/url"))))
+        .returns(Future(Some(RedirectUrl("/continue/url"))))
 
-      mockSessionStoreService.cacheContinueUrl(ContinueUrl("/continue/url"))
+      mockSessionStoreService.cacheContinueUrl(RedirectUrl("/continue/url"))
       val result = await(mockSessionStoreService.fetchContinueUrl)
-      result shouldBe Some(ContinueUrl("/continue/url"))
+      result shouldBe Some(RedirectUrl("/continue/url"))
     }
   }
 
@@ -108,13 +108,13 @@ class SessionStoreServiceSpec extends UnitSpec with MockFactory {
   "remove" should {
     "clear the session" in {
       (mockSessionStoreService
-        .cacheContinueUrl(_: ContinueUrl)(_: HeaderCarrier, _: ExecutionContext))
-        .expects(ContinueUrl("/continue/url"), hc, *)
+        .cacheContinueUrl(_: RedirectUrl)(_: HeaderCarrier, _: ExecutionContext))
+        .expects(RedirectUrl("/continue/url"), hc, *)
         .returns(Future(()))
       (mockSessionStoreService
         .fetchContinueUrl(_: HeaderCarrier, _: ExecutionContext))
         .expects(hc, *)
-        .returns(Future(Some(ContinueUrl("/continue/url"))))
+        .returns(Future(Some(RedirectUrl("/continue/url"))))
       (mockSessionStoreService
         .remove()(_: HeaderCarrier, _: ExecutionContext))
         .expects(hc, *)
@@ -124,9 +124,9 @@ class SessionStoreServiceSpec extends UnitSpec with MockFactory {
         .expects(hc, *)
         .returns(Future(None))
 
-      mockSessionStoreService.cacheContinueUrl(ContinueUrl("/continue/url"))
+      mockSessionStoreService.cacheContinueUrl(RedirectUrl("/continue/url"))
       val fetchResult = await(mockSessionStoreService.fetchContinueUrl)
-      fetchResult shouldBe Some(ContinueUrl("/continue/url"))
+      fetchResult shouldBe Some(RedirectUrl("/continue/url"))
 
       mockSessionStoreService.remove()
       val fetchResultEmpty = await(mockSessionStoreService.fetchContinueUrl)

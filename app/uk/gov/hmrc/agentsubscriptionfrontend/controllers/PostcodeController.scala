@@ -38,7 +38,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class PostcodeController @Inject()(
-  override val continueUrlActions: ContinueUrlActions,
+  override val redirectUrlActions: RedirectUrlActions,
   override val authConnector: AuthConnector,
   val sessionStoreService: SessionStoreService,
   subscriptionService: SubscriptionService,
@@ -49,7 +49,7 @@ class PostcodeController @Inject()(
   override val appConfig: AppConfig,
   val ec: ExecutionContext,
   override val messagesApi: MessagesApi)
-    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig, subscriptionJourneyService)
+    extends AgentSubscriptionBaseController(authConnector, redirectUrlActions, appConfig, subscriptionJourneyService)
     with SessionBehaviour {
 
   def showPostcodeForm(): Action[AnyContent] = Action.async { implicit request =>

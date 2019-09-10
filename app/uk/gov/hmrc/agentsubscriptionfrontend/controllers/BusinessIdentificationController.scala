@@ -45,20 +45,20 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class BusinessIdentificationController @Inject()(
-  assuranceService: AssuranceService,
-  override val authConnector: AuthConnector,
-  agentAssuranceConnector: AgentAssuranceConnector,
-  val subscriptionService: SubscriptionService,
-  val sessionStoreService: SessionStoreService,
-  continueUrlActions: ContinueUrlActions,
-  val businessDetailsValidator: BusinessDetailsValidator,
-  auditService: AuditService,
-  override val subscriptionJourneyService: SubscriptionJourneyService)(
+                                                  assuranceService: AssuranceService,
+                                                  override val authConnector: AuthConnector,
+                                                  agentAssuranceConnector: AgentAssuranceConnector,
+                                                  val subscriptionService: SubscriptionService,
+                                                  val sessionStoreService: SessionStoreService,
+                                                  redirectUrlActions: RedirectUrlActions,
+                                                  val businessDetailsValidator: BusinessDetailsValidator,
+                                                  auditService: AuditService,
+                                                  override val subscriptionJourneyService: SubscriptionJourneyService)(
   implicit messagesApi: MessagesApi,
   override val appConfig: AppConfig,
   override val metrics: Metrics,
   override val ec: ExecutionContext)
-    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig, subscriptionJourneyService)
+    extends AgentSubscriptionBaseController(authConnector, redirectUrlActions, appConfig, subscriptionJourneyService)
     with SessionBehaviour {
 
   import BusinessIdentificationForms._

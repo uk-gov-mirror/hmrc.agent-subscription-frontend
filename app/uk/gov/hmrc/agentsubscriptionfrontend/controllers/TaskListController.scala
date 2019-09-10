@@ -30,7 +30,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class TaskListController @Inject()(
   override val authConnector: AuthConnector,
   agentAssuranceConnector: AgentAssuranceConnector,
-  continueUrlActions: ContinueUrlActions,
+  redirectUrlActions: RedirectUrlActions,
   val sessionStoreService: SessionStoreService,
   override val subscriptionJourneyService: SubscriptionJourneyService,
   taskListService: TaskListService)(
@@ -38,7 +38,7 @@ class TaskListController @Inject()(
   metrics: Metrics,
   override val messagesApi: MessagesApi,
   val ec: ExecutionContext)
-    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig, subscriptionJourneyService)
+    extends AgentSubscriptionBaseController(authConnector, redirectUrlActions, appConfig, subscriptionJourneyService)
     with SessionBehaviour {
 
   def showTaskList: Action[AnyContent] = Action.async { implicit request =>

@@ -17,27 +17,19 @@ class SsoConnectorISpec extends BaseISpec with MetricTestSupport {
   private implicit val hc = HeaderCarrier()
 
   "SsoConnector" should {
-    "return true for valid domains" in {
-      withMetricsTimerUpdate("ConsumedAPI-SSO-validateExternalDomain-GET") {
-        SsoStub.givenDomainIsWhitelisted("foo.com")
-        val result = await(connector.validateExternalDomain("foo.com"))
-        result shouldBe true
+    "return valid domains" in {
+      withMetricsTimerUpdate("ConsumedAPI-SSO-getExternalDomains-GET") {
+        SsoStub.givenWhitelistedDomainsExist
+        val result = await(connector.getWhitelistedDomains)
+        result shouldBe Set("online-qa.ibt.hmrc.gov.uk", "localhost", "ibt.hmrc.gov.uk", "127.0.0.1", "www.tax.service.gov.uk")
       }
     }
 
-    "return false for a non whitelisted url" in {
-      withMetricsTimerUpdate("ConsumedAPI-SSO-validateExternalDomain-GET") {
-        SsoStub.givenDomainIsNotWhitelisted("invalid-example.com")
-        val result = await(connector.validateExternalDomain("invalid-example.com"))
-        result shouldBe false
-      }
-    }
-
-    "return false for an invalid url" in {
-      withMetricsTimerUpdate("ConsumedAPI-SSO-validateExternalDomain-GET") {
-        SsoStub.givenDomainCheckFails("invalid-example")
-        val result = await(connector.validateExternalDomain("invalid-example"))
-        result shouldBe false
+    "return an empty set when the service throws an error" in {
+      withMetricsTimerUpdate("ConsumedAPI-SSO-getExternalDomains-GET") {
+        SsoStub.givenWhitelistedDomainsError
+        val result = await(connector.getWhitelistedDomains)
+        result shouldBe Set.empty
       }
     }
   }

@@ -8,8 +8,10 @@ import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.{AmlsData, BusinessDetails, SubscriptionJourneyRecord}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub.givenAgentIsNotManuallyAssured
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionJourneyStub.{givenNoSubscriptionJourneyRecordExists, givenSubscriptionJourneyRecordExists}
+import uk.gov.hmrc.agentsubscriptionfrontend.stubs.SsoStub
 
 trait TestSetupNoJourneyRecord {
+  SsoStub.givenWhitelistedDomainsExist
   givenNoSubscriptionJourneyRecordExists(AuthProviderId("12345-credId"))
 }
 

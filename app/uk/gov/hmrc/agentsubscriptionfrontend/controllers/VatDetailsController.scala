@@ -43,7 +43,7 @@ import scala.util.{Failure, Success, Try}
 
 @Singleton
 class VatDetailsController @Inject()(
-  override val continueUrlActions: ContinueUrlActions,
+  override val redirectUrlActions: RedirectUrlActions,
   override val authConnector: AuthConnector,
   val sessionStoreService: SessionStoreService,
   val subscriptionService: SubscriptionService,
@@ -52,7 +52,7 @@ class VatDetailsController @Inject()(
   override val appConfig: AppConfig,
   val ec: ExecutionContext,
   override val messagesApi: MessagesApi)
-    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig, subscriptionJourneyService)
+    extends AgentSubscriptionBaseController(authConnector, redirectUrlActions, appConfig, subscriptionJourneyService)
     with SessionBehaviour {
 
   def showRegisteredForVatForm: Action[AnyContent] = Action.async { implicit request =>

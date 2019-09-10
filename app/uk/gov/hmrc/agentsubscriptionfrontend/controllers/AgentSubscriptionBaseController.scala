@@ -32,7 +32,7 @@ import uk.gov.hmrc.play.bootstrap.controller.BaseController
 @Singleton
 class AgentSubscriptionBaseController @Inject()(
   val authConnector: AuthConnector,
-  val continueUrlActions: ContinueUrlActions,
+  val redirectUrlActions: RedirectUrlActions,
   val appConfig: AppConfig,
   val subscriptionJourneyService: SubscriptionJourneyService)(
   implicit val messagesApi: MessagesApi,

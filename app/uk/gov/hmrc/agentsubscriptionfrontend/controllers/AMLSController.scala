@@ -41,14 +41,14 @@ import scala.concurrent.{ExecutionContext, Future}
 class AMLSController @Inject()(
   override val authConnector: AuthConnector,
   val agentAssuranceConnector: AgentAssuranceConnector,
-  override val continueUrlActions: ContinueUrlActions,
+  override val redirectUrlActions: RedirectUrlActions,
   val sessionStoreService: SessionStoreService,
   override val subscriptionJourneyService: SubscriptionJourneyService)(
   implicit messagesApi: MessagesApi,
   override val appConfig: AppConfig,
   override val metrics: Metrics,
   override val ec: ExecutionContext)
-    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig, subscriptionJourneyService)
+    extends AgentSubscriptionBaseController(authConnector, redirectUrlActions, appConfig, subscriptionJourneyService)
     with SessionBehaviour {
 
   import AMLSForms._

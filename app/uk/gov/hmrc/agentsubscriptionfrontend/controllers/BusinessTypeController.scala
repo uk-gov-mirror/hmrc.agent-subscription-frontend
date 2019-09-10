@@ -31,7 +31,7 @@ import uk.gov.hmrc.auth.core.AuthConnector
 import scala.concurrent.{ExecutionContext, Future}
 
 class BusinessTypeController @Inject()(
-  override val continueUrlActions: ContinueUrlActions,
+  override val redirectUrlActions: RedirectUrlActions,
   override val authConnector: AuthConnector,
   val sessionStoreService: SessionStoreService,
   subscriptionService: SubscriptionService,
@@ -40,7 +40,7 @@ class BusinessTypeController @Inject()(
   override val appConfig: AppConfig,
   val ec: ExecutionContext,
   override val messagesApi: MessagesApi)
-    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig, subscriptionJourneyService)
+    extends AgentSubscriptionBaseController(authConnector, redirectUrlActions, appConfig, subscriptionJourneyService)
     with SessionBehaviour {
 
   def redirectToBusinessTypeForm: Action[AnyContent] = Action.async { implicit request =>
@@ -49,7 +49,7 @@ class BusinessTypeController @Inject()(
 
   def showBusinessTypeForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { implicit agent =>
-      continueUrlActions.withMaybeContinueUrlCached {
+      redirectUrlActions.withMaybeRedirectUrlCached {
         agent.subscriptionJourneyRecord match {
           case Some(_) => Future.successful(Redirect(routes.TaskListController.showTaskList()))
           case None =>

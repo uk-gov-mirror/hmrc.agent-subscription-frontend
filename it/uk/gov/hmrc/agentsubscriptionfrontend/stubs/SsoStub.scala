@@ -1,27 +1,21 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.stubs
 
 import com.github.tomakehurst.wiremock.client.WireMock._
-import com.github.tomakehurst.wiremock.http.Fault
+import com.github.tomakehurst.wiremock.stubbing.StubMapping
 
 object SsoStub {
 
-  def givenDomainIsWhitelisted(domain: String) =
+  def givenWhitelistedDomainsExist: StubMapping =
     stubFor(
-      get(urlEqualTo(s"/sso/validate/domain/$domain"))
-        .willReturn(aResponse()
-          .withStatus(204)))
+      get(urlEqualTo("/sso/domains")).willReturn(
+        aResponse()
+          .withStatus(200)
+          .withBody(
+            """{"externalDomains": ["127.0.0.1","online-qa.ibt.hmrc.gov.uk","ibt.hmrc.gov.uk"],"internalDomains":["localhost", "www.tax.service.gov.uk"]}""")))
 
-  def givenDomainIsNotWhitelisted(domain: String) =
+  def givenWhitelistedDomainsError: StubMapping =
     stubFor(
-      get(urlEqualTo(s"/sso/validate/domain/$domain"))
-        .willReturn(aResponse()
-          .withStatus(400)))
-
-  def givenDomainCheckFails(domain: String) =
-    stubFor(
-      get(urlEqualTo(s"/sso/validate/domain/$domain"))
-        .willReturn(
-          aResponse()
-            .withStatus(500)
-            .withFault(Fault.MALFORMED_RESPONSE_CHUNK)))
+      get(urlEqualTo("/sso/domains")).willReturn(
+        aResponse()
+          .withStatus(500)))
 }

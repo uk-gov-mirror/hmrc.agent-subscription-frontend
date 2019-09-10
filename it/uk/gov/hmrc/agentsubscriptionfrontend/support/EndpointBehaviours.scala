@@ -9,10 +9,9 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, BusinessType}
-import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub
+import uk.gov.hmrc.agentsubscriptionfrontend.stubs.{AuthStub, SsoStub}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.individual
 import uk.gov.hmrc.play.HeaderCarrierConverter
-import uk.gov.hmrc.play.binders.ContinueUrl
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -86,6 +85,7 @@ trait EndpointBehaviours {
     }
 
     "include absolute continue URL" in new TestSetupNoJourneyRecord{
+      SsoStub.givenWhitelistedDomainsExist
       val continueUrl = "http://localhost"
       val (request, result) = doRequestWithContinueUrl(continueUrl)
       assertContinueUrlKept(request, result, continueUrl)
@@ -104,7 +104,7 @@ trait EndpointBehaviours {
     }
 
     "include continue URL if it's whitelisted" in new TestSetupNoJourneyRecord{
-      val continueUrl = "http://www.foo.com/bar?some=false"
+      val continueUrl = "http://online-qa.ibt.hmrc.gov.uk/foo?some=false"
       val (request, result) = doRequestWithContinueUrl(continueUrl)
       assertContinueUrlKept(request, result, continueUrl)
     }
@@ -169,7 +169,7 @@ trait EndpointBehaviours {
     def checkContinueUrlIsInCache(request: Request[AnyContent], result: Result, expectedContinueUrl: String) = {
       status(result) shouldBe expectedStatusCode
       withClue("ContinueUrl was not found in session store, actual: ") {
-        sessionStoreService.currentSession(hc(request)).continueUrl shouldBe Some(ContinueUrl(expectedContinueUrl))
+        sessionStoreService.currentSession(hc(request)).continueUrl shouldBe Some(expectedContinueUrl)
       }
     }
 
