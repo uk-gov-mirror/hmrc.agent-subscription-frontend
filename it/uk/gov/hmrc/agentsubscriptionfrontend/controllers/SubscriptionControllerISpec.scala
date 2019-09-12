@@ -126,6 +126,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         "checkAnswers.businessAddress.label"
       )
       result should not(containMessages("checkAnswers.userMapping.label"))
+      result should not(containMessages("checkAnswers.ggId.label"))
       result should not(containMessages("checkAnswers.amlsDetails.pending.label"))
     }
 
@@ -145,9 +146,11 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         "checkAnswers.businessName.label",
         "checkAnswers.businessEmailAddress.label",
         "checkAnswers.businessAddress.label",
-        "checkAnswers.userMapping.label"
+        "checkAnswers.userMapping.label",
+        "checkAnswers.ggId.label"
       )
       result should not(containMessages("checkAnswers.amlsDetails.pending.label"))
+      checkHtmlResultWithBodyText(result, "XXXX-XXXX-1234", "XXXX-XXXX-5678")
     }
 
     "throw an exception when there is no continue url in the record" in new TestSetupWithCompleteJourneyRecordWithMapping {
