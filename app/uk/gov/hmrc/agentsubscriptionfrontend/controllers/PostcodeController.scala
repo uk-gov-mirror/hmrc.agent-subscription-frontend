@@ -54,11 +54,11 @@ class PostcodeController @Inject()(
 
   def showPostcodeForm(): Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { implicit agent =>
-      withValidSession { (_, existingSession) =>
+      withValidSession { (businessType, existingSession) =>
         existingSession.postcode match {
           case Some(postcode) =>
-            Ok(html.postcode(postcodeForm.fill(postcode)))
-          case None => Ok(html.postcode(postcodeForm))
+            Ok(html.postcode(postcodeForm.fill(postcode), businessType))
+          case None => Ok(html.postcode(postcodeForm, businessType))
         }
       }
     }
@@ -66,11 +66,11 @@ class PostcodeController @Inject()(
 
   def submitPostcodeForm(): Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { implicit agent =>
-      withValidSession { (_, existingSession) =>
+      withValidSession { (businessType, existingSession) =>
         postcodeForm
           .bindFromRequest()
           .fold(
-            formWithErrors => Ok(html.postcode(formWithErrors)),
+            formWithErrors => Ok(html.postcode(formWithErrors, businessType)),
             validPostcode => {
               existingSession.utr match {
                 case Some(utr) => checkSubscriptionStatusAndUpdateSession(utr, validPostcode, existingSession)
