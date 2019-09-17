@@ -183,11 +183,19 @@ businessType.error.invalid-choice = Select your business type
 
 #UTR details page
 utr.title=What is the Unique Taxpayer Reference (UTR) of your company?
-utr.header.sole_trader=What is the Unique Taxpayer Reference (UTR) you use for Self Assessment?
-utr.header.limited_company=What is the Unique Taxpayer Reference (UTR) of your company?
+utr.header.sole_trader=What is your Self Assessment Unique Taxpayer Reference (UTR)?
+utr.header.limited_company=What is your Corporation Tax Unique Taxpayer Reference (UTR)?
 utr.header.partnership=What is the Unique Taxpayer Reference (UTR) of your partnership?
 utr.header.llp=What is the Unique Taxpayer Reference (UTR) of your limited liability partnership?
-utr.p1=A Unique Taxpayer Reference is 10 numbers like 12345 67890. It will be on tax returns and other letters about {0}. It may be called ''reference'', ''UTR'' or ''official use''. <a href="https://www.gov.uk/find-lost-utr-number" target="_blank" rel="noopener noreferrer">Find a lost UTR (opens in a new window or tab)</a>.
+
+utr.description.start=This is 10 numbers, for example 1234567890. It will be on tax returns and other letters
+utr.description.about.sole_trader=about Self Assessment.
+utr.description.about.limited_company=about Corporation Tax.
+utr.description.about.partnership=about Self Assessment.
+utr.description.about.llp=from HMRC about the limited liability partnership.
+utr.description.end=It may be called ‘reference’, ‘UTR’ or ‘official use’.
+
+utr.find-lost=Find a lost UTR (opens in a new window or tab)
 
 #CRN details page
 crn.title=What is the company registration number of your business?

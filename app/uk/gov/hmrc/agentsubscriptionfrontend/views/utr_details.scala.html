@@ -32,8 +32,12 @@
 
     <h1 class="heading-xlarge">@Messages(s"utr.header.${businessType.key}")</h1>
 
-    <p class="panel-border-wide">@Html(Messages("utr.p1", if(businessType.key == "limited_company" ) {"Corporation Tax"} else {"Self Assessment"}))</p>
-
+    <p class="panel-border-wide">
+        @Messages("utr.description.start")
+        @Messages(s"utr.description.about.${businessType.key}")
+        @Messages("utr.description.end")
+        <a href="https://www.gov.uk/find-lost-utr-number" target="_blank" rel="noopener noreferrer">@Messages("utr.find-lost")</a>.
+    </p>
 
     @form(
         action = routes.UtrController.submitUtrForm(),

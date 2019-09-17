@@ -120,8 +120,7 @@ class AssuranceChecksController @Inject()(
           .map {
             case true =>
               mark("Count-Subscription-InvasiveCheck-Success")
-              //Redirect(getNextPageAfterInvasiveChecks(businessType))
-              Redirect(routes.BusinessIdentificationController.showConfirmBusinessForm())
+              Redirect(getNextPageAfterInvasiveChecks(businessType))
             case false =>
               mark("Count-Subscription-InvasiveCheck-Failed")
               Redirect(routes.StartController.showCannotCreateAccount())

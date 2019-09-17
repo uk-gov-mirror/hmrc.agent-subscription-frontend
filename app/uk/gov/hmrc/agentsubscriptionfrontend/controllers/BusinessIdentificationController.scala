@@ -93,11 +93,10 @@ class BusinessIdentificationController @Inject()(
     implicit request: Request[_]) = {
 
     val getBackLinkForConfirmBusiness =
-      routes.BusinessDetailsController.showBusinessDetailsForm()
-//      existingSession.registeredForVat match {
-//        case Some("Yes") => routes.VatDetailsController.showVatDetailsForm()
-//        case _           => routes.VatDetailsController.showRegisteredForVatForm()
-//      }
+      existingSession.registeredForVat match {
+        case Some("Yes") => routes.VatDetailsController.showVatDetailsForm()
+        case _           => routes.VatDetailsController.showRegisteredForVatForm()
+      }
 
     (
       existingSession.utr,
@@ -114,8 +113,7 @@ class BusinessIdentificationController @Inject()(
           ))
       case (None, _, _) =>
         Logger.warn("utr is missing from registration, redirecting to /unique-taxpayer-reference")
-        //Redirect(routes.UtrController.showUtrForm())
-        Redirect(routes.BusinessDetailsController.showBusinessDetailsForm())
+        Redirect(routes.UtrController.showUtrForm())
       case (_, None, _) =>
         Logger.warn("taxpayerName is missing from registration, redirecting to /business-name")
         Redirect(routes.BusinessIdentificationController.showBusinessNameForm())
@@ -143,8 +141,7 @@ class BusinessIdentificationController @Inject()(
                   } else validatedBusinessDetailsAndRedirect(existingSession, agent)
 
                 case No =>
-                  //Redirect(routes.UtrController.showUtrForm())
-                  Redirect(routes.BusinessDetailsController.showBusinessDetailsForm())
+                  Redirect(routes.UtrController.showUtrForm())
               }
             }
           )

@@ -83,8 +83,7 @@ class ConfirmBusinessISpec extends BaseISpec {
 
       val result = await(controller.showConfirmBusinessForm(request))
 
-      //result should containSubstrings(routes.VatDetailsController.showRegisteredForVatForm().url)
-      result should containSubstrings(routes.BusinessDetailsController.showBusinessDetailsForm().url)
+      result should containSubstrings(routes.VatDetailsController.showRegisteredForVatForm().url)
     }
 
     "show a back button correct when they are registered for vat and provided vat details" in new TestSetupNoJourneyRecord {
@@ -100,8 +99,7 @@ class ConfirmBusinessISpec extends BaseISpec {
 
       val result = await(controller.showConfirmBusinessForm(request))
 
-      //result should containSubstrings(routes.VatDetailsController.showVatDetailsForm().url)
-      result should containSubstrings(routes.BusinessDetailsController.showBusinessDetailsForm().url)
+      result should containSubstrings(routes.VatDetailsController.showVatDetailsForm().url)
     }
   }
 
@@ -209,7 +207,8 @@ class ConfirmBusinessISpec extends BaseISpec {
         result.header.headers(LOCATION) shouldBe routes.SubscriptionController.showSignInWithNewID().url
       }
 
-      "redirect to showBusinessEmailForm if the user has clean creds and isSubscribedToAgentServices=false and ETMP record contains empty email" in new TestSetupNoJourneyRecord {
+      "redirect to showBusinessEmailForm if the user has clean creds and isSubscribedToAgentServices=false and ETMP " +
+        "record contains empty email" in new TestSetupNoJourneyRecord {
         implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
           .withFormUrlEncodedBody("confirmBusiness" -> "yes")
         sessionStoreService.currentSession.agentSession = Some(
@@ -223,7 +222,8 @@ class ConfirmBusinessISpec extends BaseISpec {
         result.header.headers(LOCATION) shouldBe routes.BusinessIdentificationController.showBusinessEmailForm().url
       }
 
-      "redirect to showBusinessNameForm if the user has clean creds and isSubscribedToAgentServices=false and ETMP record contains invalid name" in new TestSetupNoJourneyRecord {
+      "redirect to showBusinessNameForm if the user has clean creds and isSubscribedToAgentServices=false and ETMP " +
+        "record contains invalid name" in new TestSetupNoJourneyRecord {
         implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
           .withFormUrlEncodedBody("confirmBusiness" -> "yes")
         sessionStoreService.currentSession.agentSession = Some(
@@ -328,8 +328,7 @@ class ConfirmBusinessISpec extends BaseISpec {
 
         val result = await(controller.submitConfirmBusinessForm(request))
 
-        //result.header.headers(LOCATION) shouldBe routes.UtrController.showUtrForm().url
-        result.header.headers(LOCATION) shouldBe routes.BusinessDetailsController.showBusinessDetailsForm().url
+        result.header.headers(LOCATION) shouldBe routes.UtrController.showUtrForm().url
       }
     }
 
