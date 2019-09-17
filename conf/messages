@@ -201,9 +201,11 @@ utr.find-lost=Find a lost UTR (opens in a new window or tab)
 crn.title=What is the company registration number of your business?
 crn.hint=For example, 01234567 or SC123456
 
-
 #Postcode page
-postcode.title=What is the postcode of your registered address?
+postcode.sole_trader.title=What is the postcode of your registered address?
+postcode.limited_company.title=What is the postcode of your company's registered address?
+postcode.partnership.title=What is the postcode of your partnership's registered address?
+postcode.llp.title=What is the postcode of your limited liability partnership's registered address?
 
 #Nino page
 nino.title=What is your National Insurance number?
