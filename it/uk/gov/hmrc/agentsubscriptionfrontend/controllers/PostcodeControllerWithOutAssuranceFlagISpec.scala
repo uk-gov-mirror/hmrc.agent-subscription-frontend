@@ -115,7 +115,7 @@ class PostcodeControllerWithOutAssuranceFlagISpec extends BaseISpec with Session
       status(result) shouldBe 200
 
       result should containMessages(
-        "postcode.title",
+        "postcode.sole_trader.title",
         "error.postcode.invalid"
       )
     }
