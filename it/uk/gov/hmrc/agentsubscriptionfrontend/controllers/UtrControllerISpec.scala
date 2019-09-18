@@ -30,7 +30,6 @@ class UtrControllerISpec extends BaseISpec with SessionDataMissingSpec {
         private val result = await(controller.showUtrForm()(request))
 
         result should containMessages(
-          "utr.title",
           s"utr.header.${businessType.key}"
         )
 
@@ -83,7 +82,6 @@ class UtrControllerISpec extends BaseISpec with SessionDataMissingSpec {
 
       status(result) shouldBe 200
       result should containMessages(
-        "utr.title",
         s"utr.header.${BusinessType.SoleTrader.key}",
         "error.sautr.invalid"
       )
