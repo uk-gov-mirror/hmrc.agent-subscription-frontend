@@ -225,6 +225,23 @@ abstract class BaseISpec
     }
   }
 
+  protected def containLinkText(expectedMessageText: String, expectedHref: String): Matcher[Result] = {
+    import scala.collection.JavaConversions._
+    new Matcher[Result] {
+      override def apply(result: Result): MatchResult = {
+        val doc = Jsoup.parse(bodyOf(result))
+        val foundElements = doc.select(s"a[href=$expectedHref]")
+
+        val wasFoundWithCorrectMessage = foundElements.toList.exists(_.text() == expectedMessageText)
+        MatchResult(
+          wasFoundWithCorrectMessage,
+          s"""Response does not contain a link to "$expectedHref" with link text "$expectedMessageText" """,
+          s"""Response contains a link to "$expectedHref" with link text "$expectedMessageText" """
+        )
+      }
+    }
+  }
+
   protected def withMetricsTimerUpdate[A](expectedMetricName: String)(testCode: => A): Assertion = {
     givenCleanMetricRegistry()
     testCode

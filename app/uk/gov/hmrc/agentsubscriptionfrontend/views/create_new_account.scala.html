@@ -27,7 +27,7 @@
     <p>@Messages("createNewAccount.p1")</p>
 
     <p>
-     <a class="button margin-right-5" href="@SignedOutController.redirectTaskListUserToCreateCleanCreds" role="button" id="buttonGoToGg">@Messages("button.register")</a>
+     <a class="button margin-right-5" href="@SignedOutController.redirectUserToCreateCleanCreds" role="button" id="buttonGoToGg">@Messages("button.register")</a>
      <a class="button--secondary" href="@routes.TaskListController.savedProgress(Some(routes.BusinessIdentificationController.showCreateNewAccount().url))">@Messages("button.saveComeBackLater")</a>
     </p>
 }

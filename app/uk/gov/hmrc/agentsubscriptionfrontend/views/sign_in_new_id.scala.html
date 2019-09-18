@@ -21,8 +21,9 @@
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = Messages("sign-in-new-id.header"), bodyClasses = None) {
 
     <h1 class="heading-xlarge">@Messages("sign-in-new-id.header")</h1>
-    <p>@Messages("sign-in-new-id.p1")</p>
-    <p>@Messages("sign-in-new-id.p2")</p>
+            <p>@Messages("sign-in-new-id.p1")</p>
+            <p>@Messages("sign-in-new-id.p2")</p>
+            <p>@Html(Messages("sign-in-new-id.p3", routes.SignedOutController.redirectUserToCreateCleanCreds))</p>
 
-    <a class="button" href="@routes.SignedOutController.redirectToBusinessTypeForm" role="button" id="signInWithNewId">@Messages("sign-in-new-id.button")</a>
+            <a class="button" href="@routes.SignedOutController.redirectToBusinessTypeForm" role="button" id="signInWithNewId">@Messages("sign-in-new-id.button")</a>
 }

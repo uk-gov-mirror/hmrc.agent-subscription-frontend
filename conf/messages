@@ -440,6 +440,7 @@ postcodeNotAllowed.button=Try Again
 sign-in-new-id.header=Sign in with your new user ID
 sign-in-new-id.p1=You have not finished creating your agent services account.
 sign-in-new-id.p2=To finish this step, sign in again using the new user ID you created for your agent services account.
+sign-in-new-id.p3=If you do not have one, <a href="{0}">create a new user ID</a>, selecting the ‘Agent’ option.
 sign-in-new-id.button=Sign in with new user ID
 
 footer.links.accessibility.text=Accessibility

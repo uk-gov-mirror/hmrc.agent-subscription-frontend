@@ -98,8 +98,6 @@ GET         /sign-in-with-new-user-id                      uk.gov.hmrc.agentsubs
 
 GET         /create-clean-creds                            uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.redirectUserToCreateCleanCreds
 
-GET         /redirect-to-sos                               uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.redirectTaskListUserToCreateCleanCreds
-
 GET         /redirect-to-asaccount                         uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.redirectToASAccountPage
 GET         /start-survey                                  uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.startSurvey
 GET         /sign-out                                      uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.signOutWithContinueUrl
