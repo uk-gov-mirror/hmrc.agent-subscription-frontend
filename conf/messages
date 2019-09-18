@@ -40,7 +40,7 @@ error.email.invalidchars=Business email address must only contain letters a to z
 error.email.maxlength=Business email address must be 132 characters or less
 error.postcode.invalid=Enter a valid postcode, for example AA1 1AA
 error.postcode.invalidchars=Postcode must only include letters a to z, numbers and spaces, like AA1 1AA
-error.postcode.blacklisted=You can''t use the postcode you''ve entered
+error.postcode.blacklisted=You can’t use the postcode you’ve entered
 error.postcode.empty=Enter a valid postcode, like AA1 1AA
 error.postcode.maxlength=Postcode must be 8 characters or less
 error.addressline.1.empty = Enter address line 1
@@ -55,17 +55,17 @@ error.addressline.3.invalid = Address line 3 must only include letters a to z, n
 error.addressline.4.empty = Enter address line 4
 error.addressline.4.maxlength = Address line 4 must be 35 characters or less
 error.addressline.4.invalid = Address line 4 must only include letters a to z, numbers, commas, ampersands, single quotation marks, full stops, apostrophes, hyphens, forward slashes, and spaces
-error.utr.blank= Enter your business''s Unique Taxpayer Reference (UTR)
+error.utr.blank= Enter your business’s Unique Taxpayer Reference (UTR)
 error.utr.invalid = Unique Taxpayer Reference (UTR) must be 10 numbers
 error.sautr.blank=Enter the Unique Taxpayer Reference (UTR) you use for Self Assessment
 error.sautr.invalid=The Unique Taxpayer Reference (UTR) you use for Self Assessment must be 10 numbers
-error.companyutr.blank=Enter your company''s Unique Taxpayer Reference (UTR)
-error.companyutr.invalid=Your company''s Unique Taxpayer Reference (UTR) must be 10 numbers
-error.partnershiputr.blank=Enter your partnership''s Unique Taxpayer Reference (UTR)
-error.partnershiputr.invalid=Your partnership''s Unique Taxpayer Reference (UTR) must be 10 numbers
-error.llputr.blank=Enter your partnership''s Unique Taxpayer Reference (UTR)
-error.llputr.invalid=Your limited liability partnership''s Unique Taxpayer Reference (UTR) must be 10 numbers
-error.client.sautr.blank=Enter the client''s Self Assessment Unique Taxpayer Reference (UTR)
+error.companyutr.blank=Enter your company’s Unique Taxpayer Reference (UTR)
+error.companyutr.invalid=Your company’s Unique Taxpayer Reference (UTR) must be 10 numbers
+error.partnershiputr.blank=Enter your partnership’s Unique Taxpayer Reference (UTR)
+error.partnershiputr.invalid=Your partnership’s Unique Taxpayer Reference (UTR) must be 10 numbers
+error.llputr.blank=Enter your partnership’s Unique Taxpayer Reference (UTR)
+error.llputr.invalid=Your limited liability partnership’s Unique Taxpayer Reference (UTR) must be 10 numbers
+error.client.sautr.blank=Enter the client’s Self Assessment Unique Taxpayer Reference (UTR)
 error.client.sautr.invalid=Self Assessment Unique Taxpayer Reference (UTR) must be 10 numbers
 error.crn.empty=Enter the company registration number of your business
 error.crn.invalid=Company registration number must be 8 numbers, or 2 letters followed by 6 numbers
@@ -134,7 +134,7 @@ noAgencyFound.p2=Check the details and try again.
 
 #Already subscribed
 alreadySubscribed.title=Your business already has an agent services account
-alreadySubscribed.p1=Contact your administrator to get access to your business''s agent services account.
+alreadySubscribed.p1=Contact your administrator to get access to your business’s agent services account.
 
 #Existing (temp store) journey found for entered UTR
 existingJourneyFound.p1=Your business has already started creating an agent services account using a different Government Gateway user ID.
@@ -203,13 +203,13 @@ crn.hint=For example, 01234567 or SC123456
 
 #Postcode page
 postcode.sole_trader.title=What is the postcode of your registered address?
-postcode.limited_company.title=What is the postcode of your company's registered address?
+postcode.limited_company.title=What is the postcode of your company’s registered address?
 postcode.partnership.title=What is the postcode of your partnership's registered address?
 postcode.llp.title=What is the postcode of your limited liability partnership's registered address?
 
 #Nino page
 nino.title=What is your National Insurance number?
-nino.hint=It''s on your National Insurance card, benefit letter, payslip or P60. For example, ''QQ 12 34 56 C''.
+nino.hint=It’s on your National Insurance card, benefit letter, payslip or P60. For example, ‘QQ 12 34 56 C’.
 
 #Date of Birth page
 date-of-birth.title=What is your date of birth?
@@ -263,13 +263,13 @@ businessDetails.label.utr.partnership=Partnership Unique Taxpayer Reference (UTR
 businessDetails.label.utr.llp=Partnership Unique Taxpayer Reference (UTR)
 
 businessDetails.details.heading.sole_trader=Where to find your Self Assessment UTR
-businessDetails.details.content.sole_trader=You''ll <a href="https://www.gov.uk/find-lost-utr-number" target="_blank" rel="noopener noreferrer">find your UTR (opens in a new window or tab)</a> on the letter HMRC sent you when you registered for Self Assessment. It''s a 10-digit number, sometimes with a letter ''K'' on the end.
+businessDetails.details.content.sole_trader=You’ll <a href="https://www.gov.uk/find-lost-utr-number" target="_blank" rel="noopener noreferrer">find your UTR (opens in a new window or tab)</a> on the letter HMRC sent you when you registered for Self Assessment. It’s a 10-digit number, sometimes with a letter ''K'' on the end.
 businessDetails.details.heading.limited_company=Where to find your Corporation Tax or company UTR
-businessDetails.details.content.limited_company=You can usually find your Corporation Tax or company UTR in the header of letters from HM Revenue & Customs (HMRC), next to headings such as ''Tax Reference'', ''UTR'' or ''Official Use''.
+businessDetails.details.content.limited_company=You can usually find your Corporation Tax or company UTR in the header of letters from HM Revenue & Customs (HMRC), next to headings such as ‘Tax Reference’, ‘UTR’ or ‘Official Use’.
 businessDetails.details.heading.partnership=Where to find your partnership UTR
-businessDetails.details.content.partnership=You can find your partnership UTR in the header of letters from HM Revenue & Customs (HMRC), next to headings such as ''Tax Reference'', ''UTR'' or ''Official Use''.
+businessDetails.details.content.partnership=You can find your partnership UTR in the header of letters from HM Revenue & Customs (HMRC), next to headings such as ‘Tax Reference’, ‘UTR’ or ‘Official Use’.
 businessDetails.details.heading.llp=Where to find your partnership UTR
-businessDetails.details.content.llp=You can find your partnership UTR in the header of letters from HM Revenue & Customs (HMRC), next to headings such as ''Tax Reference'', ''UTR'' or ''Official Use''.
+businessDetails.details.content.llp=You can find your partnership UTR in the header of letters from HM Revenue & Customs (HMRC), next to headings such as ‘Tax Reference’, ‘UTR’ or ‘Official Use’.
 
 ##dynamic content finish
 
@@ -278,7 +278,7 @@ businessDetails.label.postcode.hint=This is the postcode of your registered busi
 
 #Not subscribed
 notSubscribed.title=You can create an agent services account
-notSubscribed.p1=We''ve checked <strong class="bold">{0}</strong> and it doesn''t have an agent services account.
+notSubscribed.p1=We’ve checked <strong class="bold">{0}</strong> and it doesn’t have an agent services account.
 
 #Invalid address
 invalidAddress.title=Invalid address
@@ -292,7 +292,7 @@ createNewAccount.p1=You will need this user ID to sign in to your new agent serv
 #Non agent
 nonAgent.title=You have not signed in with an agent user ID
 nonAgent.p1=<a href="{0}">Sign in with an agent Government Gateway user ID</a> to continue.
-nonAgent.p2=If you do not have one, <a href="{0}">create a new user ID</a>, selecting the ''Agent'' option.
+nonAgent.p2=If you do not have one, <a href="{0}">create a new user ID</a>, selecting the ‘Agent’ option.
 
 #Link account
 linkClients.title=Link your clients to your agent services account
@@ -351,10 +351,10 @@ invasive.check.p1=We need this information so that we can check your identity.
 invasive.radioResponse.yes=Yes
 invasive.radioResponse.hidden.input.label.sa=Self Assessment agent code
 invasive.radioResponse.no=No
-invasive.radioResponse.nino=Client''s National Insurance number
+invasive.radioResponse.nino=Client’s National Insurance number
 invasive.radioResponse.hidden.input.label.nino=National Insurance number
 invasive.radioResponse.helper.text.nino=For example, QQ 12 34 56 C
-invasive.radioResponse.utr=Client''s Self Assessment UTR
+invasive.radioResponse.utr=Client’s Self Assessment UTR
 invasive.radioResponse.hidden.input.label.utr=Self Assessment UTR
 invasive.radioResponse.helper.text.utr=For example, 12345 67890
 invasive.radioResponse.cannotProvide=I cannot provide either of these details
