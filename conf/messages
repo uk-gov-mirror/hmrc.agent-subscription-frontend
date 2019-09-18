@@ -204,8 +204,8 @@ crn.hint=For example, 01234567 or SC123456
 #Postcode page
 postcode.sole_trader.title=What is the postcode of your registered address?
 postcode.limited_company.title=What is the postcode of your company’s registered address?
-postcode.partnership.title=What is the postcode of your partnership's registered address?
-postcode.llp.title=What is the postcode of your limited liability partnership's registered address?
+postcode.partnership.title=What is the postcode of your partnership’s registered address?
+postcode.llp.title=What is the postcode of your limited liability partnership’s registered address?
 
 #Nino page
 nino.title=What is your National Insurance number?
