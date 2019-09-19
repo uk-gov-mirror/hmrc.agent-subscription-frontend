@@ -50,6 +50,7 @@ case class SubscriptionProcess(state: SubscriptionState, details: Option[Registr
 class SubscriptionService @Inject()(
   agentSubscriptionConnector: AgentSubscriptionConnector,
   sessionStoreService: SessionStoreService,
+  subscriptionJourneyService: SubscriptionJourneyService,
   val metrics: Metrics)
     extends Monitoring {
 
@@ -111,6 +112,38 @@ class SubscriptionService @Inject()(
           throw e
       }
 
+  def completePartialSubscriptionAndGoToComplete(utr: Utr, businessPostCode: Postcode)(
+    implicit hc: HeaderCarrier,
+    ec: ExecutionContext): Future[Result] =
+    completePartialSubscription(utr, businessPostCode).map { _ =>
+      mark("Count-Subscription-PartialSubscriptionCompleted")
+      Redirect(routes.SubscriptionController.showSubscriptionComplete())
+    }
+
+  def redirectAfterGGCredsCreatedBasedOnStatus(continueId: ContinueId, agent: Agent)(
+    implicit hc: HeaderCarrier,
+    ex: ExecutionContext): Future[Result] =
+    for {
+      record             <- subscriptionJourneyService.getMandatoryJourneyRecord(continueId)
+      subscriptionStatus <- getSubscriptionStatus(record.businessDetails.utr, record.businessDetails.postcode)
+      //if user is partially subscribed when they come back with a new user ID can complete partial subscription with clean creds
+      completePartialSubscriptionOrTaskList <- subscriptionStatus match {
+                                                case SubscriptionProcess(SubscribedButNotEnrolled, Some(_)) =>
+                                                  completePartialSubscriptionAndGoToComplete(
+                                                    record.businessDetails.utr,
+                                                    record.businessDetails.postcode)
+
+                                                case _ =>
+                                                  subscriptionJourneyService
+                                                    .saveJourneyRecord(
+                                                      record.copy(
+                                                        cleanCredsAuthProviderId = Some(agent.authProviderId)))
+                                                    .map { _ =>
+                                                      Redirect(routes.TaskListController.showTaskList())
+                                                    }
+                                              }
+    } yield completePartialSubscriptionOrTaskList
+
   def getSubscriptionStatus(utr: Utr, postcode: Postcode)(
     implicit hc: HeaderCarrier,
     ec: ExecutionContext): Future[SubscriptionProcess] =
@@ -146,21 +179,19 @@ class SubscriptionService @Inject()(
     ec: ExecutionContext): Future[Boolean] =
     agentSubscriptionConnector.matchVatKnownFacts(vrn, vatRegistrationDate)
 
-  def handlePartiallySubscribedAndRedirect(agent: Agent, agentUtr: Utr, agentPostcode: Postcode)(
+  def handlePartiallySubscribedAndRedirect(agent: Agent, agentSession: AgentSession)(
     whenNotPartiallySubscribed: => Future[Result])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Result] = {
-    val utr = agentUtr
-    val postcode = agentPostcode
+    val utr = agentSession.utr.getOrElse(Utr(""))
+    val postcode = agentSession.postcode.getOrElse(Postcode(""))
     for {
       subscriptionProcess <- getSubscriptionStatus(utr, postcode)
       result <- if (subscriptionProcess.state == SubscribedButNotEnrolled)
-                 agent.cleanCredsFold(
-                   isDirty =
-                     Future successful Redirect(routes.SubscriptionController.showSignInWithNewID()))(
-                   isClean = completePartialSubscription(utr, postcode)
-                     .map { _ =>
-                       mark("Count-Subscription-PartialSubscriptionCompleted")
-                       Redirect(routes.SubscriptionController.showSubscriptionComplete())
-                     }
+                 agent.cleanCredsFold(isDirty = {
+                   subscriptionJourneyService
+                     .createJourneyRecord(agentSession, agent)
+                     .flatMap(_ => Future successful Redirect(routes.SubscriptionController.showSignInWithNewID()))
+                 })(
+                   isClean = completePartialSubscriptionAndGoToComplete(utr, postcode)
                  )
                else whenNotPartiallySubscribed
     } yield result

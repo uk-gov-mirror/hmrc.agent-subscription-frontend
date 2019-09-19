@@ -87,22 +87,9 @@ class PostcodeController @Inject()(
     request: Request[AnyContent],
     agent: Agent): Future[Result] =
     subscriptionService.getSubscriptionStatus(utr, postcode).flatMap {
-      case SubscriptionProcess(Unsubscribed, Some(registrationDetails)) =>
+      case SubscriptionProcess(subscriptionState, Some(registrationDetails))
+          if subscriptionState == Unsubscribed || subscriptionState == SubscribedButNotEnrolled =>
         checkAssuranceAndUpdateSession(utr, postcode, registrationDetails, agentSession)
-
-      case SubscriptionProcess(SubscribedButNotEnrolled, Some(reg)) =>
-        for {
-          _ <- sessionStoreService.cacheAgentSession(
-                agentSession.copy(postcode = Some(postcode), registration = Some(reg)))
-          result <- agent.withCleanCredsOrCreateNewAccount {
-                     subscriptionService
-                       .completePartialSubscription(utr, postcode)
-                       .map { _ =>
-                         mark("Count-Subscription-PartialSubscriptionCompleted")
-                         Redirect(routes.SubscriptionController.showSubscriptionComplete())
-                       }
-                   }
-        } yield result
 
       case SubscriptionProcess(SubscribedAndEnrolled, _) =>
         mark("Count-Subscription-AlreadySubscribed-RegisteredInETMP")

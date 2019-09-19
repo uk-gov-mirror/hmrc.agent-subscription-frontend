@@ -166,8 +166,7 @@ class BusinessIdentificationController @Inject()(
 
           subscriptionService.handlePartiallySubscribedAndRedirect(
             agent,
-            existingSession.utr.getOrElse(Utr("")),
-            existingSession.postcode.getOrElse(Postcode("")))(
+            existingSession)(
             whenNotPartiallySubscribed = createRecordAndRedirectToTasklist())
     }
 

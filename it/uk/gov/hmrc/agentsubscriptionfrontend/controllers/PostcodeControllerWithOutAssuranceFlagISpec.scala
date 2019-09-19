@@ -74,7 +74,7 @@ class PostcodeControllerWithOutAssuranceFlagISpec extends BaseISpec with Session
       redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showAlreadySubscribed().url)
     }
 
-    "showSubscriptionComplete for partially subscribed agent" in new TestSetupNoJourneyRecord{
+    "redirect to /national-insurance-number for partially subscribed agent" in new TestSetupNoJourneyRecord{
       withMatchingUtrAndPostcode(validUtr, validPostcode, isSubscribedToAgentServices = false, isSubscribedToETMP = true)
       partialSubscriptionWillSucceed(CompletePartialSubscriptionBody(validUtr, knownFacts = SubscriptionRequestKnownFacts(validPostcode)), arn = "TARN00023")
 
@@ -83,7 +83,7 @@ class PostcodeControllerWithOutAssuranceFlagISpec extends BaseISpec with Session
       sessionStoreService.currentSession.agentSession = Some(agentSession)
 
       val result = await(controller.submitPostcodeForm()(request))
-      redirectLocation(result) shouldBe Some(routes.SubscriptionController.showSubscriptionComplete().url)
+      redirectLocation(result) shouldBe Some(routes.NationalInsuranceController.showNationalInsuranceNumberForm().url)
     }
 
     "redirect to no match found when the subscription status is strange" in new TestSetupNoJourneyRecord {

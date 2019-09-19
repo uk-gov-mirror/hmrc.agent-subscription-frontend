@@ -19,10 +19,11 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
 import play.api.i18n.MessagesApi
+import play.api.mvc.Results.Redirect
 import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.models.ContinueId
-import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService, SubscriptionService}
+import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscribedButNotEnrolled, SubscriptionJourneyService, SubscriptionProcess, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.auth.core.AuthConnector
@@ -74,11 +75,7 @@ class StartController @Inject()(
             // sanity check - they just came back with a brand new Auth Id
             require(agent.subscriptionJourneyRecord.isEmpty)
 
-            for {
-              record <- subscriptionJourneyService.getMandatoryJourneyRecord(ContinueId(continueId))
-              _ <- subscriptionJourneyService.saveJourneyRecord(
-                    record.copy(cleanCredsAuthProviderId = Some(agent.authProviderId)))
-            } yield Redirect(routes.TaskListController.showTaskList())
+            subscriptionService.redirectAfterGGCredsCreatedBasedOnStatus(ContinueId(continueId), agent)
 
           case None => Future.successful(Redirect(routes.TaskListController.showTaskList()))
         }
