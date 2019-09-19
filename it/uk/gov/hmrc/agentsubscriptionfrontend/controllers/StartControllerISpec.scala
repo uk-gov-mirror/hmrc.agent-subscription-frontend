@@ -219,4 +219,13 @@ class StartControllerISpec extends BaseISpec {
       )
     }
   }
+
+  "GET /accessibility-statement" should {
+    "show the accessibility statement content" in {
+      val result = await(controller.showAccessibilityStatement(FakeRequest()))
+
+      status(result) shouldBe 200
+      result should containMessages("accessibility.statement.h1")
+    }
+  }
 }

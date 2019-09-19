@@ -106,6 +106,6 @@ GET         /redirect-to-businesstype                      uk.gov.hmrc.agentsubs
 
 GET         /cannot-create-account                         uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.showCannotCreateAccount
 
-GET         /accessibility-statement                       uk.gov.hmrc.agentsubscriptionfrontend.controllers.AccessibilityStatementController.showAccessibilityStatement
+GET         /accessibility-statement                       uk.gov.hmrc.agentsubscriptionfrontend.controllers.StartController.showAccessibilityStatement
 
 GET         /assets/*file                                  controllers.Assets.at(path="/public", file)

@@ -97,4 +97,8 @@ class StartController @Inject()(
   def showCannotCreateAccount: Action[AnyContent] = Action { implicit request =>
     Ok(html.cannot_create_account())
   }
+
+  def showAccessibilityStatement: Action[AnyContent] = Action { implicit request =>
+    Ok(html.accessibility_statement())
+  }
 }
