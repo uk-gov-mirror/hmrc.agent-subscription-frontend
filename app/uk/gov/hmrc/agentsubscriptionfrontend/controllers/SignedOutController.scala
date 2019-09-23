@@ -19,55 +19,65 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
 import play.api.i18n.MessagesApi
-import play.api.mvc.{Action, AnyContent}
+import play.api.mvc.{Action, AnyContent, Result}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.CallOps.addParamsToUrl
 import uk.gov.hmrc.auth.core.AuthConnector
+import uk.gov.hmrc.play.binders.ContinueUrl
 
 import scala.concurrent.ExecutionContext
 
 @Singleton
 class SignedOutController @Inject()(
   val sessionStoreService: SessionStoreService,
-  override val redirectUrlActions: RedirectUrlActions,
+  continueUrlActions: ContinueUrlActions,
   override val authConnector: AuthConnector,
   override val subscriptionJourneyService: SubscriptionJourneyService)(
   implicit messagesApi: MessagesApi,
   override val appConfig: AppConfig,
   override val metrics: Metrics,
   override val ec: ExecutionContext)
-    extends AgentSubscriptionBaseController(authConnector, redirectUrlActions, appConfig, subscriptionJourneyService)
+    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig, subscriptionJourneyService)
     with SessionBehaviour {
 
-  def redirectUserToCreateCleanCreds: Action[AnyContent] = Action.async { implicit request =>
+  def redirectTaskListUserToCreateCleanCreds: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { agent =>
       for {
         agentSubContinueUrlOpt <- sessionStoreService.fetchContinueUrl
-        redirectUrl            <- redirectUrlActions.getUrl(agentSubContinueUrlOpt)
-        continueId = {
-          agent.subscriptionJourneyRecord.flatMap(_.continueId)
-        }
+        continueId = agent.getMandatorySubscriptionRecord.continueId
       } yield {
-        val continueUrl =
-          addParamsToUrl(
-            appConfig.rootContinueUrl,
-            "id"       -> continueId,
-            "continue" -> redirectUrl
-          )
-
-        SeeOther(addParamsToUrl(appConfig.ggRegistrationFrontendExternalUrl, "continue" -> Some(continueUrl))).withNewSession
+        redirectToCreateCleanCreds(agentSubContinueUrlOpt, continueId)
       }
     }
   }
 
+  def redirectUserToCreateCleanCreds: Action[AnyContent] = Action.async { implicit request =>
+    withAuthenticatedUser {
+      for {
+        agentSubContinueUrlOpt <- sessionStoreService.fetchContinueUrl
+      } yield {
+        redirectToCreateCleanCreds(agentSubContinueUrlOpt, None)
+      }
+    }
+  }
+
+  private def redirectToCreateCleanCreds(maybeContinueUrl: Option[ContinueUrl], continueId: Option[String]): Result = {
+
+    val continueUrl =
+      addParamsToUrl(
+        appConfig.rootContinueUrl,
+        "id"       -> continueId,
+        "continue" -> maybeContinueUrl.map(_.url)
+      )
+
+    SeeOther(addParamsToUrl(appConfig.ggRegistrationFrontendExternalUrl, "continue" -> Some(continueUrl))).withNewSession
+  }
+
   def signOutWithContinueUrl: Action[AnyContent] = Action.async { implicit request =>
-    for {
-      agentSubContinueUrlOpt <- sessionStoreService.fetchContinueUrl
-      redirectUrl            <- redirectUrlActions.getUrl(agentSubContinueUrlOpt)
-    } yield {
+    sessionStoreService.fetchContinueUrl.map { maybeContinueUrl =>
       val signOutUrlWithContinueUrl =
-        addParamsToUrl(appConfig.companyAuthSignInUrl, "continue" -> redirectUrl)
+        addParamsToUrl(appConfig.companyAuthSignInUrl, "continue" -> maybeContinueUrl.map(_.url))
       SeeOther(signOutUrlWithContinueUrl).withNewSession
     }
   }

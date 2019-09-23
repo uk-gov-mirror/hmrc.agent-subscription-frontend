@@ -12,7 +12,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestData}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.HeaderCarrierConverter
-import uk.gov.hmrc.play.bootstrap.binders.RedirectUrl
+import uk.gov.hmrc.play.binders.ContinueUrl
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -29,8 +29,15 @@ class SignOutControllerISpec extends BaseISpec {
 
   "redirectToSos" should {
 
+    "redirect task list user to create clean creds" in new TestSetup {
+      private val result = await(controller.redirectTaskListUserToCreateCleanCreds(authenticatedAs(subscribingAgentEnrolledForNonMTD)))
+
+      status(result) shouldBe 303
+      redirectLocation(result).head should include(sosRedirectUrl)
+    }
+
     "redirect user to create clean creds" in new TestSetup {
-      private val result = await(controller.redirectUserToCreateCleanCreds(authenticatedAs(subscribingAgentEnrolledForNonMTD)))
+      private val result = await(controller.redirectUserToCreateCleanCreds(authenticatedAs(individual)))
 
       status(result) shouldBe 303
       redirectLocation(result).head should include(sosRedirectUrl)
@@ -39,42 +46,56 @@ class SignOutControllerISpec extends BaseISpec {
     "the SOS redirect URL should include an ID of the saved continue id" in new TestSetup {
       implicit val request: FakeRequest[AnyContentAsEmpty.type] = authenticatedAs(subscribingAgentEnrolledForNonMTD)
 
-      private val result = await(controller.redirectUserToCreateCleanCreds(request))
+      private val result = await(controller.redirectTaskListUserToCreateCleanCreds(request))
       redirectLocation(result).head should include(
         s"continue=%2Fagent-subscription%2Freturn-after-gg-creds-created%3Fid%3Dfoo")
     }
 
-    def assertContinueUrl(result: Result, continueUrl: String): Assertion = {
+    def assertContinueUrl(result: Result, continueUrl: ContinueUrl): Assertion = {
       val sosContinueValueUnencoded =
-        s"/agent-subscription/return-after-gg-creds-created?continue=${URLEncoder.encode(continueUrl, "UTF-8")}"
+        s"/agent-subscription/return-after-gg-creds-created?continue=${continueUrl.encodedUrl}"
       val sosContinueValueEncoded = URLEncoder.encode(sosContinueValueUnencoded, "UTF-8")
       val expectedSosContinueParam = s"continue=$sosContinueValueEncoded"
       redirectLocation(result).head should include(expectedSosContinueParam)
+    }
+
+    "include a continue URL on user clean creds redirect if a continue URL exists in the session store" in {
+
+      val ourContinueUrl = ContinueUrl("/test-continue-url")
+      implicit val request: FakeRequest[AnyContentAsEmpty.type] = authenticatedAs(individual)
+      sessionStoreService.currentSession.continueUrl = Some(ourContinueUrl)
+
+      assertContinueUrl(
+        await(controller.redirectUserToCreateCleanCreds(authenticatedAs(individual))),
+        ourContinueUrl
+      )
+
     }
 
     "include a continue URL in the SOS redirect URL if a continue URL exists in the session store" in {
 
       givenSubscriptionJourneyRecordExists(id, TestData.minimalSubscriptionJourneyRecordWithAmls(id).copy(continueId = None))
 
-      val ourContinueUrl = "/test-continue-url"
+      val ourContinueUrl = ContinueUrl("/test-continue-url")
       implicit val request: FakeRequest[AnyContentAsEmpty.type] = authenticatedAs(subscribingAgentEnrolledForNonMTD)
       sessionStoreService.currentSession.continueUrl = Some(ourContinueUrl)
 
       assertContinueUrl(
-        await(controller.redirectUserToCreateCleanCreds(authenticatedAs(subscribingAgentEnrolledForNonMTD))),
+        await(controller.redirectTaskListUserToCreateCleanCreds(authenticatedAs(subscribingAgentEnrolledForNonMTD))),
         ourContinueUrl
       )
+
     }
 
     "include both an ID and a continue URL in the SOS redirect URL if both a continue URL and KnownFacts exist in the session store" in new TestSetup {
-      val ourContinueUrl = "/test-continue-url"
+      val ourContinueUrl = ContinueUrl("/test-continue-url")
       implicit val request: FakeRequest[AnyContentAsEmpty.type] = authenticatedAs(subscribingAgentEnrolledForNonMTD)
       sessionStoreService.currentSession.continueUrl = Some(ourContinueUrl)
 
-      private val result = await(controller.redirectUserToCreateCleanCreds(request))
+      private val result = await(controller.redirectTaskListUserToCreateCleanCreds(request))
 
       val sosContinueValueUnencoded =
-        s"/agent-subscription/return-after-gg-creds-created?id=foo&continue=${URLEncoder.encode(ourContinueUrl, "UTF-8")}"
+        s"/agent-subscription/return-after-gg-creds-created?id=foo&continue=${ourContinueUrl.encodedUrl}"
       val sosContinueValueEncoded: String = URLEncoder.encode(sosContinueValueUnencoded, "UTF-8")
       val expectedSosContinueParam = s"continue=$sosContinueValueEncoded"
       redirectLocation(result).head should include(expectedSosContinueParam)
@@ -114,16 +135,16 @@ class SignOutControllerISpec extends BaseISpec {
     "logout and redirect to /gg/sign-in?continue=... when continue URL is present in the session" in {
       testLogoutAndRedirect(
         expectedRedirectUrl = "/gg/sign-in?continue=%2Ftest-continue-url",
-        maybeContinueUrl = Some("/test-continue-url")
+        maybeContinueUrl = Some(ContinueUrl("/test-continue-url"))
       )
     }
 
-    def testLogoutAndRedirect(expectedRedirectUrl: String, maybeContinueUrl: Option[String] = None): Assertion = {
+    def testLogoutAndRedirect(expectedRedirectUrl: String, maybeContinueUrl: Option[ContinueUrl] = None): Assertion = {
       implicit val request: FakeRequest[AnyContentAsEmpty.type] = fakeRequest.withSession("sessionId" -> "SomeSession")
 
       maybeContinueUrl.map{ continueUrl =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromHeadersAndSession(request.headers, Some(request.session))
-        sessionStoreService.cacheContinueUrl(RedirectUrl(continueUrl))
+        sessionStoreService.cacheContinueUrl(continueUrl)
       }
 
       request.session.get("sessionId") should not be empty
@@ -145,18 +166,6 @@ class SignOutControllerISpec extends BaseISpec {
       status(result) shouldBe 303
 
       redirectLocation(result).head shouldBe routes.StartController.start().url
-      result.session.get("sessionId") shouldBe empty
-    }
-  }
-
-  "redirectToBusinessTypeForm" should {
-    "redirect to the business type page and remove the session" in {
-      implicit val request: FakeRequest[AnyContentAsEmpty.type] = fakeRequest.withSession("sessionId" -> "SomeSession")
-      val result = await(controller.redirectToBusinessTypeForm(request))
-
-      status(result) shouldBe 303
-
-      redirectLocation(result).head shouldBe routes.BusinessTypeController.showBusinessTypeForm().url
       result.session.get("sessionId") shouldBe empty
     }
   }

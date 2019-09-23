@@ -14,12 +14,16 @@ import play.api.mvc.{AnyContentAsEmpty, Request, Result}
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{contentType, _}
 import play.twirl.api.HtmlFormat.escape
+import uk.gov.hmrc.agentsubscriptionfrontend.connectors.SsoConnector
 import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub.userIsAuthenticated
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.DataStreamStubs
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.HeaderCarrierConverter
 import uk.gov.hmrc.play.test.UnitSpec
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 abstract class BaseISpec
     extends UnitSpec with OneAppPerSuite with WireMockSupport with EndpointBehaviours with DataStreamStubs
@@ -57,9 +61,17 @@ abstract class BaseISpec
     override def toJson: String = ???
   }
 
+  protected lazy val testSsoConnector = new SsoConnector(null, null, FakeMetrics) {
+    val whitelistedSSODomains = Set("www.foo.com", "foo.org")
+
+    override def validateExternalDomain(domain: String)(implicit hc: HeaderCarrier): Future[Boolean] =
+      Future.successful(whitelistedSSODomains.contains(domain))
+  }
+
   private class TestGuiceModule extends AbstractModule {
     override def configure(): Unit = {
       bind(classOf[SessionStoreService]).toInstance(sessionStoreService)
+      bind(classOf[SsoConnector]).toInstance(testSsoConnector)
     }
   }
 

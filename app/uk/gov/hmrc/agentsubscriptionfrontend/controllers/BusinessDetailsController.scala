@@ -37,7 +37,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class BusinessDetailsController @Inject()(
-  override val redirectUrlActions: RedirectUrlActions,
+  override val continueUrlActions: ContinueUrlActions,
   override val authConnector: AuthConnector,
   val sessionStoreService: SessionStoreService,
   val subscriptionService: SubscriptionService,
@@ -48,12 +48,12 @@ class BusinessDetailsController @Inject()(
   override val appConfig: AppConfig,
   val ec: ExecutionContext,
   override val messagesApi: MessagesApi)
-    extends AgentSubscriptionBaseController(authConnector, redirectUrlActions, appConfig, subscriptionJourneyService)
+    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig, subscriptionJourneyService)
     with SessionBehaviour {
 
   def showBusinessDetailsForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      redirectUrlActions.withMaybeRedirectUrlCached {
+      continueUrlActions.withMaybeContinueUrlCached {
         withValidSession { (businessType, _) =>
           mark("Count-Subscription-BusinessDetails-Start")
           Ok(html.business_details(businessDetailsForm(businessType.key), businessType))

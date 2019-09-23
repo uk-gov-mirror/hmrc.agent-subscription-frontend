@@ -40,13 +40,13 @@ class AssuranceChecksController @Inject()(
   assuranceService: AssuranceService,
   override val authConnector: AuthConnector,
   val sessionStoreService: SessionStoreService,
-  override val redirectUrlActions: RedirectUrlActions,
+  continueUrlActions: ContinueUrlActions,
   override val subscriptionJourneyService: SubscriptionJourneyService)(
   implicit messagesApi: MessagesApi,
   override val appConfig: AppConfig,
   override val metrics: Metrics,
   override val ec: ExecutionContext)
-    extends AgentSubscriptionBaseController(authConnector, redirectUrlActions, appConfig, subscriptionJourneyService)
+    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig, subscriptionJourneyService)
     with SessionBehaviour {
 
   def invasiveCheckStart: Action[AnyContent] = Action.async { implicit request =>
