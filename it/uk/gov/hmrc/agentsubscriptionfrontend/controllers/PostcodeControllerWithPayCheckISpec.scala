@@ -118,7 +118,7 @@ class PostcodeControllerWithPayCheckISpec extends BaseISpec with SessionDataMiss
       status(result) shouldBe 200
 
       result should containMessages(
-        "postcode.sole_trader.title",
+        "postcode.title",
         "error.postcode.invalid"
       )
     }
