@@ -8,7 +8,7 @@ lazy val scoverageSettings = {
     // Semicolon-separated list of regexs matching classes to exclude
     ScoverageKeys.coverageExcludedPackages := """uk\.gov\.hmrc\.BuildInfo;.*\.Routes;.*\.RoutesPrefix;.*Filters?;MicroserviceAuditConnector;Module;GraphiteStartUp;.*\.Reverse[^.]*""",
     ScoverageKeys.coverageMinimum := 80.00,
-    ScoverageKeys.coverageFailOnMinimum := true,
+    ScoverageKeys.coverageFailOnMinimum := false,
     ScoverageKeys.coverageHighlighting := true,
     parallelExecution in Test := false
   )
@@ -127,10 +127,11 @@ lazy val root = Project("agent-subscription-frontend", file("."))
   .configs(IntegrationTest)
   .settings(
     majorVersion := 0,
-    Keys.fork in IntegrationTest := true,
+    Keys.fork in IntegrationTest := false,
     Defaults.itSettings,
     unmanagedSourceDirectories in IntegrationTest += baseDirectory(_ / "it").value,
     parallelExecution in IntegrationTest := false,
+    testGrouping in IntegrationTest := oneForkedJvmPerTest((definedTests in IntegrationTest).value),
     scalafmtOnCompile in IntegrationTest := true
   )
   .settings(wartRemoverSettings: _*)
@@ -138,3 +139,8 @@ lazy val root = Project("agent-subscription-frontend", file("."))
 
 inConfig(IntegrationTest)(scalafmtCoreSettings)
 
+def oneForkedJvmPerTest(tests: Seq[TestDefinition]) = {
+  tests.map { test =>
+    new Group(test.name, Seq(test), SubProcess(ForkOptions(runJVMOptions = Seq(s"-Dtest.name=${test.name}"))))
+  }
+}

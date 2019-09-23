@@ -83,7 +83,7 @@ class SubscriptionController @Inject()(
                       ))
                   }
 
-              case (None, _) => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
+              case (None, _) => Redirect(routes.BusinessDetailsController.showBusinessDetailsForm())
 
               case (Some(registration), None) if isMAAgent =>
                 Ok(
@@ -206,7 +206,7 @@ class SubscriptionController @Inject()(
               val updatedReg = existingSession.registration match {
                 case Some(reg) => reg.copy(address = BusinessAddress(validDesAddress))
                 case None =>
-                  throw new IllegalStateException("expecting registration in the session, but not found")
+                  throw new IllegalStateException("expecting registration in the session, but not found") //TODO
               }
               sessionStoreService
                 .cacheAgentSession(existingSession.copy(registration = Some(updatedReg)))
