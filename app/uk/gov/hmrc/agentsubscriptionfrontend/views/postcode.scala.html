@@ -18,9 +18,9 @@
 @import uk.gov.hmrc.play.views.html.helpers.{form, input, errorSummary}
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
 @import uk.gov.hmrc.agentmtdidentifiers.model.Utr
-@import uk.gov.hmrc.agentsubscriptionfrontend.models.{Postcode, BusinessType}
+@import uk.gov.hmrc.agentsubscriptionfrontend.models.Postcode
 
-@(postcodeForm: Form[Postcode], businessType: BusinessType)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+@(postcodeForm: Form[Postcode])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 @uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title =  error_prefix(postcodeForm) + Messages(s"postcode.${businessType.key}.title"), bodyClasses = None) {
 
@@ -30,7 +30,7 @@
         @errorSummary(Messages("error.summary.heading"), postcodeForm, Seq.empty, Some("postcode"))
     }
 
-    <h1 class="heading-xlarge margin-bottom-20">@Messages(s"postcode.${businessType.key}.title")</h1>
+    <h1 class="heading-xlarge margin-bottom-20">@Messages(s"postcode.title")</h1>
 
     @form(
     action = routes.PostcodeController.submitPostcodeForm(), 'class -> "form js-form") {

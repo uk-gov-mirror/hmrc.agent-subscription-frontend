@@ -40,7 +40,7 @@ error.email.invalidchars=Business email address must only contain letters a to z
 error.email.maxlength=Business email address must be 132 characters or less
 error.postcode.invalid=Enter a valid postcode, for example AA1 1AA
 error.postcode.invalidchars=Postcode must only include letters a to z, numbers and spaces, like AA1 1AA
-error.postcode.blacklisted=You can’t use the postcode you’ve entered
+error.postcode.blacklisted=You can''t use the postcode you''ve entered
 error.postcode.empty=Enter a valid postcode, like AA1 1AA
 error.postcode.maxlength=Postcode must be 8 characters or less
 error.addressline.1.empty = Enter address line 1
@@ -55,17 +55,17 @@ error.addressline.3.invalid = Address line 3 must only include letters a to z, n
 error.addressline.4.empty = Enter address line 4
 error.addressline.4.maxlength = Address line 4 must be 35 characters or less
 error.addressline.4.invalid = Address line 4 must only include letters a to z, numbers, commas, ampersands, single quotation marks, full stops, apostrophes, hyphens, forward slashes, and spaces
-error.utr.blank= Enter your business’s Unique Taxpayer Reference (UTR)
+error.utr.blank= Enter your business''s Unique Taxpayer Reference (UTR)
 error.utr.invalid = Unique Taxpayer Reference (UTR) must be 10 numbers
 error.sautr.blank=Enter the Unique Taxpayer Reference (UTR) you use for Self Assessment
 error.sautr.invalid=The Unique Taxpayer Reference (UTR) you use for Self Assessment must be 10 numbers
-error.companyutr.blank=Enter your company’s Unique Taxpayer Reference (UTR)
-error.companyutr.invalid=Your company’s Unique Taxpayer Reference (UTR) must be 10 numbers
-error.partnershiputr.blank=Enter your partnership’s Unique Taxpayer Reference (UTR)
-error.partnershiputr.invalid=Your partnership’s Unique Taxpayer Reference (UTR) must be 10 numbers
-error.llputr.blank=Enter your partnership’s Unique Taxpayer Reference (UTR)
-error.llputr.invalid=Your limited liability partnership’s Unique Taxpayer Reference (UTR) must be 10 numbers
-error.client.sautr.blank=Enter the client’s Self Assessment Unique Taxpayer Reference (UTR)
+error.companyutr.blank=Enter your company''s Unique Taxpayer Reference (UTR)
+error.companyutr.invalid=Your company''s Unique Taxpayer Reference (UTR) must be 10 numbers
+error.partnershiputr.blank=Enter your partnership''s Unique Taxpayer Reference (UTR)
+error.partnershiputr.invalid=Your partnership''s Unique Taxpayer Reference (UTR) must be 10 numbers
+error.llputr.blank=Enter your partnership''s Unique Taxpayer Reference (UTR)
+error.llputr.invalid=Your limited liability partnership''s Unique Taxpayer Reference (UTR) must be 10 numbers
+error.client.sautr.blank=Enter the client''s Self Assessment Unique Taxpayer Reference (UTR)
 error.client.sautr.invalid=Self Assessment Unique Taxpayer Reference (UTR) must be 10 numbers
 error.crn.empty=Enter the company registration number of your business
 error.crn.invalid=Company registration number must be 8 numbers, or 2 letters followed by 6 numbers
@@ -134,7 +134,7 @@ noAgencyFound.p2=Check the details and try again.
 
 #Already subscribed
 alreadySubscribed.title=Your business already has an agent services account
-alreadySubscribed.p1=Contact your administrator to get access to your business’s agent services account.
+alreadySubscribed.p1=Contact your administrator to get access to your business''s agent services account.
 
 #Existing (temp store) journey found for entered UTR
 existingJourneyFound.p1=Your business has already started creating an agent services account using a different Government Gateway user ID.
@@ -183,25 +183,31 @@ businessType.error.invalid-choice = Select your business type
 
 #UTR details page
 utr.title=What is the Unique Taxpayer Reference (UTR) of your company?
-utr.header.sole_trader=What is the Unique Taxpayer Reference (UTR) you use for Self Assessment?
-utr.header.limited_company=What is the Unique Taxpayer Reference (UTR) of your company?
+utr.header.sole_trader=What is your Self Assessment Unique Taxpayer Reference (UTR)?
+utr.header.limited_company=What is your Corporation Tax Unique Taxpayer Reference (UTR)?
 utr.header.partnership=What is the Unique Taxpayer Reference (UTR) of your partnership?
 utr.header.llp=What is the Unique Taxpayer Reference (UTR) of your limited liability partnership?
-utr.p1=A Unique Taxpayer Reference is 10 numbers like 12345 67890. It will be on tax returns and other letters about {0}. It may be called ''reference'', ''UTR'' or ''official use''. <a href="https://www.gov.uk/find-lost-utr-number" target="_blank" rel="noopener noreferrer">Find a lost UTR (opens in a new window or tab)</a>.
+
+utr.description.start=This is 10 numbers, for example 1234567890. It will be on tax returns and other letters
+utr.description.about.sole_trader=about Self Assessment.
+utr.description.about.limited_company=about Corporation Tax.
+utr.description.about.partnership=about Self Assessment.
+utr.description.about.llp=from HMRC about the limited liability partnership.
+utr.description.end=It may be called ‘reference’, ‘UTR’ or ‘official use’.
+
+utr.find-lost=Find a lost UTR (opens in a new window or tab)
 
 #CRN details page
 crn.title=What is the company registration number of your business?
 crn.hint=For example, 01234567 or SC123456
 
+
 #Postcode page
-postcode.sole_trader.title=What is the postcode of your registered address?
-postcode.limited_company.title=What is the postcode of your company’s registered address?
-postcode.partnership.title=What is the postcode of your partnership’s registered address?
-postcode.llp.title=What is the postcode of your limited liability partnership’s registered address?
+postcode.title=What is the postcode of your registered address?
 
 #Nino page
 nino.title=What is your National Insurance number?
-nino.hint=It’s on your National Insurance card, benefit letter, payslip or P60. For example, ‘QQ 12 34 56 C’.
+nino.hint=It''s on your National Insurance card, benefit letter, payslip or P60. For example, ''QQ 12 34 56 C''.
 
 #Date of Birth page
 date-of-birth.title=What is your date of birth?
@@ -255,13 +261,13 @@ businessDetails.label.utr.partnership=Partnership Unique Taxpayer Reference (UTR
 businessDetails.label.utr.llp=Partnership Unique Taxpayer Reference (UTR)
 
 businessDetails.details.heading.sole_trader=Where to find your Self Assessment UTR
-businessDetails.details.content.sole_trader=You’ll <a href="https://www.gov.uk/find-lost-utr-number" target="_blank" rel="noopener noreferrer">find your UTR (opens in a new window or tab)</a> on the letter HMRC sent you when you registered for Self Assessment. It’s a 10-digit number, sometimes with a letter ''K'' on the end.
+businessDetails.details.content.sole_trader=You''ll <a href="https://www.gov.uk/find-lost-utr-number" target="_blank" rel="noopener noreferrer">find your UTR (opens in a new window or tab)</a> on the letter HMRC sent you when you registered for Self Assessment. It''s a 10-digit number, sometimes with a letter ''K'' on the end.
 businessDetails.details.heading.limited_company=Where to find your Corporation Tax or company UTR
-businessDetails.details.content.limited_company=You can usually find your Corporation Tax or company UTR in the header of letters from HM Revenue & Customs (HMRC), next to headings such as ‘Tax Reference’, ‘UTR’ or ‘Official Use’.
+businessDetails.details.content.limited_company=You can usually find your Corporation Tax or company UTR in the header of letters from HM Revenue & Customs (HMRC), next to headings such as ''Tax Reference'', ''UTR'' or ''Official Use''.
 businessDetails.details.heading.partnership=Where to find your partnership UTR
-businessDetails.details.content.partnership=You can find your partnership UTR in the header of letters from HM Revenue & Customs (HMRC), next to headings such as ‘Tax Reference’, ‘UTR’ or ‘Official Use’.
+businessDetails.details.content.partnership=You can find your partnership UTR in the header of letters from HM Revenue & Customs (HMRC), next to headings such as ''Tax Reference'', ''UTR'' or ''Official Use''.
 businessDetails.details.heading.llp=Where to find your partnership UTR
-businessDetails.details.content.llp=You can find your partnership UTR in the header of letters from HM Revenue & Customs (HMRC), next to headings such as ‘Tax Reference’, ‘UTR’ or ‘Official Use’.
+businessDetails.details.content.llp=You can find your partnership UTR in the header of letters from HM Revenue & Customs (HMRC), next to headings such as ''Tax Reference'', ''UTR'' or ''Official Use''.
 
 ##dynamic content finish
 
@@ -270,7 +276,7 @@ businessDetails.label.postcode.hint=This is the postcode of your registered busi
 
 #Not subscribed
 notSubscribed.title=You can create an agent services account
-notSubscribed.p1=We’ve checked <strong class="bold">{0}</strong> and it doesn’t have an agent services account.
+notSubscribed.p1=We''ve checked <strong class="bold">{0}</strong> and it doesn''t have an agent services account.
 
 #Invalid address
 invalidAddress.title=Invalid address
@@ -284,7 +290,7 @@ createNewAccount.p1=You will need this user ID to sign in to your new agent serv
 #Non agent
 nonAgent.title=You have not signed in with an agent user ID
 nonAgent.p1=<a href="{0}">Sign in with an agent Government Gateway user ID</a> to continue.
-nonAgent.p2=If you do not have one, <a href="{0}">create a new user ID</a>, selecting the ‘Agent’ option.
+nonAgent.p2=If you do not have one, <a href="{0}">create a new user ID</a>, selecting the ''Agent'' option.
 
 #Link account
 linkClients.title=Link your clients to your agent services account
@@ -343,10 +349,10 @@ invasive.check.p1=We need this information so that we can check your identity.
 invasive.radioResponse.yes=Yes
 invasive.radioResponse.hidden.input.label.sa=Self Assessment agent code
 invasive.radioResponse.no=No
-invasive.radioResponse.nino=Client’s National Insurance number
+invasive.radioResponse.nino=Client''s National Insurance number
 invasive.radioResponse.hidden.input.label.nino=National Insurance number
 invasive.radioResponse.helper.text.nino=For example, QQ 12 34 56 C
-invasive.radioResponse.utr=Client’s Self Assessment UTR
+invasive.radioResponse.utr=Client''s Self Assessment UTR
 invasive.radioResponse.hidden.input.label.utr=Self Assessment UTR
 invasive.radioResponse.helper.text.utr=For example, 12345 67890
 invasive.radioResponse.cannotProvide=I cannot provide either of these details
@@ -432,58 +438,7 @@ postcodeNotAllowed.button=Try Again
 sign-in-new-id.header=Sign in with your new user ID
 sign-in-new-id.p1=You have not finished creating your agent services account.
 sign-in-new-id.p2=To finish this step, sign in again using the new user ID you created for your agent services account.
-sign-in-new-id.p3=If you do not have one, <a href="{0}">create a new user ID</a>, selecting the ‘Agent’ option.
 sign-in-new-id.button=Sign in with new user ID
 
-accessibility.statement.title=Accessibility statement for create an agent services account
-accessibility.statement.h1=Accessibility statement for create an agent services account
-accessibility.statement.intro.p1=This accessibility statement explains how accessible this service is, what to do if you have difficulty using it, and how to report accessibility problems with the service.
-accessibility.statement.intro.p2=This service is part of the wider GOV.UK website. There is a separate <a href="https://www.gov.uk/help/accessibility">accessibility statement</a> for the main GOV.UK website.
-accessibility.statement.intro.p3=This page only contains information about the agent services account service, available at <a href="https://www.tax.service.gov.uk/agent-subscription/task-list">www.tax.service.gov.uk/agent-subscription/task-list</a>.
-
-accessibility.statement.using.heading=Using this service
-accessibility.statement.using.p1=This service allows agents to create an HMRC agent services account for their tax agent firm.
-accessibility.statement.using.p2=This service is run by HM Revenue and Customs (HMRC). We want as many people as possible to be able to use this service. This means you should be able to:
-accessibility.statement.using.l1=change colours, contrast levels and fonts
-accessibility.statement.using.l2=zoom in up to 300% without the text spilling off the screen
-accessibility.statement.using.l3=get from the start of the service to the end using just a keyboard
-accessibility.statement.using.l4=get from the start of the service to the end using speech recognition software
-accessibility.statement.using.l5=listen to the service using a screen reader (including the most recent versions of JAWS, NVDA and VoiceOver)
-accessibility.statement.using.p3=We have also made the text in the service as simple as possible to understand.
-accessibility.statement.using.p4=<a class="govuk-link" href="https://mcmw.abilitynet.org.uk/">AbilityNet</a> has advice on making your device easier to use if you have a disability.
-
-accessibility.statement.accessible.heading=How accessible this service is
-accessibility.statement.accessible.p1=This service is partially compliant with the <a class="govuk-link" href="https://www.w3.org/TR/WCAG21/">Web Content Accessibility Guidelines version 2.1 AA standard</a>.
-
-accessibility.statement.whattodo.heading=What to do if you have difficulty using this service
-accessibility.statement.whattodo.p1=If you have difficulty using this service, use the ‘Get help with this page’ link on the page in the online service.
-
-accessibility.statement.reporting.heading=Reporting accessibility problems with this service
-accessibility.statement.reporting.p1=We are always looking to improve the accessibility of this service. If you find any problems that are not listed on this page or think we are not meeting accessibility requirements, contact <a href="mailto:agentservices.accessibility@hmrc.gov.uk">agentservices.accessibility@hmrc.gov.uk</a>.
-
-accessibility.statement.enforcement.heading=What to do if you are not happy with how we respond to your complaint
-accessibility.statement.enforcement.p1=The Equality and Human Rights Commission (EHRC) is responsible for enforcing the Public Sector Bodies (Websites and Mobile Applications) (No. 2) Accessibility Regulations 2018 (the ‘accessibility regulations’). If you are not happy with how we respond to your complaint, <a href="https://www.equalityadvisoryservice.com/">contact the Equality Advisory and Support Service</a> (EASS), or the <a href="https://www.equalityni.org/Home">Equality Commission for Northern Ireland</a> (ECNI) if you live in Northern Ireland.
-
-accessibility.statement.contacting.heading=Contacting us by phone or getting a visit from us in person
-accessibility.statement.contacting.p1=We provide a text relay service if you are deaf, hearing impaired or have a speech impediment.
-accessibility.statement.contacting.p2=We can provide a British Sign Language (BSL) interpreter, or you can arrange a visit from an HMRC advisor to help you complete the service.
-accessibility.statement.contacting.p3=Find out how to <a href="https://www.gov.uk/dealing-hmrc-additional-needs">contact us</a>.
-
-accessibility.statement.technical.heading=Technical information about this service’s accessibility
-accessibility.statement.technical.p1=HMRC is committed to making this service accessible, in accordance with the Public Sector Bodies (Websites and Mobile Applications) (No. 2) Accessibility Regulations 2018.
-accessibility.statement.technical.p2=This service is partially compliant with the <a href="https://www.w3.org/TR/WCAG21/">Web Content Accessibility Guidelines version 2.1 AA standard</a>, due to the non-compliances listed below.
-accessibility.statement.technical.p3=We have carried out an in-house expert review of the service and fixed all known accessibility issues. 
-accessibility.statement.technical.p4=We will arrange a formal external audit of the full service as soon as possible, as part of our roadmap for making sure the service is fully compliant.
-
-accessibility.statement.nonaccessible.heading=Non accessible content
-accessibility.statement.nonaccessible.p1=The content listed below is non-accessible for the following reasons.
-
-accessibility.statement.noncompliance.heading=Non compliance with the accessibility regulations
-
-accessibility.statement.howtested.heading=How we tested this service
-accessibility.statement.howtested.p1=The service was last tested on 22 August 2019 and was checked for compliance with WCAG 2.1 AA.
-accessibility.statement.howtested.p2=The full service was tested by HMRC and included disabled users.
-accessibility.statement.howtested.p3=This page was prepared on 23 September 2019. It was last updated on 23 September 2019.
-
 footer.links.accessibility.text=Accessibility
-footer.links.accessibility.url=/agent-subscription/accessibility-statement
+footer.links.accessibility.url=/agent-subscription/accessibility
