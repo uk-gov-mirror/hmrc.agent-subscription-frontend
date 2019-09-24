@@ -32,7 +32,7 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class AccessibilityStatementController @Inject()(
   override val authConnector: AuthConnector,
-  continueUrlActions: ContinueUrlActions,
+  redirectUrlActions: RedirectUrlActions,
   val sessionStoreService: SessionStoreService,
   subscriptionService: SubscriptionService,
   subscriptionJourneyService: SubscriptionJourneyService)(
@@ -40,7 +40,7 @@ class AccessibilityStatementController @Inject()(
   metrics: Metrics,
   override val messagesApi: MessagesApi,
   val ec: ExecutionContext)
-    extends AgentSubscriptionBaseController(authConnector, continueUrlActions, appConfig, subscriptionJourneyService)
+    extends AgentSubscriptionBaseController(authConnector, redirectUrlActions, appConfig, subscriptionJourneyService)
     with SessionBehaviour {
 
   def showAccessibilityStatement: Action[AnyContent] = Action { implicit request =>
