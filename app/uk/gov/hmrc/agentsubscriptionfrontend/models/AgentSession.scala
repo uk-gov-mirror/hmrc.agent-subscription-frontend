@@ -30,10 +30,12 @@ case class AgentSession(
   postcode: Option[Postcode] = None,
   nino: Option[Nino] = None,
   companyRegistrationNumber: Option[CompanyRegistrationNumber] = None,
-  dateOfBirth: Option[DateOfBirth] = None,
+  dateOfBirth: Option[DateOfBirth] = None, // this is user entered DOB
   registeredForVat: Option[String] = None,
   vatDetails: Option[VatDetails] = None,
-  registration: Option[Registration] = None)
+  registration: Option[Registration] = None,
+  dateOfBirthFromCid: Option[DateOfBirth] = None //just caching this dob from CID so we dont need to make multiple calls to CID
+)
 
 object AgentSession {
   implicit val format: Format[AgentSession] = Json.format[AgentSession]

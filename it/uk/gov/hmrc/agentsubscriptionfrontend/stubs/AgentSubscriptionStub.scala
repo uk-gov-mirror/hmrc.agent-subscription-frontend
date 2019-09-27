@@ -20,12 +20,9 @@ import java.time.LocalDate
 
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
-import play.api.Logger
 import play.api.http.Status
-import play.api.libs.json.Json
 import uk.gov.hmrc.agentmtdidentifiers.model.{Utr, Vrn}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
-import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.SubscriptionJourneyRecord
 import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.play.encoding.UriPathEncoding.encodePathSegment
 
@@ -49,28 +46,43 @@ object AgentSubscriptionStub {
 
   private def noOrganisationNameResponse(isSubscribedToAgentServices: Boolean, isSubscribedToETMP: Boolean) =
     s"""
-      |{
-      |  "isSubscribedToAgentServices": false,
-      |  "isSubscribedToETMP": $isSubscribedToETMP,
-      |  "address": {
-      |        "addressLine1": "AddressLine1 A",
-      |        "addressLine2": "AddressLine2 A",
-      |        "addressLine3": "AddressLine3 A",
-      |        "addressLine4": "AddressLine4 A",
-      |        "countryCode": "GB",
-      |        "postalCode": "AA11AA"
-      |    },
-      |    "emailAddress": "someone@example.com"
-      |
-      |}""".stripMargin
+       |{
+       |  "isSubscribedToAgentServices": false,
+       |  "isSubscribedToETMP": $isSubscribedToETMP,
+       |  "address": {
+       |        "addressLine1": "AddressLine1 A",
+       |        "addressLine2": "AddressLine2 A",
+       |        "addressLine3": "AddressLine3 A",
+       |        "addressLine4": "AddressLine4 A",
+       |        "countryCode": "GB",
+       |        "postalCode": "AA11AA"
+       |    },
+       |    "emailAddress": "someone@example.com"
+       |
+       |}""".stripMargin
 
-  def withMatchingUtrAndPostcode(utr: Utr, postcode: String, isSubscribedToAgentServices: Boolean = false, isSubscribedToETMP: Boolean = false): StubMapping =
+  def withMatchingUtrAndPostcode(
+    utr: Utr,
+    postcode: String,
+    isSubscribedToAgentServices: Boolean = false,
+    isSubscribedToETMP: Boolean = false): StubMapping =
     withMatchingUtrAndPostcodeAndBody(utr, postcode, response(isSubscribedToAgentServices, isSubscribedToETMP))
 
-  def withNoOrganisationName(utr: Utr, postcode: String,isSubscribedToAgentServices: Boolean = false, isSubscribedToETMP: Boolean = false): StubMapping =
-    withMatchingUtrAndPostcodeAndBody(utr, postcode, noOrganisationNameResponse(isSubscribedToAgentServices, isSubscribedToETMP))
+  def withNoOrganisationName(
+    utr: Utr,
+    postcode: String,
+    isSubscribedToAgentServices: Boolean = false,
+    isSubscribedToETMP: Boolean = false): StubMapping =
+    withMatchingUtrAndPostcodeAndBody(
+      utr,
+      postcode,
+      noOrganisationNameResponse(isSubscribedToAgentServices, isSubscribedToETMP))
 
-  def withPartiallySubscribedAgent(utr: Utr, postcode: String, isSubscribedToAgentServices: Boolean = false, isSubscribedToETMP: Boolean = true): StubMapping =
+  def withPartiallySubscribedAgent(
+    utr: Utr,
+    postcode: String,
+    isSubscribedToAgentServices: Boolean = false,
+    isSubscribedToETMP: Boolean = true): StubMapping =
     withMatchingUtrAndPostcodeAndBody(utr, postcode, response(isSubscribedToAgentServices, isSubscribedToETMP))
 
   private def withMatchingUtrAndPostcodeAndBody(utr: Utr, postcode: String, responseBody: String): StubMapping =
@@ -97,46 +109,43 @@ object AgentSubscriptionStub {
           .withStatus(Status.INTERNAL_SERVER_ERROR)))
 
   def withMatchingCtUtrAndCrn(ctUtr: Utr, crn: CompanyRegistrationNumber): StubMapping =
-    stubFor(
-      get(urlEqualTo(
-        s"/agent-subscription/corporation-tax-utr/${encodePathSegment(ctUtr.value)}/crn/${encodePathSegment(crn.value)}"))
-        .willReturn(aResponse()
-          .withStatus(Status.OK)))
+    stubFor(get(urlEqualTo(
+      s"/agent-subscription/corporation-tax-utr/${encodePathSegment(ctUtr.value)}/crn/${encodePathSegment(crn.value)}"))
+      .willReturn(aResponse()
+        .withStatus(Status.OK)))
 
   def withNonMatchingCtUtrAndCrn(ctUtr: Utr, crn: CompanyRegistrationNumber): StubMapping =
-    stubFor(
-      get(urlEqualTo(
-        s"/agent-subscription/corporation-tax-utr/${encodePathSegment(ctUtr.value)}/crn/${encodePathSegment(crn.value)}"))
-        .willReturn(aResponse()
-          .withStatus(Status.NOT_FOUND)))
+    stubFor(get(urlEqualTo(
+      s"/agent-subscription/corporation-tax-utr/${encodePathSegment(ctUtr.value)}/crn/${encodePathSegment(crn.value)}"))
+      .willReturn(aResponse()
+        .withStatus(Status.NOT_FOUND)))
 
   def withErrorForCtUtrAndCrn(ctUtr: Utr, crn: CompanyRegistrationNumber): StubMapping =
-    stubFor(
-      get(urlEqualTo(
-        s"/agent-subscription/corporation-tax-utr/${encodePathSegment(ctUtr.value)}/crn/${encodePathSegment(crn.value)}"))
-        .willReturn(aResponse()
-          .withStatus(Status.INTERNAL_SERVER_ERROR)))
+    stubFor(get(urlEqualTo(
+      s"/agent-subscription/corporation-tax-utr/${encodePathSegment(ctUtr.value)}/crn/${encodePathSegment(crn.value)}"))
+      .willReturn(aResponse()
+        .withStatus(Status.INTERNAL_SERVER_ERROR)))
 
   def withMatchingVrnAndDateOfReg(vrn: Vrn, dateOfReg: LocalDate): StubMapping =
-    stubFor(
-      get(urlEqualTo(
-        s"/agent-subscription/vat-known-facts/vrn/${encodePathSegment(vrn.value)}/dateOfRegistration/${encodePathSegment(dateOfReg.toString)}"))
-        .willReturn(aResponse()
-          .withStatus(Status.OK)))
+    stubFor(get(urlEqualTo(
+      s"/agent-subscription/vat-known-facts/vrn/${encodePathSegment(vrn.value)}/dateOfRegistration/${encodePathSegment(
+        dateOfReg.toString)}"))
+      .willReturn(aResponse()
+        .withStatus(Status.OK)))
 
   def withNonMatchingVrnAndDateOfReg(vrn: Vrn, dateOfReg: LocalDate): StubMapping =
-    stubFor(
-      get(urlEqualTo(
-        s"/agent-subscription/vat-known-facts/vrn/${encodePathSegment(vrn.value)}/dateOfRegistration/${encodePathSegment(dateOfReg.toString)}"))
-        .willReturn(aResponse()
-          .withStatus(Status.NOT_FOUND)))
+    stubFor(get(urlEqualTo(
+      s"/agent-subscription/vat-known-facts/vrn/${encodePathSegment(vrn.value)}/dateOfRegistration/${encodePathSegment(
+        dateOfReg.toString)}"))
+      .willReturn(aResponse()
+        .withStatus(Status.NOT_FOUND)))
 
   def withErrorForVrnAndDateOfReg(vrn: Vrn, dateOfReg: LocalDate): StubMapping =
-    stubFor(
-      get(urlEqualTo(
-        s"/agent-subscription/vat-known-facts/vrn/${encodePathSegment(vrn.value)}/dateOfRegistration/${encodePathSegment(dateOfReg.toString)}"))
-        .willReturn(aResponse()
-          .withStatus(Status.INTERNAL_SERVER_ERROR)))
+    stubFor(get(urlEqualTo(
+      s"/agent-subscription/vat-known-facts/vrn/${encodePathSegment(vrn.value)}/dateOfRegistration/${encodePathSegment(
+        dateOfReg.toString)}"))
+      .willReturn(aResponse()
+        .withStatus(Status.INTERNAL_SERVER_ERROR)))
 
   def partialSubscriptionWillSucceed(request: CompletePartialSubscriptionBody, arn: String = "ARN00001"): StubMapping =
     stubFor(
@@ -153,9 +162,8 @@ object AgentSubscriptionStub {
   def partialSubscriptionWillReturnStatus(request: CompletePartialSubscriptionBody, responseCode: Int): StubMapping =
     stubFor(
       partialSubscriptionFixRequestFor(request)
-        .willReturn(
-          aResponse()
-            .withStatus(responseCode)))
+        .willReturn(aResponse()
+          .withStatus(responseCode)))
 
   def subscriptionWillSucceed(utr: Utr, request: SubscriptionRequest, arn: String = "ARN00001"): StubMapping =
     stubFor(
@@ -193,53 +201,46 @@ object AgentSubscriptionStub {
         .willReturn(aResponse()
           .withStatus(500)))
 
-  def givenAGoodCombinationNinoAndDobMatchCitizenDetails(
-                                                          nino: Nino,
-                                                          dob: DateOfBirth): StubMapping =
+  def givenDesignatoryDetailsForNino(nino: Nino, dob: DateOfBirth): StubMapping =
     stubFor(
-      post(urlEqualTo(
-        s"/agent-subscription/citizen-details"
-      )).withRequestBody(equalToJson(
-        s"""
-           |{
-           |"nino": "${nino.value}",
-           |"dateOfBirth": "${dob.value}"
-           |}
-        """.stripMargin)).willReturn(aResponse().withStatus(200))
+      get(
+        urlEqualTo(
+          s"/agent-subscription/citizen-details/${nino.value}/designatory-details"
+        )).willReturn(
+        aResponse()
+          .withBody(s"""{
+                       |       "etag" : "115",
+                       |       "person" : {
+                       |         "firstName" : "HIPPY",
+                       |         "middleName" : "T",
+                       |         "lastName" : "NEWYEAR",
+                       |         "title" : "Mr",
+                       |         "honours": "BSC",
+                       |         "sex" : "M",
+                       |         "dateOfBirth" : "${dob.value.toString}",
+                       |         "nino" : "TW189213B",
+                       |         "deceased" : false
+                       |       },
+                       |       "address" : {
+                       |         "line1" : "26 FARADAY DRIVE",
+                       |         "line2" : "PO BOX 45",
+                       |         "line3" : "LONDON",
+                       |         "postcode" : "CT1 1RQ",
+                       |         "startDate": "2009-08-29",
+                       |         "country" : "GREAT BRITAIN",
+                       |         "type" : "Residential"
+                       |       }
+                       |}""".stripMargin)
+          .withStatus(200))
     )
 
-  def givenABadCombinationNinoAndDobDoNotMatch(
-                                                nino: Nino,
-                                                dob: DateOfBirth): StubMapping =
+  def givenDesignatoryDetailsReturnsStatus(nino: Nino, status: Int): StubMapping =
     stubFor(
-      post(urlEqualTo(
-        s"/agent-subscription/citizen-details"
-      )).withRequestBody(equalToJson(
-        s"""
-           |{
-           |"nino": "${nino.value}",
-           |"dateOfBirth": "${dob.value}"
-           |}
-        """.stripMargin)).willReturn(aResponse().withStatus(400))
+      get(
+        urlEqualTo(
+          s"/agent-subscription/citizen-details/${nino.value}/designatory-details"
+        )).willReturn(aResponse().withStatus(status))
     )
-
-  def givenANetworkProblemWithSubscriptionCitizenDetails(
-                                                          nino: Nino,
-                                                          dob: DateOfBirth): StubMapping =
-    stubFor(
-      post(urlEqualTo(
-        s"/agent-subscription/citizen-details"
-      )).withRequestBody(equalToJson(
-        s"""
-           |{
-           |"nino": "${nino.value}",
-           |"dateOfBirth": "${dob.value}"
-           |}
-        """.stripMargin)).willReturn(aResponse().withStatus(500))
-    )
-
-
-
 
   private def subscriptionRequestFor(utr: Utr, request: SubscriptionRequest) = {
     val agency = request.agency
@@ -264,23 +265,22 @@ object AgentSubscriptionStub {
                                       |    "email": "${agency.email}"
                                       |  }
                                       |  ${request.amlsDetails.get.details match {
-                                            case Right(registeredDetails) =>
-                                              s""","amlsDetails" : {
-                                                 |     "supervisoryBody" : "${request.amlsDetails.get.supervisoryBody}",
-                                                 |     "membershipNumber" : "${registeredDetails.membershipNumber}",
-                                                 |     "membershipExpiresOn" : "${registeredDetails.membershipExpiresOn}"
-                                                 |   }"""
-                                            case Left(pendingDetails) =>
-                                              s""","amlsDetails" : {
-                                                 |     "supervisoryBody" : "${request.amlsDetails.get.supervisoryBody}",
-                                                 |     "appliedOn" : "${pendingDetails.appliedOn}"
-                                                 |   }"""
-                                          }
-                                          }
+                                        case Right(registeredDetails) =>
+                                          s""","amlsDetails" : {
+                                          |     "supervisoryBody" : "${request.amlsDetails.get.supervisoryBody}",
+                                          |     "membershipNumber" : "${registeredDetails.membershipNumber}",
+                                          |     "membershipExpiresOn" : "${registeredDetails.membershipExpiresOn}"
+                                          |   }"""
+                                        case Left(pendingDetails) =>
+                                          s""","amlsDetails" : {
+                                          |     "supervisoryBody" : "${request.amlsDetails.get.supervisoryBody}",
+                                          |     "appliedOn" : "${pendingDetails.appliedOn}"
+                                          |   }"""
+                                      }}
                                       |}""".stripMargin))
   }
 
-  private def partialSubscriptionFixRequestFor(request: CompletePartialSubscriptionBody) = {
+  private def partialSubscriptionFixRequestFor(request: CompletePartialSubscriptionBody) =
     put(urlEqualTo(s"/agent-subscription/subscription"))
       .withRequestBody(equalToJson(s"""
                                       |{
@@ -289,6 +289,5 @@ object AgentSubscriptionStub {
                                       |    "postcode": "${request.knownFacts.postcode}"
                                       |   }
                                       |}""".stripMargin))
-  }
 
 }

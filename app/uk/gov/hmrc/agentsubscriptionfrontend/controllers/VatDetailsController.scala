@@ -25,8 +25,9 @@ import play.api.data.format.Formats._
 import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
 import play.api.data.{Form, Mapping, _}
 import play.api.i18n.MessagesApi
-import play.api.mvc.{Action, AnyContent}
+import play.api.mvc.{Action, AnyContent, Result}
 import uk.gov.hmrc.agentmtdidentifiers.model.Vrn
+import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.VatDetailsController.{formWithRefinedErrors, registeredForVatForm, vatDetailsForm}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.{Partnership, SoleTrader}
@@ -56,22 +57,44 @@ class VatDetailsController @Inject()(
     with SessionBehaviour {
 
   def showRegisteredForVatForm: Action[AnyContent] = Action.async { implicit request =>
-    withSubscribingAgent { _ =>
+    withSubscribingAgent { agent =>
       sessionStoreService.fetchAgentSession.flatMap {
         case Some(agentSession) =>
-          (agentSession.businessType, agentSession.registeredForVat) match {
-            case (Some(businessType), Some(registeredForVat)) =>
-              val rfv = RegisteredForVat(RadioInputAnswer.apply(registeredForVat.toString))
-              Ok(html.registered_for_vat(registeredForVatForm.fill(rfv), getBackLink(businessType)))
-            case (Some(businessType), None) =>
-              Ok(html.registered_for_vat(registeredForVatForm, getBackLink(businessType)))
+          withAAChecks(agent, agentSession) {
+            (agentSession.businessType, agentSession.registeredForVat) match {
+              case (Some(businessType), Some(registeredForVat)) =>
+                val rfv = RegisteredForVat(RadioInputAnswer.apply(registeredForVat.toString))
+                Ok(html.registered_for_vat(registeredForVatForm.fill(rfv), getBackLink(businessType)))
+              case (Some(businessType), None) =>
+                Ok(html.registered_for_vat(registeredForVatForm, getBackLink(businessType)))
 
-            case _ => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
+              case _ => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
+            }
           }
         case None => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
       }
     }
   }
+
+  /**
+    * In-case of SoleTrader or Partnerships, we should display NI and DOB pages based on if nino and dob exist or not.
+    * We need to force users to go through these pages, hence the below checks
+    */
+  private def withAAChecks(agent: Agent, existingSession: AgentSession)(result: Result): Result =
+    existingSession.businessType match {
+      case Some(SoleTrader) | Some(Partnership) =>
+        (agent.authNino, existingSession.nino, existingSession.dateOfBirthFromCid) match {
+          case (None, _, _)             => result
+          case (Some(_), None, _)       => Redirect(routes.NationalInsuranceController.showNationalInsuranceNumberForm())
+          case (Some(_), Some(_), None) => result
+          case (_, _, Some(_)) =>
+            existingSession.dateOfBirth match {
+              case Some(_) => result
+              case None    => Redirect(routes.DateOfBirthController.showDateOfBirthForm())
+            }
+        }
+      case _ => result
+    }
 
   def submitRegisteredForVatForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>

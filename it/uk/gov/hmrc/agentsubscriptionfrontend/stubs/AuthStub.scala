@@ -64,7 +64,7 @@ object AuthStub {
 
   def userIsAuthenticated(user: SampleUser): Seq[(String, String)] = {
     val response =
-      s"""{${user.allEnrolments},${user.affinityGroup},"optionalCredentials": {"providerId": "${user.userId}", "providerType": "Go vernmentGateway"}}"""
+      s"""{${user.allEnrolments},${user.affinityGroup},"optionalCredentials": {"providerId": "${user.userId}", "providerType": "GovernmentGateway"}${user.ninoRetrieval}}"""
     stubFor(
       post(urlEqualTo("/auth/authorise"))
         .willReturn(

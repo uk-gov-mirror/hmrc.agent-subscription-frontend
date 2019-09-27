@@ -18,7 +18,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.support
 
 import uk.gov.hmrc.auth.core.{AffinityGroup, Enrolment, EnrolmentIdentifier}
 
-case class SampleUser(userId: String, enrolments: Seq[Enrolment], affinity: AffinityGroup) {
+case class SampleUser(userId: String, enrolments: Seq[Enrolment], affinity: AffinityGroup, nino: Option[String] = None) {
   val allEnrolments = s""" "allEnrolments": [${enrolments
                            .map(e =>
                              s"""{
@@ -30,6 +30,7 @@ case class SampleUser(userId: String, enrolments: Seq[Enrolment], affinity: Affi
                                 |}""".stripMargin)
                            .mkString(",")}] """.stripMargin
   val affinityGroup = s""" "affinityGroup": "$affinity" """
+  val ninoRetrieval = nino.map(n => s""", "nino": "$n" """).getOrElse("")
 }
 
 object SampleUser {

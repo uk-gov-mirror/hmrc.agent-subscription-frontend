@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.auth
 
+import org.joda.time.LocalDate
 import play.api.mvc.Results._
 import play.api.mvc.{Request, Result}
 import play.api.{Configuration, Environment, Logger}
@@ -30,7 +31,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.support.Monitoring
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{allEnrolments, authorisedEnrolments, credentials}
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals._
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, ~}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.config.AuthRedirects
@@ -40,7 +41,8 @@ import scala.concurrent.{ExecutionContext, Future}
 class Agent(
   private val enrolments: Set[Enrolment],
   private val maybeCredentials: Option[Credentials],
-  val subscriptionJourneyRecord: Option[SubscriptionJourneyRecord]) {
+  val subscriptionJourneyRecord: Option[SubscriptionJourneyRecord],
+  val authNino: Option[String]) {
 
   def hasIrPayeAgent: Option[Enrolment] = enrolments.find(e => e.key == "IR-PAYE-AGENT" && e.isActivated)
   def hasIrsaAgent: Option[Enrolment] = enrolments.find(e => e.key == "IR-SA-AGENT" && e.isActivated)
@@ -129,8 +131,8 @@ trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring
     hc: HeaderCarrier,
     ec: ExecutionContext): Future[Result] =
     authorised(AuthProviders(GovernmentGateway) and AffinityGroup.Agent)
-      .retrieve(allEnrolments and credentials) {
-        case enrolments ~ creds =>
+      .retrieve(allEnrolments and credentials and nino) {
+        case enrolments ~ creds ~ mayBeNino =>
           if (isEnrolledForHmrcAsAgent(enrolments)) {
             redirectUrlActions.withMaybeRedirectUrl {
               case Some(redirectUrl) =>
@@ -144,7 +146,7 @@ trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring
             val authProviderId = AuthProviderId(creds.fold("unknown")(_.providerId))
             subscriptionJourneyService
               .getJourneyRecord(authProviderId)
-              .flatMap(maybeSjr => body(new Agent(enrolments.enrolments, creds, maybeSjr)))
+              .flatMap(maybeSjr => body(new Agent(enrolments.enrolments, creds, maybeSjr, mayBeNino)))
             // check what we should do when AuthProviderId not available!
           }
       }

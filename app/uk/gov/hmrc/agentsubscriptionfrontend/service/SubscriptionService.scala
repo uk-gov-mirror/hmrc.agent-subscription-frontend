@@ -164,10 +164,8 @@ class SubscriptionService @Inject()(
       case None => SubscriptionProcess(NoRegistrationFound, None)
     }
 
-  def checkDobAndNino(nino: Nino, dateOfBirth: DateOfBirth)(
-    implicit hc: HeaderCarrier,
-    ec: ExecutionContext): Future[Boolean] =
-    agentSubscriptionConnector.matchCitizenDetails(CitizenDetailsRequest(nino, dateOfBirth))
+  def getDesignatoryDetails(nino: Nino)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[DesignatoryDetails] =
+    agentSubscriptionConnector.getDesignatoryDetails(nino)
 
   def matchCorporationTaxUtrWithCrn(utr: Utr, crn: CompanyRegistrationNumber)(
     implicit hc: HeaderCarrier,

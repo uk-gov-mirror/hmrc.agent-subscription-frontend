@@ -22,12 +22,14 @@ import java.time.LocalDate
 import com.codahale.metrics.MetricRegistry
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Named, Singleton}
+import play.api.Logger
 import play.api.libs.json.{JsValue, Json}
 import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr, Vrn}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.SubscriptionJourneyRecord
-import uk.gov.hmrc.http._
+import uk.gov.hmrc.domain.Nino
+import uk.gov.hmrc.http.{NotFoundException, _}
 import uk.gov.hmrc.play.encoding.UriPathEncoding.encodePathSegment
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -135,15 +137,14 @@ class AgentSubscriptionConnector @Inject()(
       }
     }
 
-  def matchCitizenDetails(citizenDetailsRequest: CitizenDetailsRequest)(implicit hc: HeaderCarrier): Future[Boolean] =
-    monitor(s"ConsumedAPI-Agent-Subscription-getCitizenDetails-POST") {
-      val endpoint = s"/agent-subscription/citizen-details"
+  def getDesignatoryDetails(nino: Nino)(implicit hc: HeaderCarrier): Future[DesignatoryDetails] =
+    monitor(s"ConsumedAPI-Agent-Subscription-getDesignatoryDetails-GET") {
+      val url = new URL(baseUrl, s"/agent-subscription/citizen-details/${nino.value}/designatory-details").toString
       http
-        .POST[CitizenDetailsRequest, HttpResponse](new URL(baseUrl, endpoint).toString, citizenDetailsRequest)
-        .map(_.status == 200)
+        .GET[DesignatoryDetails](url)
         .recover {
-          case e: BadRequestException => false
-          case f: NotFoundException   => false
+          case f: NotFoundException =>
+            DesignatoryDetails()
         }
     }
 

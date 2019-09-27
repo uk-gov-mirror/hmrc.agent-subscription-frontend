@@ -18,6 +18,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
+import play.api.Logger
 import play.api.i18n.MessagesApi
 import play.api.mvc.{Action, AnyContent, Request, Result}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
@@ -135,11 +136,16 @@ class PostcodeController @Inject()(
         }
     }
 
-  private def getNextPage(businessType: Option[BusinessType]) =
+  private def getNextPage(businessType: Option[BusinessType])(implicit agent: Agent) =
     businessType match {
       case Some(bt) =>
         if (bt == SoleTrader || bt == Partnership) {
-          routes.NationalInsuranceController.showNationalInsuranceNumberForm()
+          agent.authNino match {
+            case Some(_) => routes.NationalInsuranceController.showNationalInsuranceNumberForm()
+            case None =>
+              Logger.warn("NINO doesn't exist for logged in agent")
+              routes.VatDetailsController.showRegisteredForVatForm()
+          }
         } else {
           routes.CompanyRegistrationController.showCompanyRegNumberForm()
         }

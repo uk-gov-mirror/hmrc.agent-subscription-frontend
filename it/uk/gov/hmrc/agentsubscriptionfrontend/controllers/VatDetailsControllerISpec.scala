@@ -8,10 +8,10 @@ import uk.gov.hmrc.agentmtdidentifiers.model.Vrn
 import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.SoleTrader
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, DateOfBirth, VatDetails}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub
-import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestSetupNoJourneyRecord}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.subscribingAgentEnrolledForNonMTD
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData._
-import uk.gov.hmrc.agentsubscriptionfrontend.support.TestSetupNoJourneyRecord
+import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestSetupNoJourneyRecord}
+import uk.gov.hmrc.domain.Nino
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -20,17 +20,48 @@ class VatDetailsControllerISpec extends BaseISpec with SessionDataMissingSpec {
   lazy val controller: VatDetailsController = app.injector.instanceOf[VatDetailsController]
 
   "GET /registered-for-vat" should {
-    "display the page with expected content" in new TestSetupNoJourneyRecord {
-      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("registeredForVat" -> "yes")
-      sessionStoreService.currentSession.agentSession = Some(agentSession)
+
+    "display /registered-for-vat if nino doesn't exist from auth" in new TestSetupNoJourneyRecord {
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+      await(sessionStoreService.cacheAgentSession(AgentSession(Some(SoleTrader))))
       val result = await(controller.showRegisteredForVatForm()(request))
 
+      status(result) shouldBe 200
       result should containMessages("registered-for-vat.title", "registered-for-vat.option.yes", "registered-for-vat.option.no")
     }
 
-    "pre-populate the registeredForVat if one is already stored in the session" in new TestSetupNoJourneyRecord{
-      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
-      await(sessionStoreService.cacheAgentSession(AgentSession(Some(SoleTrader), registeredForVat = Some("Yes"))))
+    "redirect to /national-insurance-number page if nino exists from auth but user hasn't assured it yet" in new TestSetupNoJourneyRecord {
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD.copy(nino = Some("AE123456C")))
+      await(sessionStoreService.cacheAgentSession(AgentSession(Some(SoleTrader))))
+      val result = await(controller.showRegisteredForVatForm()(request))
+
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.NationalInsuranceController.showNationalInsuranceNumberForm().url)
+    }
+
+    "display /registered-for-vat when user has assured their nino but No DOB exists in citizen-details" in new TestSetupNoJourneyRecord {
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD.copy(nino = Some("AE123456C")))
+      await(sessionStoreService.cacheAgentSession(AgentSession(businessType =  Some(SoleTrader), nino = Some(Nino("AE123456C")))))
+      val result = await(controller.showRegisteredForVatForm()(request))
+
+      status(result) shouldBe 200
+      result should containMessages("registered-for-vat.title", "registered-for-vat.option.yes", "registered-for-vat.option.no")
+    }
+
+    "redirect to /date-of-birth when user has assured their nino and not DOB yet" in new TestSetupNoJourneyRecord {
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD.copy(nino = Some("AE123456C")))
+      val dob = LocalDate.of(2010, 1, 1)
+      await(sessionStoreService.cacheAgentSession(AgentSession(businessType =  Some(SoleTrader), nino = Some(Nino("AE123456C")), dateOfBirthFromCid = Some(DateOfBirth(dob)))))
+      val result = await(controller.showRegisteredForVatForm()(request))
+
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.DateOfBirthController.showDateOfBirthForm().url)
+    }
+
+    "pre-populate the registeredForVat if one is already stored in the session" in new TestSetupNoJourneyRecord {
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD.copy(nino = Some("AE123456C")))
+      val dob = LocalDate.of(2010, 1, 1)
+      await(sessionStoreService.cacheAgentSession(AgentSession(businessType =  Some(SoleTrader), nino = Some(Nino("AE123456C")), registeredForVat = Some("Yes"), dateOfBirthFromCid = Some(DateOfBirth(dob)), dateOfBirth = Some(DateOfBirth(dob)))))
 
       val result = await(controller.showRegisteredForVatForm()(request))
 
@@ -38,7 +69,6 @@ class VatDetailsControllerISpec extends BaseISpec with SessionDataMissingSpec {
 
       val link = doc.getElementById("registeredForVat-yes")
       link.attr("checked") shouldBe "checked"
-
     }
   }
 

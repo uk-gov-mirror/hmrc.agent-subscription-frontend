@@ -12,6 +12,7 @@ import uk.gov.hmrc.http._
 import com.kenshoo.play.metrics.Metrics
 import org.scalatest.Assertion
 import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.SoleTrader
+import uk.gov.hmrc.agentsubscriptionfrontend.models.DesignatoryDetails.Person
 import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.{AmlsData, BusinessDetails, SubscriptionJourneyRecord}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData.{validPostcode, validUtr}
 import uk.gov.hmrc.domain.Nino
@@ -337,25 +338,24 @@ class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {
     }
   }
 
-  "check citizen details" should {
+  "GET /citizen-details/nino/designatory-details" should {
     val nino = Nino("XX121212B")
     val dob = DateOfBirth(LocalDate.now)
-    val request = CitizenDetailsRequest(nino, dob)
 
-    "return true if nino and dob match" in {
-      AgentSubscriptionStub.givenAGoodCombinationNinoAndDobMatchCitizenDetails(nino, dob)
-      await(connector.matchCitizenDetails(request)) shouldBe true
+    "return DesignatoryDetails if found for a given nino" in {
+      AgentSubscriptionStub.givenDesignatoryDetailsForNino(nino, dob)
+      await(connector.getDesignatoryDetails(nino)) shouldBe DesignatoryDetails(Some(Person(Some(dob))))
     }
 
-    "return false if nino and dob do not match" in {
-      AgentSubscriptionStub.givenABadCombinationNinoAndDobDoNotMatch(nino, dob)
-      await(connector.matchCitizenDetails(request)) shouldBe false
+    "handle the case when DesignatoryDetails are not found for a given nino" in {
+      AgentSubscriptionStub.givenDesignatoryDetailsReturnsStatus(nino, 404)
+      await(connector.getDesignatoryDetails(nino)) shouldBe DesignatoryDetails()
     }
 
     "throw a Upstream5xxResponse error when there is a network problem" in {
-      AgentSubscriptionStub.givenANetworkProblemWithSubscriptionCitizenDetails(nino, dob)
+      AgentSubscriptionStub.givenDesignatoryDetailsReturnsStatus(nino, 500)
       val e = intercept[Upstream5xxResponse] {
-        await(connector.matchCitizenDetails(request))
+        await(connector.getDesignatoryDetails(nino))
       }
 
       e.upstreamResponseCode shouldBe 500
