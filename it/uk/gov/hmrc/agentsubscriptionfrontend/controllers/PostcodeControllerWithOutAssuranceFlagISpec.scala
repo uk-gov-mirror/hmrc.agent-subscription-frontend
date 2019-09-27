@@ -116,7 +116,7 @@ class PostcodeControllerWithOutAssuranceFlagISpec extends BaseISpec with Session
         CompletePartialSubscriptionBody(validUtr, knownFacts = SubscriptionRequestKnownFacts(validPostcode)),
         arn = "TARN00023")
 
-      implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+      implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments.copy(nino = Some("AE123456C")))
         .withFormUrlEncodedBody("postcode" -> validPostcode)
       sessionStoreService.currentSession.agentSession = Some(agentSession)
 
