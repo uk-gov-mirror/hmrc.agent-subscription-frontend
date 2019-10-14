@@ -103,7 +103,7 @@ class FrontendAppConfig @Inject()(val environment: Environment, val configuratio
 
   def contactFrontendAccessibilityUrl(userAction: String): String =
     s"${getConfStringOrFail(s"$env.microservice.services.contact-frontend.external-url")}" +
-      s"/contact/accessibility?service=agent-subscription-frontend&userAction=$userAction"
+      s"/contact/accessibility?service=AOSS&userAction=$userAction"
 
   def getServicesConfStringOrFail(key: String): String =
     getConfString(key, throw new Exception(s"Property not found $key"))
