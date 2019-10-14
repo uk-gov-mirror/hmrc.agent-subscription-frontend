@@ -54,6 +54,7 @@ class ViewsSpec extends MixedPlaySpec {
       s"http://localhost:9438/agent-mapping/start?continueId=$continueId"
     override val ggRegistrationFrontendExternalUrl: String = "http://localhost:8571"
     override val rootContinueUrl: String = "http://localhost:9437/agent-subscription/return-after-gg-creds-created"
+    override def contactFrontendAccessibilityUrl(userAction: String): String = "contactFrontendAccessibilityUrl"
   }
 
   "error_template view" should {

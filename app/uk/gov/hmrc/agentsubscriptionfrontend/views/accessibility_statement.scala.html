@@ -47,7 +47,7 @@
     <p>@Html(Messages("accessibility.statement.whattodo.p1"))</p>
 
     <h2 class="govuk-heading-l">@Messages("accessibility.statement.reporting.heading")</h2>
-    <p>@Html(Messages("accessibility.statement.reporting.p1"))</p>
+    <p>@Html(Messages("accessibility.statement.reporting.p1", appConfig.contactFrontendAccessibilityUrl(request.headers.get("referer").getOrElse(""))))</p>
 
     <h2 class="govuk-heading-l">@Messages("accessibility.statement.enforcement.heading")</h2>
     <p>@Html(Messages("accessibility.statement.enforcement.p1"))</p>

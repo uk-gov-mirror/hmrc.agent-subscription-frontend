@@ -49,6 +49,7 @@ trait AppConfig {
   def agentMappingFrontendStartUrl(continueId: String): String
   val ggRegistrationFrontendExternalUrl: String
   val rootContinueUrl: String
+  def contactFrontendAccessibilityUrl(userAction: String): String
 }
 
 @Singleton
@@ -99,6 +100,10 @@ class FrontendAppConfig @Inject()(val environment: Environment, val configuratio
 
   override val rootContinueUrl: String =
     if (isDevMode) s"http://localhost:9437$returnAfterGGCredsCreatedPath" else returnAfterGGCredsCreatedPath
+
+  def contactFrontendAccessibilityUrl(userAction: String): String =
+    s"${getConfStringOrFail(s"$env.microservice.services.contact-frontend.external-url")}" +
+      s"/contact/accessibility?service=agent-subscription-frontend&userAction=$userAction"
 
   def getServicesConfStringOrFail(key: String): String =
     getConfString(key, throw new Exception(s"Property not found $key"))

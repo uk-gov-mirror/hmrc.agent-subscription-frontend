@@ -2,6 +2,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import java.time.LocalDate
 
+import play.api.http.HeaderNames
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
@@ -221,11 +222,12 @@ class StartControllerISpec extends BaseISpec {
   }
 
   "GET /accessibility-statement" should {
-    "show the accessibility statement content" in {
-      val result = await(controller.showAccessibilityStatement(FakeRequest()))
+    "show the accessibility statement content with link to deskpro form containing user action" in {
+      val result = await(controller.showAccessibilityStatement(FakeRequest().withHeaders(HeaderNames.REFERER -> "foo")))
 
       status(result) shouldBe 200
       result should containMessages("accessibility.statement.h1")
+      result should containSubstrings("http://localhost:9250/contact/accessibility?service=agent-subscription-frontend&userAction=foo")
     }
   }
 }
