@@ -227,7 +227,7 @@ class StartControllerISpec extends BaseISpec {
 
       status(result) shouldBe 200
       result should containMessages("accessibility.statement.h1")
-      result should containSubstrings("http://localhost:9250/contact/accessibility?service=agent-subscription-frontend&userAction=foo")
+      result should containSubstrings("http://localhost:9250/contact/accessibility?service=AOSS&userAction=foo")
     }
   }
 }
