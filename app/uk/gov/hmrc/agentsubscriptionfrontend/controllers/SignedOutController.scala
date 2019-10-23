@@ -19,13 +19,14 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
 import play.api.i18n.MessagesApi
-import play.api.mvc.{Action, AnyContent}
+import play.api.mvc.{Action, AnyContent, Result}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.CallOps.addParamsToUrl
 import uk.gov.hmrc.auth.core.AuthConnector
+import uk.gov.hmrc.http.cache.client.NoSessionException
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class SignedOutController @Inject()(
@@ -62,13 +63,17 @@ class SignedOutController @Inject()(
   }
 
   def signOutWithContinueUrl: Action[AnyContent] = Action.async { implicit request =>
-    for {
+    val result: Future[Result] = for {
       agentSubContinueUrlOpt <- sessionStoreService.fetchContinueUrl
       redirectUrl            <- redirectUrlActions.getUrl(agentSubContinueUrlOpt)
     } yield {
       val signOutUrlWithContinueUrl =
         addParamsToUrl(appConfig.companyAuthSignInUrl, "continue" -> redirectUrl)
       SeeOther(signOutUrlWithContinueUrl).withNewSession
+    }
+
+    result.recover {
+      case NoSessionException => startNewSession
     }
   }
 
@@ -81,8 +86,11 @@ class SignedOutController @Inject()(
   }
 
   def signOut: Action[AnyContent] = Action {
-    Redirect(routes.StartController.start()).withNewSession
+    startNewSession
   }
+
+  private def startNewSession: Result =
+    Redirect(routes.StartController.start()).withNewSession
 
   def redirectToBusinessTypeForm: Action[AnyContent] = Action { implicit request =>
     Redirect(routes.BusinessTypeController.showBusinessTypeForm()).withNewSession

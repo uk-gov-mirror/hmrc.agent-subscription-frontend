@@ -9,7 +9,7 @@ import play.api.test.Helpers.{redirectLocation, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionJourneyStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData._
-import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestData}
+import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, SessionLost, TestData, TestSessionStoreService}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.HeaderCarrierConverter
 import uk.gov.hmrc.play.bootstrap.binders.RedirectUrl
@@ -118,7 +118,27 @@ class SignOutControllerISpec extends BaseISpec {
       )
     }
 
+    "sign out to continueUrl with expired session should just sign out; not give an exception" in {
+
+      implicit val request: FakeRequest[AnyContentAsEmpty.type] = fakeRequest.withSession("sessionId" -> "SomeSession")
+
+      implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromHeadersAndSession(request.headers, Some(request.session))
+
+      sessionStoreService.cacheContinueUrl(RedirectUrl("/someContinueUrl"))
+
+      request.session.get("sessionId") should not be empty
+
+      sessionStoreService.currentSessionTest = SessionLost // simulate SessionCache expiry
+
+      val result = await(controller.signOutWithContinueUrl(fakeRequest))
+
+      status(result) shouldBe 303
+      redirectLocation(result).head shouldBe "/agent-subscription/start"
+
+    }
+
     def testLogoutAndRedirect(expectedRedirectUrl: String, maybeContinueUrl: Option[String] = None): Assertion = {
+
       implicit val request: FakeRequest[AnyContentAsEmpty.type] = fakeRequest.withSession("sessionId" -> "SomeSession")
 
       maybeContinueUrl.map{ continueUrl =>
