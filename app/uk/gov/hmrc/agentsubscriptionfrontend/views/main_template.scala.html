@@ -15,34 +15,57 @@
  *@
 
 @(appConfig: uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig,
-  title: String,
-  sidebarLinks: Option[Html] = None,
-  contentHeader: Option[Html] = None,
-  bodyClasses: Option[String] = None,
-  mainClass: Option[String] = None,
-  scriptElem: Option[Html] = None,
-  userIsLoggedIn: Boolean = true)(mainContent: Html)(implicit request : Request[_], messages: Messages)
+        title: String,
+        sidebarLinks: Option[Html] = None,
+        contentHeader: Option[Html] = None,
+        bodyClasses: Option[String] = None,
+        mainClass: Option[String] = None,
+        scriptElem: Option[Html] = None,
+        userIsLoggedIn: Boolean = true,
+        hasTimeout: Boolean = true)(mainContent: Html)(implicit request: Request[_], messages: Messages)
 
 @import uk.gov.hmrc.play.views.html.layouts
-
+@import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
 
 @serviceInfoContent = {}
 
 @sidebar = {
-    @sidebarLinks match {
-       case Some(links) => { @layouts.sidebar(links, Some("sidebar")) }
-       case None => { }
+@sidebarLinks match {
+    case Some(links) => {
+        @layouts.sidebar(links, Some("sidebar"))
+    }
+    case None => {}
+}
+}
+
+@scriptElement = {
+  @scriptElem
+    @if(hasTimeout) {
+     <script id="timeoutDialog">
+        $.timeoutDialog({
+            timeout: @appConfig.timeout,
+            countdown: @appConfig.timeoutCountdown,
+            keep_alive_url: '@routes.SignedOutController.keepAlive()',
+            title: "@Messages("timeout-dialog.title")",
+            messageSeconds: "@Messages("timeout-dialog.seconds")",
+            messageMinutes: "@Messages("timeout-dialog.minutes")",
+            messageMinute: "@Messages("timeout-dialog.minute")",
+            logout_url: '@routes.SignedOutController.signOut()',
+            message: "@Messages("timeout-dialog.p1")",
+            keep_alive_button_text: "@Messages("timeout-dialog.button")"
+        });
+        </script>
     }
 }
 
 @govuk_wrapper(appConfig = appConfig,
-               title = title,
-               mainClass = mainClass,
-               bodyClasses = bodyClasses,
-               sidebar = sidebar,
-               contentHeader = contentHeader,
-               mainContent = layouts.article(mainContent),
-               serviceInfoContent = serviceInfoContent,
-               scriptElem = scriptElem,
-               userIsLoggedIn = userIsLoggedIn
+    title = title,
+    mainClass = mainClass,
+    bodyClasses = bodyClasses,
+    sidebar = sidebar,
+    contentHeader = contentHeader,
+    mainContent = layouts.article(mainContent),
+    serviceInfoContent = serviceInfoContent,
+    scriptElem = Some(scriptElement),
+    userIsLoggedIn = userIsLoggedIn
 )

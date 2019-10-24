@@ -443,6 +443,14 @@ sign-in-new-id.p2=To finish this step, sign in again using the new user ID you c
 sign-in-new-id.p3=If you do not have one, <a href="{0}">create a new user ID</a>, selecting the ‘Agent’ option.
 sign-in-new-id.button=Sign in with new user ID
 
+#session time out
+timeout-dialog.title=You’'re about to be signed out
+timeout-dialog.seconds=seconds
+timeout-dialog.minutes=minutes
+timeout-dialog.minute=minute
+timeout-dialog.button=Stay signed in
+timeout-dialog.p1=For security reasons, you'll be signed out of your Agent services account in
+
 accessibility.statement.title=Accessibility statement for create an agent services account
 accessibility.statement.h1=Accessibility statement for create an agent services account
 accessibility.statement.intro.p1=This accessibility statement explains how accessible this service is, what to do if you have difficulty using it, and how to report accessibility problems with the service.
@@ -480,7 +488,7 @@ accessibility.statement.contacting.p3=Find out how to <a href="https://www.gov.u
 accessibility.statement.technical.heading=Technical information about this service’s accessibility
 accessibility.statement.technical.p1=HMRC is committed to making this service accessible, in accordance with the Public Sector Bodies (Websites and Mobile Applications) (No. 2) Accessibility Regulations 2018.
 accessibility.statement.technical.p2=This service is partially compliant with the <a href="https://www.w3.org/TR/WCAG21/">Web Content Accessibility Guidelines version 2.1 AA standard</a>.
-accessibility.statement.technical.p3=We have carried out an in-house expert review of the service and fixed all known accessibility issues. 
+accessibility.statement.technical.p3=We have carried out an in-house expert review of the service and fixed all known accessibility issues.
 accessibility.statement.technical.p4=We will arrange a formal external audit of the full service as soon as possible, as part of our roadmap for making sure the service is fully compliant.
 
 accessibility.statement.nonaccessible.heading=Non accessible content

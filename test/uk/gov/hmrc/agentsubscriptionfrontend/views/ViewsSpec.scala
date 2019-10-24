@@ -55,6 +55,8 @@ class ViewsSpec extends MixedPlaySpec {
     override val ggRegistrationFrontendExternalUrl: String = "http://localhost:8571"
     override val rootContinueUrl: String = "http://localhost:9437/agent-subscription/return-after-gg-creds-created"
     override def contactFrontendAccessibilityUrl(userAction: String): String = "contactFrontendAccessibilityUrl"
+    override val timeout: Int = 900
+    override val timeoutCountdown: Int = 120
   }
 
   "error_template view" should {
@@ -99,7 +101,8 @@ class ViewsSpec extends MixedPlaySpec {
         userIsLoggedIn = true,
         mainContent = Html("mainContent"),
         request = FakeRequest(),
-        messages = applicationMessages
+        messages = applicationMessages,
+        hasTimeout = true
       )
 
       contentAsString(html) must {
@@ -119,7 +122,9 @@ class ViewsSpec extends MixedPlaySpec {
         Some(Html("contentHeader")),
         Some("bodyClasses"),
         Some("mainClass"),
-        Some(Html("scriptElem")),
+        Some(Html(
+          "<script src=\"@controllers.routes.Assets.at(\"javascripts/scripts.js\")\" type=\"text/javascript\"></script>")),
+        true,
         true
       )(Html("mainContent"))(FakeRequest(), applicationMessages)
       hmtl2 must be(html)

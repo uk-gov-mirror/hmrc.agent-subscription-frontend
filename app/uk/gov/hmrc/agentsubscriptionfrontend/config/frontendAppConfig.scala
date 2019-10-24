@@ -50,6 +50,8 @@ trait AppConfig {
   val ggRegistrationFrontendExternalUrl: String
   val rootContinueUrl: String
   def contactFrontendAccessibilityUrl(userAction: String): String
+  val timeout: Int
+  val timeoutCountdown: Int
 }
 
 @Singleton
@@ -113,4 +115,7 @@ class FrontendAppConfig @Inject()(val environment: Environment, val configuratio
     configuration.getBoolean(key).getOrElse(throw new Exception(s"Property not found $key"))
   def getConfIntOrFail(key: String): Int =
     configuration.getInt(key).getOrElse(throw new Exception(s"Property not found $key"))
+
+  override val timeout: Int = getConfIntOrFail("timeoutDialog.timeout-seconds")
+  override val timeoutCountdown: Int = getConfIntOrFail("timeoutDialog.timeout-countdown-seconds")
 }
