@@ -89,6 +89,10 @@ class SignedOutController @Inject()(
     startNewSession
   }
 
+  def keepAlive = Action.async { implicit request =>
+    Future successful Ok("OK")
+  }
+
   private def startNewSession: Result =
     Redirect(routes.StartController.start()).withNewSession
 
