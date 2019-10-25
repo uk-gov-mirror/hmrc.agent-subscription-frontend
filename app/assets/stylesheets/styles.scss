@@ -10,6 +10,10 @@
     margin-top: 10px !important;
 }
 
+.margin-bottom-10 {
+    margin-bottom: 10px !important;
+}
+
 .margin-bottom-0 {
     margin-bottom: 0 !important;
 }
@@ -650,6 +654,18 @@ input[type="text"].autocomplete__input {
     .govuk-heading-m {
         font-size: 24px;
         line-height: 1.25;
+    }
+}
+
+@media (max-width: 640px) {
+    .button--secondary {
+        width: 100%;
+    }
+}
+
+@media (min-width: 640px) {
+    .button--secondary {
+        line-height: 27px;
     }
 }
 
