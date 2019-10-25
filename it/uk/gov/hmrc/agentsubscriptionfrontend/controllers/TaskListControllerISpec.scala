@@ -12,7 +12,6 @@ import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.{subscribingAgen
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestData}
 import play.api.test.Helpers._
-import scala.language.postfixOps
 
 class TaskListControllerISpec extends BaseISpec {
   lazy val controller: TaskListController = app.injector.instanceOf[TaskListController]
@@ -112,21 +111,6 @@ class TaskListControllerISpec extends BaseISpec {
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.BusinessTypeController.showBusinessTypeForm().url)
-    }
-
-    "show the session timeout screen if user waits for more than configured timeout" in {
-      givenAgentIsNotManuallyAssured(validUtr.value)
-
-      givenSubscriptionJourneyRecordExists(
-        AuthProviderId("12345-credId"),
-        TestData.minimalSubscriptionJourneyRecord(AuthProviderId("12345-credId")))
-
-      val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
-
-        await(controller.showTaskList(request)) should containMessages(
-          "timeout-dialog.title",
-          "timeout-dialog.button",
-          "timeout-dialog.p1")
     }
   }
 

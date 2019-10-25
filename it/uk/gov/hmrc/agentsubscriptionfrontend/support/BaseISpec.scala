@@ -40,9 +40,7 @@ abstract class BaseISpec
         "microservice.services.government-gateway-registration-frontend.port"         -> wireMockPort,
         "auditing.enabled"                                   -> true,
         "auditing.consumer.baseUri.host"                     -> wireMockHost,
-        "auditing.consumer.baseUri.port"                     -> wireMockPort,
-        "timeoutDialog.timeout-seconds" -> 6,
-        "timeoutDialog.timeout-countdown-seconds" -> 3
+        "auditing.consumer.baseUri.port"                     -> wireMockPort
       )
       .overrides(new TestGuiceModule)
 
