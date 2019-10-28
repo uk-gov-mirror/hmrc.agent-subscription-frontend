@@ -15,15 +15,14 @@
  *@
 
 @(continueAction: play.api.mvc.Call,
-        saveAction: play.api.mvc.Call,
-        args: (Symbol, String)*
+        saveAction: play.api.mvc.Call
 )(body: => Html
 )(implicit request: Request[_], messages: Messages)
 
 @import views.html.helper._
 @import views.html.helper.CSRF
 
-<form @toHtmlArgs(args.toMap)>
+<form action="dummyAction">
     @{
         play.filters.csrf.CSRF.getToken(request).map { token => CSRF.formField(request) }
     }
