@@ -180,9 +180,8 @@ abstract class BaseISpec
           case None => false
           case Some(elAmls) => {
             val isExpectedTag = elAmls.tagName() == expectedTagName
-            val isExpectedType = elAmls.attr("type") == expectedType
             val hasExpectedMsg = elAmls.text() == htmlEscapedMessage(expectedMessageKey)
-            isExpectedTag && isExpectedType && hasExpectedMsg
+            isExpectedTag && hasExpectedMsg
           }
         }
 
