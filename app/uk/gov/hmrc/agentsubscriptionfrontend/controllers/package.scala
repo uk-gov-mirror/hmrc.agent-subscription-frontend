@@ -31,14 +31,13 @@ import uk.gov.voa.play.form.ConditionalMappings.{mandatoryIfEqual, mandatoryIfTr
 
 package object controllers {
 
-  def continueOrStop(next: Call, previous: Call)(implicit request: Request[AnyContent]): Call = {
+  def continueOrStop(next: Call, previous: Call, cOrS: String = "")(implicit request: Request[AnyContent]): Call = {
 
-    val submitAction = request.body.asFormUrlEncoded
-      .fold(Seq.empty: Seq[String])(someMap => someMap.getOrElse("continue", Seq.empty))
+    //val submitAction = cOrS
 
-    val call = submitAction.headOption match {
-      case Some("continue") => next
-      case Some("save")     => routes.TaskListController.savedProgress(Some(previous.url))
+    val call = cOrS match {
+      case "continue" => next
+      case "save"     => routes.TaskListController.savedProgress(Some(previous.url))
       case _ => {
         Logger.warn("unexpected value in submit")
         routes.TaskListController.showTaskList()

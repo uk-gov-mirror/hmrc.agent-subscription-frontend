@@ -45,7 +45,7 @@ GET         /existing-journey-found                        uk.gov.hmrc.agentsubs
 GET         /change-amls                                    uk.gov.hmrc.agentsubscriptionfrontend.controllers.AMLSController.changeAmlsDetails
 
 GET         /check-money-laundering-compliance             uk.gov.hmrc.agentsubscriptionfrontend.controllers.AMLSController.showAmlsRegisteredPage
-POST        /check-money-laundering-compliance             uk.gov.hmrc.agentsubscriptionfrontend.controllers.AMLSController.submitAmlsRegistered
+POST        /check-money-laundering-compliance/:cOrS             uk.gov.hmrc.agentsubscriptionfrontend.controllers.AMLSController.submitAmlsRegistered(cOrS: String)
 
 GET         /money-laundering-compliance                   uk.gov.hmrc.agentsubscriptionfrontend.controllers.AMLSController.showAmlsDetailsForm
 POST        /money-laundering-compliance                   uk.gov.hmrc.agentsubscriptionfrontend.controllers.AMLSController.submitAmlsDetailsForm

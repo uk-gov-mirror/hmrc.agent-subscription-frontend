@@ -80,7 +80,7 @@ class AMLSController @Inject()(
     }
   }
 
-  def submitAmlsRegistered: Action[AnyContent] = Action.async { implicit request =>
+  def submitAmlsRegistered(cOrS: String = ""): Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { agent =>
       withManuallyAssuredAgent(agent) {
         sessionStoreService.fetchIsChangingAnswers.flatMap { isChange =>
@@ -108,7 +108,7 @@ class AMLSController @Inject()(
                   },
                   maybeCreateNewAmlsData = Some(cleanAmlsData)
                 ).map(
-                  _ => Redirect(continueOrStop(continue, routes.AMLSController.showAmlsRegisteredPage()))
+                  _ => Redirect(continueOrStop(continue, routes.AMLSController.showAmlsRegisteredPage(), cOrS))
                 )
               }
             )
