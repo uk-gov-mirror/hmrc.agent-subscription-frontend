@@ -15,12 +15,19 @@
  *@
 
 @(continueAction: play.api.mvc.Call,
-        saveAction: play.api.mvc.Call
+        saveAction: play.api.mvc.Call,
+        pageId: String
 )(body: => Html
 )(implicit request: Request[_], messages: Messages)
 
 @import views.html.helper._
 @import views.html.helper.CSRF
+
+<!--
+Custom form to allow 2 submit actions for one form.
+A dummy action is required so that the formaction attribute on the button tag can override it.
+This solution works accross browsers.
+-->
 
 <form action="dummyAction">
     @{
@@ -29,8 +36,8 @@
     @body
 
     <div class="form-field">
-        <button class="button margin-right-5" id="???-continue" name="continue" value="continue" formaction='@continueAction' formmethod="post">@Messages("button.saveContinue")</button>
-        <button class="button--secondary" id="???-save" name="continue" value="save" formaction='@saveAction' formmethod="post">@Messages("button.saveComeBackLater")</button>
+        <button class="button margin-right-5" id="@pageId-continue" name="continue" value="continue" formaction='@continueAction' formmethod="post">@Messages("button.saveContinue")</button>
+        <button class="button--secondary" id="@pageId-save" name="continue" value="save" formaction='@saveAction' formmethod="post">@Messages("button.saveComeBackLater")</button>
     </div>
 
 </form>

@@ -118,7 +118,7 @@ class AMLSControllerISpec extends BaseISpec {
       givenSubscriptionRecordCreated(id, record.copy(amlsData = Some(AmlsData.registeredUserNoDataEntered)))
 
       val result =
-        await(controller.submitAmlsRegistered("")(authenticatedRequest.withFormUrlEncodedBody("registeredAmls" -> "yes", "continue" -> "continue")))
+        await(controller.submitAmlsRegistered("continue")(authenticatedRequest.withFormUrlEncodedBody("registeredAmls" -> "yes", "continue" -> "continue")))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.AMLSController.showAmlsDetailsForm().url)
@@ -127,7 +127,7 @@ class AMLSControllerISpec extends BaseISpec {
       givenSubscriptionRecordCreated(id, record.copy(amlsData = Some(AmlsData.registeredUserNoDataEntered)))
 
       val result =
-        await(controller.submitAmlsRegistered("")(authenticatedRequest.withFormUrlEncodedBody("registeredAmls" -> "yes", "continue" -> "save")))
+        await(controller.submitAmlsRegistered("save")(authenticatedRequest.withFormUrlEncodedBody("registeredAmls" -> "yes", "continue" -> "save")))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.TaskListController.savedProgress(Some(routes.AMLSController.showAmlsRegisteredPage().url)).url)
@@ -137,7 +137,7 @@ class AMLSControllerISpec extends BaseISpec {
       givenSubscriptionRecordCreated(id, record.copy(amlsData = Some(AmlsData.nonRegisteredUserNoDataEntered)))
 
       val result =
-        await(controller.submitAmlsRegistered("")(authenticatedRequest.withFormUrlEncodedBody("registeredAmls" -> "no", "continue" -> "continue")))
+        await(controller.submitAmlsRegistered("continue")(authenticatedRequest.withFormUrlEncodedBody("registeredAmls" -> "no", "continue" -> "continue")))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.AMLSController.showCheckAmlsAlreadyAppliedForm().url)
@@ -156,7 +156,7 @@ class AMLSControllerISpec extends BaseISpec {
         record.copy(amlsData = Some(AmlsData(amlsRegistered = true, None, None))))
 
       val result =
-        await(controller.submitAmlsRegistered("")(authenticatedRequest.withFormUrlEncodedBody("registeredAmls" -> "yes", "continue" -> "continue")))
+        await(controller.submitAmlsRegistered("continue")(authenticatedRequest.withFormUrlEncodedBody("registeredAmls" -> "yes", "continue" -> "continue")))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.AMLSController.showAmlsDetailsForm().url)
@@ -175,7 +175,7 @@ class AMLSControllerISpec extends BaseISpec {
         record.copy(amlsData = Some(AmlsData(amlsRegistered = true, None, None))))
 
       val result =
-        await(controller.submitAmlsRegistered("")(authenticatedRequest.withFormUrlEncodedBody("registeredAmls" -> "yes", "continue" -> "save")))
+        await(controller.submitAmlsRegistered("save")(authenticatedRequest.withFormUrlEncodedBody("registeredAmls" -> "yes", "continue" -> "save")))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.TaskListController.savedProgress(Some(routes.AMLSController.showAmlsRegisteredPage().url)).url)
@@ -191,7 +191,7 @@ class AMLSControllerISpec extends BaseISpec {
       givenSubscriptionRecordCreated(id, record.copy(amlsData = Some(completeAmlsData)))
 
       val result =
-        await(controller.submitAmlsRegistered("")(authenticatedRequest.withFormUrlEncodedBody("registeredAmls" -> "yes", "continue" -> "continue")))
+        await(controller.submitAmlsRegistered("continue")(authenticatedRequest.withFormUrlEncodedBody("registeredAmls" -> "yes", "continue" -> "continue")))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.AMLSController.showAmlsDetailsForm().url)
