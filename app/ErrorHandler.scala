@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-import javax.inject.{Inject, Singleton}
 import com.google.inject.name.Named
+import javax.inject.{Inject, Singleton}
 import play.api.http.Status.FORBIDDEN
 import play.api.i18n.{Messages, MessagesApi}
 import play.api.mvc.Results._
 import play.api.mvc.{Request, RequestHeader, Result}
 import play.api.{Configuration, Environment, Mode}
-import play.twirl.api.HtmlFormat
+import play.twirl.api.{Html, HtmlFormat}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.views.html.error_template
+import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{error_template, error_template_5xx}
 import uk.gov.hmrc.auth.core.{InsufficientEnrolments, NoActiveSession}
 import uk.gov.hmrc.http.{JsValidationException, NotFoundException}
 import uk.gov.hmrc.play.HeaderCarrierConverter
@@ -70,6 +70,8 @@ class ErrorHandler @Inject()(
   override def standardErrorTemplate(pageTitle: String, heading: String, message: String)(
     implicit request: Request[_]): HtmlFormat.Appendable =
     error_template(Messages(pageTitle), Messages(heading), Messages(message))
+
+  override def internalServerErrorTemplate(implicit request: Request[_]): Html = error_template_5xx()
 
   private implicit def rhToRequest(rh: RequestHeader): Request[_] = Request(rh, "")
 }
