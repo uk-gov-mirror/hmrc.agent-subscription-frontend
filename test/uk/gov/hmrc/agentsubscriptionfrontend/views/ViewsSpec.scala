@@ -47,7 +47,6 @@ class ViewsSpec extends MixedPlaySpec {
     override val addressLookupContinueUrl: String = "addressLookupContinueUrl"
     override val surveyRedirectUrl: String = "surveyRedirectUrl"
     override val companyAuthSignInUrl: String = "signOutUrl"
-    override val chainedSessionDetailsTtl: Int = 900
     override val cacheableSessionDomain: String = "cacheableSessionDomain"
     override val isDevMode: Boolean = true
     override def agentMappingFrontendStartUrl(continueId: String): String =

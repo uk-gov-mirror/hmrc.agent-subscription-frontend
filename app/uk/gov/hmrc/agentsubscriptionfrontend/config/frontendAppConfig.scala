@@ -44,7 +44,6 @@ trait AppConfig {
   val addressLookupContinueUrl: String
   val surveyRedirectUrl: String
   val companyAuthSignInUrl: String
-  val chainedSessionDetailsTtl: Int
   val cacheableSessionDomain: String
   def agentMappingFrontendStartUrl(continueId: String): String
   val ggRegistrationFrontendExternalUrl: String
@@ -87,7 +86,6 @@ class FrontendAppConfig @Inject()(val environment: Environment, val configuratio
   override val surveyRedirectUrl: String = getConfStringOrFail(s"$env.surveyRedirectUrl")
 
   override val companyAuthSignInUrl: String = getConfStringOrFail(s"$env.companyAuthSignInUrl")
-  override val chainedSessionDetailsTtl: Int = getConfIntOrFail(s"$env.mongodb.chainedsessiondetails.ttl")
   override val cacheableSessionDomain: String = getServicesConfStringOrFail("cachable.session-cache.domain")
   override def agentMappingFrontendStartUrl(continueId: String): String =
     s"${getServicesConfStringOrFail("agent-mapping-frontend.external-url")}${getServicesConfStringOrFail(
