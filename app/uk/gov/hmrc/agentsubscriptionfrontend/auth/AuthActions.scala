@@ -174,7 +174,7 @@ trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring
       Redirect(routes.StartController.showNotAgent())
 
     case _: NoActiveSession =>
-      toGGLogin(s"${appConfig.agentSubscriptionFrontendBaseUrl}${request.uri}")
+      toGGLogin(s"${appConfig.agentSubscriptionFrontendExternalUrl}${request.uri}")
 
     case _: InsufficientEnrolments =>
       Logger.warn(s"Logged in user does not have required enrolments")

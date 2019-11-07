@@ -48,7 +48,7 @@ trait AppConfig {
   val ssoBaseUrl: String
   val rootContinueUrl: String
   val agentSubscriptionBaseUrl: String
-  val agentSubscriptionFrontendBaseUrl: String
+  val agentSubscriptionFrontendExternalUrl: String
   def contactFrontendAccessibilityUrl(userAction: String): String
   val timeout: Int
   val timeoutCountdown: Int
@@ -85,7 +85,8 @@ class FrontendAppConfig @Inject()(servicesConfig: ServicesConfig) extends AppCon
   override val addressLookupContinueUrl: String =
     getConf("microservice.services.address-lookup-frontend.new-address-callback.url")
   override val surveyRedirectUrl: String = getConf("surveyRedirectUrl")
-  override val agentSubscriptionFrontendBaseUrl: String = servicesConfig.baseUrl("agent-subscription-frontend")
+  override val agentSubscriptionFrontendExternalUrl: String = getConf(
+    "microservice.services.agent-subscription-frontend.external-url")
   override val sessionCacheBaseUrl: String = servicesConfig.baseUrl("cachable.session-cache")
 
   override val companyAuthSignInUrl: String = getConf("companyAuthSignInUrl")
@@ -109,9 +110,8 @@ class FrontendAppConfig @Inject()(servicesConfig: ServicesConfig) extends AppCon
     s"${getConf("microservice.services.government-gateway-registration-frontend.externalUrl")}$ssoRedirectUrl"
 
   private val returnAfterGGCredsCreatedPath: String = "/agent-subscription/return-after-gg-creds-created"
-  private val returnAfterGGCredsCreatedBaseUrl: String = getConf(
-    "microservice.services.agent-subscription-frontend.external-url")
-  override val rootContinueUrl: String = s"$returnAfterGGCredsCreatedBaseUrl$returnAfterGGCredsCreatedPath"
+
+  override val rootContinueUrl: String = s"$agentSubscriptionFrontendExternalUrl$returnAfterGGCredsCreatedPath"
 
   def contactFrontendAccessibilityUrl(userAction: String): String =
     s"${getConf(s"microservice.services.contact-frontend.external-url")}" +
