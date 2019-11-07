@@ -24,6 +24,12 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.AmlsData
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.view.CheckYourAnswers
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.view.AnswerRow
+
+@this(
+mainTemplate: main_template,
+        uiFormHelper: uk.gov.hmrc.play.views.html.helpers.FormWithCSRF
+)
+
 @(checkYourAnswers: CheckYourAnswers)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 @checkAnswerBlock(id: String, answerRow: AnswerRow) = {
@@ -39,7 +45,7 @@
     </div>
 }
 
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = Messages("checkAnswers.title"), bodyClasses = None) {
+@mainTemplate(appConfig, title = Messages("checkAnswers.title"), bodyClasses = None) {
 
     <h1 class="heading-xlarge margin-bottom-20">@Messages("checkAnswers.title")</h1>
 
@@ -69,7 +75,7 @@
 
     <p>@Messages("checkAnswers.description.p3")</p>
 
-    @form(
+    @uiFormHelper(
         action = routes.SubscriptionController.submitCheckAnswers(),
         'class -> "form js-form") {
 

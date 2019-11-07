@@ -1,22 +1,24 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import org.scalatest.Assertion
-import play.api.i18n.Messages
-import play.api.i18n.Messages.Implicits.applicationMessages
+import play.api.i18n.{Lang, Messages, MessagesApi, MessagesProvider}
 import play.api.mvc.{AnyContentAsEmpty, AnyContentAsFormUrlEncoded, Result}
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{redirectLocation, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, BusinessType, Postcode}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub._
-import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestSetupNoJourneyRecord}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.subscribingCleanAgentWithoutEnrolments
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData.{testRegistration, validUtr, _}
+import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestSetupNoJourneyRecord}
 import uk.gov.hmrc.domain.Nino
 
 class AssuranceChecksControllerISpec extends BaseISpec {
 
   lazy val controller: AssuranceChecksController = app.injector.instanceOf[AssuranceChecksController]
+
+  private lazy val messagesApi = app.injector.instanceOf[MessagesApi]
+  private implicit lazy val messages: Messages = messagesApi.preferred(Seq.empty[Lang])
 
   "GET /enter-agent-code" should {
 

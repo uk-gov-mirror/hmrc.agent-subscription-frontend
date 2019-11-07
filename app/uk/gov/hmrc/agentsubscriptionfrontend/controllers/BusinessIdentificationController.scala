@@ -18,13 +18,12 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
-import play.api.Logger
+import play.api.{Configuration, Environment, Logger}
 import play.api.data.Form
-import play.api.i18n.MessagesApi
+import play.api.i18n.I18nSupport
 import play.api.mvc.{AnyContent, Request, _}
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.audit.AuditService
-import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent
+import uk.gov.hmrc.agentsubscriptionfrontend.auth.{Agent, AuthActions}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentAssuranceConnector
 import uk.gov.hmrc.agentsubscriptionfrontend.models
@@ -37,47 +36,60 @@ import uk.gov.hmrc.agentsubscriptionfrontend.service._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TaxIdentifierFormatters
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.validators.BusinessDetailsValidator
-import uk.gov.hmrc.agentsubscriptionfrontend.views.html
+import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{already_subscribed, business_email, business_name, cannot_create_account, confirm_business, create_new_account, existing_journey_found, no_match_found, postcode_not_allowed, update_business_address}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class BusinessIdentificationController @Inject()(
+                                                val authConnector: AuthConnector,
                                                   assuranceService: AssuranceService,
-                                                  override val authConnector: AuthConnector,
-                                                  agentAssuranceConnector: AgentAssuranceConnector,
-                                                  val subscriptionService: SubscriptionService,
-                                                  val sessionStoreService: SessionStoreService,
-                                                  redirectUrlActions: RedirectUrlActions,
-                                                  val businessDetailsValidator: BusinessDetailsValidator,
+                                                val agentAssuranceConnector: AgentAssuranceConnector,
+                                                val subscriptionService: SubscriptionService,
+                                                val sessionStoreService: SessionStoreService,
+                                                val redirectUrlActions: RedirectUrlActions,
+                                                val env: Environment,
+                                                val config: Configuration,
+                                                val metrics: Metrics,
+                                                val subscriptionJourneyService: SubscriptionJourneyService,
+                                                  businessDetailsValidator: BusinessDetailsValidator,
                                                   auditService: AuditService,
-                                                  override val subscriptionJourneyService: SubscriptionJourneyService)(
-  implicit messagesApi: MessagesApi,
-  override val appConfig: AppConfig,
-  override val metrics: Metrics,
-  override val ec: ExecutionContext)
-    extends AgentSubscriptionBaseController(authConnector, redirectUrlActions, appConfig, subscriptionJourneyService)
-    with SessionBehaviour {
+                                                  mcc: MessagesControllerComponents,
+                                                  createNewAccountTemplate: create_new_account,
+                                                  noMatchFoundTemplate: no_match_found,
+                                                  cannotCreateAccountTemplate: cannot_create_account,
+                                                  confirmBusinessTemplate: confirm_business,
+                                                  businessEmailTemplate: business_email,
+                                                  existingJourneyFoundTemplate: existing_journey_found,
+                                                  businessNameTemplate: business_name,
+                                                  alreadySubscribedTemplate: already_subscribed,
+                                                  updateBusinessAddressTemplate: update_business_address,
+                                                  postcodeNotAllowedTemplate: postcode_not_allowed)(
+  implicit val appConfig: AppConfig,
+  val ec: ExecutionContext)
+    extends FrontendController(mcc) with AuthActions
+    with SessionBehaviour with I18nSupport {
 
   import BusinessIdentificationForms._
 
   def showCreateNewAccount: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      Ok(html.create_new_account())
+      Ok(createNewAccountTemplate())
     }
   }
 
   def showNoMatchFound: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      Ok(html.no_match_found())
+      Ok(noMatchFoundTemplate())
     }
   }
 
   def setupIncomplete: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      Ok(html.cannot_create_account())
+      Ok(cannotCreateAccountTemplate())
     }
   }
 
@@ -104,7 +116,7 @@ class BusinessIdentificationController @Inject()(
       existingSession.registration.map(_.address)) match {
       case (Some(utr), Some(businessName), Some(address)) =>
         Ok(
-          html.confirm_business(
+          confirmBusinessTemplate(
             confirmBusinessRadioForm = form,
             registrationName = businessName,
             utr = TaxIdentifierFormatters.prettify(utr),
@@ -174,7 +186,7 @@ class BusinessIdentificationController @Inject()(
     withSubscribingAgent { _ =>
       withValidSession { (_, existingSession) =>
         Ok(
-          html.business_email(
+          businessEmailTemplate(
             existingSession.registration
               .flatMap(_.emailAddress)
               .fold(businessEmailForm)(email => businessEmailForm.fill(BusinessEmail(email))),
@@ -189,7 +201,7 @@ class BusinessIdentificationController @Inject()(
     withSubscribingAgent { agent =>
       val sjr = agent.getMandatorySubscriptionRecord
       Ok(
-        html.business_email(
+        businessEmailTemplate(
           sjr.businessDetails.registration
             .flatMap(_.emailAddress)
             .fold(businessEmailForm)(email => businessEmailForm.fill(BusinessEmail(email))),
@@ -207,7 +219,7 @@ class BusinessIdentificationController @Inject()(
         .fold(
 
           formWithErrors => Ok(
-            html.business_email(
+            businessEmailTemplate(
               formWithErrors,
               hasInvalidEmail(currentSjr.businessDetails.registration),
               isChange = true)),
@@ -238,7 +250,7 @@ class BusinessIdentificationController @Inject()(
           .bindFromRequest()
           .fold(
             formWithErrors =>
-              Ok(html.business_email(formWithErrors, hasInvalidEmail(existingSession.registration), isChange = false)),
+              Ok(businessEmailTemplate(formWithErrors, hasInvalidEmail(existingSession.registration), isChange = false)),
             validForm => {
               val updatedReg = existingSession.registration match {
                 case Some(registration) => registration.copy(emailAddress = Some(validForm.email))
@@ -257,7 +269,7 @@ class BusinessIdentificationController @Inject()(
     withSubscribingAgent { _ =>
       withValidSession { (_, existingSession) =>
         Ok(
-          html.business_name(
+          businessNameTemplate(
             businessNameForm.fill(BusinessName(existingSession.registration.flatMap(_.taxpayerName).getOrElse(""))),
             hasInvalidBusinessName(existingSession.registration),
             isChange = false
@@ -270,7 +282,7 @@ class BusinessIdentificationController @Inject()(
     withSubscribingAgent { agent =>
       val sjr = agent.getMandatorySubscriptionRecord
       Ok(
-        html.business_name(
+        businessNameTemplate(
           businessNameForm.fill(BusinessName(sjr.businessDetails.registration.flatMap(_.taxpayerName).getOrElse(""))),
           hasInvalidBusinessName(sjr.businessDetails.registration),
           isChange = true
@@ -286,7 +298,7 @@ class BusinessIdentificationController @Inject()(
         .fold(
           formWithErrors =>
             Ok(
-              html.business_name(
+              businessNameTemplate(
                 formWithErrors,
                 hasInvalidBusinessName(currentSjr.businessDetails.registration),
                 isChange = true)),
@@ -317,7 +329,7 @@ class BusinessIdentificationController @Inject()(
           .bindFromRequest()
           .fold(
             formWithErrors =>
-              Ok(html.business_name(formWithErrors, hasInvalidBusinessName(existingSession.registration), false)),
+              Ok(businessNameTemplate(formWithErrors, hasInvalidBusinessName(existingSession.registration), false)),
             validForm => {
               val updatedReg = existingSession.registration match {
                 case Some(registration) => registration.copy(taxpayerName = Some(validForm.name))
@@ -355,7 +367,7 @@ class BusinessIdentificationController @Inject()(
         existingSession.registration match {
           case Some(registration) =>
             Ok(
-              html.update_business_address(
+              updateBusinessAddressTemplate(
                 updateBusinessAddressForm.fill(models.UpdateBusinessAddressForm(registration.address))))
           case None => Redirect(routes.BusinessIdentificationController.showNoMatchFound())
         }
@@ -369,7 +381,7 @@ class BusinessIdentificationController @Inject()(
         updateBusinessAddressForm
           .bindFromRequest()
           .fold(
-            formWithErrors => Ok(html.update_business_address(formWithErrors)),
+            formWithErrors => Ok(updateBusinessAddressTemplate(formWithErrors)),
             validForm => {
               val updatedReg = existingSession.registration match {
                 case Some(registration) =>
@@ -399,19 +411,19 @@ class BusinessIdentificationController @Inject()(
 
   def showPostcodeNotAllowed: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      Ok(html.postcode_not_allowed())
+      Ok(postcodeNotAllowedTemplate())
     }
   }
 
   def showAlreadySubscribed: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      Ok(html.already_subscribed())
+      Ok(alreadySubscribedTemplate())
     }
   }
 
   def showExistingJourneyFound: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      Ok(html.existing_journey_found())
+      Ok(existingJourneyFoundTemplate())
     }
   }
 

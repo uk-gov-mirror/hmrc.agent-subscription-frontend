@@ -15,14 +15,19 @@
  *@
 
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-@import uk.gov.hmrc.play.views.html.helpers._
+
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
 @import uk.gov.hmrc.agentsubscriptionfrontend.models._
-@import uk.gov.hmrc.agentsubscriptionfrontend.views.html.error_prefix
+@import uk.gov.hmrc.agentsubscriptionfrontend.views.html._
+
+
+@this(
+mainTemplate: main_template
+)
 
 @()(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = Messages("amls-not-applied.title"), bodyClasses = None) {
+@mainTemplate(appConfig, title = Messages("amls-not-applied.title"), bodyClasses = None) {
 
 <a href="@routes.AMLSController.showCheckAmlsAlreadyAppliedForm" class="link-back">@Messages("button.back")</a>
 

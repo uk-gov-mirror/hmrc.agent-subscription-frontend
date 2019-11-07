@@ -65,17 +65,16 @@ lazy val wartRemoverSettings = {
 
 lazy val compileDeps = Seq(
   ws,
-  "uk.gov.hmrc" %% "bootstrap-play-25" % "4.12.0",
-  "uk.gov.hmrc" %% "govuk-template" % "5.35.0-play-25",
-  "uk.gov.hmrc" %% "play-ui" % "7.40.0-play-25",
-  "uk.gov.hmrc" %% "auth-client" % "2.21.0-play-25",
-  "uk.gov.hmrc" %% "play-partials" % "6.9.0-play-25",
-  "uk.gov.hmrc" %% "agent-kenshoo-monitoring" % "3.8.0",
-  "uk.gov.hmrc" %% "agent-mtd-identifiers" % "0.16.0-play-25",
-  "uk.gov.hmrc" %% "simple-reactivemongo" % "7.20.0-play-25",
-  "uk.gov.hmrc" %% "http-caching-client" % "8.4.0-play-25",
-  "uk.gov.hmrc" %% "play-conditional-form-mapping" % "0.2.0",
-  "com.kenshoo" %% "metrics-play" % "2.5.9_0.5.1",
+  "uk.gov.hmrc" %% "bootstrap-play-26" % "1.1.0",
+  "uk.gov.hmrc" %% "govuk-template" % "5.43.0-play-26",
+  "uk.gov.hmrc" %% "play-ui" % "8.3.0-play-26",
+  "uk.gov.hmrc" %% "auth-client" % "2.31.0-play-26",
+  "uk.gov.hmrc" %% "play-partials" % "6.9.0-play-26",
+  "uk.gov.hmrc" %% "agent-kenshoo-monitoring" % "4.3.0",
+  "uk.gov.hmrc" %% "agent-mtd-identifiers" % "0.17.0-play-26",
+  "uk.gov.hmrc" %% "simple-reactivemongo" % "7.20.0-play-26",
+  "uk.gov.hmrc" %% "http-caching-client" % "9.0.0-play-26",
+  "uk.gov.hmrc" %% "play-conditional-form-mapping" % "1.2.0-play-26",
   "org.typelevel" %% "cats" % "0.9.0"
 )
 
@@ -85,13 +84,13 @@ def tmpMacWorkaround(): Seq[ModuleID] =
   else Seq()
 
 def testDeps(scope: String) = Seq(
-  "uk.gov.hmrc" %% "hmrctest" % "3.8.0-play-25" % scope,
-  "org.scalatest" %% "scalatest" % "3.0.7" % scope,
+  "uk.gov.hmrc" %% "hmrctest" % "3.9.0-play-26" % scope,
+  "org.scalatest" %% "scalatest" % "3.0.8" % scope,
   "org.mockito" % "mockito-core" % "2.27.0" % scope,
-  "org.scalatestplus.play" %% "scalatestplus-play" % "2.0.1" % scope,
-  "com.github.tomakehurst" % "wiremock" % "2.24.0" % scope,
-  "uk.gov.hmrc" %% "reactivemongo-test" % "4.14.0-play-25" % scope,
-  "org.scalamock" %% "scalamock" % "4.1.0" % scope,
+  "org.scalatestplus.play" %% "scalatestplus-play" % "3.1.2" % scope,
+  "com.github.tomakehurst" % "wiremock-jre8" % "2.23.2" % scope,
+  "uk.gov.hmrc" %% "reactivemongo-test" % "4.15.0-play-26" % scope,
+  "org.scalamock" %% "scalamock" % "4.4.0" % scope,
   "org.jsoup" % "jsoup" % "1.12.1" % scope
 )
 

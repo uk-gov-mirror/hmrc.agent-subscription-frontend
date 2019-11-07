@@ -14,7 +14,26 @@
  * limitations under the License.
  *@
 
-@(appConfig: uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig,
+@import play.twirl.api.HtmlFormat
+@import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
+
+
+@this(
+govUkTemplate: views.html.layouts.GovUkTemplate,
+uiHead: uk.gov.hmrc.play.views.html.layouts.Head,
+uiHeaderNav: uk.gov.hmrc.play.views.html.layouts.HeaderNav,
+uiFooter: uk.gov.hmrc.play.views.html.layouts.Footer,
+uiServiceInfo: uk.gov.hmrc.play.views.html.layouts.ServiceInfo,
+uiMainContentHeader: uk.gov.hmrc.play.views.html.layouts.MainContentHeader,
+ uiMainContent: uk.gov.hmrc.play.views.html.layouts.MainContent,
+ uiFooterLinks: uk.gov.hmrc.play.views.html.layouts.FooterLinks,
+   helperReportAProblemLink: uk.gov.hmrc.play.views.html.helpers.ReportAProblemLink,
+    uiBetaBanner: uk.gov.hmrc.play.views.html.layouts.BetaBanner
+)
+
+
+
+@(appConfig: AppConfig,
   title: String,
   mainClass: Option[String] = None,
   mainDataAttributes: Option[Html] = None,
@@ -26,14 +45,10 @@
   scriptElem: Option[Html] = None,
   userIsLoggedIn: Boolean)(implicit request: Request[_], messages: Messages)
 
-@import layouts.{govuk_template => hmrcGovUkTemplate}
-@import uk.gov.hmrc.play.views.html.{layouts => uiLayouts}
-@import uk.gov.hmrc.play.views.html.{helpers => uiHelpers}
-@import uk.gov.hmrc.agentsubscriptionfrontend.views.html._
 
 
 @betaBanner = {
-@uiLayouts.betaBanner(userIsLoggedIn,
+@uiBetaBanner(userIsLoggedIn,
     appConfig.betaFeedbackUrl,
     appConfig.betaFeedbackUnauthenticatedUrl,
     showFeedbackLinkInBetaBanner = true)
@@ -54,7 +69,7 @@
 }
 
 @head = {
-    @uiLayouts.head(
+    @uiHead(
       linkElem = None,
       headScripts = Some(headScripts))
     <meta name="format-detection" content="telephone=no" />
@@ -70,7 +85,7 @@
 
 
 @insideHeader = {
-    @uiLayouts.header_nav(
+    @uiHeaderNav(
       navTitle = Some(Messages("app.name")),
       navTitleLink = None,
       showBetaLink = false,
@@ -80,7 +95,7 @@
 @afterHeader = {}
 
 @bodyEnd = {
-@uiLayouts.footer(
+@uiFooter(
     analyticsToken = Some(appConfig.analyticsToken),
     analyticsHost = appConfig.analyticsHost,
     ssoUrl = None,
@@ -100,7 +115,7 @@
 }
 
 @serviceInfo = {
-@uiLayouts.serviceInfo(
+@uiServiceInfo(
     betaBanner = betaBanner,
     includeGridWrapper = false,
     serviceInfoContent = Some(serviceInfoContent))
@@ -108,12 +123,12 @@
 
 @mainContentHeader = {
 @contentHeader.map { header =>
-    @uiLayouts.main_content_header(contentHeader = header)
+    @uiMainContentHeader(contentHeader = header)
 }
 }
 
 @getHelpForm = @{
-    uiHelpers.reportAProblemLink(appConfig.reportAProblemPartialUrl, appConfig.reportAProblemNonJSUrl)
+    helperReportAProblemLink(appConfig.reportAProblemPartialUrl, appConfig.reportAProblemNonJSUrl)
 }
 
 @titleSuffix = @{
@@ -121,7 +136,7 @@
 }
 
 @content = {
-@uiLayouts.main_content(
+@uiMainContent(
     article = mainContent,
     mainClass = mainClass,
     mainDataAttributes = mainDataAttributes,
@@ -131,4 +146,4 @@
     sidebar = sidebar)
 }
 
-@hmrcGovUkTemplate(Some(title + " " + titleSuffix), bodyClasses)(head, bodyEnd, insideHeader, afterHeader, footerTop, Some(uiLayouts.footer_links(additionalLinks = Some(footerLinks))), true)(content)
+@govUkTemplate(Some(title + " " + titleSuffix), bodyClasses)(head, bodyEnd, insideHeader, afterHeader, footerTop, Some(uiFooterLinks(additionalLinks = Some(footerLinks))), true)(content)

@@ -16,78 +16,45 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.views
 
-import org.scalatestplus.play.MixedPlaySpec
-import play.api.{Configuration, Environment}
-import play.api.i18n.Messages.Implicits.applicationMessages
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.i18n.Messages
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import play.twirl.api.Html
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.views.html.error_template_Scope0.error_template
-import uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template_Scope0.main_template
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html._
+import uk.gov.hmrc.play.test.UnitSpec
 
-class ViewsSpec extends MixedPlaySpec {
-
-  implicit val appConfig = new AppConfig() {
-    override val analyticsToken: String = "analyticsToken"
-    override val analyticsHost: String = "analyticsHost"
-    override val reportAProblemPartialUrl: String = "reportAProblemPartialUrl"
-    override val reportAProblemNonJSUrl: String = "reportAProblemNonJSUrl"
-    override val betaFeedbackUrl: String = "betaFeedbackUrl"
-    override val betaFeedbackUnauthenticatedUrl: String = "betaFeedbackUnauthenticatedUrl"
-    override val governmentGatewayUrl: String = "governmentGatewayUrl"
-    override val blacklistedPostcodes: Set[String] = Set("blacklistedPostcodes")
-    override val journeyName: String = "journeyName"
-    override val agentServicesAccountUrl: String = "http://localhost:9401/agent-services-account"
-    override val domainWhiteList: Set[String] = Set("www.foo.com", "foo.org")
-    override val agentAssuranceRun: Boolean = false
-    override val environment: Environment = null
-    override val configuration: Configuration = null
-    override val addressLookupContinueUrl: String = "addressLookupContinueUrl"
-    override val surveyRedirectUrl: String = "surveyRedirectUrl"
-    override val companyAuthSignInUrl: String = "signOutUrl"
-    override val cacheableSessionDomain: String = "cacheableSessionDomain"
-    override val isDevMode: Boolean = true
-    override def agentMappingFrontendStartUrl(continueId: String): String =
-      s"http://localhost:9438/agent-mapping/start?continueId=$continueId"
-    override val ggRegistrationFrontendExternalUrl: String = "http://localhost:8571"
-    override val rootContinueUrl: String = "http://localhost:9437/agent-subscription/return-after-gg-creds-created"
-    override def contactFrontendAccessibilityUrl(userAction: String): String = "contactFrontendAccessibilityUrl"
-    override val timeout: Int = 900
-    override val timeoutCountdown: Int = 120
-  }
+class ViewsSpec extends UnitSpec with GuiceOneAppPerSuite {
 
   "error_template view" should {
 
     "render title, heading and message" in new App {
-      val view = new error_template()
-      val html = view.render(
-        "My custom page title",
-        "My custom heading",
-        "My custom message",
-        FakeRequest(),
-        applicationMessages,
-        appConfig)
+      val appConfig = app.injector.instanceOf[AppConfig]
+      val messages = app.injector.instanceOf[Messages]
 
-      contentAsString(html) must {
+      val view = app.injector.instanceOf[error_template]
+      val html = view
+        .render("My custom page title", "My custom heading", "My custom message", FakeRequest(), messages, appConfig)
+
+      contentAsString(html) should {
         include("My custom page title") and
           include("My custom heading") and
           include("My custom message")
       }
 
-      val hmtl2 = view.f("My custom page title", "My custom heading", "My custom message")(
-        FakeRequest(),
-        applicationMessages,
-        appConfig)
-      hmtl2 must be(html)
+      val hmtl2 =
+        view.f("My custom page title", "My custom heading", "My custom message")(FakeRequest(), messages, appConfig)
+      hmtl2 shouldBe (html)
     }
   }
 
   "main_template view" should {
 
     "render title, header, sidebar and main content" in new App {
-      val view = new main_template()
+      val view = app.injector.instanceOf[main_template]
+      val appConfig = app.injector.instanceOf[AppConfig]
+      val messages = app.injector.instanceOf[Messages]
       val html = view.render(
         appConfig = appConfig,
         title = "My custom page title",
@@ -100,11 +67,11 @@ class ViewsSpec extends MixedPlaySpec {
         userIsLoggedIn = true,
         mainContent = Html("mainContent"),
         request = FakeRequest(),
-        messages = applicationMessages,
+        messages = messages,
         hasTimeout = true
       )
 
-      contentAsString(html) must {
+      contentAsString(html) should {
         include("My custom page title") and
           include("sidebarLinks") and
           include("contentHeader") and
@@ -125,8 +92,8 @@ class ViewsSpec extends MixedPlaySpec {
           "<script src=\"@controllers.routes.Assets.at(\"javascripts/scripts.js\")\" type=\"text/javascript\"></script>")),
         true,
         true
-      )(Html("mainContent"))(FakeRequest(), applicationMessages)
-      hmtl2 must be(html)
+      )(Html("mainContent"))(FakeRequest(), messages)
+      hmtl2 shouldBe (html)
     }
 
   }

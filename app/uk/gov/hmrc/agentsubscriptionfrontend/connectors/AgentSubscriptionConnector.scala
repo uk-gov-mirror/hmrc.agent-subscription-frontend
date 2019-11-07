@@ -16,29 +16,30 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.connectors
 
-import java.net.URL
 import java.time.LocalDate
 
 import com.codahale.metrics.MetricRegistry
 import com.kenshoo.play.metrics.Metrics
-import javax.inject.{Inject, Named, Singleton}
-import play.api.Logger
+import javax.inject.{Inject, Singleton}
 import play.api.libs.json.{JsValue, Json}
 import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr, Vrn}
+import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.SubscriptionJourneyRecord
 import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.http.{NotFoundException, _}
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import uk.gov.hmrc.play.encoding.UriPathEncoding.encodePathSegment
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class AgentSubscriptionConnector @Inject()(
-  @Named("agent-subscription-baseUrl") baseUrl: URL,
-  http: HttpGet with HttpPost with HttpPut with HttpDelete,
-  metrics: Metrics)(implicit ec: ExecutionContext)
+  http: HttpClient,
+  metrics: Metrics,
+  appConfig: AppConfig
+)(implicit ec: ExecutionContext)
     extends HttpAPIMonitor {
 
   override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
@@ -47,7 +48,7 @@ class AgentSubscriptionConnector @Inject()(
     implicit hc: HeaderCarrier): Future[Option[SubscriptionJourneyRecord]] =
     monitor(s"ConsumedAPI-Agent-Subscription-getJourneyByPrimaryId-GET") {
       val url =
-        new URL(baseUrl, s"/agent-subscription/subscription/journey/id/${encodePathSegment(internalId.id)}")
+        s"${appConfig.agentSubscriptionBaseUrl}/agent-subscription/subscription/journey/id/${encodePathSegment(internalId.id)}"
       http
         .GET[HttpResponse](url.toString)
         .map(response =>
@@ -61,14 +62,14 @@ class AgentSubscriptionConnector @Inject()(
     implicit hc: HeaderCarrier): Future[Option[SubscriptionJourneyRecord]] =
     monitor(s"ConsumedAPI-Agent-Subscription-getJourneyByContinueId-GET") {
       val url =
-        new URL(baseUrl, s"/agent-subscription/subscription/journey/continueId/${encodePathSegment(continueId.value)}")
+        s"${appConfig.agentSubscriptionBaseUrl}/agent-subscription/subscription/journey/continueId/${encodePathSegment(continueId.value)}"
       http.GET[Option[SubscriptionJourneyRecord]](url.toString)
     }
 
   def getJourneyByUtr(utr: Utr)(implicit hc: HeaderCarrier): Future[Option[SubscriptionJourneyRecord]] =
     monitor(s"ConsumedAPI-Agent-Subscription-getJourneyByUtr-GET") {
       val url =
-        new URL(baseUrl, s"/agent-subscription/subscription/journey/utr/${encodePathSegment(utr.value)}")
+        s"${appConfig.agentSubscriptionBaseUrl}/agent-subscription/subscription/journey/utr/${encodePathSegment(utr.value)}"
       http.GET[Option[SubscriptionJourneyRecord]](url.toString)
     }
 
@@ -77,7 +78,7 @@ class AgentSubscriptionConnector @Inject()(
       val path =
         s"/agent-subscription/subscription/journey/primaryId/${encodePathSegment(journeyRecord.authProviderId.id)}"
       http
-        .POST[SubscriptionJourneyRecord, HttpResponse](new URL(baseUrl, path).toString, journeyRecord)
+        .POST[SubscriptionJourneyRecord, HttpResponse](s"${appConfig.agentSubscriptionBaseUrl}$path", journeyRecord)
         .map(handleUpdateJourneyResponse(_, path))
     }
 
@@ -96,9 +97,8 @@ class AgentSubscriptionConnector @Inject()(
   def matchCorporationTaxUtrWithCrn(utr: Utr, crn: CompanyRegistrationNumber)(
     implicit hc: HeaderCarrier): Future[Boolean] =
     monitor(s"ConsumedAPI-Agent-Subscription-matchCorporationTaxUtrWithCrn-GET") {
-      val url = new URL(
-        baseUrl,
-        s"/agent-subscription/corporation-tax-utr/${encodePathSegment(utr.value)}/crn/${encodePathSegment(crn.value)}")
+      val url =
+        s"${appConfig.agentSubscriptionBaseUrl}/agent-subscription/corporation-tax-utr/${encodePathSegment(utr.value)}/crn/${encodePathSegment(crn.value)}"
 
       http
         .GET[HttpResponse](url.toString)
@@ -110,10 +110,8 @@ class AgentSubscriptionConnector @Inject()(
 
   def matchVatKnownFacts(vrn: Vrn, vatRegistrationDate: LocalDate)(implicit hc: HeaderCarrier): Future[Boolean] =
     monitor(s"ConsumedAPI-Agent-Subscription-matchVatKnownFacts-GET") {
-      val url = new URL(
-        baseUrl,
-        s"/agent-subscription/vat-known-facts/vrn/${encodePathSegment(vrn.value)}/dateOfRegistration/${encodePathSegment(vatRegistrationDate.toString)}"
-      )
+      val url =
+        s"${appConfig.agentSubscriptionBaseUrl}/agent-subscription/vat-known-facts/vrn/${encodePathSegment(vrn.value)}/dateOfRegistration/${encodePathSegment(vatRegistrationDate.toString)}"
 
       http
         .GET[HttpResponse](url.toString)
@@ -139,7 +137,8 @@ class AgentSubscriptionConnector @Inject()(
 
   def getDesignatoryDetails(nino: Nino)(implicit hc: HeaderCarrier): Future[DesignatoryDetails] =
     monitor(s"ConsumedAPI-Agent-Subscription-getDesignatoryDetails-GET") {
-      val url = new URL(baseUrl, s"/agent-subscription/citizen-details/${nino.value}/designatory-details").toString
+      val url =
+        s"${appConfig.agentSubscriptionBaseUrl}/agent-subscription/citizen-details/${nino.value}/designatory-details"
       http
         .GET[DesignatoryDetails](url)
         .recover {
@@ -148,10 +147,8 @@ class AgentSubscriptionConnector @Inject()(
         }
     }
 
-  private val subscriptionUrl = new URL(baseUrl, s"/agent-subscription/subscription")
+  private val subscriptionUrl = s"${appConfig.agentSubscriptionBaseUrl}/agent-subscription/subscription"
 
   private def getRegistrationUrlFor(utr: Utr, postcode: String) =
-    new URL(
-      baseUrl,
-      s"/agent-subscription/registration/${encodePathSegment(utr.value)}/postcode/${encodePathSegment(postcode)}").toString
+    s"${appConfig.agentSubscriptionBaseUrl}/agent-subscription/registration/${encodePathSegment(utr.value)}/postcode/${encodePathSegment(postcode)}"
 }

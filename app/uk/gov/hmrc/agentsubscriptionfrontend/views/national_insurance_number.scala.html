@@ -15,28 +15,36 @@
  *@
 
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-@import uk.gov.hmrc.play.views.html.helpers.{form, input, errorSummary}
+@import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
 @import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 @import uk.gov.hmrc.domain.Nino
 
+@this(
+mainTemplate: main_template,
+errorPrefix: error_prefix,
+uiErrorSummary: uk.gov.hmrc.play.views.html.helpers.ErrorSummary,
+uiFormHelper: uk.gov.hmrc.play.views.html.helpers.FormWithCSRF,
+uiInput: uk.gov.hmrc.play.views.html.helpers.Input
+)
+
 @(ninoForm: Form[Nino])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title =  error_prefix(ninoForm) + Messages("nino.title"), bodyClasses = None) {
+@mainTemplate(appConfig, title =  errorPrefix(ninoForm) + Messages("nino.title"), bodyClasses = None) {
 
     <a href="@routes.PostcodeController.showPostcodeForm()" class="link-back">@Messages("button.back")</a>
 
     @if(ninoForm.hasErrors) {
-        @errorSummary(Messages("error.summary.heading"), ninoForm, Seq.empty, Some("nino"))
+        @uiErrorSummary(Messages("error.summary.heading"), ninoForm, Seq.empty, Some("nino"))
     }
 
     <h1 class="heading-xlarge margin-bottom-20">@Messages(s"nino.title")</h1>
     <p class="form-hint">@Messages("nino.hint")</p>
 
-    @form(action = routes.NationalInsuranceController.submitNationalInsuranceNumberForm(), 'class -> "form js-form") {
+    @uiFormHelper(action = routes.NationalInsuranceController.submitNationalInsuranceNumberForm(), 'class -> "form js-form") {
 
         <div class="form-group">
-            @input(
+            @uiInput(
             ninoForm("nino"),
             '_inputClass -> "form-control input--cleared"
             )

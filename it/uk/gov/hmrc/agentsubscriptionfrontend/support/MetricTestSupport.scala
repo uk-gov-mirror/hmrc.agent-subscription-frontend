@@ -4,11 +4,12 @@ import com.codahale.metrics.MetricRegistry
 import com.kenshoo.play.metrics.Metrics
 import org.scalatest.{Assertion, Matchers}
 import org.scalatestplus.play.OneAppPerSuite
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 
 import scala.collection.JavaConversions
 
 trait MetricTestSupport {
-  self: OneAppPerSuite with Matchers =>
+  self: GuiceOneAppPerSuite with Matchers =>
 
   private var metricsRegistry: MetricRegistry = _
 

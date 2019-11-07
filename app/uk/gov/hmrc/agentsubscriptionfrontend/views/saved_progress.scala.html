@@ -17,10 +17,13 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
 
+@this(
+mainTemplate: main_template
+)
 
 @(backLink: Option[String])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title =  Messages("saved-progress.title"), bodyClasses = None) {
+@mainTemplate(appConfig, title =  Messages("saved-progress.title"), bodyClasses = None) {
 
 
     <div class="transaction-banner--complete">

@@ -15,11 +15,18 @@
  *@
 
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-@import uk.gov.hmrc.play.views.html.helpers.{form, input, errorSummary, dateFieldsFreeInlineLegend}
+
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
 @import uk.gov.hmrc.agentsubscriptionfrontend.models.AmlsPendingForm
-@import uk.gov.hmrc.agentsubscriptionfrontend.views.html.helpers._
 @import uk.gov.hmrc.agentsubscriptionfrontend.views.html._
+
+@this(
+mainTemplate: main_template,
+    errorPrefix: error_prefix,
+        uiFormHelper: uk.gov.hmrc.play.views.html.helpers.FormWithCSRF,
+        uiErrorSummary: uk.gov.hmrc.play.views.html.helpers.ErrorSummary,
+        uiDateFieldsFreeInlineLegend: uk.gov.hmrc.play.views.html.helpers.DateFieldsFreeInlineLegend
+)
 
 @(amlsPendingForm: Form[AmlsPendingForm], mayBeGoBackUrl: Option[String] = None)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
@@ -48,23 +55,23 @@
     }
 
 
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title =  error_prefix(amlsPendingForm) + Messages("amls.pending.appliedOn.title"), bodyClasses = None) {
+@mainTemplate(appConfig, title =  errorPrefix(amlsPendingForm) + Messages("amls.pending.appliedOn.title"), bodyClasses = None) {
 
 <a href="@mayBeGoBackUrl.getOrElse(routes.AMLSController.showCheckAmlsAlreadyAppliedForm.url)" class="link-back">@Messages("button.back")</a>
 
     @if(amlsPendingForm.hasErrors) {
-        @errorSummary(Messages("error.summary.heading"), amlsPendingForm, Seq.empty, Some("amls-pending-details"))
+        @uiErrorSummary(Messages("error.summary.heading"), amlsPendingForm, Seq.empty, Some("amls-pending-details"))
     }
     <h1 class="heading-xlarge margin-bottom-30">@Messages("amls.pending.appliedOn.title")</h1>
 
-    @form(action = routes.AMLSController.submitAmlsApplicationDatePage(), 'class -> "form js-form", 'id -> "amlsPendingForm") {
+    @uiFormHelper(action = routes.AMLSController.submitAmlsApplicationDatePage(), 'class -> "form js-form", 'id -> "amlsPendingForm") {
 
         <fieldset>
 
             <input type="hidden" name="amlsCode" id="amlsCode" value="HMRC" >
 
             <div class="@DayFieldError @MonthFieldError @YearFieldError @DateFieldErrorsAll">
-                @dateFieldsFreeInlineLegend(
+                @uiDateFieldsFreeInlineLegend(
                 dateFormWithRefinedErrors,
                 "appliedOn",
                 '_inputHint -> Messages("moneyLaunderingCompliance.expiry.hint"),

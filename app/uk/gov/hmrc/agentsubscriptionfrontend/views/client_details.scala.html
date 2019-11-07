@@ -17,17 +17,24 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 @import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInvasiveTaxPayerOption
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
-@import uk.gov.hmrc.play.views.html.helpers.{form,errorSummary}
+@import uk.gov.hmrc.agentsubscriptionfrontend.views.html._
+
+@this(
+mainTemplate: main_template,
+uiErrorSummary: uk.gov.hmrc.play.views.html.helpers.ErrorSummary,
+        errorPrefix: error_prefix,
+        formHelper: uk.gov.hmrc.play.views.html.helpers.FormWithCSRF
+)
 
 @(radioResponseForm: Form[RadioInvasiveTaxPayerOption])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = error_prefix(radioResponseForm) + Messages("invasive.title.option"), bodyClasses = None) {
+@mainTemplate(appConfig, title = errorPrefix(radioResponseForm) + Messages("invasive.title.option"), bodyClasses = None) {
 
     @if(radioResponseForm.hasErrors) {
-        @errorSummary(Messages("error.summary.heading"),radioResponseForm, Seq.empty, Some("client-details"))
+    @uiErrorSummary(Messages("error.summary.heading"),radioResponseForm, Seq.empty, Some("client-details"))
     }
 
-    @form(action = routes.AssuranceChecksController.submitClientDetailsForm, 'class -> "form js-form") {
+    @formHelper(action = routes.AssuranceChecksController.submitClientDetailsForm, 'class -> "form js-form") {
         <div class="form-group @if(radioResponseForm.error("variant").isDefined){form-group-error}" id="radioResponse">
             <fieldset>
                 <legend>

@@ -2,6 +2,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.auth
 
 import com.kenshoo.play.metrics.Metrics
 import org.scalatestplus.mockito.MockitoSugar
+import play.api.{Configuration, Environment}
 import play.api.mvc.Results._
 import play.api.mvc.{AnyContentAsEmpty, Result}
 import play.api.test.FakeRequest
@@ -28,6 +29,9 @@ class AuthActionsSpec extends BaseISpec with MockitoSugar {
     implicit val hc: HeaderCarrier = HeaderCarrier()
     implicit val request: FakeRequest[AnyContentAsEmpty.type] = FakeRequest().withSession(SessionKeys.authToken -> "Bearer XYZ")
     import scala.concurrent.ExecutionContext.Implicits.global
+    val env = app.injector.instanceOf[Environment]
+    val config = app.injector.instanceOf[Configuration]
+
 
     override def authConnector: AuthConnector = app.injector.instanceOf[AuthConnector]
     override def appConfig: AppConfig = app.injector.instanceOf[AppConfig]

@@ -16,10 +16,15 @@
 
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
+@import uk.gov.hmrc.agentsubscriptionfrontend.views.html
+
+@this(
+mainTemplate: main_template
+)
 
 @()(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = Messages("postcodeNotAllowed.title"), bodyClasses = None) {
+@mainTemplate(appConfig, title = Messages("postcodeNotAllowed.title"), bodyClasses = None) {
 
     <h1 class="heading-xlarge">@Messages("postcodeNotAllowed.title")</h1>
 

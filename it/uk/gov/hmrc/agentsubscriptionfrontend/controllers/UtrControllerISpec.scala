@@ -1,6 +1,5 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
-import play.api.i18n.Messages
-import play.api.i18n.Messages.Implicits.applicationMessages
+import play.api.i18n.{Lang, Messages, MessagesApi}
 import play.api.mvc.{AnyContentAsEmpty, AnyContentAsFormUrlEncoded}
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{redirectLocation, _}
@@ -16,6 +15,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class UtrControllerISpec extends BaseISpec with SessionDataMissingSpec {
 
   lazy val controller: UtrController = app.injector.instanceOf[UtrController]
+
+  private lazy val messagesApi = app.injector.instanceOf[MessagesApi]
+  private implicit lazy val messages: Messages = messagesApi.preferred(Seq.empty[Lang])
 
   "showUtrFormPage" should {
 

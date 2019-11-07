@@ -1,19 +1,20 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.connectors
 
-import java.net.URL
-
+import com.kenshoo.play.metrics.Metrics
+import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.SsoStub
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, MetricTestSupport}
-import uk.gov.hmrc.http.{HeaderCarrier, HttpGet}
-import com.kenshoo.play.metrics.Metrics
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class SsoConnectorISpec extends BaseISpec with MetricTestSupport {
 
   private lazy val connector = new SsoConnector(
-    app.injector.instanceOf[HttpGet],
-    new URL(s"http://localhost:$wireMockPort"),
-    app.injector.instanceOf[Metrics])
+    app.injector.instanceOf[HttpClient],
+    app.injector.instanceOf[Metrics],
+    app.injector.instanceOf[AppConfig])
   private implicit val hc = HeaderCarrier()
 
   "SsoConnector" should {

@@ -1,13 +1,13 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.connectors
 
-import java.net.URL
-
 import com.kenshoo.play.metrics.Metrics
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, MetricTestSupport}
 import uk.gov.hmrc.domain.{Nino, SaAgentReference}
 import uk.gov.hmrc.http._
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -18,9 +18,10 @@ class AgentAssuranceConnectorISpec extends BaseISpec with MetricTestSupport {
 
   private lazy val connector =
     new AgentAssuranceConnector(
-      new URL(s"http://localhost:$wireMockPort"),
-      app.injector.instanceOf[HttpGet],
-      app.injector.instanceOf[Metrics])
+      app.injector.instanceOf[HttpClient],
+      app.injector.instanceOf[Metrics],
+      app.injector.instanceOf[AppConfig]
+      )
 
   "getRegistration PAYE" should {
     behave like testAcceptableNumberOfClientsEndpoint("IR-PAYE")(connector.hasAcceptableNumberOfPayeClients)

@@ -16,10 +16,9 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.auth
 
-import org.joda.time.LocalDate
+import play.api.{Configuration, Logger}
 import play.api.mvc.Results._
 import play.api.mvc.{Request, Result}
-import play.api.{Configuration, Environment, Logger}
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent.hasNonEmptyEnrolments
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
@@ -87,9 +86,7 @@ trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring
 
   def redirectUrlActions: RedirectUrlActions
   def appConfig: AppConfig
-
-  def env: Environment = appConfig.environment
-  def config: Configuration = appConfig.configuration
+  def config: Configuration
 
   def subscriptionJourneyService: SubscriptionJourneyService
 
@@ -177,7 +174,7 @@ trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring
       Redirect(routes.StartController.showNotAgent())
 
     case _: NoActiveSession =>
-      toGGLogin(if (appConfig.isDevMode) s"http://${request.host}${request.uri}" else s"${request.uri}")
+      toGGLogin(s"${appConfig.agentSubscriptionFrontendBaseUrl}${request.uri}")
 
     case _: InsufficientEnrolments =>
       Logger.warn(s"Logged in user does not have required enrolments")

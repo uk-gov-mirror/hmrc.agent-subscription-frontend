@@ -14,6 +14,17 @@
  * limitations under the License.
  *@
 
+@import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
+@import uk.gov.hmrc.agentsubscriptionfrontend.views.html._
+
+@this(
+govukWrapper: govuk_wrapper,
+uiSidebar: uk.gov.hmrc.play.views.html.layouts.Sidebar,
+        uiArticle: uk.gov.hmrc.play.views.html.layouts.Article
+)
+
+
+
 @(appConfig: uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig,
         title: String,
         sidebarLinks: Option[Html] = None,
@@ -24,15 +35,13 @@
         userIsLoggedIn: Boolean = true,
         hasTimeout: Boolean = true)(mainContent: Html)(implicit request: Request[_], messages: Messages)
 
-@import uk.gov.hmrc.play.views.html.layouts
-@import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
 
 @serviceInfoContent = {}
 
 @sidebar = {
 @sidebarLinks match {
     case Some(links) => {
-        @layouts.sidebar(links, Some("sidebar"))
+        @uiSidebar(links, Some("sidebar"))
     }
     case None => {}
 }
@@ -58,13 +67,13 @@
     }
 }
 
-@govuk_wrapper(appConfig = appConfig,
+@govukWrapper(appConfig = appConfig,
     title = title,
     mainClass = mainClass,
     bodyClasses = bodyClasses,
     sidebar = sidebar,
     contentHeader = contentHeader,
-    mainContent = layouts.article(mainContent),
+    mainContent = uiArticle(mainContent),
     serviceInfoContent = serviceInfoContent,
     scriptElem = Some(scriptElement),
     userIsLoggedIn = userIsLoggedIn

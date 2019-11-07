@@ -15,14 +15,25 @@
  *@
 
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-@import uk.gov.hmrc.play.views.html.helpers.{form, input, errorSummary}
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
 @import uk.gov.hmrc.agentsubscriptionfrontend.models.UpdateBusinessAddressForm
+@import uk.gov.hmrc.agentsubscriptionfrontend.views.html
+
+@this(
+mainTemplate: main_template,
+errorPrefix: error_prefix,
+uiErrorSummary: uk.gov.hmrc.play.views.html.helpers.ErrorSummary,
+uiFormHelper: uk.gov.hmrc.play.views.html.helpers.FormWithCSRF,
+uiInput: uk.gov.hmrc.play.views.html.helpers.Input
+)
+
 @(addressForm: Form[UpdateBusinessAddressForm])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title =  error_prefix(addressForm) + Messages("updateBusinessAddress.title"), bodyClasses = None) {
+
+
+@mainTemplate(appConfig, title =  errorPrefix(addressForm) + Messages("updateBusinessAddress.title"), bodyClasses = None) {
     @if(addressForm.hasErrors) {
-        @errorSummary(Messages("error.summary.heading"), addressForm, Seq.empty, Some("update-business-address"))
+        @uiErrorSummary(Messages("error.summary.heading"), addressForm, Seq.empty, Some("update-business-address"))
     }
     <h1 class="heading-xlarge">@Messages("updateBusinessAddress.title")</h1>
 
@@ -30,13 +41,13 @@
 
     <p class="panel panel-border-wide">@Messages("updateBusinessAddress.p2")</p>
 
-    @form(action = routes.BusinessIdentificationController.submitUpdateBusinessAddressForm(), 'class -> "form js-form") {
+    @uiFormHelper(action = routes.BusinessIdentificationController.submitUpdateBusinessAddressForm(), 'class -> "form js-form") {
 
         <fieldset>
 
           @for(index <- 1 to 4) {
             <div class="form-group">
-            @input(
+            @uiInput(
                 addressForm(s"addressLine$index"),
                 '_label -> Messages(s"updateBusinessAddress.address_line_$index.title"),
                 '_inputClass -> "form-control input--cleared",
@@ -46,7 +57,7 @@
           }
 
             <div class="form-group">
-            @input(
+            @uiInput(
                 addressForm("postcode"),
                 '_label -> Messages("updateBusinessAddress.postcode.title"),
                 '_inputClass -> "form-control input--cleared input--small",

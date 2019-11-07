@@ -16,20 +16,20 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.connectors
 
-import java.net.URL
-
 import com.codahale.metrics.MetricRegistry
 import com.kenshoo.play.metrics.Metrics
-import javax.inject.{Inject, Named, Singleton}
+import javax.inject.{Inject, Singleton}
 import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.domain.{SaAgentReference, TaxIdentifier}
 import uk.gov.hmrc.http._
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class AgentAssuranceConnector @Inject()(@Named("agent-assurance-baseUrl") baseUrl: URL, http: HttpGet, metrics: Metrics)(
+class AgentAssuranceConnector @Inject()(http: HttpClient, metrics: Metrics, appConfig: AppConfig)(
   implicit ec: ExecutionContext)
     extends HttpAPIMonitor {
 
@@ -38,7 +38,8 @@ class AgentAssuranceConnector @Inject()(@Named("agent-assurance-baseUrl") baseUr
   def hasAcceptableNumberOfClients(regime: String)(implicit hc: HeaderCarrier): Future[Boolean] =
     monitor(s"ConsumedAPI-AgentAssurance-hasAcceptableNumberOfClients-GET") {
       http
-        .GET[HttpResponse](new URL(baseUrl, s"/agent-assurance/acceptableNumberOfClients/service/$regime").toString)
+        .GET[HttpResponse](
+          s"${appConfig.agentAssuranceBaseUrl}/agent-assurance/acceptableNumberOfClients/service/$regime")
         .map { response =>
           response.status == 204
         } recover {
@@ -50,7 +51,7 @@ class AgentAssuranceConnector @Inject()(@Named("agent-assurance-baseUrl") baseUr
   def getActiveCesaRelationship(url: String)(implicit hc: HeaderCarrier): Future[Boolean] =
     monitor(s"ConsumedAPI-AgentAssurance-getActiveCesaRelationship-GET") {
       http
-        .GET[HttpResponse](baseUrl + url)
+        .GET[HttpResponse](s"${appConfig.agentAssuranceBaseUrl}$url")
         .map(_ => true)
         .recover {
           case e: Upstream4xxResponse if e.upstreamResponseCode == 403 => false
@@ -62,7 +63,7 @@ class AgentAssuranceConnector @Inject()(@Named("agent-assurance-baseUrl") baseUr
     monitor(s"ConsumedAPI-AgentAssurance-getR2DWAgents-GET") {
       val endpoint = s"/agent-assurance/refusal-to-deal-with/utr/${utr.value}"
       http
-        .GET[HttpResponse](new URL(baseUrl, endpoint).toString)
+        .GET[HttpResponse](s"${appConfig.agentAssuranceBaseUrl}$endpoint")
         .map { response =>
           response.status == 403
         }
@@ -70,7 +71,7 @@ class AgentAssuranceConnector @Inject()(@Named("agent-assurance-baseUrl") baseUr
           case e: Upstream4xxResponse if e.upstreamResponseCode == 403 => true
           case _: NotFoundException => {
             throw new IllegalStateException(
-              s"unable to reach $baseUrl/$endpoint. R2dw list might not have been configured")
+              s"unable to reach ${appConfig.agentAssuranceBaseUrl}$endpoint. R2dw list might not have been configured")
           }
         }
     }
@@ -79,7 +80,7 @@ class AgentAssuranceConnector @Inject()(@Named("agent-assurance-baseUrl") baseUr
     monitor(s"ConsumedAPI-AgentAssurance-getManuallyAssuredAgents-GET") {
       val endpoint = s"/agent-assurance/manually-assured/utr/${utr.value}"
       http
-        .GET[HttpResponse](new URL(baseUrl, endpoint).toString)
+        .GET[HttpResponse](s"${appConfig.agentAssuranceBaseUrl}$endpoint")
         .map { response =>
           (200 until 300) contains response.status
         }
@@ -87,7 +88,7 @@ class AgentAssuranceConnector @Inject()(@Named("agent-assurance-baseUrl") baseUr
           case e: Upstream4xxResponse if e.upstreamResponseCode == 403 => false
           case _: NotFoundException => {
             throw new IllegalStateException(
-              s"unable to reach $baseUrl/$endpoint. Manually assured agents list might not have been configured")
+              s"unable to reach ${appConfig.agentAssuranceBaseUrl}/$endpoint. Manually assured agents list might not have been configured")
           }
         }
     }

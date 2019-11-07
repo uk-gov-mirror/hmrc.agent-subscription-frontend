@@ -24,5 +24,5 @@ object TestMessagesApi {
   private val environment = Environment.simple()
   private val configuration = Configuration.load(environment)
 
-  val testMessagesApi: MessagesApi = new DefaultMessagesApi(environment, configuration, new DefaultLangs(configuration))
+  val testMessagesApi: MessagesApi = new DefaultMessagesApi()
 }

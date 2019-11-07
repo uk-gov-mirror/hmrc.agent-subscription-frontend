@@ -17,29 +17,32 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
+import play.api.{Configuration, Environment}
 import play.api.i18n.MessagesApi
-import play.api.mvc.{Action, AnyContent}
+import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationForms.utrForm
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
-import uk.gov.hmrc.agentsubscriptionfrontend.views.html
+import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{utr_details}
 import uk.gov.hmrc.auth.core.AuthConnector
+import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 import scala.concurrent.ExecutionContext
 
 @Singleton
 class UtrController @Inject()(
-  override val redirectUrlActions: RedirectUrlActions,
-  override val authConnector: AuthConnector,
+  val redirectUrlActions: RedirectUrlActions,
+  val authConnector: AuthConnector,
+  val metrics: Metrics,
   val sessionStoreService: SessionStoreService,
-  override val subscriptionJourneyService: SubscriptionJourneyService)(
-  implicit override val metrics: Metrics,
-  override val appConfig: AppConfig,
-  val ec: ExecutionContext,
-  override val messagesApi: MessagesApi)
-    extends AgentSubscriptionBaseController(authConnector, redirectUrlActions, appConfig, subscriptionJourneyService)
-    with SessionBehaviour {
+  val config: Configuration,
+  val env: Environment,
+  val subscriptionJourneyService: SubscriptionJourneyService,
+  mcc: MessagesControllerComponents,
+  utrDetailsTemplate: utr_details)(implicit val appConfig: AppConfig, val ec: ExecutionContext)
+    extends FrontendController(mcc) with SessionBehaviour with AuthActions {
 
   def showUtrForm(): Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { implicit agent =>
@@ -47,9 +50,9 @@ class UtrController @Inject()(
         case Some(agentSession) =>
           (agentSession.businessType, agentSession.utr) match {
             case (Some(businessType), Some(utr)) =>
-              Ok(html.utr_details(utrForm(businessType.key).fill(utr), businessType))
+              Ok(utrDetailsTemplate(utrForm(businessType.key).fill(utr), businessType))
             case (Some(businessType), None) =>
-              Ok(html.utr_details(utrForm(businessType.key), businessType))
+              Ok(utrDetailsTemplate(utrForm(businessType.key), businessType))
             case _ => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
           }
         case None => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
@@ -64,7 +67,7 @@ class UtrController @Inject()(
           .bindFromRequest()
           .fold(
             formWithErrors => {
-              Ok(html.utr_details(formWithErrors, businessType))
+              Ok(utrDetailsTemplate(formWithErrors, businessType))
             },
             validUtr =>
               updateSessionAndRedirect(existingSession.copy(utr = Some(validUtr)))(

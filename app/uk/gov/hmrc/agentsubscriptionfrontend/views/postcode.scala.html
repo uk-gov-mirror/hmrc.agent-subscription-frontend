@@ -20,23 +20,31 @@
 @import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 @import uk.gov.hmrc.agentsubscriptionfrontend.models.{Postcode, BusinessType}
 
+@this(
+mainTemplate: main_template,
+errorPrefix: error_prefix,
+uiErrorSummary: uk.gov.hmrc.play.views.html.helpers.ErrorSummary,
+uiFormHelper: uk.gov.hmrc.play.views.html.helpers.FormWithCSRF,
+uiInput: uk.gov.hmrc.play.views.html.helpers.Input
+)
+
 @(postcodeForm: Form[Postcode], businessType: BusinessType)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title =  error_prefix(postcodeForm) + Messages(s"postcode.${businessType.key}.title"), bodyClasses = None) {
+@mainTemplate(appConfig, title =  errorPrefix(postcodeForm) + Messages(s"postcode.${businessType.key}.title"), bodyClasses = None) {
 
     <a href="@routes.UtrController.showUtrForm()" class="link-back">@Messages("button.back")</a>
 
     @if(postcodeForm.hasErrors) {
-        @errorSummary(Messages("error.summary.heading"), postcodeForm, Seq.empty, Some("postcode"))
+        @uiErrorSummary(Messages("error.summary.heading"), postcodeForm, Seq.empty, Some("postcode"))
     }
 
     <h1 class="heading-xlarge margin-bottom-20">@Messages(s"postcode.${businessType.key}.title")</h1>
 
-    @form(
+    @uiFormHelper(
     action = routes.PostcodeController.submitPostcodeForm(), 'class -> "form js-form") {
 
     <div class="form-group">
-        @input(
+        @uiInput(
         postcodeForm("postcode"),
         '_inputClass -> "form-control input--cleared"
         )

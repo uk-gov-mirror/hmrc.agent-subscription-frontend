@@ -295,7 +295,7 @@ object CommonValidators {
 
       def isNumber(str: String): Boolean = str.map(_.isDigit).reduceOption(_ && _).getOrElse(false)
 
-      Constraints.nonEmpty(formattedField) match {
+      Constraints.nonEmpty.apply(formattedField) match {
         case _: Invalid => Invalid(ValidationError(blank))
         case _ if !isNumber(formattedField) || formattedField.length != UtrMaxLength =>
           Invalid(ValidationError(invalid))
@@ -308,7 +308,7 @@ object CommonValidators {
   private val ninoConstraint: Constraint[String] = Constraint[String] { fieldValue: String =>
     val formattedField = fieldValue.replaceAll("\\s", "").toUpperCase
 
-    Constraints.nonEmpty(formattedField) match {
+    Constraints.nonEmpty.apply(formattedField) match {
       case _: Invalid                         => Invalid(ValidationError("error.nino.empty"))
       case _ if !Nino.isValid(formattedField) => Invalid(ValidationError("error.nino.invalid"))
       case _                                  => Valid
@@ -316,7 +316,7 @@ object CommonValidators {
   }
 
   private def amlsCodeConstraint(bodies: Set[String]): Constraint[String] = Constraint[String] { fieldValue: String =>
-    Constraints.nonEmpty(fieldValue) match {
+    Constraints.nonEmpty.apply(fieldValue) match {
       case _: Invalid => Invalid(ValidationError("error.moneyLaunderingCompliance.amlscode.empty"))
       case _ if !validateAMLSBodies(fieldValue, bodies) =>
         Invalid(ValidationError("error.moneyLaunderingCompliance.amlscode.invalid"))

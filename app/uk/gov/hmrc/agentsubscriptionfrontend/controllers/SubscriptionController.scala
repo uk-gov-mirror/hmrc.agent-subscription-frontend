@@ -18,11 +18,10 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
-import play.api.Logger
-import play.api.i18n.MessagesApi
+import play.api.{Configuration, Environment, Logger}
 import play.api.mvc.{AnyContent, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent
+import uk.gov.hmrc.agentsubscriptionfrontend.auth.{Agent, AuthActions}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.config.view.CheckYourAnswers
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.{AddressLookupFrontendConnector, AgentAssuranceConnector}
@@ -30,29 +29,34 @@ import uk.gov.hmrc.agentsubscriptionfrontend.form.DesAddressForm
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService, SubscriptionReturnedHttpError, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
-import uk.gov.hmrc.agentsubscriptionfrontend.views.html
-import uk.gov.hmrc.agentsubscriptionfrontend.views.html.sign_in_new_id
+import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{sign_in_new_id, check_answers, address_form_with_errors, subscription_complete}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.{HeaderCarrier, HttpException}
+import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 
 @Singleton
 class SubscriptionController @Inject()(
-                                        override val authConnector: AuthConnector,
+                                        val authConnector: AuthConnector,
                                         subscriptionService: SubscriptionService,
                                         val sessionStoreService: SessionStoreService,
+                                        val metrics: Metrics,
+                                        val config: Configuration,
+                                        val env: Environment,
                                         addressLookUpConnector: AddressLookupFrontendConnector,
                                         agentAssuranceConnector: AgentAssuranceConnector,
-                                        redirectUrlActions: RedirectUrlActions,
-                                        override val subscriptionJourneyService: SubscriptionJourneyService)(
-  implicit messagesApi: MessagesApi,
-  override val appConfig: AppConfig,
-  override val metrics: Metrics,
-  override val ec: ExecutionContext)
-    extends AgentSubscriptionBaseController(authConnector, redirectUrlActions, appConfig, subscriptionJourneyService)
-    with SessionBehaviour {
+                                        val redirectUrlActions: RedirectUrlActions,
+                                        mcc: MessagesControllerComponents,
+                                        val subscriptionJourneyService: SubscriptionJourneyService,
+                                        checkAnswersTemplate: check_answers,
+                                        addressFormWithErrorsTemplate: address_form_with_errors,
+                                        subscriptionCompleteTemplate: subscription_complete,
+                                        signInNewIdTemplate: sign_in_new_id)(
+  implicit val appConfig: AppConfig, val ec: ExecutionContext)
+    extends FrontendController(mcc)
+    with SessionBehaviour  with AuthActions {
 
   private val JourneyName: String = appConfig.journeyName
   private val blacklistedPostCodes: Set[String] = appConfig.blacklistedPostcodes
@@ -71,7 +75,7 @@ class SubscriptionController @Inject()(
                   .cacheGoBackUrl(routes.SubscriptionController.showCheckAnswers().url)
                   .map { _ =>
                     Ok(
-                      html.check_answers(CheckYourAnswers(
+                      checkAnswersTemplate(CheckYourAnswers(
                         registrationName = registration.taxpayerName.getOrElse(""),
                         address = registration.address,
                         emailAddress = registration.emailAddress,
@@ -87,7 +91,7 @@ class SubscriptionController @Inject()(
 
               case (Some(registration), None) if isMAAgent =>
                 Ok(
-                  html.check_answers(CheckYourAnswers(
+                  checkAnswersTemplate(CheckYourAnswers(
                     registrationName = registration.taxpayerName.getOrElse(""),
                     address = registration.address,
                     emailAddress = registration.emailAddress,
@@ -177,7 +181,7 @@ class SubscriptionController @Inject()(
             desAddressForm
               .bindAddressLookupFrontendAddress(utr, address)
               .fold(
-                formWithErrors => Future successful Ok(html.address_form_with_errors(formWithErrors)),
+                formWithErrors => Future successful Ok(addressFormWithErrorsTemplate(formWithErrors)),
                 validDesAddress => {
                   mark("Count-Subscription-AddressLookup-Success")
                   val updatedSjr = sjr.copy(businessDetails = sjr.businessDetails.copy(
@@ -201,7 +205,7 @@ class SubscriptionController @Inject()(
         desAddressForm.form
           .bindFromRequest()
           .fold(
-            formWithErrors => Future successful Ok(html.address_form_with_errors(formWithErrors)),
+            formWithErrors => Future successful Ok(addressFormWithErrorsTemplate(formWithErrors)),
             validDesAddress => {
               val updatedReg = existingSession.registration match {
                 case Some(reg) => reg.copy(address = BusinessAddress(validDesAddress))
@@ -253,10 +257,10 @@ class SubscriptionController @Inject()(
     withSubscribedAgent { (arn, sjrOpt) =>
       sjrOpt match {
         case Some(sjr) => handleRegistrationAndGoToComplete(sjr.businessDetails.registration, (agencyName, agencyEmail, redirectUrl) =>
-            Ok(html.subscription_complete(redirectUrl, arn.value, agencyName, agencyEmail)))
+            Ok(subscriptionCompleteTemplate(redirectUrl, arn.value, agencyName, agencyEmail)))
         case None => sessionStoreService.fetchAgentSession.flatMap {
           case Some(agentSession) => handleRegistrationAndGoToComplete(agentSession.registration, (agencyName, agencyEmail, redirectUrl) =>
-            Ok(html.subscription_complete(redirectUrl, arn.value, agencyName, agencyEmail)))
+            Ok(subscriptionCompleteTemplate(redirectUrl, arn.value, agencyName, agencyEmail)))
 
           case None => throw new RuntimeException("no record found for agent")
         }
@@ -266,7 +270,7 @@ class SubscriptionController @Inject()(
 
   def showSignInWithNewID: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      Ok(sign_in_new_id())
+      Ok(signInNewIdTemplate())
     }
   }
 }

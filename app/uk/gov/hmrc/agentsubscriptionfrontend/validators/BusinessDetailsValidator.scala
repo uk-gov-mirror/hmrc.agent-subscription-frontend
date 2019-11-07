@@ -63,9 +63,11 @@ class BusinessDetailsValidator @Inject()(appConfig: AppConfig) {
       .getOrElse(Pass)
 
   private def validateEmail(email: Option[String]): ValidationResult =
-    email.map(Constraints.emailAddress(_)) match {
-      case Some(Valid) => Pass
-      case _           => Failure(InvalidEmail)
+    email.fold[ValidationResult](Failure(InvalidEmail)) { e =>
+      Constraints.emailAddress().apply(e) match {
+        case Valid => Pass
+        case _     => Failure(InvalidEmail)
+      }
     }
 
   private def validateBusinessName(businessName: Option[String]): ValidationResult =

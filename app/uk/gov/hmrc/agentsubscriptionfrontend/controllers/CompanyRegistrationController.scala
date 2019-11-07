@@ -18,38 +18,41 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
-import play.api.i18n.MessagesApi
-import play.api.mvc.{Action, AnyContent}
+import play.api.{Configuration, Environment}
+import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.CompanyRegistrationForms._
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
-import uk.gov.hmrc.agentsubscriptionfrontend.views.html
+import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{company_registration}
 import uk.gov.hmrc.auth.core.AuthConnector
+import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 import scala.concurrent.ExecutionContext
 
 @Singleton
 class CompanyRegistrationController @Inject()(
-  override val redirectUrlActions: RedirectUrlActions,
-  override val authConnector: AuthConnector,
+  val redirectUrlActions: RedirectUrlActions,
+  val authConnector: AuthConnector,
   val sessionStoreService: SessionStoreService,
   val subscriptionService: SubscriptionService,
-  override val subscriptionJourneyService: SubscriptionJourneyService)(
-  implicit override val metrics: Metrics,
-  override val appConfig: AppConfig,
-  val ec: ExecutionContext,
-  override val messagesApi: MessagesApi)
-    extends AgentSubscriptionBaseController(authConnector, redirectUrlActions, appConfig, subscriptionJourneyService)
-    with SessionBehaviour {
+  val config: Configuration,
+  val env: Environment,
+  val metrics: Metrics,
+  val subscriptionJourneyService: SubscriptionJourneyService,
+  mcc: MessagesControllerComponents,
+  companyRegistrationTemplate: company_registration
+)(implicit val appConfig: AppConfig, val ec: ExecutionContext)
+    extends FrontendController(mcc) with SessionBehaviour with AuthActions {
 
   def showCompanyRegNumberForm(): Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
       withValidSession { (_, existingSession) =>
         existingSession.companyRegistrationNumber match {
           case Some(crn) =>
-            Ok(html.company_registration(crnForm.fill(crn)))
-          case None => Ok(html.company_registration(crnForm))
+            Ok(companyRegistrationTemplate(crnForm.fill(crn)))
+          case None => Ok(companyRegistrationTemplate(crnForm))
         }
       }
     }
@@ -61,7 +64,7 @@ class CompanyRegistrationController @Inject()(
         crnForm
           .bindFromRequest()
           .fold(
-            formWithErrors => Ok(html.company_registration(formWithErrors)),
+            formWithErrors => Ok(companyRegistrationTemplate(formWithErrors)),
             validCrn =>
               existingSession.utr match {
                 case Some(utr) =>

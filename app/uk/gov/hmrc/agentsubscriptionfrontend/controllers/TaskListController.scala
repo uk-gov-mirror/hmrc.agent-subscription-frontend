@@ -17,40 +17,43 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.Inject
-import play.api.i18n.MessagesApi
-import play.api.mvc.{Action, AnyContent}
+import play.api.{Configuration, Environment}
+import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentAssuranceConnector
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService, TaskListService}
-import uk.gov.hmrc.agentsubscriptionfrontend.views.html
+import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{saved_progress, task_list}
 import uk.gov.hmrc.auth.core.AuthConnector
+import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 import scala.concurrent.{ExecutionContext, Future}
 
 class TaskListController @Inject()(
-  override val authConnector: AuthConnector,
+  val authConnector: AuthConnector,
+  val metrics: Metrics,
+  val env: Environment,
+  val config: Configuration,
   agentAssuranceConnector: AgentAssuranceConnector,
-  redirectUrlActions: RedirectUrlActions,
+  val redirectUrlActions: RedirectUrlActions,
   val sessionStoreService: SessionStoreService,
-  override val subscriptionJourneyService: SubscriptionJourneyService,
-  taskListService: TaskListService)(
-  implicit override implicit val appConfig: AppConfig,
-  metrics: Metrics,
-  override val messagesApi: MessagesApi,
-  val ec: ExecutionContext)
-    extends AgentSubscriptionBaseController(authConnector, redirectUrlActions, appConfig, subscriptionJourneyService)
-    with SessionBehaviour {
+  val subscriptionJourneyService: SubscriptionJourneyService,
+  taskListService: TaskListService,
+  mcc: MessagesControllerComponents,
+  savedProgressTemplate: saved_progress,
+  taskListTemplate: task_list)(implicit val appConfig: AppConfig, val ec: ExecutionContext)
+    extends FrontendController(mcc) with SessionBehaviour with AuthActions {
 
   def showTaskList: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { agent =>
       agent.subscriptionJourneyRecord match {
-        case Some(record) => taskListService.createTasks(record).map(tasks => (Ok(html.task_list(tasks))))
+        case Some(record) => taskListService.createTasks(record).map(tasks => (Ok(taskListTemplate(tasks))))
         case None         => Future.successful(Redirect(routes.BusinessTypeController.showBusinessTypeForm()))
       }
     }
   }
 
   def savedProgress(backLink: Option[String] = None): Action[AnyContent] = Action { implicit request =>
-    Ok(html.saved_progress(backLink))
+    Ok(savedProgressTemplate(backLink))
   }
 }

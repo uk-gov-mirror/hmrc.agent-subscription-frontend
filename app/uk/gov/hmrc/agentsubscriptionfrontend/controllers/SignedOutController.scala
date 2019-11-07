@@ -18,28 +18,29 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
-import play.api.i18n.MessagesApi
-import play.api.mvc.{Action, AnyContent, Result}
+import play.api.{Configuration, Environment}
+import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Result}
+import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.CallOps.addParamsToUrl
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.cache.client.NoSessionException
+import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class SignedOutController @Inject()(
   val sessionStoreService: SessionStoreService,
-  override val redirectUrlActions: RedirectUrlActions,
-  override val authConnector: AuthConnector,
-  override val subscriptionJourneyService: SubscriptionJourneyService)(
-  implicit messagesApi: MessagesApi,
-  override val appConfig: AppConfig,
-  override val metrics: Metrics,
-  override val ec: ExecutionContext)
-    extends AgentSubscriptionBaseController(authConnector, redirectUrlActions, appConfig, subscriptionJourneyService)
-    with SessionBehaviour {
+  val redirectUrlActions: RedirectUrlActions,
+  val metrics: Metrics,
+  val authConnector: AuthConnector,
+  val env: Environment,
+  val config: Configuration,
+  val subscriptionJourneyService: SubscriptionJourneyService,
+  mcc: MessagesControllerComponents)(implicit val appConfig: AppConfig, val ec: ExecutionContext)
+    extends FrontendController(mcc) with SessionBehaviour with AuthActions {
 
   def redirectUserToCreateCleanCreds: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { agent =>

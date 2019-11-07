@@ -20,37 +20,39 @@ import java.time.LocalDate
 
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
+import play.api.{Configuration, Environment}
 import play.api.data.Forms.{mapping, text, tuple}
 import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
 import play.api.data.{Form, FormError, Mapping}
-import play.api.i18n.MessagesApi
-import play.api.mvc.{Action, AnyContent}
+import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.DateOfBirthController._
 import uk.gov.hmrc.agentsubscriptionfrontend.models.DateOfBirth
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{AssuranceService, SessionStoreService, SubscriptionJourneyService, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.validators.CommonValidators.checkOneAtATime
-import uk.gov.hmrc.agentsubscriptionfrontend.views.html
+import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{date_of_birth}
 import uk.gov.hmrc.auth.core.AuthConnector
+import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success, Try}
 
 @Singleton
 class DateOfBirthController @Inject()(
-  override val redirectUrlActions: RedirectUrlActions,
-  override val authConnector: AuthConnector,
+  val redirectUrlActions: RedirectUrlActions,
+  val authConnector: AuthConnector,
   val assuranceService: AssuranceService,
+  val metrics: Metrics,
+  val env: Environment,
+  val config: Configuration,
   val sessionStoreService: SessionStoreService,
   val subscriptionService: SubscriptionService,
-  override val subscriptionJourneyService: SubscriptionJourneyService)(
-  implicit override val metrics: Metrics,
-  override val appConfig: AppConfig,
-  val ec: ExecutionContext,
-  override val messagesApi: MessagesApi)
-    extends AgentSubscriptionBaseController(authConnector, redirectUrlActions, appConfig, subscriptionJourneyService)
-    with SessionBehaviour {
+  val subscriptionJourneyService: SubscriptionJourneyService,
+  mcc: MessagesControllerComponents,
+  dateOfBirthTemplate: date_of_birth)(implicit val appConfig: AppConfig, val ec: ExecutionContext)
+    extends FrontendController(mcc) with SessionBehaviour with AuthActions {
 
   /**
     * In-case of SoleTrader or Partnerships, we should display NI and DOB pages based on if nino and dob exist or not.
@@ -70,8 +72,8 @@ class DateOfBirthController @Inject()(
           case (_, _, Some(_)) =>
             existingSession.dateOfBirth match {
               case Some(dob) =>
-                Ok(html.date_of_birth(dateOfBirthForm.fill(dob)))
-              case None => Ok(html.date_of_birth(dateOfBirthForm))
+                Ok(dateOfBirthTemplate(dateOfBirthForm.fill(dob)))
+              case None => Ok(dateOfBirthTemplate(dateOfBirthForm))
             }
         }
       }
@@ -83,7 +85,7 @@ class DateOfBirthController @Inject()(
       dateOfBirthForm
         .bindFromRequest()
         .fold(
-          formWithErrors => Ok(html.date_of_birth(formWithRefinedErrors(formWithErrors))),
+          formWithErrors => Ok(dateOfBirthTemplate(formWithRefinedErrors(formWithErrors))),
           validDob => {
             sessionStoreService.fetchAgentSession.flatMap {
               case Some(existingSession) =>

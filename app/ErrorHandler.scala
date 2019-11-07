@@ -38,6 +38,8 @@ class ErrorHandler @Inject()(
   val env: Environment,
   val messagesApi: MessagesApi,
   val auditConnector: AuditConnector,
+  errorTemplate: error_template,
+  errorTemplate5xx: error_template_5xx,
   @Named("appName") val appName: String)(implicit val config: Configuration, ec: ExecutionContext, appConfig: AppConfig)
     extends FrontendErrorHandler with AuthRedirects with ErrorAuditing {
 
@@ -69,9 +71,9 @@ class ErrorHandler @Inject()(
 
   override def standardErrorTemplate(pageTitle: String, heading: String, message: String)(
     implicit request: Request[_]): HtmlFormat.Appendable =
-    error_template(Messages(pageTitle), Messages(heading), Messages(message))
+    errorTemplate(Messages(pageTitle), Messages(heading), Messages(message))
 
-  override def internalServerErrorTemplate(implicit request: Request[_]): Html = error_template_5xx()
+  override def internalServerErrorTemplate(implicit request: Request[_]): Html = errorTemplate5xx()
 
   private implicit def rhToRequest(rh: RequestHeader): Request[_] = Request(rh, "")
 }

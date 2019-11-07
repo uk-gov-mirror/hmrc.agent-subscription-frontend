@@ -20,14 +20,15 @@ import java.time.LocalDate
 
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
+import play.api.{Configuration, Environment}
 import play.api.data.Forms.{mapping, of, optional, text, _}
 import play.api.data.format.Formats._
 import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
 import play.api.data.{Form, Mapping, _}
 import play.api.i18n.MessagesApi
-import play.api.mvc.{Action, AnyContent, Result}
+import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Result}
 import uk.gov.hmrc.agentmtdidentifiers.model.Vrn
-import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent
+import uk.gov.hmrc.agentsubscriptionfrontend.auth.{Agent, AuthActions}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.VatDetailsController.{formWithRefinedErrors, registeredForVatForm, vatDetailsForm}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.{Partnership, SoleTrader}
@@ -36,25 +37,27 @@ import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.validators.CommonValidators.{checkOneAtATime, radioInputSelected}
-import uk.gov.hmrc.agentsubscriptionfrontend.views.html
+import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{registered_for_vat, vat_details}
 import uk.gov.hmrc.auth.core.AuthConnector
+import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success, Try}
 
 @Singleton
 class VatDetailsController @Inject()(
-  override val redirectUrlActions: RedirectUrlActions,
-  override val authConnector: AuthConnector,
+  val redirectUrlActions: RedirectUrlActions,
+  val authConnector: AuthConnector,
+  val metrics: Metrics,
+  val config: Configuration,
+  val env: Environment,
   val sessionStoreService: SessionStoreService,
   val subscriptionService: SubscriptionService,
-  override val subscriptionJourneyService: SubscriptionJourneyService)(
-  implicit override val metrics: Metrics,
-  override val appConfig: AppConfig,
-  val ec: ExecutionContext,
-  override val messagesApi: MessagesApi)
-    extends AgentSubscriptionBaseController(authConnector, redirectUrlActions, appConfig, subscriptionJourneyService)
-    with SessionBehaviour {
+  val subscriptionJourneyService: SubscriptionJourneyService,
+  mcc: MessagesControllerComponents,
+  registeredForVatTemplate: registered_for_vat,
+  vatDetailsTemplate: vat_details)(implicit val appConfig: AppConfig, val ec: ExecutionContext)
+    extends FrontendController(mcc) with SessionBehaviour with AuthActions {
 
   def showRegisteredForVatForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { agent =>
@@ -64,9 +67,9 @@ class VatDetailsController @Inject()(
             (agentSession.businessType, agentSession.registeredForVat) match {
               case (Some(businessType), Some(registeredForVat)) =>
                 val rfv = RegisteredForVat(RadioInputAnswer.apply(registeredForVat.toString))
-                Ok(html.registered_for_vat(registeredForVatForm.fill(rfv), getBackLink(businessType)))
+                Ok(registeredForVatTemplate(registeredForVatForm.fill(rfv), getBackLink(businessType)))
               case (Some(businessType), None) =>
-                Ok(html.registered_for_vat(registeredForVatForm, getBackLink(businessType)))
+                Ok(registeredForVatTemplate(registeredForVatForm, getBackLink(businessType)))
 
               case _ => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
             }
@@ -102,7 +105,7 @@ class VatDetailsController @Inject()(
         registeredForVatForm
           .bindFromRequest()
           .fold(
-            formWithErrors => Ok(html.registered_for_vat(formWithErrors, getBackLink(businessType))),
+            formWithErrors => Ok(registeredForVatTemplate(formWithErrors, getBackLink(businessType))),
             choice => {
               val nextPage = if (choice.confirm == Yes) {
                 routes.VatDetailsController.showVatDetailsForm()
@@ -122,8 +125,8 @@ class VatDetailsController @Inject()(
       withValidSession { (_, existingSession) =>
         existingSession.vatDetails match {
           case Some(vatDetails) =>
-            Ok(html.vat_details(vatDetailsForm.fill(vatDetails)))
-          case None => Ok(html.vat_details(vatDetailsForm))
+            Ok(vatDetailsTemplate(vatDetailsForm.fill(vatDetails)))
+          case None => Ok(vatDetailsTemplate(vatDetailsForm))
         }
       }
     }
@@ -135,7 +138,7 @@ class VatDetailsController @Inject()(
         vatDetailsForm
           .bindFromRequest()
           .fold(
-            formWithErrors => Ok(html.vat_details(formWithRefinedErrors(formWithErrors))),
+            formWithErrors => Ok(vatDetailsTemplate(formWithRefinedErrors(formWithErrors))),
             validForm => {
               subscriptionService.matchVatKnownFacts(validForm.vrn, validForm.regDate).flatMap { foundMatch =>
                 if (foundMatch)

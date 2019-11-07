@@ -18,9 +18,9 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
-import play.api.i18n.MessagesApi
+import play.api.{Configuration, Environment}
 import play.api.mvc.{AnyContent, _}
-import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent
+import uk.gov.hmrc.agentsubscriptionfrontend.auth.{Agent, AuthActions}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.config.amls.AMLSLoader
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentAssuranceConnector
@@ -30,26 +30,31 @@ import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.AmlsData
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
-import uk.gov.hmrc.agentsubscriptionfrontend.views.html.amls._
+import uk.gov.hmrc.agentsubscriptionfrontend.views.html.amls.{amls_applied_for, amls_details, amls_not_applied, amls_pending_details, check_amls}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 import scala.collection.immutable.Map
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class AMLSController @Inject()(
-  override val authConnector: AuthConnector,
-  val agentAssuranceConnector: AgentAssuranceConnector,
-  override val redirectUrlActions: RedirectUrlActions,
+  val config: Configuration,
+  val metrics: Metrics,
+  val authConnector: AuthConnector,
+  val env: Environment,
+  val redirectUrlActions: RedirectUrlActions,
+  val subscriptionJourneyService: SubscriptionJourneyService,
   val sessionStoreService: SessionStoreService,
-  override val subscriptionJourneyService: SubscriptionJourneyService)(
-  implicit messagesApi: MessagesApi,
-  override val appConfig: AppConfig,
-  override val metrics: Metrics,
-  override val ec: ExecutionContext)
-    extends AgentSubscriptionBaseController(authConnector, redirectUrlActions, appConfig, subscriptionJourneyService)
-    with SessionBehaviour {
+  agentAssuranceConnector: AgentAssuranceConnector,
+  mcc: MessagesControllerComponents,
+  checkAmlsTemplate: check_amls,
+  amlsAppliedForTemplate: amls_applied_for,
+  amlsNotAppliedTemplate: amls_not_applied,
+  amlsDetailsTemplate: amls_details,
+  amlsPendingDetailsTemplate: amls_pending_details)(implicit val appConfig: AppConfig, val ec: ExecutionContext)
+    extends FrontendController(mcc) with SessionBehaviour with AuthActions {
 
   import AMLSForms._
 
@@ -69,10 +74,10 @@ class AMLSController @Inject()(
             record.amlsData match {
               case Some(amlsData) =>
                 Ok(
-                  check_amls(
+                  checkAmlsTemplate(
                     checkAmlsForm.bind(Map("registeredAmls" -> RadioInputAnswer(amlsData.amlsRegistered))),
                     isChange = isChange.getOrElse(false)))
-              case None => Ok(check_amls(checkAmlsForm, isChange.getOrElse(false)))
+              case None => Ok(checkAmlsTemplate(checkAmlsForm, isChange.getOrElse(false)))
             }
           }
         }
@@ -87,7 +92,7 @@ class AMLSController @Inject()(
           checkAmlsForm
             .bindFromRequest()
             .fold(
-              formWithErrors => Ok(html.amls.check_amls(formWithErrors, isChange.getOrElse(false))),
+              formWithErrors => Ok(checkAmlsTemplate(formWithErrors, isChange.getOrElse(false))),
               validForm => {
                 val continue: Call = validForm match {
                   case Yes =>
@@ -123,8 +128,8 @@ class AMLSController @Inject()(
         agent.getMandatoryAmlsData.map { data =>
           data.amlsAppliedFor match {
             case Some(appliedFor) =>
-              Ok(amls_applied_for(appliedForAmlsForm.bind(Map("amlsAppliedFor" -> RadioInputAnswer(appliedFor)))))
-            case None => Ok(amls_applied_for(appliedForAmlsForm))
+              Ok(amlsAppliedForTemplate(appliedForAmlsForm.bind(Map("amlsAppliedFor" -> RadioInputAnswer(appliedFor)))))
+            case None => Ok(amlsAppliedForTemplate(appliedForAmlsForm))
           }
         }
       }
@@ -135,7 +140,7 @@ class AMLSController @Inject()(
     withSubscribingAgent { agent =>
       withManuallyAssuredAgent(agent) {
         appliedForAmlsForm.bindFromRequest.fold(
-          formWithErrors => Ok(amls_applied_for(formWithErrors)),
+          formWithErrors => Ok(amlsAppliedForTemplate(formWithErrors)),
           validForm => {
             val continue = validForm match {
               case Yes => routes.AMLSController.showAmlsApplicationDatePage()
@@ -161,7 +166,7 @@ class AMLSController @Inject()(
           record.amlsDetails match {
             case Some(amlsDetails) =>
               amlsDetails.details match {
-                case Left(PendingDetails(_)) => Ok(html.amls.amls_details(amlsForm(amlsBodies.keySet), amlsBodies))
+                case Left(PendingDetails(_)) => Ok(amlsDetailsTemplate(amlsForm(amlsBodies.keySet), amlsBodies))
                 case Right(RegisteredDetails(membershipNumber, membershipExpiresOn)) =>
                   val form: Map[String, String] = Map(
                     "amlsCode"         -> amlsBodies.find(_._2 == amlsDetails.supervisoryBody).map(_._1).getOrElse(""),
@@ -170,9 +175,9 @@ class AMLSController @Inject()(
                     "expiry.month"     -> membershipExpiresOn.getMonthValue.toString,
                     "expiry.year"      -> membershipExpiresOn.getYear.toString
                   )
-                  Ok(html.amls.amls_details(amlsForm(amlsBodies.keySet).bind(form), amlsBodies))
+                  Ok(amlsDetailsTemplate(amlsForm(amlsBodies.keySet).bind(form), amlsBodies))
               }
-            case _ => Ok(html.amls.amls_details(amlsForm(amlsBodies.keySet), amlsBodies))
+            case _ => Ok(amlsDetailsTemplate(amlsForm(amlsBodies.keySet), amlsBodies))
           }
       }
     }
@@ -187,7 +192,7 @@ class AMLSController @Inject()(
             .fold(
               formWithErrors => {
                 val form = AMLSForms.formWithRefinedErrors(formWithErrors)
-                Ok(html.amls.amls_details(form, amlsBodies))
+                Ok(amlsDetailsTemplate(form, amlsBodies))
               },
               validForm => {
                 val supervisoryBodyData =
@@ -212,7 +217,7 @@ class AMLSController @Inject()(
 
   def showAmlsNotAppliedPage: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      Ok(html.amls.amls_not_applied())
+      Ok(amlsNotAppliedTemplate())
     }
   }
 
@@ -232,12 +237,10 @@ class AMLSController @Inject()(
                     "appliedOn.month" -> appliedOn.getMonthValue.toString,
                     "appliedOn.year"  -> appliedOn.getYear.toString
                   )
-                  Ok(
-                    html.amls
-                      .amls_pending_details(amlsPendingForm.bind(form)))
-                case Right(RegisteredDetails(_, _)) => Ok(html.amls.amls_pending_details(amlsPendingForm))
+                  Ok(amlsPendingDetailsTemplate(amlsPendingForm.bind(form)))
+                case Right(RegisteredDetails(_, _)) => Ok(amlsPendingDetailsTemplate(amlsPendingForm))
               }
-            case _ => Ok(html.amls.amls_pending_details(amlsPendingForm))
+            case _ => Ok(amlsPendingDetailsTemplate(amlsPendingForm))
           }
         }
       }
@@ -253,7 +256,7 @@ class AMLSController @Inject()(
             .fold(
               formWithErrors => {
                 val form = AMLSForms.amlsPendingDetailsFormWithRefinedErrors(formWithErrors)
-                Ok(html.amls.amls_pending_details(form))
+                Ok(amlsPendingDetailsTemplate(form))
               },
               validForm => {
                 val supervisoryBodyData =

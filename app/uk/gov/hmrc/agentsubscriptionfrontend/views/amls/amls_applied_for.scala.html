@@ -15,32 +15,36 @@
  *@
 
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-@import uk.gov.hmrc.play.views.html.helpers.{form, input_radio_group, errorSummary}
+
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
 @import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer
-@import uk.gov.hmrc.agentsubscriptionfrontend.views.html.error_prefix
-@import uk.gov.hmrc.play.views.html.helpers.{errorSummary, form, input_radio_group}
+@import uk.gov.hmrc.agentsubscriptionfrontend.views.html._
 
+@this(
+mainTemplate: main_template,
+    errorPrefix: error_prefix,
+uiErrorSummary: uk.gov.hmrc.play.views.html.helpers.ErrorSummary,
+        uiInputRadioGroup: uk.gov.hmrc.play.views.html.helpers.InputRadioGroup,
+        uiFormHelper: uk.gov.hmrc.play.views.html.helpers.FormWithCSRF)
 
 @(amlsAppliedForForm: Form[RadioInputAnswer], mayBeGoBackUrl: Option[String] = None)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
-
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = error_prefix(amlsAppliedForForm) + Messages("amlsAppliedFor.title"), bodyClasses = None) {
+@mainTemplate(appConfig, title = errorPrefix(amlsAppliedForForm) + Messages("amlsAppliedFor.title"), bodyClasses = None) {
 
  <a href="@routes.AMLSController.showAmlsRegisteredPage()" class="link-back">@Messages("button.back")</a>
 
 @if(amlsAppliedForForm.hasErrors) {
-@errorSummary(Messages("error.summary.heading"), amlsAppliedForForm, Seq.empty, Some("amls-applied"))
+@uiErrorSummary(Messages("error.summary.heading"), amlsAppliedForForm, Seq.empty, Some("amls-applied"))
 }
 
 <h1 class="heading-xlarge margin-bottom-20">@Messages(s"amlsAppliedFor.title")</h1>
 
 
-@form(
+@uiFormHelper(
 action = routes.AMLSController.submitCheckAmlsAlreadyAppliedForm, 'class -> "form js-form") {
 
 <div class="form-group margin-top-30">
-    @input_radio_group(
+    @uiInputRadioGroup(
     amlsAppliedForForm("amlsAppliedFor"),
     Seq(
     "yes" -> Messages("button.yes"),

@@ -19,25 +19,33 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
 @import uk.gov.hmrc.agentsubscriptionfrontend.models.RegisteredForVat
 
+@this(
+mainTemplate: main_template,
+errorPrefix: error_prefix,
+uiErrorSummary: uk.gov.hmrc.play.views.html.helpers.ErrorSummary,
+uiFormHelper: uk.gov.hmrc.play.views.html.helpers.FormWithCSRF,
+uiInputRadioGroup: uk.gov.hmrc.play.views.html.helpers.InputRadioGroup
+)
+
 @(rfvForm: Form[RegisteredForVat], backLink: String)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title =  error_prefix(rfvForm) + Messages("registered-for-vat.title"), bodyClasses = None) {
+@mainTemplate(appConfig, title =  errorPrefix(rfvForm) + Messages("registered-for-vat.title"), bodyClasses = None) {
 
     <a href="@backLink" class="link-back">@Messages("button.back")</a>
 
     @if(rfvForm.hasErrors) {
-        @errorSummary(Messages("error.summary.heading"), rfvForm, Seq.empty, Some("registered-for-vat"))
+        @uiErrorSummary(Messages("error.summary.heading"), rfvForm, Seq.empty, Some("registered-for-vat"))
     }
 
     <h1 class="heading-xlarge margin-bottom-20">@Messages(s"registered-for-vat.title")</h1>
 
 
-    @form(
+    @uiFormHelper(
         action = routes.VatDetailsController.submitRegisteredForVatForm(),
         'class -> "form js-form") {
 
         <div class="form-group margin-top-30">
-            @input_radio_group(
+            @uiInputRadioGroup(
                 rfvForm("registeredForVat"),
                 Seq(
                 "yes" -> Messages("registered-for-vat.option.yes"),

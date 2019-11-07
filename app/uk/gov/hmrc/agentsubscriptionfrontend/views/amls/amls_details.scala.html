@@ -15,11 +15,21 @@
  *@
 
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-@import uk.gov.hmrc.play.views.html.helpers.{form, input, errorSummary, dateFieldsFreeInlineLegend}
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
 @import uk.gov.hmrc.agentsubscriptionfrontend.models.AMLSForm
 @import uk.gov.hmrc.agentsubscriptionfrontend.views.html.helpers._
 @import uk.gov.hmrc.agentsubscriptionfrontend.views.html._
+
+
+@this(
+mainTemplate: main_template,
+uiErrorSummary: uk.gov.hmrc.play.views.html.helpers.ErrorSummary,
+formHelper: uk.gov.hmrc.play.views.html.helpers.FormWithCSRF,
+inputTemplate: uk.gov.hmrc.play.views.html.helpers.Input,
+dateFieldsFreeInlineLegendTemplate: uk.gov.hmrc.play.views.html.helpers.DateFieldsFreeInlineLegend,
+errorPrefixTemplate: error_prefix,
+    amlsDropdownTemplate: amls_dropdown
+)
 
 @(amlsForm: Form[AMLSForm], amlsBodies: Map[String, String], mayBeGoBackUrl: Option[String] = None)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
@@ -48,24 +58,24 @@
     }
 
 
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title =  error_prefix(amlsForm) + Messages("moneyLaunderingCompliance.title"), bodyClasses = None) {
+@mainTemplate(appConfig, title =  errorPrefixTemplate(amlsForm) + Messages("moneyLaunderingCompliance.title"), bodyClasses = None) {
 
 
 <a href="@mayBeGoBackUrl.getOrElse(routes.AMLSController.showAmlsRegisteredPage.url)" class="link-back">@Messages("button.back")</a>
 
     @if(amlsForm.hasErrors) {
-        @errorSummary(Messages("error.summary.heading"), amlsForm, Seq.empty, Some("money-laundering-compliance"))
+        @uiErrorSummary(Messages("error.summary.heading"), amlsForm, Seq.empty, Some("money-laundering-compliance"))
     }
     <h1 class="heading-xlarge margin-bottom-20">@Messages("moneyLaunderingCompliance.title")</h1>
 
     <p class="panel panel-border-wide">@Messages("moneyLaunderingCompliance.p1")</p>
 
-    @form(action = routes.AMLSController.submitAmlsDetailsForm(), 'class -> "form js-form", 'id -> "dropForm") {
+    @formHelper(action = routes.AMLSController.submitAmlsDetailsForm(), 'class -> "form js-form", 'id -> "dropForm") {
 
         <fieldset>
 
             <div class="form-group">
-                @amls_dropdown(
+                @amlsDropdownTemplate(
                 amlsForm("amlsCode"),
                 amlsBodies.toSeq,
                 true,
@@ -78,7 +88,7 @@
             </div>
 
             <div class="form-group">
-                @input(
+                @inputTemplate(
                 amlsForm("membershipNumber"),
                 '_label -> Messages("moneyLaunderingCompliance.membershipNumber.title"),
                 '_inputClass -> "form-control input--cleared",
@@ -88,7 +98,7 @@
             </div>
 
             <div class="@DayFieldError @MonthFieldError @YearFieldError @DateFieldErrorsAll">
-                @dateFieldsFreeInlineLegend(
+                @dateFieldsFreeInlineLegendTemplate(
                 dateFormWithRefinedErrors,
                 "expiry",
                 '_legend -> Messages("moneyLaunderingCompliance.expiry.title"),

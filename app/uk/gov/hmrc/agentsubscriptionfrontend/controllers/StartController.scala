@@ -18,31 +18,35 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
-import play.api.i18n.MessagesApi
-import play.api.mvc.Results.Redirect
-import play.api.mvc.{Action, AnyContent}
+import play.api.{Configuration, Environment}
+import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.models.ContinueId
-import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscribedButNotEnrolled, SubscriptionJourneyService, SubscriptionProcess, SubscriptionService}
+import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
-import uk.gov.hmrc.agentsubscriptionfrontend.views.html
+import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{accessibility_statement, cannot_create_account, not_agent, start}
 import uk.gov.hmrc.auth.core.AuthConnector
+import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class StartController @Inject()(
-  override val authConnector: AuthConnector,
-  redirectUrlActions: RedirectUrlActions,
+  val authConnector: AuthConnector,
+  val redirectUrlActions: RedirectUrlActions,
+  val metrics: Metrics,
   val sessionStoreService: SessionStoreService,
+  val config: Configuration,
+  val env: Environment,
   subscriptionService: SubscriptionService,
-  subscriptionJourneyService: SubscriptionJourneyService)(
-  implicit override implicit val appConfig: AppConfig,
-  metrics: Metrics,
-  override val messagesApi: MessagesApi,
-  val ec: ExecutionContext)
-    extends AgentSubscriptionBaseController(authConnector, redirectUrlActions, appConfig, subscriptionJourneyService)
-    with SessionBehaviour {
+  val subscriptionJourneyService: SubscriptionJourneyService,
+  mcc: MessagesControllerComponents,
+  startTemplate: start,
+  notAgentTemplate: not_agent,
+  cannotCreateAccountTemplate: cannot_create_account,
+  accessibilityStatementTemplate: accessibility_statement)(implicit val appConfig: AppConfig, val ec: ExecutionContext)
+    extends FrontendController(mcc) with SessionBehaviour with AuthActions {
 
   import uk.gov.hmrc.agentsubscriptionfrontend.support.CallOps._
 
@@ -57,13 +61,13 @@ class StartController @Inject()(
       val nextUrl: String = routes.BusinessTypeController
         .showBusinessTypeForm()
         .toURLWithParams("continue" -> urlOpt)
-      Ok(html.start(nextUrl))
+      Ok(startTemplate(nextUrl))
     }
   }
 
   def showNotAgent: Action[AnyContent] = Action.async { implicit request =>
     withAuthenticatedUser {
-      Ok(html.not_agent())
+      Ok(notAgentTemplate())
     }
   }
 
@@ -95,10 +99,10 @@ class StartController @Inject()(
   }
 
   def showCannotCreateAccount: Action[AnyContent] = Action { implicit request =>
-    Ok(html.cannot_create_account())
+    Ok(cannotCreateAccountTemplate())
   }
 
   def showAccessibilityStatement: Action[AnyContent] = Action { implicit request =>
-    Ok(html.accessibility_statement())
+    Ok(accessibilityStatementTemplate())
   }
 }

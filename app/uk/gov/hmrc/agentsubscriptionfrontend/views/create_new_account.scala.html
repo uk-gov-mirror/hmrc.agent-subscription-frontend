@@ -18,9 +18,11 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes.SignedOutController
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
 
+@this(mainTemplate: main_template)
+
 @()(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = Messages("createNewAccount.title"), bodyClasses = None) {
+@mainTemplate(appConfig, title = Messages("createNewAccount.title"), bodyClasses = None) {
 
     <h1 class="heading-xlarge">@Messages("createNewAccount.title")</h1>
 

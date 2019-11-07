@@ -18,12 +18,12 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
-import play.api.Logger
+import play.api.{Configuration, Environment, Logger}
 import play.api.i18n.MessagesApi
-import play.api.mvc.{Action, AnyContent, Request, Result}
+import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Request, Result}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.audit.AuditService
-import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent
+import uk.gov.hmrc.agentsubscriptionfrontend.auth.{Agent, AuthActions}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationForms.postcodeForm
 import uk.gov.hmrc.agentsubscriptionfrontend.models.AssuranceResults._
@@ -31,35 +31,36 @@ import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.{Partnership, S
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.service._
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
-import uk.gov.hmrc.agentsubscriptionfrontend.views.html
+import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{postcode}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class PostcodeController @Inject()(
-  override val redirectUrlActions: RedirectUrlActions,
-  override val authConnector: AuthConnector,
+  val redirectUrlActions: RedirectUrlActions,
+  val authConnector: AuthConnector,
   val sessionStoreService: SessionStoreService,
+  val env: Environment,
+  val config: Configuration,
   subscriptionService: SubscriptionService,
+  val metrics: Metrics,
   assuranceService: AssuranceService,
   auditService: AuditService,
-  override val subscriptionJourneyService: SubscriptionJourneyService)(
-  implicit override val metrics: Metrics,
-  override val appConfig: AppConfig,
-  val ec: ExecutionContext,
-  override val messagesApi: MessagesApi)
-    extends AgentSubscriptionBaseController(authConnector, redirectUrlActions, appConfig, subscriptionJourneyService)
-    with SessionBehaviour {
+  val subscriptionJourneyService: SubscriptionJourneyService,
+  mcc: MessagesControllerComponents,
+  postcodeTemplate: postcode)(implicit val appConfig: AppConfig, val ec: ExecutionContext)
+    extends FrontendController(mcc) with SessionBehaviour with AuthActions {
 
   def showPostcodeForm(): Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { implicit agent =>
       withValidSession { (businessType, existingSession) =>
         existingSession.postcode match {
           case Some(postcode) =>
-            Ok(html.postcode(postcodeForm.fill(postcode), businessType))
-          case None => Ok(html.postcode(postcodeForm, businessType))
+            Ok(postcodeTemplate(postcodeForm.fill(postcode), businessType))
+          case None => Ok(postcodeTemplate(postcodeForm, businessType))
         }
       }
     }
@@ -71,7 +72,7 @@ class PostcodeController @Inject()(
         postcodeForm
           .bindFromRequest()
           .fold(
-            formWithErrors => Ok(html.postcode(formWithErrors, businessType)),
+            formWithErrors => Ok(postcodeTemplate(formWithErrors, businessType)),
             validPostcode => {
               existingSession.utr match {
                 case Some(utr) => checkSubscriptionStatusAndUpdateSession(utr, validPostcode, existingSession)

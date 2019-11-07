@@ -1,21 +1,21 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.connectors
 
-import java.net.URL
 import java.time.LocalDate
 
-import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr, Vrn}
-import uk.gov.hmrc.agentsubscriptionfrontend.models._
-import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub
-import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionJourneyStub
-import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, MetricTestSupport, TestData}
-import uk.gov.hmrc.http._
 import com.kenshoo.play.metrics.Metrics
 import org.scalatest.Assertion
+import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr, Vrn}
+import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.SoleTrader
 import uk.gov.hmrc.agentsubscriptionfrontend.models.DesignatoryDetails.Person
+import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.{AmlsData, BusinessDetails, SubscriptionJourneyRecord}
+import uk.gov.hmrc.agentsubscriptionfrontend.stubs.{AgentSubscriptionJourneyStub, AgentSubscriptionStub}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData.{validPostcode, validUtr}
+import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, MetricTestSupport, TestData}
 import uk.gov.hmrc.domain.Nino
+import uk.gov.hmrc.http._
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 import scala.concurrent.ExecutionContext.Implicits.global
 class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {
@@ -24,9 +24,9 @@ class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {
 
   private lazy val connector: AgentSubscriptionConnector =
     new AgentSubscriptionConnector(
-      new URL(s"http://localhost:$wireMockPort"),
-      app.injector.instanceOf[HttpGet with HttpPost with HttpPut with HttpDelete],
-      app.injector.instanceOf[Metrics])
+      app.injector.instanceOf[HttpClient],
+      app.injector.instanceOf[Metrics],
+      app.injector.instanceOf[AppConfig])
 
   private val utr = Utr("0123456789")
   private val crn = CompanyRegistrationNumber("SC123456")

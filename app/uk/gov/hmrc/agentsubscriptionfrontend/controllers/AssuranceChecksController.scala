@@ -16,43 +16,45 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 import com.kenshoo.play.metrics.Metrics
-import javax.inject.Inject
-import play.api.i18n.MessagesApi
-import play.api.mvc.{Action, AnyContent, Request, Result}
+import javax.inject.{Inject, Singleton}
+import play.api.{Configuration, Environment}
+import play.api.mvc._
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
-import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent
+import uk.gov.hmrc.agentsubscriptionfrontend.auth.{Agent, AuthActions}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationForms.{clientDetailsForm, invasiveCheckStartSaAgentCodeForm}
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{BusinessType, RadioInvasiveTaxPayerOption, TaxPayerNino, TaxPayerUtr, ValidVariantsTaxPayerOptionForm}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.{LimitedCompany, Llp, Partnership, SoleTrader}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{BusinessType, TaxPayerNino, TaxPayerUtr, ValidVariantsTaxPayerOptionForm}
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{AssuranceService, SessionStoreService, SubscriptionJourneyService}
-import uk.gov.hmrc.agentsubscriptionfrontend.support.TaxIdentifierFormatters
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html
-import uk.gov.hmrc.agentsubscriptionfrontend.views.html.invasive_check_start
+import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{client_details, invasive_check_start}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 import scala.concurrent.{ExecutionContext, Future}
 
+@Singleton
 class AssuranceChecksController @Inject()(
-  assuranceService: AssuranceService,
-  override val authConnector: AuthConnector,
+  val config: Configuration,
+  val metrics: Metrics,
+  val authConnector: AuthConnector,
+  val env: Environment,
+  val redirectUrlActions: RedirectUrlActions,
+  val subscriptionJourneyService: SubscriptionJourneyService,
   val sessionStoreService: SessionStoreService,
-  override val redirectUrlActions: RedirectUrlActions,
-  override val subscriptionJourneyService: SubscriptionJourneyService)(
-  implicit messagesApi: MessagesApi,
-  override val appConfig: AppConfig,
-  override val metrics: Metrics,
-  override val ec: ExecutionContext)
-    extends AgentSubscriptionBaseController(authConnector, redirectUrlActions, appConfig, subscriptionJourneyService)
-    with SessionBehaviour {
+  assuranceService: AssuranceService,
+  invasiveCheckStartTemplate: invasive_check_start,
+  clientDetailsTemplate: client_details,
+  mcc: MessagesControllerComponents)(implicit val appConfig: AppConfig, val ec: ExecutionContext)
+    extends FrontendController(mcc) with SessionBehaviour with AuthActions {
 
   def invasiveCheckStart: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
       withValidSession { (_, _) =>
-        Ok(invasive_check_start(invasiveCheckStartSaAgentCodeForm))
+        Ok(invasiveCheckStartTemplate(invasiveCheckStartSaAgentCodeForm))
       }
     }
   }
@@ -64,7 +66,7 @@ class AssuranceChecksController @Inject()(
           .bindFromRequest()
           .fold(
             formWithErrors => {
-              Ok(invasive_check_start(formWithErrors))
+              Ok(invasiveCheckStartTemplate(formWithErrors))
             },
             correctForm => {
               if (correctForm.hasSaAgentCode) {
@@ -83,7 +85,7 @@ class AssuranceChecksController @Inject()(
   def showClientDetailsForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
       withValidSession { (_, _) =>
-        Ok(html.client_details(clientDetailsForm))
+        Ok(clientDetailsTemplate(clientDetailsForm))
       }
     }
   }
@@ -94,7 +96,7 @@ class AssuranceChecksController @Inject()(
         clientDetailsForm
           .bindFromRequest()
           .fold(
-            formWithErrors => Ok(html.client_details(formWithErrors)),
+            formWithErrors => Ok(clientDetailsTemplate(formWithErrors)),
             correctForm => {
               ValidVariantsTaxPayerOptionForm.findByValue(correctForm.variant) match {
                 case TaxPayerUtr  => checkAndRedirect(Utr(correctForm.utr), "utr", businessType)

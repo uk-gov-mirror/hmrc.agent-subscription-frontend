@@ -15,24 +15,33 @@
  *@
 
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-@import uk.gov.hmrc.play.views.html.helpers._
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
-@import uk.gov.hmrc.agentsubscriptionfrontend.models._
-@import uk.gov.hmrc.agentsubscriptionfrontend.views.html.error_prefix
+
+@import uk.gov.hmrc.agentsubscriptionfrontend.views.html._
+@import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer
+
+@this(
+        mainTemplate: main_template,
+    errorPrefix: error_prefix,
+        uiErrorSummary: uk.gov.hmrc.play.views.html.helpers.ErrorSummary,
+        uiFormHelper: uk.gov.hmrc.play.views.html.helpers.FormWithCSRF,
+        uiInputRadioGroup: uk.gov.hmrc.play.views.html.helpers.InputRadioGroup
+)
+
 
 @(checkAmlsForm: Form[RadioInputAnswer], isChange: Boolean)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 @backLink = @{if(isChange) routes.SubscriptionController.showCheckAnswers() else routes.TaskListController.showTaskList()}
 
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title =  error_prefix(checkAmlsForm) + Messages("check-amls.title"), bodyClasses = None) {
+@mainTemplate(appConfig, title =  errorPrefix(checkAmlsForm) + Messages("check-amls.title"), bodyClasses = None) {
 
 <a href="@backLink" class="link-back">@Messages("button.back")</a>
 
 @if(checkAmlsForm.hasErrors) {
-@errorSummary(Messages("error.summary.heading"), checkAmlsForm, Seq.empty, Some("check-amls"))
+@uiErrorSummary(Messages("error.summary.heading"), checkAmlsForm, Seq.empty, Some("check-amls"))
 }
 
-@form(
+@uiFormHelper(
 action = routes.AMLSController.submitAmlsRegistered(), 'class -> "form js-form") {
 
     <fieldset>
@@ -40,7 +49,7 @@ action = routes.AMLSController.submitAmlsRegistered(), 'class -> "form js-form")
             <h1 class="heading-xlarge margin-bottom-20">@Messages(s"check-amls.title")</h1>
         </legend>
         <div class="form-group margin-top-30">
-            @input_radio_group(
+            @uiInputRadioGroup(
             checkAmlsForm("registeredAmls"),
             Seq(
             "yes" -> Messages("button.yes"),

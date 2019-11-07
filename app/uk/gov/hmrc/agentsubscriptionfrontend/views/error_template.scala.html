@@ -14,7 +14,13 @@
  * limitations under the License.
  *@
 
-@(pageTitle: String, heading: String, message: String)(implicit request: Request[_], messages: Messages, appConfig: uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig)
+@import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
+@import uk.gov.hmrc.agentsubscriptionfrontend.views.html._
+
+
+@this(govUkWrapper: govuk_wrapper)
+
+@(pageTitle: String, heading: String, message: String)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 @contentHeader = {
     <div class="error__content">
@@ -28,4 +34,4 @@
     </div>
 }
 
-@govuk_wrapper(appConfig = appConfig, title = pageTitle, contentHeader = Some(contentHeader), mainContent = mainContent, userIsLoggedIn = false)
+@govUkWrapper(appConfig = appConfig, title = pageTitle, contentHeader = Some(contentHeader), mainContent = mainContent, userIsLoggedIn = false)

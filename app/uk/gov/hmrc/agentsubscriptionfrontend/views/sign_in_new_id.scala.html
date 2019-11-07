@@ -16,9 +16,13 @@
 
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
+
+@this(
+mainTemplate: main_template
+)
 @()(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = Messages("sign-in-new-id.header"), bodyClasses = None) {
+@mainTemplate(appConfig, title = Messages("sign-in-new-id.header"), bodyClasses = None) {
 
     <h1 class="heading-xlarge">@Messages("sign-in-new-id.header")</h1>
             <p>@Messages("sign-in-new-id.p1")</p>

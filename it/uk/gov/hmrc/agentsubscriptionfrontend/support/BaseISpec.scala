@@ -6,7 +6,7 @@ import com.kenshoo.play.metrics.Metrics
 import org.jsoup.Jsoup
 import org.scalatest.Assertion
 import org.scalatest.matchers.{MatchResult, Matcher}
-import org.scalatestplus.play.OneAppPerSuite
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.i18n.{Lang, Messages, MessagesApi}
 import play.api.inject.guice.GuiceApplicationBuilder
@@ -22,7 +22,7 @@ import uk.gov.hmrc.play.HeaderCarrierConverter
 import uk.gov.hmrc.play.test.UnitSpec
 
 abstract class BaseISpec
-    extends UnitSpec with OneAppPerSuite with WireMockSupport with EndpointBehaviours with DataStreamStubs
+    extends UnitSpec with GuiceOneAppPerSuite with WireMockSupport with EndpointBehaviours with DataStreamStubs
      with MetricTestSupport {
 
   override implicit lazy val app: Application = appBuilder.build()
@@ -32,6 +32,8 @@ abstract class BaseISpec
       .configure(
         "microservice.services.auth.port"                    -> wireMockPort,
         "microservice.services.agent-subscription.port"      -> wireMockPort,
+        "microservice.services.agent-subscription-frontend.external-url" -> "",
+        "companyAuthSignInUrl"                                -> "/gg/sign-in",
         "microservice.services.address-lookup-frontend.port" -> wireMockPort,
         "microservice.services.sso.port"                     -> wireMockPort,
         "microservice.services.agent-assurance.port"         -> wireMockPort,

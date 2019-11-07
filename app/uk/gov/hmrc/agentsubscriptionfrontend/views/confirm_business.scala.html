@@ -17,17 +17,24 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
 @import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessAddress
-@import uk.gov.hmrc.play.views.html.helpers._
 @import uk.gov.hmrc.agentsubscriptionfrontend.models.ConfirmBusiness
+@import uk.gov.hmrc.agentsubscriptionfrontend.views.html._
 
+@this(
+mainTemplate: main_template,
+    errorPrefix: error_prefix,
+        uiErrorSummary: uk.gov.hmrc.play.views.html.helpers.ErrorSummary,
+        uiFormHelper: uk.gov.hmrc.play.views.html.helpers.FormWithCSRF,
+        uiInputRadioGroup: uk.gov.hmrc.play.views.html.helpers.InputRadioGroup
+)
 @(confirmBusinessRadioForm: Form[ConfirmBusiness], registrationName: String, utr: String, businessAddress: BusinessAddress, backLink: Call)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = error_prefix(confirmBusinessRadioForm) + Messages("confirmBusiness.title"), bodyClasses = None) {
+@mainTemplate(appConfig, title = errorPrefix(confirmBusinessRadioForm) + Messages("confirmBusiness.title"), bodyClasses = None) {
 
     <a href="@backLink" class="link-back">@Messages("button.back")</a>
 
     @if(confirmBusinessRadioForm.hasErrors) {
-        @errorSummary(Messages("error.summary.heading"), confirmBusinessRadioForm, Seq.empty, Some("confirm-business"))
+        @uiErrorSummary(Messages("error.summary.heading"), confirmBusinessRadioForm, Seq.empty, Some("confirm-business"))
     }
 
     <h1 class="heading-xlarge margin-bottom-20">@Messages("confirmBusiness.title")</h1>
@@ -52,12 +59,12 @@
     <p class="panel panel-border-wide">@Html(Messages("confirmBusiness.content.utr", utr))</p>
 
 
-    @form(
+    @uiFormHelper(
         action = routes.BusinessIdentificationController.submitConfirmBusinessForm(),
         'class -> "form js-form") {
 
         <div class="form-group margin-top-30">
-        @input_radio_group(
+        @uiInputRadioGroup(
             confirmBusinessRadioForm("confirmBusiness"),
             Seq(
                 "yes" -> Messages("confirmBusiness.option.yes"),

@@ -20,6 +20,14 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes.SignedOutController
 @import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType
 
+@this(
+mainTemplate: main_template,
+errorPrefixTemplate: error_prefix,
+uiErrorSummary: uk.gov.hmrc.play.views.html.helpers.ErrorSummary,
+uiInputRadioGroup: uk.gov.hmrc.play.views.html.helpers.InputRadioGroup,
+formHelper: uk.gov.hmrc.play.views.html.helpers.FormWithCSRF
+)
+
 @(businessTypeRadioForm: Form[BusinessType])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 @headerTitle = {
@@ -28,17 +36,17 @@
     </h1>
 }
 
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = error_prefix(businessTypeRadioForm) + Messages("businessType.title"), bodyClasses = None) {
+@mainTemplate(appConfig, title = errorPrefixTemplate(businessTypeRadioForm) + Messages("businessType.title"), bodyClasses = None) {
     @if(businessTypeRadioForm.hasErrors) {
-        @errorSummary(Messages("error.summary.heading"), businessTypeRadioForm, Seq.empty, Some("business-type"))
+        @uiErrorSummary(Messages("error.summary.heading"), businessTypeRadioForm, Seq.empty, Some("business-type"))
     }
 
-    @form(
+    @formHelper(
         action = routes.BusinessTypeController.submitBusinessTypeForm(),
         'class -> "form js-form") {
 
         <div class="form-group">
-        @input_radio_group(
+        @uiInputRadioGroup(
             businessTypeRadioForm("businessType"),
             Seq(
                 "limited_company" -> Messages("businessType.option.limited-company"),

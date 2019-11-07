@@ -20,6 +20,10 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.models.Task
 @import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType
 
+@this(
+mainTemplate: main_template
+)
+
 @(tasks: List[Task])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 @completedMark = {
@@ -46,7 +50,7 @@
     </li>
 }
 
-@uk.gov.hmrc.agentsubscriptionfrontend.views.html.main_template(appConfig, title = Messages("task-list.header"), bodyClasses = None) {
+@mainTemplate(appConfig, title = Messages("task-list.header"), bodyClasses = None) {
 
     <h1 class="heading-xlarge margin-bottom-40">@Messages("task-list.header")</h1>
 

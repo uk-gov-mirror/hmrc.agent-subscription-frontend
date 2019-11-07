@@ -18,30 +18,33 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.Inject
-import play.api.i18n.MessagesApi
-import play.api.mvc.{Action, AnyContent}
+import play.api.{Configuration, Environment}
+import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationForms.businessTypeForm
 import uk.gov.hmrc.agentsubscriptionfrontend.models.AgentSession
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
-import uk.gov.hmrc.agentsubscriptionfrontend.views.html
+import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{business_type}
 import uk.gov.hmrc.auth.core.AuthConnector
+import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 import scala.concurrent.{ExecutionContext, Future}
 
 class BusinessTypeController @Inject()(
-  override val redirectUrlActions: RedirectUrlActions,
-  override val authConnector: AuthConnector,
+  val redirectUrlActions: RedirectUrlActions,
+  val authConnector: AuthConnector,
   val sessionStoreService: SessionStoreService,
+  val metrics: Metrics,
+  val config: Configuration,
+  val env: Environment,
+  val subscriptionJourneyService: SubscriptionJourneyService,
   subscriptionService: SubscriptionService,
-  override val subscriptionJourneyService: SubscriptionJourneyService)(
-  implicit override val metrics: Metrics,
-  override val appConfig: AppConfig,
-  val ec: ExecutionContext,
-  override val messagesApi: MessagesApi)
-    extends AgentSubscriptionBaseController(authConnector, redirectUrlActions, appConfig, subscriptionJourneyService)
-    with SessionBehaviour {
+  mcc: MessagesControllerComponents,
+  businessTypeTemplate: business_type
+)(implicit val appConfig: AppConfig, val ec: ExecutionContext)
+    extends FrontendController(mcc) with AuthActions with SessionBehaviour {
 
   def redirectToBusinessTypeForm: Action[AnyContent] = Action.async { implicit request =>
     Redirect(routes.BusinessTypeController.showBusinessTypeForm())
@@ -57,10 +60,10 @@ class BusinessTypeController @Inject()(
               case Some(agentSession) =>
                 agentSession.businessType match {
                   case Some(businessType) =>
-                    Ok(html.business_type(businessTypeForm.fill(businessType)))
-                  case _ => Ok(html.business_type(businessTypeForm))
+                    Ok(businessTypeTemplate(businessTypeForm.fill(businessType)))
+                  case _ => Ok(businessTypeTemplate(businessTypeForm))
                 }
-              case None => Ok(html.business_type(businessTypeForm))
+              case None => Ok(businessTypeTemplate(businessTypeForm))
             }
         }
       }
@@ -72,7 +75,7 @@ class BusinessTypeController @Inject()(
       businessTypeForm
         .bindFromRequest()
         .fold(
-          formWithErrors => Ok(html.business_type(formWithErrors)),
+          formWithErrors => Ok(businessTypeTemplate(formWithErrors)),
           validatedBusinessType => {
             sessionStoreService.fetchAgentSession
               .flatMap(_.getOrElse(AgentSession()))
