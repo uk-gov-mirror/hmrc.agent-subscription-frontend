@@ -110,7 +110,6 @@ class FrontendAppConfig @Inject()(servicesConfig: ServicesConfig) extends AppCon
     s"${getConf("microservice.services.government-gateway-registration-frontend.externalUrl")}$ssoRedirectUrl"
 
   private val returnAfterGGCredsCreatedPath: String = "/agent-subscription/return-after-gg-creds-created"
-
   override val rootContinueUrl: String = s"$agentSubscriptionFrontendExternalUrl$returnAfterGGCredsCreatedPath"
 
   def contactFrontendAccessibilityUrl(userAction: String): String =
