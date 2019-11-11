@@ -29,11 +29,6 @@ errorSummary: uk.gov.hmrc.play.views.html.helpers.ErrorSummary
 
 @(businessEmailForm: Form[BusinessEmail], invalidDesEmail: Boolean, isChange: Boolean)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
-@formLabel = @{
-    """<h1 class="heading-xlarge">""" + Messages("businessEmail.title") + """</h1>"""+
-    """<p class="panel panel-border-wide">""" + Messages("businessEmail.description") + """</p>"""
-}
-
 
 @mainTemplate(appConfig, title =  errorPrefix(businessEmailForm) +  Messages("businessEmail.title"), bodyClasses = None) {
    @if(!invalidDesEmail) {
@@ -44,6 +39,9 @@ errorSummary: uk.gov.hmrc.play.views.html.helpers.ErrorSummary
         @errorSummary(Messages("error.summary.heading"), businessEmailForm, Seq.empty, Some("business-email"))
     }
 
+    <h1 class="heading-xlarge">@Messages("businessEmail.title")</h1>
+    <p class="panel panel-border-wide">@Messages("businessEmail.description")</p>
+
     @formHelper(
         action = if(isChange) routes.BusinessIdentificationController.submitChangeBusinessEmail else routes.BusinessIdentificationController.submitBusinessEmailForm(),
         'class -> "form js-form") {
@@ -52,8 +50,7 @@ errorSummary: uk.gov.hmrc.play.views.html.helpers.ErrorSummary
         @inputTemplate(
             businessEmailForm("email"),
             '_inputClass -> "form-control input--cleared",
-            '_labelClass -> "heading-small soft--ends",
-            '_label -> Html(formLabel)
+            '_labelClass -> "heading-small soft--ends"
         )
         </div>
 

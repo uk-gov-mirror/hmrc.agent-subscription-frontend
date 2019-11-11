@@ -17,7 +17,7 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.validators
 
 import javax.inject.{Inject, Singleton}
-import play.api.data.validation.{Constraints, Invalid, Valid, ValidationResult => PlayValdationResult}
+import play.api.data.validation.{Constraint, Constraints, Invalid, Valid, ValidationError, ValidationResult => PlayValdationResult}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidationResult.FailureReason._
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{BusinessAddress, Registration, ValidationResult}
