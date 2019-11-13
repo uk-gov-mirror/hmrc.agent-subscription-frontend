@@ -453,12 +453,12 @@ sign-in-new-id.p3=If you do not have one, <a href="{0}">create a new user ID</a>
 sign-in-new-id.button=Sign in with new user ID
 
 #session time out
-timeout-dialog.title=You’re about to be signed out
+timeout-dialog.title=You are about to be signed out
 timeout-dialog.seconds=seconds
 timeout-dialog.minutes=minutes
 timeout-dialog.minute=minute
 timeout-dialog.button=Stay signed in
-timeout-dialog.p1=For security reasons, you’ll be signed out of your Agent services account in
+timeout-dialog.p1=For security reasons, you will be signed out of your Agent services account in
 
 accessibility.statement.title=Accessibility statement for create an agent services account
 accessibility.statement.h1=Accessibility statement for create an agent services account
