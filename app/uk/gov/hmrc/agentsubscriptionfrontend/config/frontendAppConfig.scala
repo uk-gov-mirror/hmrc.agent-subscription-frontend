@@ -89,8 +89,7 @@ class FrontendAppConfig @Inject()(servicesConfig: ServicesConfig) extends AppCon
     "microservice.services.agent-subscription-frontend.external-url")
   override val sessionCacheBaseUrl: String = servicesConfig.baseUrl("cachable.session-cache")
 
-  override val companyAuthSignInUrl: String =
-    s"${getConf("microservice.services.company-auth-frontend.external-url")}${getConf("microservice.services.company-auth-frontend.sign-in-path")}"
+  override val companyAuthSignInUrl: String = getConf("microservice.services.companyAuthSignInUrl")
   override val chainedSessionDetailsTtl: Int = servicesConfig.getInt("mongodb.chainedsessiondetails.ttl")
   override val cachableSessionDomain: String =
     getConf("microservice.services.cachable.session-cache.domain")
