@@ -72,43 +72,40 @@ errorPrefixTemplate: error_prefix,
 
     @formHelper(action = routes.AMLSController.submitAmlsDetailsForm(), 'class -> "form js-form", 'id -> "dropForm") {
 
-        <fieldset>
+        <div class="form-group">
+            @amlsDropdownTemplate(
+            amlsForm("amlsCode"),
+            amlsBodies.toSeq,
+            true,
+            '_errorsAboveInput -> true,
+            '_label -> Messages("moneyLaunderingCompliance.amls.title"),
+            '_inputClass -> "form-control input--cleared",
+            '_labelClass -> "form-element-bold soft--ends",
+            '_selectWrapper -> Html("""class="autocomplete-wrapper"""")
+            )
+        </div>
 
-            <div class="form-group">
-                @amlsDropdownTemplate(
-                amlsForm("amlsCode"),
-                amlsBodies.toSeq,
-                true,
-                '_errorsAboveInput -> true,
-                '_label -> Messages("moneyLaunderingCompliance.amls.title"),
-                '_inputClass -> "form-control input--cleared",
-                '_labelClass -> "form-element-bold soft--ends",
-                '_selectWrapper -> Html("""class="autocomplete-wrapper"""")
-                )
-            </div>
+        <div class="form-group">
+            @inputTemplate(
+            amlsForm("membershipNumber"),
+            '_label -> Messages("moneyLaunderingCompliance.membershipNumber.title"),
+            '_inputClass -> "form-control input--cleared",
+            '_labelClass -> "form-element-bold soft--ends",
+            '_dataAttributes -> Html("""data-uppercase="true"""")
+            )
+        </div>
 
-            <div class="form-group">
-                @inputTemplate(
-                amlsForm("membershipNumber"),
-                '_label -> Messages("moneyLaunderingCompliance.membershipNumber.title"),
-                '_inputClass -> "form-control input--cleared",
-                '_labelClass -> "form-element-bold soft--ends",
-                '_dataAttributes -> Html("""data-uppercase="true"""")
-                )
-            </div>
-
-            <div class="@DayFieldError @MonthFieldError @YearFieldError @DateFieldErrorsAll">
-                @dateFieldsFreeInlineLegendTemplate(
-                dateFormWithRefinedErrors,
-                "expiry",
-                '_legend -> Messages("moneyLaunderingCompliance.expiry.title"),
-                '_inputHint -> Messages("moneyLaunderingCompliance.expiry.hint"),
-                '_legendSpanClass -> "form-element-bold",
-                '_legendClass -> "flush--ends"
-                )
-            </div>
-
-        </fieldset>
+        <div class="@DayFieldError @MonthFieldError @YearFieldError @DateFieldErrorsAll">
+            @dateFieldsFreeInlineLegendTemplate(
+            dateFormWithRefinedErrors,
+            "expiry",
+            '_legend -> Messages("moneyLaunderingCompliance.expiry.title"),
+            '_inputHint -> Messages("moneyLaunderingCompliance.expiry.hint"),
+            '_legendSpanClass -> "form-element-bold",
+            '_legendClass -> "flush--ends",
+            '_hintId -> "dates"
+            )
+        </div>
 
         <div class="form-field">
             <button class="button margin-right-5" id="amls-details-continue" name="continue" value="continue">@Messages("button.saveContinue")</button>

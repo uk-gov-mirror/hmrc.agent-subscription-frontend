@@ -38,7 +38,9 @@ uiInput: uk.gov.hmrc.play.views.html.helpers.Input
         @uiErrorSummary(Messages("error.summary.heading"), utrForm, Seq.empty, Some("utr-details"))
     }
 
-    <h1 class="heading-xlarge">@Messages(s"utr.header.${businessType.key}")</h1>
+    <h1>
+        <label for="utr" class="heading-xlarge">@Messages(s"utr.header.${businessType.key}")</label>
+    </h1>
 
     <p class="panel-border-wide">
         @Messages("utr.description.start")
@@ -51,11 +53,9 @@ uiInput: uk.gov.hmrc.play.views.html.helpers.Input
         action = routes.UtrController.submitUtrForm(),
         'class -> "form js-form") {
 
+        @* Can't use play ui text input as h1 needs to wrap a label *@
         <div class="form-group">
-        @uiInput(
-            utrForm("utr"),
-            '_inputClass -> "form-control input--cleared"
-        )
+            <input type="text" class="form-control input--cleared" name="utr" id="utr" value="@utrForm("utr").value">
         </div>
 
         <div class="form-field">

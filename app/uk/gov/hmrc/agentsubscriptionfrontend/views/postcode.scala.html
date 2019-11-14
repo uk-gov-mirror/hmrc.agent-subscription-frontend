@@ -38,16 +38,18 @@ uiInput: uk.gov.hmrc.play.views.html.helpers.Input
         @uiErrorSummary(Messages("error.summary.heading"), postcodeForm, Seq.empty, Some("postcode"))
     }
 
-    <h1 class="heading-xlarge margin-bottom-20">@Messages(s"postcode.${businessType.key}.title")</h1>
+    <h1>
+      <label class="heading-xlarge" for="postcode">
+            @Messages(s"postcode.${businessType.key}.title")
+      </label>
+    </h1>
 
     @uiFormHelper(
     action = routes.PostcodeController.submitPostcodeForm(), 'class -> "form js-form") {
 
+    @* Can't use play ui text input as h1 needs to wrap a label *@
     <div class="form-group">
-        @uiInput(
-        postcodeForm("postcode"),
-        '_inputClass -> "form-control input--cleared"
-        )
+        <input type="text" class="form-control input--cleared" name="postcode" id="postcode" value="@postcodeForm("postcode").value">
     </div>
 
     <div class="form-field">

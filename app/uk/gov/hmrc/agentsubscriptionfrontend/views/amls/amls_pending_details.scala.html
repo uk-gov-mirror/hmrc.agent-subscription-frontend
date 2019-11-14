@@ -50,10 +50,14 @@ mainTemplate: main_template,
     if(amlsPendingForm("expiry").hasErrors && !amlsPendingForm("appliedOn.day").hasErrors && !amlsPendingForm("appliedOn.month").hasErrors && !amlsPendingForm("appliedOn.year").hasErrors)
         "date-field-errors-all"
 }
-    @dateFormWithRefinedErrors = @{
-        amlsPendingForm.copy(errors = amlsPendingForm.errors.filterNot(error => error.message == "" || !error.key.contains("expiry")))
-    }
 
+@dateFormWithRefinedErrors = @{
+    amlsPendingForm.copy(errors = amlsPendingForm.errors.filterNot(error => error.message == "" || !error.key.contains("expiry")))
+}
+
+@headerTitle = {
+    <h1 class="heading-xlarge margin-bottom-30">@Messages("amls.pending.appliedOn.title")</h1>
+}
 
 @mainTemplate(appConfig, title =  errorPrefix(amlsPendingForm) + Messages("amls.pending.appliedOn.title"), bodyClasses = None) {
 
@@ -62,25 +66,23 @@ mainTemplate: main_template,
     @if(amlsPendingForm.hasErrors) {
         @uiErrorSummary(Messages("error.summary.heading"), amlsPendingForm, Seq.empty, Some("amls-pending-details"))
     }
-    <h1 class="heading-xlarge margin-bottom-30">@Messages("amls.pending.appliedOn.title")</h1>
+
 
     @uiFormHelper(action = routes.AMLSController.submitAmlsApplicationDatePage(), 'class -> "form js-form", 'id -> "amlsPendingForm") {
 
-        <fieldset>
+        <input type="hidden" name="amlsCode" id="amlsCode" value="HMRC" >
 
-            <input type="hidden" name="amlsCode" id="amlsCode" value="HMRC" >
-
-            <div class="@DayFieldError @MonthFieldError @YearFieldError @DateFieldErrorsAll">
-                @uiDateFieldsFreeInlineLegend(
-                dateFormWithRefinedErrors,
-                "appliedOn",
-                '_inputHint -> Messages("moneyLaunderingCompliance.expiry.hint"),
-                '_legendSpanClass -> "form-element-bold",
-                '_legendClass -> "flush--ends"
-                )
-            </div>
-
-        </fieldset>
+        <div class="@DayFieldError @MonthFieldError @YearFieldError @DateFieldErrorsAll">
+            @uiDateFieldsFreeInlineLegend(
+            dateFormWithRefinedErrors,
+            "appliedOn",
+            '_inputHint -> Messages("moneyLaunderingCompliance.expiry.hint"),
+            '_legendSpanClass -> "form-element-bold",
+            '_legend -> headerTitle,
+            '_legendClass -> "flush--ends",
+            '_hintId -> "applied-on"
+            )
+        </div>
 
         <div class="form-field">
             <button class="button margin-right-5" id="amls-pending-continue" name="continue" value="continue">@Messages("button.saveContinue")</button>

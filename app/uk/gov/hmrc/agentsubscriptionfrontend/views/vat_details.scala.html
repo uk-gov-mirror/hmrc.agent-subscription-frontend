@@ -62,17 +62,19 @@ errorPrefix: error_prefix
         @uiErrorSummary(Messages("error.summary.heading"), vatDetailsForm, Seq.empty, Some("vat-details"))
     }
 
-    <h1 class="heading-xlarge margin-bottom-20">@Messages(s"vat-details.title")</h1>
-
     @uiFormHelper(action = routes.VatDetailsController.submitVatDetailsForm(), 'class -> "form js-form") {
 
         <fieldset>
+            <legend class="margin-bottom-10">
+                <h1 class="heading-xlarge margin-bottom-20">@Messages(s"vat-details.title")</h1>
+            </legend>
             <div class="form-group">
                 @uiInput(
                 vatDetailsForm("vrn"),
                 '_label -> Messages("vat-details.vrn.title"),
                 '_inputHint -> Messages("vat-details.vrn.hint"),
-                '_inputClass -> "form-control input--cleared"
+                '_inputClass -> "form-control input--cleared",
+                '_hintId -> "vat-details"
                 )
             </div>
 
@@ -83,7 +85,8 @@ errorPrefix: error_prefix
                 '_legend -> Messages("vat-details.reg-date.title"),
                 '_inputHint -> Messages("vat-details.reg-date.hint"),
                 '_inputClass -> "form-control input--cleared",
-                '_labelClass -> "heading-small soft--ends"
+                '_labelClass -> "heading-small soft--ends",
+                '_hintId -> "reg-date"
                 )
             </div>
         </fieldset>
