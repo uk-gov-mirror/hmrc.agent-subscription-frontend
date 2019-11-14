@@ -155,7 +155,7 @@
           return;
         }
 
-        $details.attr("role", "group");
+        // $details.attr("role", "group");
         $details.prop("details-initialised", true);
 
         // If there is no `summary` in the current `details` element…
@@ -165,8 +165,9 @@
           $detailsSummary = $('<summary>').text('Details').prependTo($details);
         }
 
-        $('<i>').addClass("arrow arrow-open").append(document.createTextNode("\u25bc")).prependTo($detailsSummary);
-        $('<i>').addClass("arrow arrow-closed").append(document.createTextNode("\u25ba")).prependTo($detailsSummary);
+        // Done with CSS instead as screen readers were announcing the arrows
+        // $('<i>').addClass("arrow arrow-open").append(document.createTextNode("\u25bc")).prependTo($detailsSummary);
+        // $('<i>').addClass("arrow arrow-closed").append(document.createTextNode("\u25ba")).prependTo($detailsSummary);
 
         // Look for direct child text nodes
         if ($detailsNotSummary.length != $detailsNotSummaryContents.length)

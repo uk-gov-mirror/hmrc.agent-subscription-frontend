@@ -38,17 +38,18 @@ uiInput: uk.gov.hmrc.play.views.html.helpers.Input
         @uiErrorSummary(Messages("error.summary.heading"), crnForm, Seq.empty, Some("crn"))
     }
 
-    <h1 class="heading-xlarge margin-bottom-20">@Messages(s"crn.title")</h1>
+    <h1 class="heading-xlarge margin-bottom-20">
+        <label for="crn">
+            @Messages(s"crn.title")
+        </label>
+    </h1>
     <p class="form-hint">@Messages("crn.hint")</p>
-
 
  @uiFormHelper(action = routes.CompanyRegistrationController.submitCompanyRegNumberForm(), 'class -> "form js-form"){
 
-  <div class="form-group">
-        @uiInput(
-        crnForm("crn"),
-        '_inputClass -> "form-control input--cleared"
-        )
+    @* Can't use play ui text input as h1 needs to wrap a label *@
+    <div class="form-group">
+       <input type="text" class="form-control input--cleared" name="crn" id="crn" value="@crnForm("crn").value">
     </div>
 
     <div class="form-field">

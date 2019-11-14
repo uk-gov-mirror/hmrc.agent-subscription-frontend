@@ -39,37 +39,37 @@ uiErrorSummary: uk.gov.hmrc.play.views.html.helpers.ErrorSummary,
             <fieldset>
                 <legend>
                     <h1 class="heading-xlarge margin-bottom-20 @if(radioResponseForm.hasErrors){push--top}">@Messages("invasive.title.option")</h1>
-                    <p>@Messages("invasive.p1")</p>
-                    <p>@Messages("invasive.p2")</p>
-                    @if(radioResponseForm.error("variant").isDefined){
-                        <span class="error-message">@Messages("clientDetails.error.no-radio.selected")</span>
-                    }
                 </legend>
-                <div class="multiple-choice" data-target="ninoRadioInput">
-                    <input id="variant_nino" type="radio" name="variant" value="nino" @if(radioResponseForm.error("nino").isDefined){checked} >
-                    <label for="variant_nino">@Messages("invasive.radioResponse.nino")</label>
-                </div>
-                <div class="panel panel-border-narrow js-hidden @if(radioResponseForm.error("utr").isDefined){form-group-error}" id="ninoRadioInput">
-                    <label class="form-label" for="nino">@Messages("invasive.radioResponse.hidden.input.label.nino")
-                    <span class="form-hint">@Messages("invasive.radioResponse.helper.text.nino")</span>
-                    </label>
-                    @radioResponseForm.error("nino").map{formError => <span class="error-message"> @Messages(formError.message)</span>}
-                    <input data-uppercase="true" class="form-control @if(radioResponseForm.error("nino").isDefined){form-control-error}" name="nino" type="text" id="nino">
-                </div>
-                <div class="multiple-choice" data-target="utrRadioInput">
-                    <input id="variant_utr" type="radio" name="variant" value="utr" @if(radioResponseForm.error("utr").isDefined){checked} >
-                    <label for="variant_utr">@Messages("invasive.radioResponse.utr")</label>
-                </div>
-                <div class="panel panel-border-narrow js-hidden @if(radioResponseForm.error("utr").isDefined){form-group-error}" id="utrRadioInput">
-                    <label class="form-label" for="utr">@Messages("invasive.radioResponse.hidden.input.label.utr")
-                    <span class="form-hint">@Messages("invasive.radioResponse.helper.text.utr")</span>
-                    </label>
-                    @radioResponseForm.error("utr").map{formError => <span class="error-message"> @Messages(formError.message)</span>}
-                    <input class="form-control @if(radioResponseForm.error("utr").isDefined){form-control-error}" name="utr" type="text" id="utr">
-                </div>
-                <div class="multiple-choice">
-                    <input id="variant_cannotProvide" type="radio" name="variant" value="cannotProvide">
-                    <label for="variant_cannotProvide">@Messages("invasive.radioResponse.cannotProvide")</label>
+                <p>@Messages("invasive.p1")</p>
+                <p>@Messages("invasive.p2")</p>
+                @if(radioResponseForm.error("variant").isDefined){
+                    <span class="error-message">@Messages("clientDetails.error.no-radio.selected")</span>
+                }
+                <div id="variant" data-target="variant">
+                    <div class="multiple-choice" data-target="ninoRadioInput">
+                        <input id="variant_nino" type="radio" name="variant" value="nino" @if(radioResponseForm.error("nino").isDefined){checked} >
+                        <label for="variant_nino">@Messages("invasive.radioResponse.nino")</label>
+                    </div>
+                    <div class="panel panel-border-narrow js-hidden @if(radioResponseForm.error("utr").isDefined){form-group-error}" id="ninoRadioInput">
+                        <label class="form-label" for="nino">@Messages("invasive.radioResponse.hidden.input.label.nino")</label>
+                        <span id="text-nino" class="form-hint">@Messages("invasive.radioResponse.helper.text.nino")</span>
+                        @radioResponseForm.error("nino").map{formError => <span class="error-message"> @Messages(formError.message)</span>}
+                        <input aria-describedby="text-nino" data-uppercase="true" class="form-control @if(radioResponseForm.error("nino").isDefined){form-control-error}" name="nino" type="text" id="nino">
+                    </div>
+                    <div class="multiple-choice" data-target="utrRadioInput">
+                        <input id="variant_utr" type="radio" name="variant" value="utr" @if(radioResponseForm.error("utr").isDefined){checked} >
+                        <label for="variant_utr">@Messages("invasive.radioResponse.utr")</label>
+                    </div>
+                    <div class="panel panel-border-narrow js-hidden @if(radioResponseForm.error("utr").isDefined){form-group-error}" id="utrRadioInput">
+                        <label class="form-label" for="utr">@Messages("invasive.radioResponse.hidden.input.label.utr")</label>
+                        <span id="text-utr" class="form-hint">@Messages("invasive.radioResponse.helper.text.utr")</span>
+                        @radioResponseForm.error("utr").map{formError => <span class="error-message"> @Messages(formError.message)</span>}
+                        <input aria-describedby="text-utr" class="form-control @if(radioResponseForm.error("utr").isDefined){form-control-error}" name="utr" type="text" id="utr">
+                    </div>
+                    <div class="multiple-choice">
+                        <input id="variant_cannotProvide" type="radio" name="variant" value="cannotProvide">
+                        <label for="variant_cannotProvide">@Messages("invasive.radioResponse.cannotProvide")</label>
+                    </div>
                 </div>
             </fieldset>
         </div>
