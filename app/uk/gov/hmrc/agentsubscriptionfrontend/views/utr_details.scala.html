@@ -54,7 +54,8 @@ uiInput: uk.gov.hmrc.play.views.html.helpers.Input
         'class -> "form js-form") {
 
         @* Can't use play ui text input as h1 needs to wrap a label *@
-        <div class="form-group">
+        <div class="form-group @if(utrForm.hasErrors){form-field--error}">
+            @utrForm.error("utr").map{formError => <span class="error-message"> @Messages(formError.message)</span>}
             <input type="text" class="form-control input--cleared" name="utr" id="utr" value="@utrForm("utr").value">
         </div>
 
