@@ -78,7 +78,6 @@ $(function() {
     $('a[role=button]').keyup(function(e) {
         // get the target element
         var target = e.target;
-        console.log('keys');
 
         // if the element has a role=’button’ and the pressed key is a space, we’ll simulate a click
         if (e.keyCode === 32) {
