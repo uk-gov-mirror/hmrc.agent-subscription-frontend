@@ -48,7 +48,8 @@ uiInput: uk.gov.hmrc.play.views.html.helpers.Input
     action = routes.PostcodeController.submitPostcodeForm(), 'class -> "form js-form") {
 
     @* Can't use play ui text input as h1 needs to wrap a label *@
-    <div class="form-group">
+    <div class="form-group @if(postcodeForm.hasErrors){form-field--error}">
+        @postcodeForm.error("postcode").map{formError => <span class="error-message"> @Messages(formError.message)</span>}
         <input type="text" class="form-control input--cleared" name="postcode" id="postcode" value="@postcodeForm("postcode").value">
     </div>
 
