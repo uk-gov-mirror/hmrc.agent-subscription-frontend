@@ -72,7 +72,7 @@ errorPrefixTemplate: error_prefix,
 
     @formHelper(action = routes.AMLSController.submitAmlsDetailsForm(), 'class -> "form js-form", 'id -> "dropForm") {
 
-        <div class="form-group">
+        <div class="form-group" id="amlsCode">
             @amlsDropdownTemplate(
             amlsForm("amlsCode"),
             amlsBodies.toSeq,
