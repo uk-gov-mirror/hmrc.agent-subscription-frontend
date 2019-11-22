@@ -52,7 +52,9 @@
     -webkit-box-shadow: inset 0 0 0 2px;
     box-shadow: inset 0 0 0 2px;
   }
-  .form-field--error input[type="text"]:focus {
+  .form-field--error input[type="text"]:focus,
+  .form-group-error input[type="text"]:focus,
+  .form-field--error input[type="tel"]:focus {
     border: 2px solid #0b0c0c;
   }
   .multiple-choice [type=checkbox]:focus+label::before {

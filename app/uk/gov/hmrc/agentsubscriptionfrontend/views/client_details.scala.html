@@ -50,7 +50,7 @@ uiErrorSummary: uk.gov.hmrc.play.views.html.helpers.ErrorSummary,
                         <input id="variant_nino" type="radio" name="variant" value="nino" @if(radioResponseForm.error("nino").isDefined){checked} >
                         <label for="variant_nino">@Messages("invasive.radioResponse.nino")</label>
                     </div>
-                    <div class="panel panel-border-narrow js-hidden @if(radioResponseForm.error("utr").isDefined){form-group-error}" id="ninoRadioInput">
+                    <div class="panel panel-border-narrow js-hidden @if(radioResponseForm.error("nino").isDefined){form-group-error}" id="ninoRadioInput">
                         <label class="form-label" for="nino">@Messages("invasive.radioResponse.hidden.input.label.nino")</label>
                         <span id="text-nino" class="form-hint">@Messages("invasive.radioResponse.helper.text.nino")</span>
                         @radioResponseForm.error("nino").map{formError => <span class="error-message"> @Messages(formError.message)</span>}
