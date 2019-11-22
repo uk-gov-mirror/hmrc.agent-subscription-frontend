@@ -1,7 +1,9 @@
 $(function() {
+
     //Accessibility
     var errorSummary =  $('#error-summary-display'),
-    $input = $('input:text')
+    $input = $('input:text');
+
     //Error summary focus
     if (errorSummary){ errorSummary.focus() }
     $input.each( function(){
@@ -11,6 +13,7 @@ $(function() {
             $(this).attr('aria-invalid', false)
         }
     });
+
     //Trim inputs and Capitalize postode
     $('[type="submit"]').click(function(){
         $input.each( function(){
@@ -21,14 +24,14 @@ $(function() {
             }
         });
     });
+
     //Add aria-hidden to hidden inputs
-    $('[type="hidden"]').attr("aria-hidden", true)
+    $('[type="hidden"]').attr("aria-hidden", true);
 
-    var showHideContent = new GOVUK.ShowHideContent()
-    showHideContent.init()
+    var showHideContent = new GOVUK.ShowHideContent();
+    showHideContent.init();
 
-
-   var selectEl = document.querySelector('#amls-auto-complete')
+    var selectEl = document.querySelector('#amls-auto-complete');
       if(selectEl){
           accessibleAutocomplete.enhanceSelectElement({
             autoselect: true,
@@ -44,15 +47,15 @@ $(function() {
 
     //custom handler for AMLS auto-complete dropdown
     $('#amls-auto-complete').change(function(){
-        var changedValue = $(this).val()
+        var changedValue = $(this).val();
         var array = [];
 
         $('.autocomplete__menu li').each(function(){
             array.push($(this).text())
-        })
+        });
 
         if(array == "No results found"){
-            $('#amls-auto-complete-select').append('<option id="notFound" value="NOTFOUND">No results found</option>')
+            $('#amls-auto-complete-select').append('<option id="notFound" value="NOTFOUND">No results found</option>');
             $('#amls-auto-complete-select').val('NOTFOUND').attr("selected", "selected");
 
         }else if(array == ""){
@@ -63,11 +66,24 @@ $(function() {
 
      $('.form-date label.form-field--error').each(function () {
 
-                $(this).closest('div').addClass('form-field--error')
-                var $relocate = $(this).closest('fieldset').find('legend')
-                $(this).find('.error-notification').appendTo($relocate)
+        $(this).closest('div').addClass('form-field--error');
+        var $relocate = $(this).closest('fieldset').find('legend');
+        $(this).find('.error-notification').appendTo($relocate)
 
-        })
-//by default the dropForm will be hidden so we we need this to make the form visible after loaded
-    $('#dropForm').css('visibility', 'visible')
+     });
+
+    // by default the dropForm will be hidden so we we need this to make the form visible after loaded
+    $('#dropForm').css('visibility', 'visible');
+
+    $('a[role=button]').keyup(function(e) {
+        // get the target element
+        var target = e.target;
+
+        // if the element has a role=’button’ and the pressed key is a space, we’ll simulate a click
+        if (e.keyCode === 32) {
+            e.preventDefault();
+            // trigger the target’s click event
+            target.click()
+        }
+    });
 });
