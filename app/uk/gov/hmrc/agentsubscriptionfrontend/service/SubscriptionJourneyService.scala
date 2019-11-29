@@ -17,17 +17,14 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.service
 
 import javax.inject.{Inject, Singleton}
-import play.api.Logger
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent
-import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent._
+import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentSubscriptionConnector
 import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.SubscriptionJourneyRecord
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, AuthProviderId, ContinueId}
-import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentSubscriptionConnector
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.control.NonFatal
 
 @Singleton
 class SubscriptionJourneyService @Inject()(agentSubscriptionConnector: AgentSubscriptionConnector)(
@@ -59,15 +56,17 @@ class SubscriptionJourneyService @Inject()(agentSubscriptionConnector: AgentSubs
       case None    => throw new RuntimeException("Journey record expected")
     }
 
-  def saveJourneyRecord(subscriptionJourneyRecord: SubscriptionJourneyRecord)(
-    implicit hc: HeaderCarrier): Future[Unit] =
+  def saveJourneyRecord(subscriptionJourneyRecord: SubscriptionJourneyRecord)(implicit hc: HeaderCarrier): Future[Int] =
     agentSubscriptionConnector.createOrUpdateJourney(subscriptionJourneyRecord)
 
-  def createJourneyRecord(agentSession: AgentSession, agent: Agent)(implicit hc: HeaderCarrier): Future[Unit] = {
+  def createJourneyRecord(agentSession: AgentSession, agent: Agent)(
+    implicit hc: HeaderCarrier): Future[Either[String, Unit]] = {
     val sjr =
       SubscriptionJourneyRecord
         .fromAgentSession(agentSession, agent.authProviderId, agent.maybeCleanCredsAuthProviderId)
-    saveJourneyRecord(sjr)
+    saveJourneyRecord(sjr) map {
+      case 204 => Right(())
+      case 409 => Left("the subscription journey record already exists in the database")
+    }
   }
-
 }

@@ -31,7 +31,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.{AmlsData, SubscriptionJourneyRecord}
 import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.http.{HeaderCarrier, Upstream4xxResponse}
-import play.api.mvc.Results.Redirect
+import play.api.mvc.Results.{Conflict, Redirect}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.Monitoring
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -187,7 +187,10 @@ class SubscriptionService @Inject()(
                  agent.cleanCredsFold(isDirty = {
                    subscriptionJourneyService
                      .createJourneyRecord(agentSession, agent)
-                     .flatMap(_ => Future successful Redirect(routes.SubscriptionController.showSignInWithNewID()))
+                     .map {
+                       case Right(()) => Redirect(routes.SubscriptionController.showSignInWithNewID())
+                       case Left(msg) => Logger.warn(msg); Conflict
+                     }
                  })(
                    isClean = completePartialSubscriptionAndGoToComplete(utr, postcode)
                  )

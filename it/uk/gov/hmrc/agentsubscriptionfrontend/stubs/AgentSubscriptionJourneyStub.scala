@@ -96,13 +96,13 @@ object AgentSubscriptionJourneyStub {
     )
   }
 
-  def givenSubscriptionRecordNotCreated(authProviderId: AuthProviderId, subscriptionJourneyRecord: SubscriptionJourneyRecord) = {
+  def givenSubscriptionRecordNotCreated(authProviderId: AuthProviderId, subscriptionJourneyRecord: SubscriptionJourneyRecord, status: Int) = {
     stubFor(
       post(
         urlEqualTo(s"/agent-subscription/subscription/journey/primaryId/${encodePathSegment(authProviderId.id)}"))
         .withRequestBody(equalToJson(
           Json.toJson(subscriptionJourneyRecord).toString(), true, true ))
-        .willReturn(aResponse().withStatus(Status.BAD_REQUEST))
+        .willReturn(aResponse().withStatus(status))
     )
   }
 

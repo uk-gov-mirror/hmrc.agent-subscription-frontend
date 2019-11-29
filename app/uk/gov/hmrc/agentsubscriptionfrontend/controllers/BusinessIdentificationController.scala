@@ -18,10 +18,10 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
-import play.api.{Configuration, Environment, Logger}
 import play.api.data.Form
 import play.api.i18n.I18nSupport
 import play.api.mvc.{AnyContent, Request, _}
+import play.api.{Configuration, Environment, Logger}
 import uk.gov.hmrc.agentsubscriptionfrontend.audit.AuditService
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.{Agent, AuthActions}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
@@ -36,7 +36,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.service._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TaxIdentifierFormatters
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.validators.BusinessDetailsValidator
-import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{already_subscribed, business_email, business_name, cannot_create_account, confirm_business, create_new_account, existing_journey_found, no_match_found, postcode_not_allowed, update_business_address}
+import uk.gov.hmrc.agentsubscriptionfrontend.views.html._
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
@@ -173,8 +173,10 @@ class BusinessIdentificationController @Inject()(
       case _ =>
 
         def createRecordAndRedirectToTasklist(): Future[Result] = subscriptionJourneyService
-          .createJourneyRecord(existingSession, agent)
-          .map(_ => Redirect(routes.TaskListController.showTaskList()))
+          .createJourneyRecord(existingSession, agent) map {
+          case Right(()) => Redirect(routes.TaskListController.showTaskList())
+          case Left(msg) => Logger.warn(msg); Conflict
+        }
 
           subscriptionService.handlePartiallySubscribedAndRedirect(
             agent,
