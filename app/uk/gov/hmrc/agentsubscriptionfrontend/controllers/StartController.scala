@@ -18,14 +18,14 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
-import play.api.{Configuration, Environment}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import play.api.{Configuration, Environment}
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.models.ContinueId
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
-import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{accessibility_statement, cannot_create_account, not_agent, sign_in_check, start}
+import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{accessibility_statement, cannot_create_account, not_agent, sign_in_check}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
@@ -42,7 +42,6 @@ class StartController @Inject()(
   subscriptionService: SubscriptionService,
   val subscriptionJourneyService: SubscriptionJourneyService,
   mcc: MessagesControllerComponents,
-  startTemplate: start,
   notAgentTemplate: not_agent,
   signInCheckTemplate: sign_in_check,
   cannotCreateAccountTemplate: cannot_create_account,
@@ -59,10 +58,10 @@ class StartController @Inject()(
 
   def start: Action[AnyContent] = Action.async { implicit request =>
     redirectUrlActions.withMaybeRedirectUrl { urlOpt =>
-      val nextUrl: String = routes.StartController
-        .signInCheck()
-        .toURLWithParams("continue" -> urlOpt)
-      Ok(startTemplate(nextUrl))
+      Redirect(
+        routes.StartController
+          .signInCheck()
+          .toURLWithParams("continue" -> urlOpt))
     }
   }
 
@@ -74,7 +73,9 @@ class StartController @Inject()(
 
   def signInCheck: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      Ok(signInCheckTemplate())
+      redirectUrlActions.withMaybeRedirectUrlCached {
+        Ok(signInCheckTemplate())
+      }
     }
   }
 
