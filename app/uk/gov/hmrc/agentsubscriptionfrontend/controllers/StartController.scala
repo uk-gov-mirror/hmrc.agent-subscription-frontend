@@ -25,7 +25,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.models.ContinueId
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
-import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{accessibility_statement, cannot_create_account, not_agent, start}
+import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{accessibility_statement, cannot_create_account, not_agent, sign_in_check, start}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
@@ -44,6 +44,7 @@ class StartController @Inject()(
   mcc: MessagesControllerComponents,
   startTemplate: start,
   notAgentTemplate: not_agent,
+  signInCheckTemplate: sign_in_check,
   cannotCreateAccountTemplate: cannot_create_account,
   accessibilityStatementTemplate: accessibility_statement)(implicit val appConfig: AppConfig, val ec: ExecutionContext)
     extends FrontendController(mcc) with SessionBehaviour with AuthActions {
@@ -58,8 +59,8 @@ class StartController @Inject()(
 
   def start: Action[AnyContent] = Action.async { implicit request =>
     redirectUrlActions.withMaybeRedirectUrl { urlOpt =>
-      val nextUrl: String = routes.BusinessTypeController
-        .showBusinessTypeForm()
+      val nextUrl: String = routes.StartController
+        .signInCheck()
         .toURLWithParams("continue" -> urlOpt)
       Ok(startTemplate(nextUrl))
     }
@@ -68,6 +69,12 @@ class StartController @Inject()(
   def showNotAgent: Action[AnyContent] = Action.async { implicit request =>
     withAuthenticatedUser {
       Ok(notAgentTemplate())
+    }
+  }
+
+  def signInCheck: Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { _ =>
+      Ok(signInCheckTemplate())
     }
   }
 

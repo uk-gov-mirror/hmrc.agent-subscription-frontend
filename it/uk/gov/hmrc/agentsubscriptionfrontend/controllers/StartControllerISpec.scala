@@ -54,7 +54,6 @@ class StartControllerISpec extends BaseISpec {
       AgentSubscriptionStub.withMatchingUtrAndPostcode(
         validUtr,
         testPostcode,
-        isSubscribedToAgentServices = false,
         isSubscribedToETMP = true)
       AgentSubscriptionJourneyStub.givenNoSubscriptionJourneyRecordExists(AuthProviderId("12345-credId"))
     }
@@ -88,9 +87,9 @@ class StartControllerISpec extends BaseISpec {
       bodyOf(result) should include("Agent services account: sign in or set up")
     }
 
-    "contain a start button pointing to /business-type" in {
+    "contain a start button pointing to /sign-in-check" in {
       val result = await(controller.start(FakeRequest()))
-      result should containLink("startpage.continue", routes.BusinessTypeController.showBusinessTypeForm().url)
+      result should containLink("startpage.continue", routes.StartController.signInCheck().url)
     }
 
     behave like aPageWithFeedbackLinks(request => controller.start(request))
@@ -132,6 +131,23 @@ class StartControllerISpec extends BaseISpec {
     }
 
     behave like aPageWithFeedbackLinks(request => controller.showNotAgent(request), authenticatedAs(individual))
+  }
+
+  "signInCheck" when {
+    "the current user is logged in" should {
+
+      "display the sign in check page with correct links" in new SetupUnsubscribed {
+        implicit val request = FakeRequest()
+        val result = await(controller.signInCheck(request))
+
+        status(result) shouldBe OK
+        contentType(result) shouldBe Some("text/html")
+        charset(result) shouldBe Some("utf-8")
+        bodyOf(result) should include(htmlEscapedMessage("sign-in-check.header"))
+        result should containLink("sign-in-check.sign-out.link", routes.SignedOutController.signOut().url)
+        result should containLink("sign-in-check.create.link", routes.BusinessTypeController.showBusinessTypeForm().url)
+      }
+    }
   }
 
   trait SetupUnsubscribed {
