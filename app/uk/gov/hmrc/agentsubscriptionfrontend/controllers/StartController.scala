@@ -20,7 +20,8 @@ import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import play.api.{Configuration, Environment}
-import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
+import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent.hasNonEmptyEnrolments
+import uk.gov.hmrc.agentsubscriptionfrontend.auth.{Agent, AuthActions}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.models.ContinueId
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService, SubscriptionService}
@@ -72,9 +73,12 @@ class StartController @Inject()(
   }
 
   def signInCheck: Action[AnyContent] = Action.async { implicit request =>
-    withSubscribingAgent { _ =>
+    withSubscribingAgent { agent =>
       redirectUrlActions.withMaybeRedirectUrlCached {
-        Ok(signInCheckTemplate())
+        agent match {
+          case hasNonEmptyEnrolments(_) => Ok(signInCheckTemplate())
+          case _                        => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
+        }
       }
     }
   }
