@@ -178,11 +178,11 @@ saved-progress.continue=Continue where you left off
 saved-progress.finish=Finish and sign out
 
 #Sign in check
-sign-in-check.header=You signed in with your HMRC online services for agents user ID
-sign-in-check.p1=To continue to your Agent Services account you need to login with the user ID you created when you signed up.
-sign-in-check.sign-out.link=Sign out
-sign-in-check.p2=If you don’t have an Agent services account
-sign-in-check.create.link=you need to create one
+sign-in-check.header=You have signed in with you user ID for your HMRC online services for agents
+sign-in-check.p1=To continue to your Agent Services account you need to log in with the user ID you created when you signed up.
+sign-in-check.sign-out.link=Sign out.
+sign-in-check.p2=If you do not have an Agent services account
+sign-in-check.create.link=you need to create one.
 
 #Check business type
 businessType.title=What type of business are you?
