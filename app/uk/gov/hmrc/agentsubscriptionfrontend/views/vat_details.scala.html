@@ -51,7 +51,8 @@ errorPrefix: error_prefix
 }
 
 @dateFormWithRefinedErrors = @{
-    vatDetailsForm.copy(errors = vatDetailsForm.errors.filterNot(error => error.message == "" || !error.key.contains("regDate")))
+    vatDetailsForm.copy(errors = vatDetailsForm.errors.filterNot(error => error.message == "" || error.key.contains("regDate.day") ||
+    error.key.contains("regDate.month") || error.key.contains("regDate.year")))
 }
 
 @mainTemplate(appConfig, title =  errorPrefix(vatDetailsForm) + Messages("vat-details.title"), bodyClasses = None) {
@@ -59,7 +60,7 @@ errorPrefix: error_prefix
     <a href="@routes.VatDetailsController.showRegisteredForVatForm()" class="link-back">@Messages("button.back")</a>
 
     @if(vatDetailsForm.hasErrors) {
-        @uiErrorSummary(Messages("error.summary.heading"), vatDetailsForm, Seq.empty, Some("vat-details"))
+        @uiErrorSummary(Messages("error.summary.heading"), dateFormWithRefinedErrors, Seq.empty, Some("vat-details"))
     }
 
     @uiFormHelper(action = routes.VatDetailsController.submitVatDetailsForm(), 'class -> "form js-form") {

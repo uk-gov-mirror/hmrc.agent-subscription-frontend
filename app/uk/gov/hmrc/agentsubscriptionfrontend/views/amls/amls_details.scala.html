@@ -54,7 +54,8 @@ errorPrefixTemplate: error_prefix,
         "date-field-errors-all"
 }
     @dateFormWithRefinedErrors = @{
-        amlsForm.copy(errors = amlsForm.errors.filterNot(error => error.message == "" || !error.key.contains("expiry")))
+        amlsForm.copy(errors = amlsForm.errors.filterNot(error => error.message == "" || error.key.contains("expiry.day")
+        || error.key.contains("expiry.month") || error.key.contains("expiry.year")))
     }
 
 
@@ -64,7 +65,7 @@ errorPrefixTemplate: error_prefix,
 <a href="@mayBeGoBackUrl.getOrElse(routes.AMLSController.showAmlsRegisteredPage.url)" class="link-back">@Messages("button.back")</a>
 
     @if(amlsForm.hasErrors) {
-        @uiErrorSummary(Messages("error.summary.heading"), amlsForm, Seq.empty, Some("money-laundering-compliance"))
+        @uiErrorSummary(Messages("error.summary.heading"), dateFormWithRefinedErrors, Seq.empty, Some("money-laundering-compliance"))
     }
     <h1 class="heading-xlarge margin-bottom-20">@Messages("moneyLaunderingCompliance.title")</h1>
 
