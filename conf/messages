@@ -484,7 +484,13 @@ accessibility.statement.using.p3=We have also made the text in the service as si
 accessibility.statement.using.p4=<a class="govuk-link" href="https://mcmw.abilitynet.org.uk/">AbilityNet</a> has advice on making your device easier to use if you have a disability.
 
 accessibility.statement.accessible.heading=How accessible this service is
-accessibility.statement.accessible.p1=This service is partially compliant with the <a class="govuk-link" href="https://www.w3.org/TR/WCAG21/">Web Content Accessibility Guidelines version 2.1 AA standard</a>.
+accessibility.statement.accessible.p1=This service is partially compliant with the <a class="govuk-link" href="https://www.w3.org/TR/WCAG21/">Web Content Accessibility Guidelines version 2.1 AA standard</a>, non-compliances listed below.
+accessibility.statement.accessible.p2=Some people may find parts of this service difficult to use:
+accessibility.statement.accessible.l1=some of the links in the service are not descriptive
+accessibility.statement.accessible.l2=the autocomplete functions on some pages in this service may cause issues for people using a screen reader
+accessibility.statement.accessible.l3=some of the pages in the service have a redundant fieldset, which could prevent users browsing out of context from understanding what is being selected
+accessibility.statement.accessible.l4=the 'Have you applied for money laundering supervision with HMRC?' page does not have a fieldset and legend attribute, so the purpose of the radio buttons may be unclear for some users
+accessibility.statement.accessible.l5=the input field on the 'What is your Corporation Tax Unique Tax Reference (UTR)?' page is unlabelled, which may prevent some users from understanding what they need to enter into the field
 
 accessibility.statement.whattodo.heading=What to do if you have difficulty using this service
 accessibility.statement.whattodo.p1=If you have difficulty using this service, use the ‘Get help with this page’ link on the page in the online service.
@@ -502,9 +508,19 @@ accessibility.statement.contacting.p3=Find out how to <a href="https://www.gov.u
 
 accessibility.statement.technical.heading=Technical information about this service’s accessibility
 accessibility.statement.technical.p1=HMRC is committed to making this service accessible, in accordance with the Public Sector Bodies (Websites and Mobile Applications) (No. 2) Accessibility Regulations 2018.
-accessibility.statement.technical.p2=This service is partially compliant with the <a href="https://www.w3.org/TR/WCAG21/">Web Content Accessibility Guidelines version 2.1 AA standard</a>.
-accessibility.statement.technical.p3=We have carried out an in-house expert review of the service and fixed all known accessibility issues.
-accessibility.statement.technical.p4=We will arrange a formal external audit of the full service as soon as possible, as part of our roadmap for making sure the service is fully compliant.
+accessibility.statement.technical.p2=This service is partially compliant with the <a href="https://www.w3.org/TR/WCAG21/">Web Content Accessibility Guidelines version 2.1 AA standard</a>, due to the non-compliances listed below.
+accessibility.statement.technical.heading2=Non-accessible content
+accessibility.statement.technical.p3=The content listed below is non-accessible for the following reasons.
+accessibility.statement.technical.heading3=Non-compliance with the accessibility regulations
+accessibility.statement.technical.p4=Some of the links in the service are not descriptive. This doesn’t meet WCAG 2.1 success criterion 2.4.4 (Link Purpose in context).
+accessibility.statement.technical.p5=The autocomplete functions on some pages in this service may cause issues for people using a screen reader. This doesn’t meet WCAG success criterion 4.1.2 (Name, Role, Value).
+accessibility.statement.technical.p6=Some of the pages in the service have a redundant fieldset, which could prevent users browsing out of context from understanding what is being selected. This doesn’t meet WCAG success criterion 1.3.1 (Info and Relationships) and 4.1.1 (Parsing).
+accessibility.statement.technical.p7=The ‘Have you applied for money laundering supervision with HMRC?’ page does not have a fieldset and legend attribute, so the purpose of the radio buttons may be unclear for some users. This doesn’t meet WCAG success criterion 1.3.1 (Info and Relationships).
+accessibility.statement.technical.p8=The input field on the 'What is your Corporation Tax Unique Tax Reference (UTR)?' page is unlabelled, which may prevent some users from understanding what they need to enter into the field. This doesn’t meet WCAG success criterion 1.3.1 (Info and Relationships) and 3.3.2 (Labels or Instructions).
+accessibility.statement.technical.p9=The error link in the ’Client details‘ page does not link to the error. This doesn‘t meet WCAG success criterion 2.4.1 (Bypass Blocks).
+accessibility.statement.technical.p10=The error validation message in the ‘What type of business are you?’ page is not descriptive. This doesn’t meet WCAG 2.1 success criterion 3.3.3 (Error Suggestion).
+accessibility.statement.technical.p11=We have carried out an in-house expert review of the service and fixed these accessibility issues. 
+accessibility.statement.technical.p12=We will arrange a further formal external audit of the full service as soon as possible, as part of our roadmap for making sure the service is fully compliant.
 
 accessibility.statement.nonaccessible.heading=Non accessible content
 accessibility.statement.nonaccessible.p1=The content listed below is non-accessible for the following reasons.
@@ -512,9 +528,9 @@ accessibility.statement.nonaccessible.p1=The content listed below is non-accessi
 accessibility.statement.noncompliance.heading=Non compliance with the accessibility regulations
 
 accessibility.statement.howtested.heading=How we tested this service
-accessibility.statement.howtested.p1=The service was last tested on 22 August 2019 and was checked for compliance with WCAG 2.1 AA.
+accessibility.statement.howtested.p1=The service was last tested on 23 October 2019 and was checked for compliance with WCAG 2.1 AA.
 accessibility.statement.howtested.p2=The full service was tested by HMRC and included disabled users.
-accessibility.statement.howtested.p3=This page was prepared on 23 September 2019. It was last updated on 23 September 2019.
+accessibility.statement.howtested.p3=This page was prepared on 23 September 2019. It was last updated on 11 December 2019.
 
 footer.links.accessibility.text=Accessibility
 footer.links.accessibility.url=/agent-subscription/accessibility-statement
