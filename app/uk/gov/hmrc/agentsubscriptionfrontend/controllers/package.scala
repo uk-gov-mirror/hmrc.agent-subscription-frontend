@@ -58,11 +58,11 @@ package object controllers {
     val businessTypeForm: Form[BusinessType] =
       Form[BusinessType](
         mapping(
-          "businessType" -> nonEmptyText
-            .verifying(
-              "businessType.error.invalid-choice",
-              value => businessTypes.contains(value)
-            ))(input => BusinessType(input))(bType => Some(bType.key))
+          "businessType" -> optional(text)
+            .transform[String](_.getOrElse(""), s => Some(s))
+            .verifying(radioInputStringSelected("businessType.error.invalid-choice"))
+            .verifying("businessType.error.invalid-choice", value => businessTypes.contains(value))
+        )(input => BusinessType(input))(bType => Some(bType.key))
       )
 
     def utrForm(businessType: String): Form[Utr] =
