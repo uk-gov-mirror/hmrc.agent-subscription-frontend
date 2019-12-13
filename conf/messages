@@ -522,11 +522,6 @@ accessibility.statement.technical.p10=The error validation message in the ‘Wha
 accessibility.statement.technical.p11=We have carried out an in-house expert review of the service and fixed these accessibility issues. 
 accessibility.statement.technical.p12=We will arrange a further formal external audit of the full service as soon as possible, as part of our roadmap for making sure the service is fully compliant.
 
-accessibility.statement.nonaccessible.heading=Non accessible content
-accessibility.statement.nonaccessible.p1=The content listed below is non-accessible for the following reasons.
-
-accessibility.statement.noncompliance.heading=Non compliance with the accessibility regulations
-
 accessibility.statement.howtested.heading=How we tested this service
 accessibility.statement.howtested.p1=The service was last tested on 23 October 2019 and was checked for compliance with WCAG 2.1 AA.
 accessibility.statement.howtested.p2=The full service was tested by HMRC and included disabled users.
