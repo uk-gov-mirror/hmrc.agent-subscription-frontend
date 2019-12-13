@@ -18,14 +18,15 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
-import play.api.{Configuration, Environment}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
-import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
+import play.api.{Configuration, Environment}
+import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent.hasNonEmptyEnrolments
+import uk.gov.hmrc.agentsubscriptionfrontend.auth.{Agent, AuthActions}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.models.ContinueId
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
-import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{accessibility_statement, cannot_create_account, not_agent, start}
+import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{accessibility_statement, cannot_create_account, not_agent, sign_in_check}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
@@ -42,8 +43,8 @@ class StartController @Inject()(
   subscriptionService: SubscriptionService,
   val subscriptionJourneyService: SubscriptionJourneyService,
   mcc: MessagesControllerComponents,
-  startTemplate: start,
   notAgentTemplate: not_agent,
+  signInCheckTemplate: sign_in_check,
   cannotCreateAccountTemplate: cannot_create_account,
   accessibilityStatementTemplate: accessibility_statement)(implicit val appConfig: AppConfig, val ec: ExecutionContext)
     extends FrontendController(mcc) with SessionBehaviour with AuthActions {
@@ -58,16 +59,27 @@ class StartController @Inject()(
 
   def start: Action[AnyContent] = Action.async { implicit request =>
     redirectUrlActions.withMaybeRedirectUrl { urlOpt =>
-      val nextUrl: String = routes.BusinessTypeController
-        .showBusinessTypeForm()
-        .toURLWithParams("continue" -> urlOpt)
-      Ok(startTemplate(nextUrl))
+      Redirect(
+        routes.StartController
+          .signInCheck()
+          .toURLWithParams("continue" -> urlOpt))
     }
   }
 
   def showNotAgent: Action[AnyContent] = Action.async { implicit request =>
     withAuthenticatedUser {
       Ok(notAgentTemplate())
+    }
+  }
+
+  def signInCheck: Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { agent =>
+      redirectUrlActions.withMaybeRedirectUrlCached {
+        agent match {
+          case hasNonEmptyEnrolments(_) => Ok(signInCheckTemplate())
+          case _                        => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
+        }
+      }
     }
   }
 

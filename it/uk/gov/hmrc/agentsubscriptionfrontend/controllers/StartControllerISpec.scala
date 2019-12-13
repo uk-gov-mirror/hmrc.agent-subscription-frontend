@@ -11,7 +11,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.models.{AmlsDetails, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionJourneyStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub.{partialSubscriptionWillSucceed, withMatchingUtrAndPostcode}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.{AgentSubscriptionJourneyStub, AgentSubscriptionStub, AuthStub}
-import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.{individual, subscribingAgentEnrolledForNonMTD}
+import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.{individual, subscribingAgentEnrolledForNonMTD,  subscribingCleanAgentWithoutEnrolments}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestData}
 
@@ -54,7 +54,6 @@ class StartControllerISpec extends BaseISpec {
       AgentSubscriptionStub.withMatchingUtrAndPostcode(
         validUtr,
         testPostcode,
-        isSubscribedToAgentServices = false,
         isSubscribedToETMP = true)
       AgentSubscriptionJourneyStub.givenNoSubscriptionJourneyRecordExists(AuthProviderId("12345-credId"))
     }
@@ -74,28 +73,14 @@ class StartControllerISpec extends BaseISpec {
   }
 
   "start" should {
-    "not require authentication" in {
+    "redirect to the sign in check" in {
       AuthStub.userIsNotAuthenticated()
 
       val result = await(controller.start(FakeRequest()))
 
-      status(result) shouldBe 200
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.StartController.signInCheck().url)
     }
-
-    "be available" in {
-      val result = await(controller.start()(FakeRequest()))
-
-      bodyOf(result) should include("Agent services account: sign in or set up")
-    }
-
-    "contain a start button pointing to /business-type" in {
-      val result = await(controller.start(FakeRequest()))
-      result should containLink("startpage.continue", routes.BusinessTypeController.showBusinessTypeForm().url)
-    }
-
-    behave like aPageWithFeedbackLinks(request => controller.start(request))
-
-    behave like aPageTakingContinueUrlAndContainingItAsALink(request => controller.start(request))
   }
 
   "showNotAgent" when {
@@ -132,6 +117,34 @@ class StartControllerISpec extends BaseISpec {
     }
 
     behave like aPageWithFeedbackLinks(request => controller.showNotAgent(request), authenticatedAs(individual))
+  }
+
+  "signInCheck" when {
+    "the current user is logged in" should {
+
+      "display the sign in check page with correct links" in new SetupUnsubscribed {
+        implicit val request = FakeRequest("GET", "/agent-subscription/sign-in-check?continue=/go/somewhere")
+        val result = await(controller.signInCheck(request))
+
+        status(result) shouldBe OK
+        contentType(result) shouldBe Some("text/html")
+        charset(result) shouldBe Some("utf-8")
+        bodyOf(result) should include(htmlEscapedMessage("sign-in-check.header"))
+        result should containLink("sign-in-check.sign-out.link", routes.SignedOutController.signOut().url)
+        result should containLink("sign-in-check.create.link", routes.BusinessTypeController.showBusinessTypeForm().url)
+        sessionStoreService.currentSession.continueUrl shouldBe Some("/go/somewhere")
+      }
+
+      "redirect to business type if the user has clean creds" in new SetupUnsubscribed {
+        implicit val request = FakeRequest("GET", "/agent-subscription/sign-in-check")
+        override implicit val authenticatedRequest: FakeRequest[AnyContentAsEmpty.type] = authenticatedAs(
+          subscribingCleanAgentWithoutEnrolments)
+        val result = await(controller.signInCheck(request))
+
+        status(result) shouldBe SEE_OTHER
+        redirectLocation(result) shouldBe Some(routes.BusinessTypeController.showBusinessTypeForm().url)
+      }
+    }
   }
 
   trait SetupUnsubscribed {
