@@ -16,7 +16,7 @@
 
 @import play.twirl.api.HtmlFormat
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-
+@import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
 
 @this(
 govUkTemplate: views.html.layouts.GovUkTemplate,
@@ -43,7 +43,8 @@ uiMainContentHeader: uk.gov.hmrc.play.views.html.layouts.MainContentHeader,
   mainContent: Html = HtmlFormat.empty,
   serviceInfoContent: Html = HtmlFormat.empty,
   scriptElem: Option[Html] = None,
-  userIsLoggedIn: Boolean)(implicit request: Request[_], messages: Messages)
+  userIsLoggedIn: Boolean,
+  hasTimeout: Boolean = true)(implicit request: Request[_], messages: Messages)
 
 
 
@@ -69,6 +70,25 @@ uiMainContentHeader: uk.gov.hmrc.play.views.html.layouts.MainContentHeader,
 }
 
 @head = {
+  <script>
+            window.getCookie = function (name) {
+                var match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+                if (match) return match[2];
+            };
+            window.jsConfig = window.jsConfig || {};
+            window.jsConfig.lang = window.getCookie("PLAY_LANG") || "en";
+    </script>
+    @if(hasTimeout) {
+        <script id="timeoutDialog">
+            window.jsConfig.timeoutEnabled = true;
+            window.jsConfig.timeout = @{appConfig.timeout};
+            window.jsConfig.countdown = @{appConfig.timeoutCountdown};
+            window.jsConfig.keep_alive_url = "@{routes.SignedOutController.keepAlive().url}";
+            window.jsConfig.message = "@{Messages("timeout-dialog.p1")}";
+            window.jsConfig.timed_out_url = "@{routes.SignedOutController.timedOut().url}";
+            window.jsConfig.logout_url = "@{routes.SignedOutController.signOut().url}";
+    </script>
+    }
     @uiHead(
       linkElem = None,
       headScripts = Some(headScripts))
@@ -81,6 +101,8 @@ uiMainContentHeader: uk.gov.hmrc.play.views.html.layouts.MainContentHeader,
     <script src="@controllers.routes.Assets.at("javascripts/scripts.js")" type="text/javascript"></script>
     <script src="@controllers.routes.Assets.at("javascripts/ga-events.js")" type="text/javascript"></script>
     <script src="@controllers.routes.Assets.at("javascripts/details.pollyfill.js")" type="text/javascript"></script>
+    <script src="@controllers.routes.Assets.at("javascripts/session-timeout.js")" type="text/javascript"></script>
+    <script src="@controllers.routes.Assets.at("javascripts/as-fe.js")" type="text/javascript"></script>
 }
 
 

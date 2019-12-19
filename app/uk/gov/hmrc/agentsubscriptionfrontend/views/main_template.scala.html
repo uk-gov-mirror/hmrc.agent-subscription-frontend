@@ -49,22 +49,6 @@ uiSidebar: uk.gov.hmrc.play.views.html.layouts.Sidebar,
 
 @scriptElement = {
   @scriptElem
-    @if(hasTimeout) {
-     <script id="timeoutDialog">
-        $.timeoutDialog({
-            timeout: @appConfig.timeout,
-            countdown: @appConfig.timeoutCountdown,
-            keep_alive_url: '@routes.SignedOutController.keepAlive()',
-            title: "@Messages("timeout-dialog.title")",
-            messageSeconds: "@Messages("timeout-dialog.seconds")",
-            messageMinutes: "@Messages("timeout-dialog.minutes")",
-            messageMinute: "@Messages("timeout-dialog.minute")",
-            logout_url: '@routes.SignedOutController.signOut()',
-            message: "@Messages("timeout-dialog.p1")",
-            keep_alive_button_text: "@Messages("timeout-dialog.button")"
-        });
-        </script>
-    }
 }
 
 @govukWrapper(appConfig = appConfig,
@@ -76,5 +60,6 @@ uiSidebar: uk.gov.hmrc.play.views.html.layouts.Sidebar,
     mainContent = uiArticle(mainContent),
     serviceInfoContent = serviceInfoContent,
     scriptElem = Some(scriptElement),
-    userIsLoggedIn = userIsLoggedIn
+    userIsLoggedIn = userIsLoggedIn,
+    hasTimeout = hasTimeout
 )

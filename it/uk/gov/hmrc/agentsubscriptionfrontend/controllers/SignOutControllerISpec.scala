@@ -133,7 +133,7 @@ class SignOutControllerISpec extends BaseISpec {
       val result = await(controller.signOutWithContinueUrl(fakeRequest))
 
       status(result) shouldBe 303
-      redirectLocation(result).head shouldBe "/agent-subscription/start"
+      redirectLocation(result).head shouldBe "/agent-subscription/task-list"
 
     }
 
@@ -158,14 +158,25 @@ class SignOutControllerISpec extends BaseISpec {
   }
 
   "signOut" should {
-    "logout and redirect to start page" in {
+    "logout and redirect to task list page" in {
       implicit val request: FakeRequest[AnyContentAsEmpty.type] = fakeRequest.withSession("sessionId" -> "SomeSession")
       val result = await(controller.signOut(request))
 
       status(result) shouldBe 303
 
-      redirectLocation(result).head shouldBe routes.StartController.start().url
+      redirectLocation(result).head shouldBe routes.TaskListController.showTaskList().url
       result.session.get("sessionId") shouldBe empty
+    }
+  }
+
+  "timedOut" should {
+    "show the timed out page with forbidden status" in {
+      implicit val request: FakeRequest[AnyContentAsEmpty.type] = fakeRequest
+      val result = await(controller.timedOut(request))
+
+      status(result) shouldBe 403
+      checkHtmlResultWithBodyText(result, "You have been signed out", "Sign in again")
+
     }
   }
 

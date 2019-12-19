@@ -24,6 +24,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.CallOps.addParamsToUrl
+import uk.gov.hmrc.agentsubscriptionfrontend.views.html.timed_out
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.cache.client.NoSessionException
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
@@ -32,6 +33,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class SignedOutController @Inject()(
+  timedOutTemplate: timed_out,
   val sessionStoreService: SessionStoreService,
   val redirectUrlActions: RedirectUrlActions,
   val metrics: Metrics,
@@ -90,12 +92,16 @@ class SignedOutController @Inject()(
     startNewSession
   }
 
-  def keepAlive = Action.async { implicit request =>
+  def keepAlive: Action[AnyContent] = Action.async { implicit request =>
     Future successful Ok("OK")
   }
 
+  def timedOut: Action[AnyContent] = Action.async { implicit request =>
+    Future successful Forbidden(timedOutTemplate())
+  }
+
   private def startNewSession: Result =
-    Redirect(routes.StartController.start()).withNewSession
+    Redirect(routes.TaskListController.showTaskList()).withNewSession
 
   def redirectToBusinessTypeForm: Action[AnyContent] = Action { implicit request =>
     Redirect(routes.BusinessTypeController.showBusinessTypeForm()).withNewSession
