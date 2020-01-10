@@ -419,7 +419,13 @@ class BusinessIdentificationController @Inject()(
 
   def showAlreadySubscribed: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      Ok(alreadySubscribedTemplate())
+      for {
+        agentSubContinueUrlOpt <- sessionStoreService.fetchContinueUrl
+        redirectUrl <- redirectUrlActions.getUrl(agentSubContinueUrlOpt)
+      } yield {
+        val continueUrl = redirectUrl.getOrElse(routes.SignedOutController.redirectToBusinessTypeForm().url)
+        Ok(alreadySubscribedTemplate(continueUrl))
+      }
     }
   }
 

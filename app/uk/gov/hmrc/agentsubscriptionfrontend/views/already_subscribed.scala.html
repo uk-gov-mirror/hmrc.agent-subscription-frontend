@@ -17,11 +17,15 @@
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes.SignedOutController
 @import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 @import uk.gov.hmrc.agentsubscriptionfrontend.views.html._
+@import uk.gov.hmrc.play.bootstrap.binders.RedirectUrl
 
 @this(
 mainTemplate:main_template
 )
-@()(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+
+
+@(continueUrl: String)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+
 
 @mainTemplate(appConfig, title = Messages("alreadySubscribed.title"), bodyClasses = None) {
 
@@ -29,6 +33,6 @@ mainTemplate:main_template
 
     <p>@Messages("alreadySubscribed.p1")</p>
 
-    <p><a draggable="false" class="button" href="@SignedOutController.redirectToBusinessTypeForm" role="button" id="finishSignOut">@Messages("button.finishSignOut")</a></p>
+    <p><a draggable="false" class="button" href="@continueUrl" role="button" id="finishSignOut">@Messages("button.finishSignOut")</a></p>
 
 }

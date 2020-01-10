@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
-import org.jsoup.Jsoup
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{redirectLocation, _}
@@ -27,6 +26,11 @@ import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionJourneyStub.
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData.id
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestData, TestSetupNoJourneyRecord}
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.HeaderCarrierConverter
+import uk.gov.hmrc.play.bootstrap.binders.RedirectUrl
+
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class BusinessIdentificationControllerISpec extends BaseISpec {
 
@@ -86,12 +90,29 @@ class BusinessIdentificationControllerISpec extends BaseISpec {
 
     behave like anAgentAffinityGroupOnlyEndpoint(request => controller.showAlreadySubscribed(request))
 
-    "display the already subscribed page if the current user is logged in and has affinity group = Agent" in new TestSetupNoJourneyRecord{
+    "display the already subscribed page with href to continueUrl if the current user is logged " +
+      "in and has affinity group = Agent and has continueUrl cached" in new TestSetupNoJourneyRecord {
+
+      implicit val request: FakeRequest[AnyContentAsEmpty.type] = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+
+      implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromHeadersAndSession(request.headers, Some(request.session))
+
+      await(sessionStoreService.cacheContinueUrl(RedirectUrl("/someContinueUrl")))
+
+      val result = await(controller.showAlreadySubscribed(authenticatedAs(subscribingCleanAgentWithoutEnrolments)))
+
+      result should containMessages("alreadySubscribed.title")
+      result should containLink("button.finishSignOut", "/someContinueUrl")
+    }
+
+    "display the already subscribed page with href to showBusinessTypeForm if the current user is logged" +
+      " in and has affinity group = Agent and no continueUrl cached" in new TestSetupNoJourneyRecord {
 
       val result = await(controller.showAlreadySubscribed(authenticatedAs(subscribingCleanAgentWithoutEnrolments)))
 
       result should containMessages("alreadySubscribed.title")
       result should containLink("button.finishSignOut", routes.SignedOutController.redirectToBusinessTypeForm().url)
+
     }
   }
 
