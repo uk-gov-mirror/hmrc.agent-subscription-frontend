@@ -26,6 +26,6 @@ mainTemplate: main_template
 
     <h1 class="heading-xlarge">@Messages("sign-in-check.header")</h1>
 
-    <p>@Messages("sign-in-check.p1")&nbsp;<a href='@routes.SignedOutController.signOut()'>@Messages("sign-in-check.sign-out.link")</a></p>
+    <p>@Messages("sign-in-check.p1.start")&nbsp;<a href='@routes.SignedOutController.signOut()'>@Messages("sign-in-check.sign-out.link")</a> @Messages("sign-in-check.p1.end")</p>
     <p>@Messages("sign-in-check.p2")&nbsp;<a href='@routes.BusinessTypeController.showBusinessTypeForm()'>@Messages("sign-in-check.create.link")</a></p>
 }
