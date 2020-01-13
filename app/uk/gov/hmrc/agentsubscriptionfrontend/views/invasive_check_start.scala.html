@@ -52,7 +52,7 @@ uiErrorSummary: uk.gov.hmrc.play.views.html.helpers.ErrorSummary)
                 </details>
 
                 @if(radioResponseForm.error("hasSaAgentCode").isDefined){
-                    <span class="error-message">@Messages("invasive.error.no-radio.selected")</span>
+                    <span class="error-message"><span>@Messages("error.prefix")</span>@Messages("invasive.error.no-radio.selected")</span>
                 }
 
                 <div class="multiple-choice" data-target="hasSaAgentCodeField">

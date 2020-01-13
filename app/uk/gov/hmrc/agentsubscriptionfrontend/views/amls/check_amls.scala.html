@@ -44,6 +44,7 @@
 @uiErrorSummary(Messages("error.summary.heading"), checkAmlsForm, Seq.empty, Some("check-amls"))
 }
 
+
 @uiFormHelper(
 action = routes.AMLSController.submitAmlsRegistered(), 'class -> "form js-form") {
 
@@ -56,7 +57,8 @@ action = routes.AMLSController.submitAmlsRegistered(), 'class -> "form js-form")
         ),
         '_legend -> headerTitle,
         '_groupDivClass -> "soft--ends",
-        '_fieldsetAttributes -> Html("""id='registeredAmls'""")
+        '_fieldsetAttributes -> Html("""id='registeredAmls'"""),
+        '_errorPrefix -> Messages("error.prefix")
         )
     </div>
 

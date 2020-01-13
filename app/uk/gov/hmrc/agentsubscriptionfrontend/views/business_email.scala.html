@@ -50,7 +50,8 @@ errorSummary: uk.gov.hmrc.play.views.html.helpers.ErrorSummary
         @inputTemplate(
             businessEmailForm("email"),
             '_inputClass -> "form-control input--cleared",
-            '_labelClass -> "heading-small soft--ends"
+            '_labelClass -> "heading-small soft--ends",
+            '_errorPrefix -> Messages("error.prefix")
         )
         </div>
 

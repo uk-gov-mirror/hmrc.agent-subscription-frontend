@@ -92,7 +92,8 @@ errorPrefixTemplate: error_prefix,
             '_label -> Messages("moneyLaunderingCompliance.membershipNumber.title"),
             '_inputClass -> "form-control input--cleared",
             '_labelClass -> "form-element-bold soft--ends",
-            '_dataAttributes -> Html("""data-uppercase="true"""")
+            '_dataAttributes -> Html("""data-uppercase="true""""),
+            '_errorPrefix -> Messages("error.prefix")
             )
         </div>
 
@@ -104,7 +105,8 @@ errorPrefixTemplate: error_prefix,
             '_inputHint -> Messages("moneyLaunderingCompliance.expiry.hint"),
             '_legendSpanClass -> "form-element-bold",
             '_legendClass -> "flush--ends",
-            '_hintId -> "dates"
+            '_hintId -> "dates",
+            '_errorPrefix -> Messages("error.prefix")
             )
         </div>
 

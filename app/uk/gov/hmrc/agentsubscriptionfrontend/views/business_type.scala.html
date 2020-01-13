@@ -56,7 +56,8 @@ formHelper: uk.gov.hmrc.play.views.html.helpers.FormWithCSRF
             ),
             '_legend -> headerTitle,
             '_groupDivClass -> "soft--ends",
-            '_fieldsetAttributes -> Html("""id='businessType'""")
+            '_fieldsetAttributes -> Html("""id='businessType'"""),
+            '_errorPrefix -> Messages("error.prefix")
         )
         </div>
 

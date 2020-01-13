@@ -46,7 +46,8 @@ uiInput: uk.gov.hmrc.play.views.html.helpers.Input
         <div class="form-group">
             @uiInput(
             ninoForm("nino"),
-            '_inputClass -> "form-control input--cleared"
+            '_inputClass -> "form-control input--cleared",
+            '_errorPrefix -> Messages("error.prefix")
             )
         </div>
 

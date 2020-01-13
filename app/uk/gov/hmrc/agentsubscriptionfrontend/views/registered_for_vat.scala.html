@@ -53,7 +53,8 @@ uiInputRadioGroup: uk.gov.hmrc.play.views.html.helpers.InputRadioGroup
                 ),
                 '_groupDivClass -> "soft--ends",
                 '_legendClass -> "visuallyhidden",
-                '_fieldsetAttributes -> Html("""id='registeredForVat'""")
+                '_fieldsetAttributes -> Html("""id='registeredForVat'"""),
+            '_errorPrefix -> Messages("error.prefix")
             )
         </div>
 

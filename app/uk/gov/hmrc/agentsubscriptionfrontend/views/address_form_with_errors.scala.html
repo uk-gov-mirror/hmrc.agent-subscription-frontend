@@ -49,7 +49,8 @@ uiInput: uk.gov.hmrc.play.views.html.helpers.Input
                     detailsForm("addressLine1"),
                     '_label -> Messages("address.form.with-errors.address_line_1"),
                     '_inputClass -> "form-control input--cleared",
-                    '_labelClass -> "heading-small soft--ends"
+                    '_labelClass -> "heading-small soft--ends",
+                    '_errorPrefix -> Messages("error.prefix")
                 )
             </div>
             <div class="form-group">
@@ -57,7 +58,8 @@ uiInput: uk.gov.hmrc.play.views.html.helpers.Input
                     detailsForm("addressLine2"),
                     '_label -> Messages("address.form.with-errors.address_line_2"),
                     '_inputClass -> "form-control input--cleared",
-                    '_labelClass -> "heading-small soft--ends"
+                    '_labelClass -> "heading-small soft--ends",
+                    '_errorPrefix -> Messages("error.prefix")
                 )
             </div>
             <div class="form-group">
@@ -65,7 +67,8 @@ uiInput: uk.gov.hmrc.play.views.html.helpers.Input
                     detailsForm("addressLine3"),
                     '_label -> Messages("address.form.with-errors.address_line_3"),
                     '_inputClass -> "form-control input--cleared",
-                    '_labelClass -> "heading-small soft--ends"
+                    '_labelClass -> "heading-small soft--ends",
+                    '_errorPrefix -> Messages("error.prefix")
                 )
             </div>
             <div class="form-group">
@@ -73,7 +76,8 @@ uiInput: uk.gov.hmrc.play.views.html.helpers.Input
                     detailsForm("addressLine4"),
                     '_label -> Messages("address.form.with-errors.town"),
                     '_inputClass -> "form-control input--cleared",
-                    '_labelClass -> "heading-small soft--ends"
+                    '_labelClass -> "heading-small soft--ends",
+                    '_errorPrefix -> Messages("error.prefix")
                 )
             </div>
             <div class="form-group">
@@ -82,7 +86,8 @@ uiInput: uk.gov.hmrc.play.views.html.helpers.Input
                     '_label -> Messages("address.form.with-errors.postcode"),
                     '_inputClass -> "form-control input--cleared input--small",
                     '_labelClass -> "heading-small soft--ends",
-                    '_dataAttributes -> Html("""data-uppercase="true"""")
+                    '_dataAttributes -> Html("""data-uppercase="true""""),
+                    '_errorPrefix -> Messages("error.prefix")
                 )
             </div>
 

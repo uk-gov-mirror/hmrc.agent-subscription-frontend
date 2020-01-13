@@ -51,7 +51,8 @@ uiInput: uk.gov.hmrc.play.views.html.helpers.Input
                 addressForm(s"addressLine$index"),
                 '_label -> Messages(s"updateBusinessAddress.address_line_$index.title"),
                 '_inputClass -> "form-control input--cleared",
-                '_labelClass -> "heading-small soft--ends"
+                '_labelClass -> "heading-small soft--ends",
+                '_errorPrefix -> Messages("error.prefix")
             )
             </div>
           }
@@ -62,7 +63,8 @@ uiInput: uk.gov.hmrc.play.views.html.helpers.Input
                 '_label -> Messages("updateBusinessAddress.postcode.title"),
                 '_inputClass -> "form-control input--cleared input--small",
                 '_labelClass -> "heading-small soft--ends",
-                '_dataAttributes -> Html("""data-uppercase="true"""")
+                '_dataAttributes -> Html("""data-uppercase="true""""),
+                '_errorPrefix -> Messages("error.prefix")
             )
             </div>
 

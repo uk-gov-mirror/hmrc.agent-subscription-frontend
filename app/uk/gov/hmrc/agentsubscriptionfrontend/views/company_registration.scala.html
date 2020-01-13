@@ -49,7 +49,7 @@ uiInput: uk.gov.hmrc.play.views.html.helpers.Input
 
     @* Can't use play ui text input as h1 needs to wrap a label *@
      <div class="form-group @if(crnForm.hasErrors){form-field--error}">
-         @crnForm.error("crn").map{formError => <span class="error-message"> @Messages(formError.message)</span>}
+         @crnForm.error("crn").map{formError => <span class="error-message"><span class="visuallyhidden">@Messages("error.prefix")</span> @Messages(formError.message)</span>}
        <input type="text" class="form-control input--cleared" name="crn" id="crn" value="@crnForm("crn").value">
     </div>
 

@@ -53,7 +53,8 @@ action = routes.AMLSController.submitCheckAmlsAlreadyAppliedForm, 'class -> "for
         ),
         '_groupDivClass -> "soft--ends",
         '_legend -> headerTitle,
-        '_fieldsetAttributes -> Html("""id='amls-applied-for'""")
+        '_fieldsetAttributes -> Html("""id='amls-applied-for'"""),
+        '_errorPrefix -> Messages("error.prefix")
         )
     </div>
 
