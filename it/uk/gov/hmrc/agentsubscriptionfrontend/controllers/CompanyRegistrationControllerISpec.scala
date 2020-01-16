@@ -55,7 +55,45 @@ class CompanyRegistrationControllerISpec extends BaseISpec with SessionDataMissi
       sessionStoreService.currentSession.agentSession shouldBe Some(agentSessionForLimitedCompany.copy(companyRegistrationNumber = Some(crn)))
     }
 
+    "read the crn as expected and save it to the session when supplied utr does not match with DES utr " +
+      "(retrieved using crn) but the businessType is Llp" in new TestSetupNoJourneyRecord{
+      val crn = CompanyRegistrationNumber("12345678")
+
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+        .withFormUrlEncodedBody("crn" -> "12345678")
+
+      AgentSubscriptionStub.withNonMatchingCtUtrAndCrn(agentSessionForLimitedPartnership.utr.get, crn)
+
+      sessionStoreService.currentSession.agentSession = Some(agentSessionForLimitedPartnership)
+
+      val result = await(controller.submitCompanyRegNumberForm()(request))
+
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.VatDetailsController.showRegisteredForVatForm().url)
+
+      sessionStoreService.currentSession.agentSession shouldBe Some(agentSessionForLimitedPartnership.copy(companyRegistrationNumber = Some(crn)))
+    }
+
     "redirect to /no-match page when supplied utr does not matches with DES utr (retrieved using crn)" in new TestSetupNoJourneyRecord{
+      val crn = CompanyRegistrationNumber("12345678")
+
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+        .withFormUrlEncodedBody("crn" -> "12345678")
+
+      AgentSubscriptionStub.withNonMatchingCtUtrAndCrn(agentSessionForLimitedCompany.utr.get, crn)
+
+      sessionStoreService.currentSession.agentSession = Some(agentSessionForLimitedCompany)
+
+      val result = await(controller.submitCompanyRegNumberForm()(request))
+
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showNoMatchFound().url)
+
+      sessionStoreService.currentSession.agentSession shouldBe Some(agentSessionForLimitedCompany.copy(companyRegistrationNumber = None))
+    }
+
+    "redirect to /no-match page when supplied utr does not matches with DES utr (retrieved using crn) and the " +
+      "businessType is not Llp" in new TestSetupNoJourneyRecord{
       val crn = CompanyRegistrationNumber("12345678")
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)

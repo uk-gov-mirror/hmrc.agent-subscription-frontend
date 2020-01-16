@@ -2,7 +2,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.support
 import java.time.LocalDate
 
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
-import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.{LimitedCompany, SoleTrader}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.{LimitedCompany, Llp, SoleTrader}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.{AmlsData, BusinessDetails, SubscriptionJourneyRecord, UserMapping}
 import uk.gov.hmrc.domain.{AgentCode, Nino}
@@ -39,6 +39,8 @@ object TestData {
       nino = Some(Nino("AE123456C")))
 
   val agentSessionForLimitedCompany: AgentSession = agentSession.copy(businessType = Some(LimitedCompany))
+
+  val agentSessionForLimitedPartnership: AgentSession = agentSession.copy(businessType = Some(Llp))
 
   val testRegistration = Registration(Some(registrationName), isSubscribedToAgentServices = false, isSubscribedToETMP = false, businessAddress, Some("test@gmail.com"))
 
