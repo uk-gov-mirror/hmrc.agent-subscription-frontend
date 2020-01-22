@@ -137,8 +137,8 @@ confirmBusiness.option.no=No - I want to enter a different UTR
 confirmBusiness.error.no-radio-selected=Select yes if this is your business
 
 #No agency found
-noAgencyFound.title=There is a problem
-noAgencyFound.p1=We could not find any records matching the details you entered.
+noAgencyFound.title=We could not find your business
+noAgencyFound.p1=We could not find a business in our records using the details you gave us.
 noAgencyFound.p2=Check the details and try again.
 
 #Already subscribed
@@ -307,8 +307,8 @@ createNewAccount.p1=You will need this user ID to sign in to your new agent serv
 
 #Non agent
 nonAgent.title=You have not signed in with an agent user ID
-nonAgent.p1=<a href="{0}">Sign in with an agent Government Gateway user ID</a> to continue.
-nonAgent.p2=If you do not have one, <a href="{0}">create a new user ID</a>, selecting the ‘Agent’ option.
+nonAgent.p1=To continue, <a href="{0}">sign in with an agent user ID</a>.
+nonAgent.p2=If you do not have one, <a href="{0}">create a new Government Gateway user ID</a>, selecting the ‘Agent’ option.
 
 #Link account
 linkClients.title=Link your clients to your agent services account
@@ -447,7 +447,7 @@ updateBusinessAddress.address_line_4.title = Address line 4 (Optional)
 updateBusinessAddress.postcode.title = Postcode
 updateBusinessAddress.continue = Continue
 
-postcodeNotAllowed.title=There is a problem
+postcodeNotAllowed.title=You cannot use this postcode
 postcodeNotAllowed.p1=You cannot use this postcode to create an agent services account.
 postcodeNotAllowed.p2=Use a different postcode and try again.
 postcodeNotAllowed.button=Try Again
