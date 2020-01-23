@@ -44,7 +44,7 @@ class SignedOutController @Inject()(
   mcc: MessagesControllerComponents)(implicit val appConfig: AppConfig, val ec: ExecutionContext)
     extends FrontendController(mcc) with SessionBehaviour with AuthActions {
 
-  def redirectUserToCreateCleanCreds: Action[AnyContent] = Action.async { implicit request =>
+  def redirectAgentToCreateCleanCreds: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { agent =>
       for {
         agentSubContinueUrlOpt <- sessionStoreService.fetchContinueUrl
@@ -62,6 +62,21 @@ class SignedOutController @Inject()(
 
         SeeOther(addParamsToUrl(appConfig.ggRegistrationFrontendExternalUrl, "continue" -> Some(continueUrl))).withNewSession
       }
+    }
+  }
+
+  def redirectToCreateCleanCreds: Action[AnyContent] = Action.async { implicit request =>
+    for {
+      agentSubContinueUrlOpt <- sessionStoreService.fetchContinueUrl
+      redirectUrl            <- redirectUrlActions.getUrl(agentSubContinueUrlOpt)
+    } yield {
+      val continueUrl =
+        addParamsToUrl(
+          appConfig.rootContinueUrl,
+          "continue" -> redirectUrl
+        )
+
+      SeeOther(addParamsToUrl(appConfig.ggRegistrationFrontendExternalUrl, "continue" -> Some(continueUrl))).withNewSession
     }
   }
 

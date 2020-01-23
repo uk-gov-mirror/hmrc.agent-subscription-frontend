@@ -97,7 +97,8 @@ POST        /submit-modified-address                       uk.gov.hmrc.agentsubs
 GET         /complete                                        uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showSubscriptionComplete
 GET         /sign-in-with-new-user-id                      uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showSignInWithNewID
 
-GET         /create-clean-creds                            uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.redirectUserToCreateCleanCreds
+GET         /create-clean-creds-agent                            uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.redirectAgentToCreateCleanCreds
+GET         /create-clean-creds                            uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.redirectToCreateCleanCreds
 
 GET         /redirect-to-asaccount                         uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.redirectToASAccountPage
 GET         /start-survey                                  uk.gov.hmrc.agentsubscriptionfrontend.controllers.SignedOutController.startSurvey

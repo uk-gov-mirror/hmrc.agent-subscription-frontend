@@ -30,7 +30,7 @@ class SignOutControllerISpec extends BaseISpec {
   "redirectToSos" should {
 
     "redirect user to create clean creds" in new TestSetup {
-      private val result = await(controller.redirectUserToCreateCleanCreds(authenticatedAs(subscribingAgentEnrolledForNonMTD)))
+      private val result = await(controller.redirectAgentToCreateCleanCreds(authenticatedAs(subscribingAgentEnrolledForNonMTD)))
 
       status(result) shouldBe 303
       redirectLocation(result).head should include(sosRedirectUrl)
@@ -39,7 +39,7 @@ class SignOutControllerISpec extends BaseISpec {
     "the SOS redirect URL should include an ID of the saved continue id" in new TestSetup {
       implicit val request: FakeRequest[AnyContentAsEmpty.type] = authenticatedAs(subscribingAgentEnrolledForNonMTD)
 
-      private val result = await(controller.redirectUserToCreateCleanCreds(request))
+      private val result = await(controller.redirectAgentToCreateCleanCreds(request))
       redirectLocation(result).head should include(
         s"continue=%2Fagent-subscription%2Freturn-after-gg-creds-created%3Fid%3Dfoo")
     }
@@ -61,7 +61,7 @@ class SignOutControllerISpec extends BaseISpec {
       sessionStoreService.currentSession.continueUrl = Some(ourContinueUrl)
 
       assertContinueUrl(
-        await(controller.redirectUserToCreateCleanCreds(authenticatedAs(subscribingAgentEnrolledForNonMTD))),
+        await(controller.redirectAgentToCreateCleanCreds(authenticatedAs(subscribingAgentEnrolledForNonMTD))),
         ourContinueUrl
       )
     }
@@ -71,7 +71,7 @@ class SignOutControllerISpec extends BaseISpec {
       implicit val request: FakeRequest[AnyContentAsEmpty.type] = authenticatedAs(subscribingAgentEnrolledForNonMTD)
       sessionStoreService.currentSession.continueUrl = Some(ourContinueUrl)
 
-      private val result = await(controller.redirectUserToCreateCleanCreds(request))
+      private val result = await(controller.redirectAgentToCreateCleanCreds(request))
 
       val sosContinueValueUnencoded =
         s"/agent-subscription/return-after-gg-creds-created?id=foo&continue=${URLEncoder.encode(ourContinueUrl, "UTF-8")}"

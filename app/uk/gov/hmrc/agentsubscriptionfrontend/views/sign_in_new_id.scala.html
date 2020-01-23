@@ -27,7 +27,7 @@ mainTemplate: main_template
     <h1 class="heading-xlarge">@Messages("sign-in-new-id.header")</h1>
             <p>@Messages("sign-in-new-id.p1")</p>
             <p>@Messages("sign-in-new-id.p2")</p>
-            <p>@Html(Messages("sign-in-new-id.p3", routes.SignedOutController.redirectUserToCreateCleanCreds))</p>
+            <p>@Html(Messages("sign-in-new-id.p3", routes.SignedOutController.redirectAgentToCreateCleanCreds))</p>
 
             <a class="button" href="@routes.SignedOutController.redirectToBusinessTypeForm" draggable="false" role="button" id="signInWithNewId">@Messages("sign-in-new-id.button")</a>
 }

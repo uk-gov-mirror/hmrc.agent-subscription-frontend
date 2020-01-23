@@ -29,7 +29,7 @@
     <p>@Messages("createNewAccount.p1")</p>
 
     <p>
-     <a class="button margin-bottom-10 margin-right-5" href="@SignedOutController.redirectUserToCreateCleanCreds" draggable="false" role="button" id="buttonGoToGg">@Messages("button.register")</a>
+     <a class="button margin-bottom-10 margin-right-5" href="@SignedOutController.redirectAgentToCreateCleanCreds" draggable="false" role="button" id="buttonGoToGg">@Messages("button.register")</a>
      <a class="button--secondary" href="@routes.TaskListController.savedProgress(Some(routes.BusinessIdentificationController.showCreateNewAccount().url))" draggable="false" role="button">@Messages("button.saveComeBackLater")</a>
     </p>
 }

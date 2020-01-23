@@ -71,14 +71,16 @@ class CompanyRegistrationController @Inject()(
                 case Some(utr) =>
                   existingSession.businessType match {
                     case Some(businessType) => {
-                      subscriptionService.matchCorporationTaxUtrWithCrn(utr, validCrn).flatMap { foundMatch =>
-                        if (foundMatch || businessType == Llp) {
-                          if(businessType == Llp) Logger.warn(s"businessType $businessType CTUtr CRN match result was $foundMatch")
-                          updateSessionAndRedirect(existingSession.copy(companyRegistrationNumber = Some(validCrn)))(
-                            routes.VatDetailsController.showRegisteredForVatForm())
-                        } else {
-                          Redirect(routes.BusinessIdentificationController.showNoMatchFound())
-                        }
+                      subscriptionService.matchCorporationTaxUtrWithCrn(utr, validCrn).flatMap {
+                        foundMatch =>
+                          if (foundMatch || businessType == Llp) {
+                            if (businessType == Llp)
+                              Logger.warn(s"businessType $businessType CTUtr CRN match result was $foundMatch")
+                            updateSessionAndRedirect(existingSession.copy(companyRegistrationNumber = Some(validCrn)))(
+                              routes.VatDetailsController.showRegisteredForVatForm())
+                          } else {
+                            Redirect(routes.BusinessIdentificationController.showNoMatchFound())
+                          }
                       }
                     }
                     case _ => Redirect(routes.BusinessTypeController.showBusinessTypeForm())

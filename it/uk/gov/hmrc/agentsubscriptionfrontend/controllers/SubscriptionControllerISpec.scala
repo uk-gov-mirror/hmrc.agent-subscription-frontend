@@ -550,7 +550,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         "To finish this step, sign in again using the new user ID you created for your agent services account.",
       "If you do not have one")
 
-      result should containLinkText("create a new user ID", routes.SignedOutController.redirectUserToCreateCleanCreds().url)
+      result should containLinkText("create a new user ID", routes.SignedOutController.redirectAgentToCreateCleanCreds().url)
     }
   }
 
