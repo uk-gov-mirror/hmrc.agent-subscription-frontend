@@ -52,7 +52,7 @@ mainTemplate: main_template,
 }
 
 @dateFormWithRefinedErrors = @{
-    amlsPendingForm.copy(errors = amlsPendingForm.errors.filterNot(error => error.message == "" || !error.key.contains("expiry")))
+    amlsPendingForm.copy(errors = amlsPendingForm.errors.filterNot(error => error.message == "" || error.key.contains("appliedOn.day") || error.key.contains("appliedOn.month") || error.key.contains("appliedOn.year")))
 }
 
 @headerTitle = {
@@ -80,7 +80,8 @@ mainTemplate: main_template,
             '_legendSpanClass -> "form-element-bold",
             '_legend -> headerTitle,
             '_legendClass -> "flush--ends",
-            '_hintId -> "applied-on"
+            '_hintId -> "applied-on",
+                '_errorPrefix -> Messages("error.prefix")
             )
         </div>
 
