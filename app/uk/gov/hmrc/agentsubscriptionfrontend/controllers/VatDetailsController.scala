@@ -67,9 +67,9 @@ class VatDetailsController @Inject()(
             (agentSession.businessType, agentSession.registeredForVat) match {
               case (Some(businessType), Some(registeredForVat)) =>
                 val rfv = RegisteredForVat(RadioInputAnswer.apply(registeredForVat.toString))
-                Ok(registeredForVatTemplate(registeredForVatForm.fill(rfv), getBackLink(businessType)))
+                Ok(registeredForVatTemplate(registeredForVatForm.fill(rfv), getBackLink(agent, businessType)))
               case (Some(businessType), None) =>
-                Ok(registeredForVatTemplate(registeredForVatForm, getBackLink(businessType)))
+                Ok(registeredForVatTemplate(registeredForVatForm, getBackLink(agent, businessType)))
 
               case _ => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
             }
@@ -100,12 +100,12 @@ class VatDetailsController @Inject()(
     }
 
   def submitRegisteredForVatForm: Action[AnyContent] = Action.async { implicit request =>
-    withSubscribingAgent { _ =>
+    withSubscribingAgent { agent =>
       withValidSession { (businessType, existingSession) =>
         registeredForVatForm
           .bindFromRequest()
           .fold(
-            formWithErrors => Ok(registeredForVatTemplate(formWithErrors, getBackLink(businessType))),
+            formWithErrors => Ok(registeredForVatTemplate(formWithErrors, getBackLink(agent, businessType))),
             choice => {
               val nextPage = if (choice.confirm == Yes) {
                 routes.VatDetailsController.showVatDetailsForm()
@@ -153,9 +153,12 @@ class VatDetailsController @Inject()(
     }
   }
 
-  private def getBackLink(businessType: BusinessType) =
+  private def getBackLink(agent: Agent, businessType: BusinessType) =
     if (businessType == SoleTrader || businessType == Partnership) {
-      routes.DateOfBirthController.showDateOfBirthForm().url
+      agent.authNino match {
+        case Some(_) => routes.DateOfBirthController.showDateOfBirthForm().url
+        case None    => routes.PostcodeController.showPostcodeForm().url
+      }
     } else {
       routes.CompanyRegistrationController.showCompanyRegNumberForm().url
     }
