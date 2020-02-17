@@ -74,7 +74,8 @@ lazy val compileDeps = Seq(
   "uk.gov.hmrc" %% "simple-reactivemongo" % "7.22.0-play-26",
   "uk.gov.hmrc" %% "http-caching-client" % "9.0.0-play-26",
   "uk.gov.hmrc" %% "play-conditional-form-mapping" % "1.2.0-play-26",
-  "org.typelevel" %% "cats" % "0.9.0"
+  "org.typelevel" %% "cats" % "0.9.0",
+  "uk.gov.hmrc" %% "play-language" % "4.2.0-play-26"
 )
 
 def tmpMacWorkaround(): Seq[ModuleID] =

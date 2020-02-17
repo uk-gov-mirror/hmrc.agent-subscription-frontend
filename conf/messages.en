@@ -40,7 +40,7 @@ global.error.500.vat_helpline=if you need help with Making Tax Digital for VAT.
 global.error.500.sa_helpline.link=Call the HMRC Self Assessment online services helpline
 global.error.500.sa_helpline=if you need help with Making Tax Digital for Income Tax.
 
-##Errors that override Play default messages
+##Errors that override Play default messages.en
 error.maxLength = You must not enter more than {0} figures
 error.email= Enter a valid email address, like yourname@example.com
 

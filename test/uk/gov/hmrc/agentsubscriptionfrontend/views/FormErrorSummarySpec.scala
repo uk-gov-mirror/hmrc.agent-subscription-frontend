@@ -44,7 +44,7 @@ class FormErrorSummarySpec extends UnitSpec {
   implicit val messages = messagesApi.preferred(request)
 
   "form_error_summary" should {
-    "display error messages including arguments" in {
+    "display error messages.en including arguments" in {
 
       val formWithError = testForm.bind(Map("name" -> "too long too long"))
       val errorView = new uk.gov.hmrc.play.views.html.helpers.ErrorSummary
