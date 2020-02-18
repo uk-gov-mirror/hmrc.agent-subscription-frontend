@@ -47,7 +47,7 @@ mainTemplate: main_template,
 }
 
 @DateFieldErrorsAll = @{
-    if(amlsPendingForm("expiry").hasErrors && !amlsPendingForm("appliedOn.day").hasErrors && !amlsPendingForm("appliedOn.month").hasErrors && !amlsPendingForm("appliedOn.year").hasErrors)
+    if(amlsPendingForm("appliedOn").hasErrors && !amlsPendingForm("appliedOn.day").hasErrors && !amlsPendingForm("appliedOn.month").hasErrors && !amlsPendingForm("appliedOn.year").hasErrors)
         "date-field-errors-all"
 }
 
@@ -64,7 +64,7 @@ mainTemplate: main_template,
 <a href="@mayBeGoBackUrl.getOrElse(routes.AMLSController.showCheckAmlsAlreadyAppliedForm.url)" class="link-back">@Messages("button.back")</a>
 
     @if(amlsPendingForm.hasErrors) {
-        @uiErrorSummary(Messages("error.summary.heading"), amlsPendingForm, Seq.empty, Some("amls-pending-details"))
+        @uiErrorSummary(Messages("error.summary.heading"), dateFormWithRefinedErrors, Seq.empty, Some("amls-pending-details"))
     }
 
 
