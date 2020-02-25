@@ -430,11 +430,11 @@ checkAnswers.ggId.xs=XXXX-XXXX-{0}
 businessName.title=What is your business name?
 businessName.updated.title=Update your business name
 businessName.updated.p1=Make sure your business name only includes letters a to z, numbers, commas, full stops, apostrophes, hyphens, forward slashes, and spaces.
-businessName.description=Your business name will not be updated in other government services.
+businessName.description=Your business name will only be updated in your agent services account.
 businessName.continue.button=Continue
 
 businessEmail.title=What is your business email address?
-businessEmail.description=Your business email address will not be updated in other government services.
+businessEmail.description=We will only use this to send you a confirmation email. Your business email address will only be updated in your agent services account.
 businessEmail.continue.button=Continue
 
 updateBusinessAddress.title=Update your business address
