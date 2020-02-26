@@ -166,6 +166,20 @@
   }
 }
 
+.welsh-toggle {
+    padding-right: 15px;
+    float: right;
+    color: #626A6E;
+    font-weight: bold;
+    margin-bottom: 0;
+    text-decoration: none
+}
+
+#cymraeg-switch:hover, #english-switch:hover{
+    color: white;
+    text-decoration: underline;
+}
+
 @import 'partials/_dateFields';
 @import 'partials/_checkAnswers';
 @import 'partials/_taskList';
