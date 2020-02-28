@@ -132,8 +132,8 @@ class SubscriptionController @Inject()(
           case (utr, postcode, Some(registration), amlsData) =>
                     for {
                     _ <- updateSessionBeforeSubscribing(registration)
-                    subscriptionResponse <- subscriptionService
-                      .subscribe(utr, postcode, registration, amlsData)
+                    langForEmail = extractLangFromCookie
+                    subscriptionResponse <- subscriptionService.subscribe(utr, postcode, registration, amlsData, langForEmail)
                     result <- redirectSubscriptionResponse(subscriptionResponse, agent)
                     } yield result
 
@@ -153,6 +153,14 @@ class SubscriptionController @Inject()(
         .map(Redirect(_))
     }
   }
+
+  private def extractLangFromCookie(implicit request: Request[_]): String =
+    request.cookies
+      .get("PLAY_LANG")
+      .fold{
+        Logger.info("PLAY_LANG cookie not found, using 'en'")
+        "en"
+      }(_.value)
 
   private def redirectSubscriptionResponse(either: Either[SubscriptionReturnedHttpError, (Arn, String)], agent: Agent)(
     implicit request: Request[AnyContent]): Future[Result] =
