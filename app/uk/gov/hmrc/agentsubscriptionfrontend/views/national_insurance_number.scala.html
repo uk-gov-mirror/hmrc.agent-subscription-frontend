@@ -42,7 +42,6 @@ uiInput: uk.gov.hmrc.play.views.html.helpers.Input
     <p class="form-hint">@Messages("nino.hint")</p>
 
     @uiFormHelper(action = routes.NationalInsuranceController.submitNationalInsuranceNumberForm(), 'class -> "form js-form") {
-
         <div class="form-group">
             @uiInput(
             ninoForm("nino"),
