@@ -20,8 +20,9 @@ import java.time.LocalDate
 
 import com.github.tomakehurst.wiremock.client.WireMock._
 import org.scalatest.concurrent.ScalaFutures
+import play.api.i18n.Lang
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.mvc.{AnyContent, Request}
+import play.api.mvc.{AnyContent, Cookie, Request}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
@@ -178,7 +179,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       "agency is already subscribed to MTD" in new TestSetupWithCompleteJourneyRecord {
         AgentSubscriptionStub.subscriptionWillConflict(validUtr, subscriptionRequestWithNoEdit())
 
-        implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+        implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments).withCookies(Cookie("PLAY_LANG", "en"))
 
         val result = await(controller.submitCheckAnswers(request))
 
@@ -497,7 +498,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       "all fields are supplied" in new TestSetupWithCompleteJourneyRecordAndCreate {
         AgentSubscriptionStub.subscriptionWillSucceed(validUtr, subscriptionRequestWithNoEdit(), arn = "TARN00023")
 
-        implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+        implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments).withCookies(Cookie("PLAY_LANG", "en"))
         sessionStoreService.currentSession.continueUrl = Some("/some/url")
 
         val result = await(controller.submitCheckAnswers(request))
@@ -511,7 +512,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       "some fields are supplied" in new TestSetupWithCompleteJourneyRecordAndCreate {
         AgentSubscriptionStub.subscriptionWillSucceed(validUtr, subscriptionRequestWithNoEdit())
 
-        implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+        implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments).withCookies(Cookie("PLAY_LANG", "en"))
         sessionStoreService.currentSession.continueUrl = Some("/some/url")
 
         val result = await(controller.submitCheckAnswers(request))
@@ -526,7 +527,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         val amlsDetails = Some(AmlsDetails("supervisory", Right(RegisteredDetails("123", LocalDate.now()))))
         AgentSubscriptionStub.subscriptionWillSucceed(validUtr, subscriptionRequestWithNoEdit())
 
-        implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+        implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments).withCookies(Cookie("PLAY_LANG", "en"))
         sessionStoreService.currentSession.continueUrl = Some("/some/url")
         val result = await(controller.submitCheckAnswers(request))
         status(result) shouldBe 303
@@ -598,6 +599,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
           countryCode = countryCode),
         email = "agency@example.com"
       ),
+      langForEmail = Some(Lang("en")),
       amlsDetails = Some(amlsDetails))
 
 
@@ -617,6 +619,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         ),
         email = testRegistration.emailAddress.get
       ),
+      langForEmail = Some(Lang("en")),
       amlsDetails = Some(amlsDetails)
     )
 
@@ -640,6 +643,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
           countryCode = "GB"),
         email = "agency2@example.com"
       ),
+      langForEmail = Some(Lang("en")),
       amlsDetails = Some(amlsDetails)
     )
 

@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.models
 
+import play.api.i18n.Lang
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import play.api.libs.json._
 
@@ -36,8 +37,9 @@ case class SubscriptionRequest(
   utr: Utr,
   knownFacts: SubscriptionRequestKnownFacts,
   agency: Agency,
-  amlsDetails: Option[AmlsDetails],
-  lang: String)
+  langForEmail: Option[Lang],
+  amlsDetails: Option[AmlsDetails]
+)
 
 object SubscriptionRequest {
   implicit val format: Format[SubscriptionRequest] = Json.format[SubscriptionRequest]

@@ -263,7 +263,8 @@ object AgentSubscriptionStub {
                                       |      "countryCode": "${address.countryCode}"
                                       |    },
                                       |    "email": "${agency.email}"
-                                      |  }
+                                      |  },
+                                      |  "langForEmail": "${request.langForEmail.fold("")(_.code)}"
                                       |  ${request.amlsDetails.get.details match {
                                         case Right(registeredDetails) =>
                                           s""","amlsDetails" : {

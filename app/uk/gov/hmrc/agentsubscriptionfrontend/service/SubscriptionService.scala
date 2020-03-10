@@ -22,6 +22,7 @@ import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
 import play.api.Logger
 import play.api.http.Status
+import play.api.i18n.Lang
 import play.api.mvc.Result
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr, Vrn}
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent
@@ -60,8 +61,8 @@ class SubscriptionService @Inject()(
     utr: Utr,
     postcode: Postcode,
     registration: Registration,
-    amlsData: Option[AmlsData],
-    langForEmail: String)(
+    langForEmail: Option[Lang],
+    amlsData: Option[AmlsData])(
     implicit hc: HeaderCarrier,
     ec: ExecutionContext): Future[Either[SubscriptionReturnedHttpError, (Arn, String)]] = {
     val subscriptionDetails = mapper(utr, postcode, registration, amlsData)
@@ -71,7 +72,7 @@ class SubscriptionService @Inject()(
     }
   }
 
-  def subscribeAgencyToMtd(subscriptionDetails: SubscriptionDetails, langForEmail: String)(
+  def subscribeAgencyToMtd(subscriptionDetails: SubscriptionDetails, langForEmail: Option[Lang])(
     implicit hc: HeaderCarrier,
     ec: ExecutionContext): Future[Either[Int, Arn]] = {
     val address = if (subscriptionDetails.address.countryCode != "GB") {
@@ -87,11 +88,11 @@ class SubscriptionService @Inject()(
       subscriptionDetails.utr,
       SubscriptionRequestKnownFacts(subscriptionDetails.knownFactsPostcode),
       Agency(name = subscriptionDetails.name, email = subscriptionDetails.email, address = address),
+      langForEmail,
       subscriptionDetails.amlsData match {
         case Some(amlsData) => amlsData.amlsDetails
         case None           => None
-      },
-      langForEmail
+      }
     )
 
     agentSubscriptionConnector.subscribeAgencyToMtd(request).map[Either[Int, Arn]] { arn =>

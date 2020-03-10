@@ -5,6 +5,7 @@ import java.time.LocalDate
 import com.kenshoo.play.metrics.Metrics
 import org.scalatest.Assertion
 import play.api.http.Status
+import play.api.i18n.Lang
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr, Vrn}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.SoleTrader
@@ -386,6 +387,7 @@ class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {
           countryCode = "GB"),
         email = "agency@example.com"
       ),
+      Some(Lang("en")),
       amlsDetails = Some(AmlsDetails("supervisory", Right(RegisteredDetails("123456789", LocalDate.now()))))
     )
 
