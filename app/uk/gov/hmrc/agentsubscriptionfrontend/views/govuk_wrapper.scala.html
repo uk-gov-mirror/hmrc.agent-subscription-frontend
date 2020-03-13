@@ -106,11 +106,11 @@ uiMainContentHeader: uk.gov.hmrc.play.views.html.layouts.MainContentHeader,
 
     @insideHeaderNavLinks = {
     @if(appConfig.languageToggle){
-        <div class="text--right">@views.html.language_selection(
+        <li class="text--right">@views.html.language_selection(
             appConfig.languageMap,
             appConfig.routeToSwitchLanguage,
-            customClass = Some("welsh-toggle")
-        )</div>
+            customClass = Some("cy")
+        )</li>
     }
     }
 
