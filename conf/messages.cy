@@ -137,8 +137,8 @@ confirmBusiness.option.no=Na – hoffwn nodi UTR gwahanol
 confirmBusiness.error.no-radio-selected=Dewiswch ‘Iawn’ os mai dyma’ch busnes
 
 #No agency found
-noAgencyFound.title=
-noAgencyFound.p1=
+noAgencyFound.title=Nid oeddem yn gallu dod o hyd i’ch busnes
+noAgencyFound.p1=Nid oeddem yn gallu dod o hyd i fusnes yn ein cofnodion drwy ddefnyddio’r manylion a roesoch i ni.
 noAgencyFound.p2=Gwiriwch y manylion a rhowch gynnig arall arni.
 
 #Already subscribed
@@ -178,12 +178,12 @@ saved-progress.continue=Ailgydio ynddi o ble’r oeddech y tro diwethaf
 saved-progress.finish=Gorffen ac allgofnodi
 
 #Sign in check
-sign-in-check.header=
-sign-in-check.p1.start=
-sign-in-check.sign-out.link=
-sign-in-check.p1.end=
-sign-in-check.p2=
-sign-in-check.create.link=
+sign-in-check.header=Rydych wedi mewngofnodi gyda’ch Dynodydd Defnyddiwr (ID) gwasanaethau ar-lein CThEM ar gyfer asiantau
+sign-in-check.p1.start=Os oes eisoes gennych gyfrif gwasanaethau asiant, bydd angen i chi
+sign-in-check.sign-out.link=fewngofnodi eto
+sign-in-check.p1.end=gyda’r Dynodydd Defnyddiwr (ID) a gawsoch wrth greu’ch cyfrif.
+sign-in-check.p2=Os nad oes un gennych, gallwch
+sign-in-check.create.link=greu cyfrif gwasanaethau asiant.
 
 #Check business type
 businessType.title=Pa fath o fusnes ydych chi?
@@ -202,13 +202,13 @@ utr.title=Beth yw Cyfeirnod Unigryw y Trethdalwr (UTR) eich cwmni?
 utr.header.sole_trader=Beth yw’ch Cyfeirnod Unigryw y Trethdalwr (UTR) ar gyfer Hunanasesiad?
 utr.header.limited_company=Beth yw’ch Cyfeirnod Unigryw y Trethdalwr (UTR) ar gyfer Treth Gorfforaeth?
 utr.header.partnership=Beth yw Cyfeirnod Unigryw y Trethdalwr (UTR) eich partneriaeth?
-utr.header.llp=
+utr.header.llp=Beth yw Cyfeirnod Unigryw y Trethdalwr (UTR) eich partneriaeth atebolrwydd cyfyngedig?
 
 utr.description.start=Rhif 10 digid yw hwn, er enghraifft 1234567890. Bydd hwn i’w weld ar Ffurflenni Treth a llythyrau eraill
 utr.description.about.sole_trader=ynglŷn â Hunanasesiad.
 utr.description.about.limited_company=ynglŷn â Threth Gorfforaeth.
 utr.description.about.partnership=ynglŷn â Hunanasesiad.
-utr.description.about.llp=
+utr.description.about.llp=oddi wrth CThEM ynghylch y bartneriaeth atebolrwydd cyfyngedig.
 utr.description.end=Efallai y cyfeirir ato gan ddefnyddio’r geiriau ‘cyfeirnod’, ‘UTR’ neu ‘defnydd swyddogol’.
 
 utr.find-lost=Dod o hyd i UTR coll (yn agor ffenestr neu dab newydd)
@@ -307,8 +307,8 @@ createNewAccount.p1=Bydd angen y Dynodydd Defnyddiwr (ID) hwn i fewngofnodi i’
 
 #Non agent
 nonAgent.title=Nid ydych wedi mewngofnodi gyda Dynodydd Defnyddiwr (ID) asiant
-nonAgent.p1=
-nonAgent.p2=
+nonAgent.p1=I fynd yn eich blaen, <a href="{0}">mewngofnodwch gyda Dynodydd Defnyddiwr (ID) asiant</a>.
+nonAgent.p2=Os nad oes un gennych, <a href="{0}">crëwch Ddynodydd Defnyddiwr (ID) Porth y Llywodraeth newydd</a>, gan ddewis yr opsiwn ‘Asiant’.
 
 #Link account
 linkClients.title=Cysylltu’ch cleientiaid â’ch cyfrif gwasanaethau asiant
@@ -447,7 +447,7 @@ updateBusinessAddress.address_line_4.title =Llinell cyfeiriad 4 (dewisol)
 updateBusinessAddress.postcode.title =Cod post
 updateBusinessAddress.continue =Yn eich blaen
 
-postcodeNotAllowed.title=
+postcodeNotAllowed.title=Ni allwch ddefnyddio’r cod post hwn
 postcodeNotAllowed.p1=Ni allwch ddefnyddio’r cod post hwn i greu cyfrif gwasanaethau asiant.
 postcodeNotAllowed.p2=Defnyddiwch god post gwahanol a rhowch gynnig arall arni.
 postcodeNotAllowed.button=Rhoi cynnig arall arni
