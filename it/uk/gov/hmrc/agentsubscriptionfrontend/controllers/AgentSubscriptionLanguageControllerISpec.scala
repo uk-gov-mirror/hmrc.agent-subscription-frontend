@@ -35,7 +35,7 @@ class AgentSubscriptionLanguageControllerISpec extends BaseISpec {
 
       val result = controller.switchToLanguage("english")(request)
       status(result) shouldBe 303
-      redirectLocation(result)(timeout) shouldBe Some("https://www.gov.uk/fallback")
+      redirectLocation(result)(timeout) shouldBe Some("https://www.tax.service.gov.uk/agent-subscription/start")
 
       cookies(result)(timeout).get("PLAY_LANG").get.value shouldBe "en"
     }
