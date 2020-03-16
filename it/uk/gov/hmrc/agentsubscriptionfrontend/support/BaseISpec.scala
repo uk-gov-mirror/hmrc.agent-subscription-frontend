@@ -42,7 +42,8 @@ abstract class BaseISpec
         "microservice.services.government-gateway-registration-frontend.port"         -> wireMockPort,
         "auditing.enabled"                                   -> true,
         "auditing.consumer.baseUri.host"                     -> wireMockHost,
-        "auditing.consumer.baseUri.port"                     -> wireMockPort
+        "auditing.consumer.baseUri.port"                     -> wireMockPort,
+        "features.enable-welsh-toggle"                        -> true
       )
       .overrides(new TestGuiceModule)
 

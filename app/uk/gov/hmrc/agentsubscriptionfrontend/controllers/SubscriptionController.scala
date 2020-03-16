@@ -18,6 +18,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
+import play.api.i18n.Lang
 import play.api.{Configuration, Environment, Logger}
 import play.api.mvc.{AnyContent, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
@@ -29,7 +30,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.form.DesAddressForm
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService, SubscriptionReturnedHttpError, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
-import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{sign_in_new_id, check_answers, address_form_with_errors, subscription_complete}
+import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{address_form_with_errors, check_answers, sign_in_new_id, subscription_complete}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.{HeaderCarrier, HttpException}
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
@@ -132,8 +133,8 @@ class SubscriptionController @Inject()(
           case (utr, postcode, Some(registration), amlsData) =>
                     for {
                     _ <- updateSessionBeforeSubscribing(registration)
-                    subscriptionResponse <- subscriptionService
-                      .subscribe(utr, postcode, registration, amlsData)
+                    langForEmail = extractLangPreferenceFromCookie
+                    subscriptionResponse <- subscriptionService.subscribe(utr, postcode, registration, langForEmail, amlsData)
                     result <- redirectSubscriptionResponse(subscriptionResponse, agent)
                     } yield result
 
@@ -153,6 +154,11 @@ class SubscriptionController @Inject()(
         .map(Redirect(_))
     }
   }
+
+  private def extractLangPreferenceFromCookie(implicit request: Request[_]): Option[Lang] =
+    request.cookies
+      .get("PLAY_LANG").map(x => Lang(x.value))
+
 
   private def redirectSubscriptionResponse(either: Either[SubscriptionReturnedHttpError, (Arn, String)], agent: Agent)(
     implicit request: Request[AnyContent]): Future[Result] =
