@@ -29,6 +29,10 @@ uiInputRadioGroup: uk.gov.hmrc.play.views.html.helpers.InputRadioGroup
 
 @(rfvForm: Form[RegisteredForVat], backLink: String)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
+@legend = {
+    <h1 class="heading-xlarge margin-bottom-20 @if(rfvForm.hasErrors){push--top}">@Messages("registered-for-vat.title")</h1>
+}
+
 @mainTemplate(appConfig, title =  errorPrefix(rfvForm) + Messages("registered-for-vat.title"), bodyClasses = None) {
 
     <a href="@backLink" class="link-back">@Messages("button.back")</a>
@@ -36,8 +40,6 @@ uiInputRadioGroup: uk.gov.hmrc.play.views.html.helpers.InputRadioGroup
     @if(rfvForm.hasErrors) {
         @uiErrorSummary(Messages("error.summary.heading"), rfvForm, Seq.empty, Some("registered-for-vat"))
     }
-
-    <h1 class="heading-xlarge margin-bottom-20">@Messages(s"registered-for-vat.title")</h1>
 
 
     @uiFormHelper(
@@ -52,7 +54,7 @@ uiInputRadioGroup: uk.gov.hmrc.play.views.html.helpers.InputRadioGroup
                 "no" -> Messages("registered-for-vat.option.no")
                 ),
                 '_groupDivClass -> "soft--ends",
-                '_legendClass -> "visuallyhidden",
+                '_legend -> legend,
                 '_fieldsetAttributes -> Html("""id='registeredForVat'"""),
             '_errorPrefix -> Messages("error.prefix")
             )

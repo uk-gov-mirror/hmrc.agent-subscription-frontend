@@ -41,25 +41,17 @@ errorPrefix: error_prefix
         @uiErrorSummary(Messages("error.summary.heading"), businessNameForm, Seq.empty, Some("business-name"))
     }
 
-    @if(desErrorExists) {
-        <h1 class="heading-xlarge">@Messages("businessName.updated.title")</h1>
-                <p>@Messages("businessName.updated.p1")</p>
-                <p class="panel panel-border-wide">@Messages("businessName.description")</p>
-    } else {
-        <h1 class="heading-xlarge">@Messages("businessName.title")</h1>
-        <p class="panel panel-border-wide">@Messages("businessName.description")</p>
-    }
-
     @uiFormHelper(
         action = if(isChange) routes.BusinessIdentificationController.submitChangeBusinessName else routes.BusinessIdentificationController.submitBusinessNameForm(),
         'class -> "form js-form") {
 
-        <div class="form-group">
-        @uiInput(
-            businessNameForm("name"),
-            '_inputClass -> "form-control input--cleared",
-            '_errorPrefix -> Messages("error.prefix")
-        )
+        <div class="form-group @if(businessNameForm.hasErrors) {form-field--error}">
+            <label for="name"><h1 class="heading-xlarge @if(businessNameForm.hasErrors){push--top}">@title</h1></label>
+            @if(desErrorExists){<p>@Messages("businessName.updated.p1")</p>}
+            <p class="panel panel-border-wide">@Messages("businessName.description")</p>
+
+            @businessNameForm.error("name").map { formError => <span class="error-message"><span class="visuallyhidden">@Messages("error.prefix")</span>@Messages(formError.message)</span>}
+            <input type="text" class="form-control input--cleared" name="name" id="name" value="@businessNameForm("name").value">
         </div>
 
         <div class="form-field">

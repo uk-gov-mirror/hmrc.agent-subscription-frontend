@@ -39,29 +39,25 @@ errorSummary: uk.gov.hmrc.play.views.html.helpers.ErrorSummary
         @errorSummary(Messages("error.summary.heading"), businessEmailForm, Seq.empty, Some("business-email"))
     }
 
-    <h1 class="heading-xlarge">@Messages("businessEmail.title")</h1>
-    <p class="panel panel-border-wide">@Messages("businessEmail.description")</p>
-
     @formHelper(
         action = if(isChange) routes.BusinessIdentificationController.submitChangeBusinessEmail else routes.BusinessIdentificationController.submitBusinessEmailForm(),
         'class -> "form js-form") {
 
-        <div class="form-group">
-        @inputTemplate(
-            businessEmailForm("email"),
-            '_inputClass -> "form-control input--cleared",
-            '_labelClass -> "heading-small soft--ends",
-            '_errorPrefix -> Messages("error.prefix")
-        )
-        </div>
+        <div class="form-group @if(businessEmailForm.hasErrors) {form-field--error}">
+        <label for="email"><h1 class="heading-xlarge @if(businessEmailForm.hasErrors){push--top}">@Messages("businessEmail.title")</h1></label>
+        <p class="panel panel-border-wide">@Messages("businessEmail.description")</p>
+
+            @businessEmailForm.error("email").map { formError => <span class="error-message"><span class="visuallyhidden">@Messages("error.prefix")</span>@Messages(formError.message)</span>}
+                <input type="text" class="form-control input--cleared" name="email" id="email" value="@businessEmailForm("email").value">
+            </div>
 
         <div class="form-field">
-            @if(isChange){
-                <button class="button margin-bottom-10 margin-right-5" id="business-email-change-continue" name="continue" value="continue">@Messages("button.saveContinue")</button>
-                <button class="button--secondary" id="business-email-change-save" name="continue" value="save">@Messages("button.saveComeBackLater")</button>
-            } else {
-                <button class="button" type="submit" id="submit-email">@Messages("businessEmail.continue.button")</button>
-            }
+        @if(isChange) {
+            <button class="button margin-bottom-10 margin-right-5" id="business-email-change-continue" name="continue" value="continue">@Messages("button.saveContinue")</button>
+            <button class="button--secondary" id="business-email-change-save" name="continue" value="save">@Messages("button.saveComeBackLater")</button>
+        } else {
+            <button class="button" type="submit" id="submit-email">@Messages("businessEmail.continue.button")</button>
+        }
         </div>
     }
 }

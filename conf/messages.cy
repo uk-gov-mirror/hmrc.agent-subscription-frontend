@@ -337,6 +337,7 @@ subscriptionComplete.p3=<a href="{0}">Gwiriwch yr arweiniad</a> i gael gwybod su
 subscriptionComplete.bullet-list.1=mewngofnodi i’ch cyfrif gwasanaethau asiant
 subscriptionComplete.bullet-list.2=defnyddio gwasanaethau CThEM newydd ar ran eich cleientiaid
 subscriptionComplete.button=Ewch i’ch cyfrif gwasanaethau asiant
+subscriptionComplete.href=https://www.gov.uk/guidance/get-an-hmrc-agent-services-account.cy
 
 subscriptionComplete.button.continueToASAccount=Ewch i’ch cyfrif gwasanaethau asiant
 subscriptionComplete.button.continueJourney=Yn eich blaen

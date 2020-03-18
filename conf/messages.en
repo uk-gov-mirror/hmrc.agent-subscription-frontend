@@ -337,6 +337,7 @@ subscriptionComplete.p3=<a href="{0}">Check the guidance</a> to find out how to:
 subscriptionComplete.bullet-list.1=sign in to your agent services account
 subscriptionComplete.bullet-list.2=use new HMRC services on behalf of your clients
 subscriptionComplete.button=Go to your agent services account
+subscriptionComplete.href=https://www.gov.uk/guidance/get-an-hmrc-agent-services-account
 
 subscriptionComplete.button.continueToASAccount=Go to your agent services account
 subscriptionComplete.button.continueJourney=Continue

@@ -31,7 +31,7 @@
 @(checkAmlsForm: Form[RadioInputAnswer], isChange: Boolean)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 @headerTitle = {
-    <h1 class="heading-xlarge margin-bottom-20">@Messages(s"check-amls.title")</h1>
+    <h1 class="heading-xlarge margin-bottom-20 @if(checkAmlsForm.hasErrors){push--top}">@Messages(s"check-amls.title")</h1>
 }
 
 @backLink = @{if(isChange) routes.SubscriptionController.showCheckAnswers() else routes.TaskListController.showTaskList()}

@@ -31,7 +31,7 @@ class AgentSubscriptionLanguageControllerISpec extends BaseISpec {
 
     val request = FakeRequest("GET", "/language/english")
 
-    "redirect to https://www.gov.uk/fallback when the request header contains no referer" in {
+    "redirect to https://www.tax.service.co.uk/agent-subscription/start when the request header contains no referer" in {
 
       val result = controller.switchToLanguage("english")(request)
       status(result) shouldBe 303
