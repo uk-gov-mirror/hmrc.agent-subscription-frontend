@@ -81,9 +81,14 @@ package object controllers {
 
     val confirmBusinessForm: Form[ConfirmBusiness] =
       Form[ConfirmBusiness](
-        mapping("confirmBusiness" -> text
-          .verifying("error.confirm-business-value.invalid", value => value == "yes" || value == "no"))(answer =>
-          ConfirmBusiness(RadioInputAnswer.apply(answer)))(answer => RadioInputAnswer.unapply(answer.confirm)))
+        mapping(
+          "confirmBusiness" -> optional(text).verifying(radioInputSelected("error.confirm-business-value.invalid")))(
+          answer => ConfirmBusiness(RadioInputAnswer.apply(answer.getOrElse(""))))(answer =>
+          Some(RadioInputAnswer.unapply(answer.confirm)))
+          .verifying(
+            "error.confirm-business-value.invalid",
+            submittedAnswer => Seq(Yes, No).contains(submittedAnswer.confirm)
+          ))
 
     val businessEmailForm = Form[BusinessEmail](
       mapping(

@@ -13,6 +13,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionJourneyStub.
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.{subscribingAgentEnrolledForNonMTD, subscribingCleanAgentWithoutEnrolments}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData.{businessAddress, testPostcode, utr, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestSetupNoJourneyRecord}
+import uk.gov.hmrc.http.BadRequestException
 
 class ConfirmBusinessISpec extends BaseISpec {
   lazy val controller: BusinessIdentificationController = app.injector.instanceOf[BusinessIdentificationController]
@@ -345,14 +346,13 @@ class ConfirmBusinessISpec extends BaseISpec {
     }
 
     "form value is invalid" should {
-      "result in a BadRequest" in new TestSetupNoJourneyRecord {
+      "result in a BadRequestException" in new TestSetupNoJourneyRecord {
         implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
           .withFormUrlEncodedBody("confirmBusiness" -> "INVALID")
         sessionStoreService.currentSession.agentSession = Some(agentSession.copy(registration = Some(testRegistration)))
 
-        val result = await(controller.submitConfirmBusinessForm(request))
-
-        result should containMessages("confirmBusiness.title", "error.confirm-business-value.invalid")
+        a[BadRequestException] shouldBe thrownBy(
+          await(controller.submitConfirmBusinessForm(request)))
       }
     }
   }
