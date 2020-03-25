@@ -266,13 +266,15 @@ class SubscriptionController @Inject()(
             Ok(subscriptionCompleteTemplate(redirectUrl, arn.value, agencyName, agencyEmail)))
         case None => sessionStoreService.fetchAgentSession.flatMap {
           case Some(agentSession) => handleRegistrationAndGoToComplete(agentSession.registration, (agencyName, agencyEmail, redirectUrl) =>
-            Ok(subscriptionCompleteTemplate(redirectUrl, arn.value, agencyName, agencyEmail)))
+            Ok(subscriptionCompleteTemplate(redirectUrl, formatArn(arn.value), agencyName, agencyEmail)))
 
           case None => throw new RuntimeException("no record found for agent")
         }
       }
     }
   }
+
+  private def formatArn(s: String): String = if(s.length == 11) s"${s.substring(0,4)} ${s.substring(4,7)} ${s.substring(7)}" else s
 
   def showSignInWithNewID: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>

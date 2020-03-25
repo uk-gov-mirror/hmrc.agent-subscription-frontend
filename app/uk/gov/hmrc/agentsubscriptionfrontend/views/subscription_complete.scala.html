@@ -36,14 +36,12 @@ mainTemplate: main_template
 
 <p>@Html(Messages("subscriptionComplete.p1", s"$arn"))</p>
 <p>@Html(Messages("subscriptionComplete.p2", s"$agencyEmail"))</p>
-<h2 class="heading-medium">@Messages("subscriptionComplete.h2")</h2>
-<p>@Html(Messages("subscriptionComplete.p3", Messages("subscriptionComplete.href")))</p>
+<h2 class="heading-medium margin-top-10">@Messages("subscriptionComplete.nextSteps.heading")</h2>
+<p>@Messages("subscriptionComplete.nextSteps.p")</p>
+    <h2 class="heading-medium margin-top-10">@Messages("subscriptionComplete.nextSteps.ters.heading")</h2>
+    <p>@Messages("subscriptionComplete.nextSteps.ters.p")</p>
 
 
-<ul class="list list-bullet">
-    <li>@Messages("subscriptionComplete.bullet-list.1")</li>
-    <li>@Messages("subscriptionComplete.bullet-list.2")</li>
-</ul>
 
-<a href="@continueUrl" class="button" id="continue" role="button">@Messages("subscriptionComplete.button.continueJourney")</a>
+<a href="@continueUrl" class="button" id="continue" role="button">@Messages("subscriptionComplete.button")</a>
 }
