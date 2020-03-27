@@ -18,6 +18,7 @@
 @import uk.gov.hmrc.play.views.html.helpers._
 @import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
 @import uk.gov.hmrc.agentsubscriptionfrontend.models.Task
+@import uk.gov.hmrc.agentsubscriptionfrontend.models.SubTask
 @import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType
 
 @this(
@@ -32,21 +33,25 @@ mainTemplate: main_template
 
 @listItem(number: Int, task: Task) = {
     <li>
-        <h2>
+        <h2 class="margin-bottom-0">
             <span class="app-task-list__section-number">@Messages(s"task-list.$number.number")</span>@Messages(s"task-list.${task.taskKey}.header")
         </h2>
-        <div class="app-task-list__items">
-            <p class="app-task-list__item">
-                @if(task.showLink) {
-                    <a class="app-task-list__name" href="@task.link">@Messages(s"task-list.${task.taskKey}")</a>
-                } else {
-                    @Messages(s"task-list.${task.taskKey}")
-                }
-                @if(task.isComplete) {
-                    @completedMark
-                }
-            </p>
-        </div>
+
+            <div class="app-task-list__items">
+            @for(subTask <- task.subTasks) {
+                <p class="app-task-list__item">
+                    @if(subTask.showLink) {
+                        <a class="app-task-list__name" href="@subTask.link">@Messages(s"task-list.${subTask.taskKey}")</a>
+                    } else {
+                        @Messages(s"task-list.${subTask.taskKey}")
+                    }
+                    @if(subTask.isComplete) {
+                        @completedMark
+                    }
+                </p>
+
+        }
+            </div>
     </li>
 }
 

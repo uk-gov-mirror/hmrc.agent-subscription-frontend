@@ -20,6 +20,7 @@ object TestData {
   val utr = Utr("2000000000")
   val testPostcode = "AA1 1AA"
   val registrationName = "My Agency"
+  val tradingName = "My Trading Name"
   val businessAddress =
     BusinessAddress(
       "AddressLine1 A",
@@ -28,6 +29,14 @@ object TestData {
       Some("AddressLine4 A"),
       Some("AA11AA"),
       "GB")
+
+  val tradingAddress = BusinessAddress(
+    "TradingAddress1 A",
+    Some("TradingAddress2 A"),
+    Some("TradingAddress3 A"),
+    Some("TradingAddress4 A"),
+    Some("TT11TT"),
+    "GB")
 
   val configuredGovernmentGatewayUrl = "http://configured-government-gateway.gov.uk/"
 
@@ -59,26 +68,30 @@ object TestData {
       businessDetails = BusinessDetails(SoleTrader, validUtr, Postcode(validPostcode)),
       amlsData = Some(AmlsData.registeredUserNoDataEntered))
 
-  val completeJourneyRecordNoMappings = SubscriptionJourneyRecord(AuthProviderId("12345-credId"),
-    None,
-    BusinessDetails(SoleTrader,
+  val completeJourneyRecordNoMappings = SubscriptionJourneyRecord(
+    authProviderId = AuthProviderId("12345-credId"),
+    continueId = None,
+    businessDetails = BusinessDetails(SoleTrader,
       validUtr,
       Postcode(validPostcode),
-      Some(Registration(
+      registration = Some(Registration(
           Some(registrationName),
           isSubscribedToAgentServices = true,
           isSubscribedToETMP = true,
           businessAddress,
           Some("test@gmail.com")))
     ),
-    Some(AmlsData(
+    amlsData = Some(AmlsData(
         amlsRegistered = true,
         Some(false),
         Some(
           AmlsDetails(
             "supervisory",
             Right(RegisteredDetails("123456789", LocalDate.now().plusDays(10))))))),
-    cleanCredsAuthProviderId = Some(id)
+    cleanCredsAuthProviderId = Some(id),
+    contactDetailsEmailCheck = true,
+    contactDetailsTradingName = Some(registrationName),
+    contactDetailsTradingAddress = Some(businessAddress)
   )
 
   val completeJourneyRecordWithMappings: SubscriptionJourneyRecord = completeJourneyRecordNoMappings
@@ -88,6 +101,15 @@ object TestData {
         UserMapping(AuthProviderId("map-2"),Some(AgentCode("BCODE")), List.empty, 20, "5678")
       )
   )
+
+  def completeJourneyRecordWithMappingsAndNewTradingDetails(
+                                                               tradingName: Option[String],
+                                                               tradingAddress: Option[BusinessAddress]) =
+    completeJourneyRecordWithMappings
+    .copy(
+      contactDetailsTradingName = tradingName,
+      contactDetailsTradingAddress = tradingAddress
+    )
 
   def completeJourneyRecordWithUpdatedBusinessName(newBusinessName: String): SubscriptionJourneyRecord =
     completeJourneyRecordNoMappings.copy(businessDetails = BusinessDetails(SoleTrader,

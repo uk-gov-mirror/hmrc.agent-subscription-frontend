@@ -35,24 +35,64 @@ class TaskListService @Inject()(agentAssuranceConnector: AgentAssuranceConnector
       maa <- agentAssuranceConnector.isManuallyAssuredAgent(subscriptionJourneyRecord.businessDetails.utr)
     } yield {
       if (isCleanCredsAgent(subscriptionJourneyRecord)) {
-        val amlsTask = AmlsTask(maa, subscriptionJourneyRecord.amlsData)
-        val checkAnswersTask = CheckAnswersTask(amlsTask)
-        List(amlsTask, checkAnswersTask)
+        val amlsAndContactDetailsTaskList: List[Task] = amlsAndContactDetailsTasks(subscriptionJourneyRecord, maa)
+        val checkAnswersTask: Task = CheckAnswersTask(
+          List(CheckAnswersSubTask(amlsAndContactDetailsTaskList.forall(_.isComplete))))
+        amlsAndContactDetailsTaskList ::: List(checkAnswersTask)
+
       } else {
-        val amlsTask = AmlsTask(maa, subscriptionJourneyRecord.amlsData)
-        val mappingTask = MappingTask(
-          subscriptionJourneyRecord.cleanCredsAuthProviderId,
-          subscriptionJourneyRecord.mappingComplete,
-          subscriptionJourneyRecord.continueId.getOrElse(" "),
-          amlsTask,
-          appConfig
+
+        val amlsAndContactDetailsTaskList: List[Task] = amlsAndContactDetailsTasks(subscriptionJourneyRecord, maa)
+        val checkAnswersTask: Task = CheckAnswersTask(
+          List(CheckAnswersSubTask(amlsAndContactDetailsTaskList.forall(_.isComplete))))
+
+        val mappingTask: Task = MappingTask(
+          List(
+            MappingSubTask(
+              subscriptionJourneyRecord.cleanCredsAuthProviderId,
+              subscriptionJourneyRecord.mappingComplete,
+              subscriptionJourneyRecord.continueId.getOrElse(" "),
+              amlsAndContactDetailsTaskList.forall(_.isComplete),
+              appConfig
+            )
+          )
         )
-        val createIDTask = CreateIDTask(subscriptionJourneyRecord.cleanCredsAuthProviderId, mappingTask)
-        val checkAnswersTask = CheckAnswersTask(createIDTask)
-        List(amlsTask, mappingTask, createIDTask, checkAnswersTask)
+        val createIDTask: Task = CreateIDTask(
+          List(CreateIDSubTask(subscriptionJourneyRecord.cleanCredsAuthProviderId, mappingTask.isComplete)))
+        val cyaTask: Task = CheckAnswersTask(List(CheckAnswersSubTask(createIDTask.isComplete)))
+        amlsAndContactDetailsTaskList ::: List(mappingTask, createIDTask, cyaTask)
       }
     }
 
   def isCleanCredsAgent(subscriptionJourneyRecord: SubscriptionJourneyRecord) =
     subscriptionJourneyRecord.cleanCredsAuthProviderId.contains(subscriptionJourneyRecord.authProviderId)
+
+  private def amlsAndContactDetailsTasks(
+    subscriptionJourneyRecord: SubscriptionJourneyRecord,
+    maa: Boolean): List[Task] = {
+
+    val amlsTask: Task = AmlsTask(List(AmlsSubTask(maa, subscriptionJourneyRecord.amlsData)))
+
+    val contactEmailSubTask: SubTask = ContactDetailsEmailSubTask(
+      subscriptionJourneyRecord.contactDetailsEmailCheck,
+      amlsTask.isComplete
+    )
+    val contactTradingNameSubTask: SubTask = ContactTradingNameSubTask(
+      subscriptionJourneyRecord.contactDetailsTradingName,
+      contactEmailSubTask.isComplete
+    )
+    val contactTradingAddressSubTask: SubTask = ContactTradingAddressSubTask(
+      subscriptionJourneyRecord.contactDetailsTradingAddress,
+      contactTradingNameSubTask.isComplete
+    )
+    val contactDetailsTask: Task = ContactDetailsTask(
+      List(
+        contactEmailSubTask,
+        contactTradingNameSubTask,
+        contactTradingAddressSubTask
+      )
+    )
+    List(amlsTask, contactDetailsTask)
+  }
+
 }

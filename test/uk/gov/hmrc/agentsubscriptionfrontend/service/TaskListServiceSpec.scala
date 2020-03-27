@@ -72,24 +72,34 @@ class TaskListServiceSpec extends UnitSpec with MockitoSugar {
     None
   )
 
+  val tradingName = "My Trading Name"
+
+  val tradingAddress = BusinessAddress(
+    "TradingAddress1 A",
+    Some("TradingAddress2 A"),
+    Some("TradingAddress3 A"),
+    Some("TradingAddress4 A"),
+    Some("TT11TT"),
+    "GB")
+
   "when the user has unclean creds show the full task list" should {
     "AmlsTask" should {
       "when agent is not manually assured show AMLS link" in {
         givenNotManuallyAssured
         val tasks = await(taskListService.createTasks(minimalUncleanCredsRecord))
 
-        tasks.length shouldBe 4
+        tasks.length shouldBe 5
         tasks.head.taskKey shouldBe "amlsTask"
-        tasks.head.showLink shouldBe true
+        tasks.head.subTasks.head.showLink shouldBe true
       }
 
       "when agent is manually assured don't show AMLS link" in {
         givenManuallyAssured
         val tasks = await(taskListService.createTasks(minimalUncleanCredsRecord))
 
-        tasks.length shouldBe 4
+        tasks.length shouldBe 5
         tasks.head.taskKey shouldBe "amlsTask"
-        tasks.head.showLink shouldBe false
+        tasks.head.subTasks.head.showLink shouldBe false
       }
 
       "when agent has registered AMLS data show AMLS as complete" in {
@@ -102,7 +112,7 @@ class TaskListServiceSpec extends UnitSpec with MockitoSugar {
               Some(AmlsDetails("supervisory", Right(RegisteredDetails("123", LocalDate.now().plusDays(20))))))))
         val tasks = await(taskListService.createTasks(amlsRecord))
 
-        tasks.length shouldBe 4
+        tasks.length shouldBe 5
         tasks.head.taskKey shouldBe "amlsTask"
         tasks.head.isComplete shouldBe true
       }
@@ -117,7 +127,7 @@ class TaskListServiceSpec extends UnitSpec with MockitoSugar {
               Some(AmlsDetails("supervisory", Left(PendingDetails(LocalDate.now().minusDays(20))))))))
         val tasks = await(taskListService.createTasks(amlsRecord))
 
-        tasks.length shouldBe 4
+        tasks.length shouldBe 5
         tasks.head.taskKey shouldBe "amlsTask"
         tasks.head.isComplete shouldBe true
       }
@@ -125,7 +135,7 @@ class TaskListServiceSpec extends UnitSpec with MockitoSugar {
       "when agent is manually assured show AMLS as complete" in {
         givenManuallyAssured
         val tasks = await(taskListService.createTasks(minimalUncleanCredsRecord))
-        tasks.length shouldBe 4
+        tasks.length shouldBe 5
         tasks.head.isComplete shouldBe true
       }
 
@@ -135,9 +145,70 @@ class TaskListServiceSpec extends UnitSpec with MockitoSugar {
           minimalUncleanCredsRecord.copy(amlsData = Some(AmlsData(amlsRegistered = true, None, None)))
         val tasks = await(taskListService.createTasks(partialAmlsRecord))
 
-        tasks.length shouldBe 4
+        tasks.length shouldBe 5
         tasks.head.taskKey shouldBe "amlsTask"
         tasks.head.isComplete shouldBe false
+      }
+    }
+
+    "contactDetailsTask" should {
+      "when agent has no clean creds auth provider id and the amls task is complete show the contact details email task link" in {
+        givenNotManuallyAssured
+        val record = minimalUncleanCredsRecord.copy(
+          amlsData = Some(
+            AmlsData(
+              amlsRegistered = true,
+              None,
+              Some(AmlsDetails("supervisory", Left(PendingDetails(LocalDate.now().minusDays(20)))))))
+        )
+        val tasks = await(taskListService.createTasks(record))
+
+        tasks.length shouldBe 5
+        tasks(1).taskKey shouldBe "contactDetailsTask"
+        tasks(1).subTasks.length shouldBe 3
+        tasks(1).subTasks.head.showLink shouldBe true
+        tasks(1).subTasks.tail.forall(_.showLink) shouldBe false
+      }
+
+      "when agent has no clean creds auth provider id and the email task is complete show the business name task link" in {
+        givenNotManuallyAssured
+        val record = minimalUncleanCredsRecord.copy(
+          amlsData = Some(
+            AmlsData(
+              amlsRegistered = true,
+              None,
+              Some(AmlsDetails("supervisory", Left(PendingDetails(LocalDate.now().minusDays(20))))))),
+          contactDetailsEmailCheck = true
+        )
+        val tasks = await(taskListService.createTasks(record))
+
+        tasks.length shouldBe 5
+        tasks(1).taskKey shouldBe "contactDetailsTask"
+        tasks(1).subTasks.length shouldBe 3
+        tasks(1).subTasks.head.showLink shouldBe true
+        tasks(1).subTasks(1).showLink shouldBe true
+        tasks(1).subTasks(2).showLink shouldBe false
+      }
+
+      "when agent has no clean creds auth provider id and the email and the business name tasks are complete show the business address task link" in {
+        givenNotManuallyAssured
+        val record = minimalUncleanCredsRecord.copy(
+          amlsData = Some(
+            AmlsData(
+              amlsRegistered = true,
+              None,
+              Some(AmlsDetails("supervisory", Left(PendingDetails(LocalDate.now().minusDays(20))))))),
+          contactDetailsEmailCheck = true,
+          contactDetailsTradingName = Some(tradingName)
+        )
+        val tasks = await(taskListService.createTasks(record))
+
+        tasks.length shouldBe 5
+        tasks(1).taskKey shouldBe "contactDetailsTask"
+        tasks(1).subTasks.length shouldBe 3
+        tasks(1).subTasks.head.showLink shouldBe true
+        tasks(1).subTasks(1).showLink shouldBe true
+        tasks(1).subTasks(2).showLink shouldBe true
       }
     }
 
@@ -149,22 +220,31 @@ class TaskListServiceSpec extends UnitSpec with MockitoSugar {
             AmlsData(
               amlsRegistered = true,
               None,
-              Some(AmlsDetails("supervisory", Left(PendingDetails(LocalDate.now().minusDays(20))))))))
+              Some(AmlsDetails("supervisory", Left(PendingDetails(LocalDate.now().minusDays(20))))))),
+          contactDetailsEmailCheck = true,
+          contactDetailsTradingAddress = Some(tradingAddress),
+          contactDetailsTradingName = Some(tradingName)
+        )
         val tasks = await(taskListService.createTasks(record))
 
-        tasks.length shouldBe 4
-        tasks(1).taskKey shouldBe "mappingTask"
-        tasks(1).showLink shouldBe true
+        tasks.length shouldBe 5
+        tasks(2).taskKey shouldBe "mappingTask"
+        tasks(2).subTasks.length shouldBe 1
+        tasks(2).subTasks.head.showLink shouldBe true
       }
 
       "when an agent has completed mapping and the previous task is complete show the mapping task as complete" in {
         givenManuallyAssured
-        val record = minimalUncleanCredsRecord.copy(mappingComplete = true)
+        val record = minimalUncleanCredsRecord.copy(
+          mappingComplete = true,
+          contactDetailsEmailCheck = true,
+          contactDetailsTradingName = Some(tradingName),
+          contactDetailsTradingAddress = Some(tradingAddress))
         val tasks = await(taskListService.createTasks(record))
 
-        tasks.length shouldBe 4
-        tasks(1).taskKey shouldBe "mappingTask"
-        tasks(1).isComplete shouldBe true
+        tasks.length shouldBe 5
+        tasks(2).taskKey shouldBe "mappingTask"
+        tasks(2).isComplete shouldBe true
       }
     }
 
@@ -177,24 +257,35 @@ class TaskListServiceSpec extends UnitSpec with MockitoSugar {
             AmlsData(
               amlsRegistered = true,
               None,
-              Some(AmlsDetails("supervisory", Left(PendingDetails(LocalDate.now().minusDays(20)))))))
+              Some(AmlsDetails("supervisory", Left(PendingDetails(LocalDate.now().minusDays(20))))))),
+          contactDetailsEmailCheck = true,
+          contactDetailsTradingName = Some(tradingName),
+          contactDetailsTradingAddress = Some(tradingAddress)
         )
         val tasks = await(taskListService.createTasks(record))
 
-        tasks.length shouldBe 4
-        tasks(2).taskKey shouldBe "createIDTask"
-        tasks(2).showLink shouldBe true
+        tasks.length shouldBe 5
+        tasks(3).taskKey shouldBe "createIDTask"
+        tasks(3).subTasks.length shouldBe 1
+        tasks(3).subTasks.head.showLink shouldBe true
       }
 
       "when an agent has an auth provider id and the previous task is complete show the create id task as complete" in {
         givenManuallyAssured
         val record = minimalUncleanCredsRecord
-          .copy(cleanCredsAuthProviderId = Some(AuthProviderId("cred-123")), mappingComplete = true)
+          .copy(
+            cleanCredsAuthProviderId = Some(AuthProviderId("cred-123")),
+            mappingComplete = true,
+            contactDetailsEmailCheck = true,
+            contactDetailsTradingName = Some(tradingName),
+            contactDetailsTradingAddress = Some(tradingAddress)
+          )
         val tasks = await(taskListService.createTasks(record))
 
-        tasks.length shouldBe 4
-        tasks(2).taskKey shouldBe "createIDTask"
-        tasks(2).isComplete shouldBe true
+        tasks.length shouldBe 5
+        tasks(3).taskKey shouldBe "createIDTask"
+        tasks(3).subTasks.length shouldBe 1
+        tasks(3).subTasks.head.isComplete shouldBe true
       }
     }
 
@@ -202,12 +293,19 @@ class TaskListServiceSpec extends UnitSpec with MockitoSugar {
       "when an agent has completed the previous task show the check answers link" in {
         givenManuallyAssured
         val record = minimalUncleanCredsRecord
-          .copy(cleanCredsAuthProviderId = Some(AuthProviderId("cred-123")), mappingComplete = true)
+          .copy(
+            cleanCredsAuthProviderId = Some(AuthProviderId("cred-123")),
+            mappingComplete = true,
+            contactDetailsEmailCheck = true,
+            contactDetailsTradingName = Some(tradingName),
+            contactDetailsTradingAddress = Some(tradingAddress)
+          )
         val tasks = await(taskListService.createTasks(record))
 
-        tasks.length shouldBe 4
-        tasks(3).taskKey shouldBe "checkAnswersTask"
-        tasks(3).showLink shouldBe true
+        tasks.length shouldBe 5
+        tasks(4).taskKey shouldBe "checkAnswersTask"
+        tasks(4).subTasks.length shouldBe 1
+        tasks(4).subTasks.head.showLink shouldBe true
       }
     }
   }
@@ -218,18 +316,20 @@ class TaskListServiceSpec extends UnitSpec with MockitoSugar {
         givenNotManuallyAssured
         val tasks = await(taskListService.createTasks(minimalCleanCredsRecord))
 
-        tasks.length shouldBe 2
+        tasks.length shouldBe 3
         tasks.head.taskKey shouldBe "amlsTask"
-        tasks.head.showLink shouldBe true
+        tasks.head.subTasks.length shouldBe 1
+        tasks.head.subTasks.head.showLink shouldBe true
       }
 
       "when agent is manually assured don't show AMLS link" in {
         givenManuallyAssured
         val tasks = await(taskListService.createTasks(minimalCleanCredsRecord))
 
-        tasks.length shouldBe 2
+        tasks.length shouldBe 3
         tasks.head.taskKey shouldBe "amlsTask"
-        tasks.head.showLink shouldBe false
+        tasks.head.subTasks.length shouldBe 1
+        tasks.head.subTasks.head.showLink shouldBe false
       }
 
       "when agent has registered AMLS data show AMLS as complete" in {
@@ -242,7 +342,7 @@ class TaskListServiceSpec extends UnitSpec with MockitoSugar {
               Some(AmlsDetails("supervisory", Right(RegisteredDetails("123", LocalDate.now().plusDays(20))))))))
         val tasks = await(taskListService.createTasks(amlsRecord))
 
-        tasks.length shouldBe 2
+        tasks.length shouldBe 3
         tasks.head.taskKey shouldBe "amlsTask"
         tasks.head.isComplete shouldBe true
       }
@@ -257,7 +357,7 @@ class TaskListServiceSpec extends UnitSpec with MockitoSugar {
               Some(AmlsDetails("supervisory", Left(PendingDetails(LocalDate.now().minusDays(20))))))))
         val tasks = await(taskListService.createTasks(amlsRecord))
 
-        tasks.length shouldBe 2
+        tasks.length shouldBe 3
         tasks.head.taskKey shouldBe "amlsTask"
         tasks.head.isComplete shouldBe true
       }
@@ -265,7 +365,7 @@ class TaskListServiceSpec extends UnitSpec with MockitoSugar {
       "when agent is manually assured show AMLS as complete" in {
         givenManuallyAssured
         val tasks = await(taskListService.createTasks(minimalCleanCredsRecord))
-        tasks.length shouldBe 2
+        tasks.length shouldBe 3
         tasks.head.isComplete shouldBe true
       }
 
@@ -275,9 +375,27 @@ class TaskListServiceSpec extends UnitSpec with MockitoSugar {
           minimalCleanCredsRecord.copy(amlsData = Some(AmlsData(amlsRegistered = true, None, None)))
         val tasks = await(taskListService.createTasks(partialAmlsRecord))
 
-        tasks.length shouldBe 2
+        tasks.length shouldBe 3
         tasks.head.taskKey shouldBe "amlsTask"
         tasks.head.isComplete shouldBe false
+      }
+    }
+
+    "contactDetailsTask" should {
+      "when an agent has completed amls task show the contact details task" in {
+        givenManuallyAssured
+        val record = minimalCleanCredsRecord.copy(
+          amlsData = Some(
+            AmlsData(
+              amlsRegistered = true,
+              None,
+              Some(AmlsDetails("supervisory", Left(PendingDetails(LocalDate.now().minusDays(20))))))))
+        val tasks = await(taskListService.createTasks(record))
+
+        tasks.length shouldBe 3
+        tasks(1).taskKey shouldBe "contactDetailsTask"
+        tasks(1).subTasks.head.showLink shouldBe true
+
       }
     }
 
@@ -289,12 +407,17 @@ class TaskListServiceSpec extends UnitSpec with MockitoSugar {
             AmlsData(
               amlsRegistered = true,
               None,
-              Some(AmlsDetails("supervisory", Left(PendingDetails(LocalDate.now().minusDays(20))))))))
+              Some(AmlsDetails("supervisory", Left(PendingDetails(LocalDate.now().minusDays(20))))))),
+          contactDetailsEmailCheck = true,
+          contactDetailsTradingName = Some(tradingName),
+          contactDetailsTradingAddress = Some(tradingAddress)
+        )
+
         val tasks = await(taskListService.createTasks(record))
 
-        tasks.length shouldBe 2
-        tasks(1).taskKey shouldBe "checkAnswersTask"
-        tasks(1).showLink shouldBe true
+        tasks.length shouldBe 3
+        tasks(2).taskKey shouldBe "checkAnswersTask"
+        tasks(2).subTasks.head.showLink shouldBe true
       }
     }
   }

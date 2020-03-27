@@ -22,13 +22,39 @@ import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.AmlsData
 
 sealed trait Task {
   val taskKey: String
+  val subTasks: List[SubTask]
+  val isComplete: Boolean = subTasks.forall(_.isComplete)
+}
+
+final case class AmlsTask(subTasks: List[SubTask]) extends Task {
+  override val taskKey: String = "amlsTask"
+}
+
+final case class ContactDetailsTask(subTasks: List[SubTask]) extends Task {
+  override val taskKey: String = "contactDetailsTask"
+}
+
+final case class MappingTask(subTasks: List[SubTask]) extends Task {
+  override val taskKey: String = "mappingTask"
+}
+
+final case class CreateIDTask(subTasks: List[SubTask]) extends Task {
+  override val taskKey: String = "createIDTask"
+}
+
+final case class CheckAnswersTask(subTasks: List[SubTask]) extends Task {
+  override val taskKey: String = "checkAnswersTask"
+}
+
+sealed trait SubTask {
+  val taskKey: String
   val showLink: Boolean
   val isComplete: Boolean
   val link: String
 }
 
-final case class AmlsTask(isMaa: Boolean, amlsData: Option[AmlsData]) extends Task {
-  override val taskKey: String = "amlsTask"
+final case class AmlsSubTask(isMaa: Boolean, amlsData: Option[AmlsData]) extends SubTask {
+  override val taskKey: String = "amlsSubTask"
   override val showLink: Boolean = !isMaa
   override val isComplete: Boolean = isMaa ||
     amlsData.fold(false) {
@@ -39,29 +65,47 @@ final case class AmlsTask(isMaa: Boolean, amlsData: Option[AmlsData]) extends Ta
   override val link: String = routes.AMLSController.showAmlsRegisteredPage().url
 }
 
-final case class MappingTask(
+final case class ContactDetailsEmailSubTask(isComplete: Boolean, showLink: Boolean) extends SubTask {
+  override val taskKey: String = "contactDetailsEmailSubTask"
+  override val link: String = ""
+}
+
+final case class ContactTradingNameSubTask(contactDetailsBusinessNameData: Option[String], showLink: Boolean)
+    extends SubTask {
+  override val taskKey: String = "contactDetailsTradingNameSubTask"
+  override val isComplete: Boolean = contactDetailsBusinessNameData.isDefined
+  override val link: String = ""
+}
+
+final case class ContactTradingAddressSubTask(
+  contactDetailsTradingAddressData: Option[BusinessAddress],
+  showLink: Boolean)
+    extends SubTask {
+  override val taskKey: String = "contactDetailsTradingAddressSubTask"
+  override val isComplete: Boolean = contactDetailsTradingAddressData.isDefined
+  override val link: String = ""
+}
+
+final case class MappingSubTask(
   cleanCredsAuthProviderId: Option[AuthProviderId],
   mappingComplete: Boolean,
   continueId: String,
-  previousTask: Task,
+  showLink: Boolean,
   appConfig: AppConfig)
-    extends Task {
-  override val taskKey: String = "mappingTask"
-  override val showLink: Boolean = previousTask.isComplete
-  override val isComplete: Boolean = mappingComplete && previousTask.isComplete
+    extends SubTask {
+  override val taskKey: String = "mappingSubTask"
+  override val isComplete: Boolean = mappingComplete
   override val link: String = appConfig.agentMappingFrontendStartUrl(continueId)
 }
 
-final case class CreateIDTask(cleanCredsAuthProviderId: Option[AuthProviderId], previousTask: Task) extends Task {
-  override val taskKey: String = "createIDTask"
-  override val showLink: Boolean = previousTask.isComplete
-  override val isComplete: Boolean = cleanCredsAuthProviderId.isDefined && previousTask.isComplete
+final case class CreateIDSubTask(cleanCredsAuthProviderId: Option[AuthProviderId], showLink: Boolean) extends SubTask {
+  override val taskKey: String = "createIDSubTask"
+  override val isComplete: Boolean = cleanCredsAuthProviderId.isDefined && showLink
   override val link: String = routes.BusinessIdentificationController.showCreateNewAccount().url
 }
 
-final case class CheckAnswersTask(previousTask: Task) extends Task {
-  override val taskKey: String = "checkAnswersTask"
-  override val showLink: Boolean = previousTask.isComplete
+final case class CheckAnswersSubTask(showLink: Boolean) extends SubTask {
+  override val taskKey: String = "checkAnswersSubTask"
   override val isComplete: Boolean = false
   override val link: String = routes.SubscriptionController.showCheckAnswers().url
 }

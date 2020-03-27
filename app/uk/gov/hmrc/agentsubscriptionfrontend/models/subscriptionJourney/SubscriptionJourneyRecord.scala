@@ -21,7 +21,7 @@ import java.util.UUID
 
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{JsPath, OFormat}
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, AuthProviderId}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, AuthProviderId, BusinessAddress, BusinessName}
 
 /**
   * A Mongo record which represents the user's current journey in setting up a new
@@ -36,7 +36,11 @@ final case class SubscriptionJourneyRecord(
   userMappings: List[UserMapping] = List.empty,
   mappingComplete: Boolean = false,
   cleanCredsAuthProviderId: Option[AuthProviderId] = None,
-  lastModifiedDate: Option[LocalDateTime] = None)
+  lastModifiedDate: Option[LocalDateTime] = None,
+  contactDetailsEmailCheck: Boolean = false,
+  contactDetailsTradingName: Option[String] = None,
+  contactDetailsTradingAddress: Option[BusinessAddress] = None
+)
 
 object SubscriptionJourneyRecord {
 
@@ -50,8 +54,11 @@ object SubscriptionJourneyRecord {
       (JsPath \ "userMappings").format[List[UserMapping]] and
       (JsPath \ "mappingComplete").format[Boolean] and
       (JsPath \ "cleanCredsAuthProviderId").formatNullable[AuthProviderId] and
-      (JsPath \ "lastModifiedDate")
-        .formatNullable[LocalDateTime])(SubscriptionJourneyRecord.apply, unlift(SubscriptionJourneyRecord.unapply))
+      (JsPath \ "lastModifiedDate").formatNullable[LocalDateTime] and
+      (JsPath \ "contactDetailsEmailCheck").format[Boolean] and
+      (JsPath \ "contactDetailsTradingName").formatNullable[String] and
+      (JsPath \ "contactDetailsTradingAddress")
+        .formatNullable[BusinessAddress])(SubscriptionJourneyRecord.apply, unlift(SubscriptionJourneyRecord.unapply))
 
   def fromAgentSession(
     agentSession: AgentSession,

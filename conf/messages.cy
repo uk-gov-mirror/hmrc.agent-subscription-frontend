@@ -155,16 +155,21 @@ task-list.header=Creu cyfrif gwasanaethau asiant
 task-list.subheader=Cwblhewch bob adran yn ei thro. Gallwch gadw’ch cynnydd wrth fynd yn eich blaen.
 task-list.1.number=1.
 task-list.amlsTask.header=Nodwch eich manylion cydymffurfiad gwyngalchu arian
-task-list.amlsTask=Nodwch eich manylion cydymffurfiad gwyngalchu arian
+task-list.amlsSubTask=Nodwch eich manylion cydymffurfiad gwyngalchu arian
 task-list.2.number=2.
-task-list.mappingTask.header=Copïwch ar draws eich perthnasoedd presennol â chleientiaid
-task-list.mappingTask=Copïwch eich cleientiaid Hunanasesiad a TAW presennol ar draws i’ch cyfrif newydd
+task-list.contactDetailsTask.header=
+task-list.contactDetailsEmailSubTask=
+task-list.contactDetailsTradingNameSubTask=
+task-list.contactDetailsTradingAddressSubTask=
 task-list.3.number=3.
-task-list.createIDTask.header=Crëwch eich Dynodydd Defnyddiwr (ID) newydd
-task-list.createIDTask=Crëwch eich Dynodydd Defnyddiwr (ID) ar gyfer eich cyfrif gwasanaethau asiant
+task-list.mappingTask.header=Copïwch ar draws eich perthnasoedd presennol â chleientiaid
+task-list.mappingSubTask=Copïwch eich cleientiaid Hunanasesiad a TAW presennol ar draws i’ch cyfrif newydd
 task-list.4.number=4.
+task-list.createIDTask.header=Crëwch eich Dynodydd Defnyddiwr (ID) newydd
+task-list.createIDSubTask=Crëwch eich Dynodydd Defnyddiwr (ID) ar gyfer eich cyfrif gwasanaethau asiant
+task-list.5.number=5.
 task-list.checkAnswersTask.header=Gwiriwch eich atebion a chrëwch eich cyfrif
-task-list.checkAnswersTask=Gallwch wirio’ch atebion ar ôl i chi gwblhau’r adrannau eraill.
+task-list.checkAnswersSubTask=Gallwch wirio’ch atebion ar ôl i chi gwblhau’r adrannau eraill.
 task-list.completed=WEDI’I CHWBLHAU
 
 #Saved Progress

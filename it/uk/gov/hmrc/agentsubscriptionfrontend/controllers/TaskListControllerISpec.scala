@@ -32,10 +32,24 @@ class TaskListControllerISpec extends BaseISpec {
 
       result should containMessages(
         "task-list.header",
+        "task-list.subheader",
+        "task-list.1.number",
         "task-list.amlsTask.header",
+        "task-list.amlsSubTask",
+        "task-list.2.number",
+        "task-list.contactDetailsTask.header",
+        "task-list.contactDetailsEmailSubTask",
+        "task-list.contactDetailsTradingNameSubTask",
+        "task-list.contactDetailsTradingAddressSubTask",
+        "task-list.3.number",
         "task-list.mappingTask.header",
+        "task-list.mappingSubTask",
+        "task-list.4.number",
         "task-list.createIDTask.header",
-        "task-list.checkAnswersTask.header")
+        "task-list.createIDSubTask",
+        "task-list.5.number",
+        "task-list.checkAnswersTask.header",
+      "task-list.checkAnswersSubTask")
     }
 
     "contain CONTINUE tag when a task has been completed" in {
@@ -81,18 +95,37 @@ class TaskListControllerISpec extends BaseISpec {
       implicit val request: FakeRequest[AnyContentAsEmpty.type] = authenticatedAs(subscribingAgentEnrolledForNonMTD)
 
       val result = await(controller.showTaskList(request))
-      result should containMessages("task-list.header", "task-list.amlsTask", "task-list.completed")
+      result should containMessages("task-list.header", "task-list.amlsTask.header", "task-list.amlsSubTask", "task-list.completed")
 
-      result should containLink("task-list.amlsTask", routes.AMLSController.showAmlsRegisteredPage().url)
+      result should containLink("task-list.amlsSubTask", routes.AMLSController.showAmlsRegisteredPage().url)
     }
 
-    "contain a url to the mapping journey when user has completed amls" in {
+    "contain a url to the contact details task when user has completed amls" in {
       givenAgentIsNotManuallyAssured(validUtr.value)
       givenSubscriptionJourneyRecordExists(
         AuthProviderId("12345-credId"),
         TestData.minimalSubscriptionJourneyRecord(AuthProviderId("12345-credId"))
           .copy(amlsData = Some(AmlsData(amlsRegistered = true, None,
             Some(AmlsDetails("supervisory", Left(PendingDetails(LocalDate.now().minusDays(20))))))), continueId = Some("continue-id")))
+
+      implicit val request: FakeRequest[AnyContentAsEmpty.type] = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+
+      val result = await(controller.showTaskList(request))
+      status(result) shouldBe 200
+
+      checkHtmlResultWithBodyText(result, "")
+    }
+
+    "contain a url to the mapping journey when user has completed contact details" in {
+      givenAgentIsNotManuallyAssured(validUtr.value)
+      givenSubscriptionJourneyRecordExists(
+        AuthProviderId("12345-credId"),
+        TestData.minimalSubscriptionJourneyRecord(AuthProviderId("12345-credId"))
+          .copy(amlsData = Some(AmlsData(amlsRegistered = true, None,
+            Some(AmlsDetails("supervisory", Left(PendingDetails(LocalDate.now().minusDays(20))))))), continueId = Some("continue-id"),
+            contactDetailsEmailCheck = true,
+            contactDetailsTradingName = Some(tradingName),
+            contactDetailsTradingAddress = Some(tradingAddress)))
 
       implicit val request: FakeRequest[AnyContentAsEmpty.type] = authenticatedAs(subscribingAgentEnrolledForNonMTD)
 
