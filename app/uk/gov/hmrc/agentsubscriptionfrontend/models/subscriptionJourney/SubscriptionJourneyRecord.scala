@@ -21,7 +21,7 @@ import java.util.UUID
 
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{JsPath, OFormat}
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, AuthProviderId, BusinessAddress, BusinessName}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, AuthProviderId, BusinessAddress, ContactEmailData}
 
 /**
   * A Mongo record which represents the user's current journey in setting up a new
@@ -37,7 +37,7 @@ final case class SubscriptionJourneyRecord(
   mappingComplete: Boolean = false,
   cleanCredsAuthProviderId: Option[AuthProviderId] = None,
   lastModifiedDate: Option[LocalDateTime] = None,
-  contactDetailsEmailCheck: Boolean = false,
+  contactEmailData: Option[ContactEmailData] = None,
   contactDetailsTradingName: Option[String] = None,
   contactDetailsTradingAddress: Option[BusinessAddress] = None
 )
@@ -55,7 +55,7 @@ object SubscriptionJourneyRecord {
       (JsPath \ "mappingComplete").format[Boolean] and
       (JsPath \ "cleanCredsAuthProviderId").formatNullable[AuthProviderId] and
       (JsPath \ "lastModifiedDate").formatNullable[LocalDateTime] and
-      (JsPath \ "contactDetailsEmailCheck").format[Boolean] and
+      (JsPath \ "contactEmailData").formatNullable[ContactEmailData] and
       (JsPath \ "contactDetailsTradingName").formatNullable[String] and
       (JsPath \ "contactDetailsTradingAddress")
         .formatNullable[BusinessAddress])(SubscriptionJourneyRecord.apply, unlift(SubscriptionJourneyRecord.unapply))

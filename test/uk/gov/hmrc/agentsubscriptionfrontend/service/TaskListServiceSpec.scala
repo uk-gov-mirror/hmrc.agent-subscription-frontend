@@ -178,7 +178,7 @@ class TaskListServiceSpec extends UnitSpec with MockitoSugar {
               amlsRegistered = true,
               None,
               Some(AmlsDetails("supervisory", Left(PendingDetails(LocalDate.now().minusDays(20))))))),
-          contactDetailsEmailCheck = true
+          contactEmailData = Some(ContactEmailData(true, Some("email@email.com")))
         )
         val tasks = await(taskListService.createTasks(record))
 
@@ -198,7 +198,7 @@ class TaskListServiceSpec extends UnitSpec with MockitoSugar {
               amlsRegistered = true,
               None,
               Some(AmlsDetails("supervisory", Left(PendingDetails(LocalDate.now().minusDays(20))))))),
-          contactDetailsEmailCheck = true,
+          contactEmailData = Some(ContactEmailData(true, Some("email@email.com"))),
           contactDetailsTradingName = Some(tradingName)
         )
         val tasks = await(taskListService.createTasks(record))
@@ -221,7 +221,7 @@ class TaskListServiceSpec extends UnitSpec with MockitoSugar {
               amlsRegistered = true,
               None,
               Some(AmlsDetails("supervisory", Left(PendingDetails(LocalDate.now().minusDays(20))))))),
-          contactDetailsEmailCheck = true,
+          contactEmailData = Some(ContactEmailData(true, Some("email@email.com"))),
           contactDetailsTradingAddress = Some(tradingAddress),
           contactDetailsTradingName = Some(tradingName)
         )
@@ -237,9 +237,10 @@ class TaskListServiceSpec extends UnitSpec with MockitoSugar {
         givenManuallyAssured
         val record = minimalUncleanCredsRecord.copy(
           mappingComplete = true,
-          contactDetailsEmailCheck = true,
+          contactEmailData = Some(ContactEmailData(true, Some("email@email.com"))),
           contactDetailsTradingName = Some(tradingName),
-          contactDetailsTradingAddress = Some(tradingAddress))
+          contactDetailsTradingAddress = Some(tradingAddress)
+        )
         val tasks = await(taskListService.createTasks(record))
 
         tasks.length shouldBe 5
@@ -258,7 +259,7 @@ class TaskListServiceSpec extends UnitSpec with MockitoSugar {
               amlsRegistered = true,
               None,
               Some(AmlsDetails("supervisory", Left(PendingDetails(LocalDate.now().minusDays(20))))))),
-          contactDetailsEmailCheck = true,
+          contactEmailData = Some(ContactEmailData(true, Some("email@email.com"))),
           contactDetailsTradingName = Some(tradingName),
           contactDetailsTradingAddress = Some(tradingAddress)
         )
@@ -276,7 +277,7 @@ class TaskListServiceSpec extends UnitSpec with MockitoSugar {
           .copy(
             cleanCredsAuthProviderId = Some(AuthProviderId("cred-123")),
             mappingComplete = true,
-            contactDetailsEmailCheck = true,
+            contactEmailData = Some(ContactEmailData(true, Some("email@email.com"))),
             contactDetailsTradingName = Some(tradingName),
             contactDetailsTradingAddress = Some(tradingAddress)
           )
@@ -296,7 +297,7 @@ class TaskListServiceSpec extends UnitSpec with MockitoSugar {
           .copy(
             cleanCredsAuthProviderId = Some(AuthProviderId("cred-123")),
             mappingComplete = true,
-            contactDetailsEmailCheck = true,
+            contactEmailData = Some(ContactEmailData(true, Some("email@email.com"))),
             contactDetailsTradingName = Some(tradingName),
             contactDetailsTradingAddress = Some(tradingAddress)
           )
@@ -408,7 +409,7 @@ class TaskListServiceSpec extends UnitSpec with MockitoSugar {
               amlsRegistered = true,
               None,
               Some(AmlsDetails("supervisory", Left(PendingDetails(LocalDate.now().minusDays(20))))))),
-          contactDetailsEmailCheck = true,
+          contactEmailData = Some(ContactEmailData(true, Some("email@email.com"))),
           contactDetailsTradingName = Some(tradingName),
           contactDetailsTradingAddress = Some(tradingAddress)
         )

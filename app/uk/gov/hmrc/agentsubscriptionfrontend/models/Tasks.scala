@@ -65,9 +65,11 @@ final case class AmlsSubTask(isMaa: Boolean, amlsData: Option[AmlsData]) extends
   override val link: String = routes.AMLSController.showAmlsRegisteredPage().url
 }
 
-final case class ContactDetailsEmailSubTask(isComplete: Boolean, showLink: Boolean) extends SubTask {
+final case class ContactDetailsEmailSubTask(contactEmailData: Option[ContactEmailData], showLink: Boolean)
+    extends SubTask {
   override val taskKey: String = "contactDetailsEmailSubTask"
-  override val link: String = ""
+  override val isComplete: Boolean = contactEmailData.flatMap(_.contactEmail).isDefined
+  override val link: String = routes.ContactDetailsController.showContactEmailCheck().url
 }
 
 final case class ContactTradingNameSubTask(contactDetailsBusinessNameData: Option[String], showLink: Boolean)

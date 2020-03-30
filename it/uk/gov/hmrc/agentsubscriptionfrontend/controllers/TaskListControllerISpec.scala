@@ -4,10 +4,10 @@ import java.time.LocalDate
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{AmlsDetails, AuthProviderId, PendingDetails, RegisteredDetails}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AmlsDetails, AuthProviderId, ContactEmailData, PendingDetails, RegisteredDetails}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.AmlsData
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub._
-import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionJourneyStub.{givenSubscriptionJourneyRecordExists, givenNoSubscriptionJourneyRecordExists}
+import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionJourneyStub.{givenNoSubscriptionJourneyRecordExists, givenSubscriptionJourneyRecordExists}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.{subscribingAgentEnrolledForHMRCASAGENT, subscribingAgentEnrolledForNonMTD}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestData}
@@ -123,7 +123,7 @@ class TaskListControllerISpec extends BaseISpec {
         TestData.minimalSubscriptionJourneyRecord(AuthProviderId("12345-credId"))
           .copy(amlsData = Some(AmlsData(amlsRegistered = true, None,
             Some(AmlsDetails("supervisory", Left(PendingDetails(LocalDate.now().minusDays(20))))))), continueId = Some("continue-id"),
-            contactDetailsEmailCheck = true,
+            contactEmailData = Some(ContactEmailData(true, Some("email@email.com"))),
             contactDetailsTradingName = Some(tradingName),
             contactDetailsTradingAddress = Some(tradingAddress)))
 

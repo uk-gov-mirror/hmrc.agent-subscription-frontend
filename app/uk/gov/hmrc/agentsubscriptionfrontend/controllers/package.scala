@@ -253,4 +253,24 @@ package object controllers {
     }
   }
 
+  object ContactDetailsForms {
+
+    val contactEmailCheckForm = Form[ContactEmailCheck](
+      mapping("check" -> optional(text).verifying(radioInputSelected("error.contact-email-check.invalid")))(answer =>
+        ContactEmailCheck(RadioInputAnswer.apply(answer.getOrElse(""))))(answer =>
+        Some(RadioInputAnswer.unapply(answer.check)))
+        .verifying(
+          "error.contact-email-check.invalid",
+          submittedAnswer => Seq(Yes, No).contains(submittedAnswer.check)
+        )
+    )
+
+    val contactEmailAddressForm = Form[BusinessEmail](
+      mapping(
+        "email" -> contactEmailAddress
+      )(BusinessEmail.apply)(BusinessEmail.unapply)
+    )
+
+  }
+
 }

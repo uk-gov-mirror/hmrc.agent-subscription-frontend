@@ -50,3 +50,5 @@ object RadioInputAnswer {
 case class LinkClients(autoMapping: RadioInputAnswer)
 
 case class ConfirmBusiness(confirm: RadioInputAnswer)
+
+case class ContactEmailCheck(check: RadioInputAnswer)

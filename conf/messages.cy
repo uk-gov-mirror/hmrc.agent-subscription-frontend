@@ -119,6 +119,22 @@ error.amls.pending.appliedOn.date.invalid=Nodwch ddyddiad go iawn
 error.amls.pending.appliedOn.date.too-old=Rhaid i’r dyddiad y gwnaethoch gais fod ar ôl {0}
 error.amls.pending.appliedOn.date.cannot-be-in-future=Rhaid i’r dyddiad y gwnaethoch gais fod heddiw neu yn y gorffennol
 
+error.contact-email-check.invalid=
+error.contact-email.empty=
+error.contact-email.maxLength=
+error.contact-email.missingSeparator=
+error.contact-email.invalidChar=
+
+#Contact Email Check
+contactEmailCheck.title=
+contactEmailCheck.option.differentEmail=
+contactEmailCheck.continue.button=
+
+#Contact Email Address
+contactEmailAddress.title=
+contactEmailAddress.p=
+contactEmailAddress.button=
+
 ##Modifying address
 address.form.with-errors.error.summary =Gwiriwch y canlynol:
 address.form.with-errors.heading =Nodwch gyfeiriad

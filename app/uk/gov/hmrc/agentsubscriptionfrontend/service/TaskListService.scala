@@ -43,8 +43,6 @@ class TaskListService @Inject()(agentAssuranceConnector: AgentAssuranceConnector
       } else {
 
         val amlsAndContactDetailsTaskList: List[Task] = amlsAndContactDetailsTasks(subscriptionJourneyRecord, maa)
-        val checkAnswersTask: Task = CheckAnswersTask(
-          List(CheckAnswersSubTask(amlsAndContactDetailsTaskList.forall(_.isComplete))))
 
         val mappingTask: Task = MappingTask(
           List(
@@ -59,8 +57,8 @@ class TaskListService @Inject()(agentAssuranceConnector: AgentAssuranceConnector
         )
         val createIDTask: Task = CreateIDTask(
           List(CreateIDSubTask(subscriptionJourneyRecord.cleanCredsAuthProviderId, mappingTask.isComplete)))
-        val cyaTask: Task = CheckAnswersTask(List(CheckAnswersSubTask(createIDTask.isComplete)))
-        amlsAndContactDetailsTaskList ::: List(mappingTask, createIDTask, cyaTask)
+        val checkAnswersTask: Task = CheckAnswersTask(List(CheckAnswersSubTask(createIDTask.isComplete)))
+        amlsAndContactDetailsTaskList ::: List(mappingTask, createIDTask, checkAnswersTask)
       }
     }
 
@@ -74,7 +72,7 @@ class TaskListService @Inject()(agentAssuranceConnector: AgentAssuranceConnector
     val amlsTask: Task = AmlsTask(List(AmlsSubTask(maa, subscriptionJourneyRecord.amlsData)))
 
     val contactEmailSubTask: SubTask = ContactDetailsEmailSubTask(
-      subscriptionJourneyRecord.contactDetailsEmailCheck,
+      subscriptionJourneyRecord.contactEmailData,
       amlsTask.isComplete
     )
     val contactTradingNameSubTask: SubTask = ContactTradingNameSubTask(

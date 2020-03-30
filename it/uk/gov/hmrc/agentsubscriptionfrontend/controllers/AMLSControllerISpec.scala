@@ -106,7 +106,6 @@ class AMLSControllerISpec extends BaseISpec {
       intercept[RuntimeException] {
         await(controller.showAmlsRegisteredPage(authenticatedRequest))
       }.getMessage should be("Expected Journey Record missing")
-
     }
 
   }

@@ -87,7 +87,15 @@ object CommonValidators {
 
   def emailAddress: Mapping[String] =
     text
-      .verifying(validEmailAddress)
+      .verifying(validEmailAddress())
+
+  def contactEmailAddress: Mapping[String] =
+    text.verifying(
+      validEmailAddress(
+        "error.contact-email.empty",
+        "error.contact-email.maxLength",
+        "error.contact-email.invalidChar",
+        "error.contact-email.missingSeparator"))
 
   def businessName: Mapping[String] =
     text
@@ -186,19 +194,23 @@ object CommonValidators {
     def unbind(key: String, value: String) = Map(key -> value)
   }
 
-  private def validEmailAddress = Constraint { fieldValue: String =>
-    nonEmptyWithMessage("error.business-email.empty")(fieldValue) match {
+  private def validEmailAddress(
+    nonEmptyMessageKey: String = "error.business-email.empty",
+    maxLengthMessageKey: String = "error.email.maxlength",
+    invalidCharMessageKey: String = "error.email.invalidchars",
+    missingEmailPartSeperatorMessageKey: String = "error.email.invalidchars") = Constraint { fieldValue: String =>
+    nonEmptyWithMessage(nonEmptyMessageKey)(fieldValue) match {
       case i: Invalid => i
       case Valid => {
         if (fieldValue.size > EmailMaxLength) {
-          Invalid(ValidationError("error.email.maxlength"))
+          Invalid(ValidationError(maxLengthMessageKey))
         } else if (fieldValue.contains('@')) {
           val email = fieldValue.split('@')
           if (!email(0).matches(EmailLocalPartRegex) || !email(1).matches(EmailDomainRegex)) {
-            Invalid(ValidationError("error.email.invalidchars"))
+            Invalid(ValidationError(invalidCharMessageKey))
           } else Constraints.emailAddress(fieldValue)
         } else
-          Invalid(ValidationError("error.email.invalidchars"))
+          Invalid(ValidationError(missingEmailPartSeperatorMessageKey))
       }
     }
   }

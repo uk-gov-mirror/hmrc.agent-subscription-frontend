@@ -1,0 +1,66 @@
+@*
+ * Copyright 2020 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
+@import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
+@import uk.gov.hmrc.agentsubscriptionfrontend.models.ContactEmailCheck
+@import uk.gov.hmrc.agentsubscriptionfrontend.views.html
+
+
+@this(
+        mainTemplate: main_template,
+        errorPrefix: error_prefix,
+        formHelper: uk.gov.hmrc.play.views.html.helpers.FormWithCSRF,
+        errorSummary: uk.gov.hmrc.play.views.html.helpers.ErrorSummary,
+        uiInputRadioGroup: uk.gov.hmrc.play.views.html.helpers.InputRadioGroup
+)
+
+@(contactEmailCheckForm: Form[ContactEmailCheck], businessEmail: String)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+
+
+@mainTemplate(appConfig, title =  errorPrefix(contactEmailCheckForm) +  Messages("contactEmailCheck.title"), bodyClasses = None) {
+
+        <a href='@routes.TaskListController.showTaskList()' class="link-back">@Messages("button.back")</a>
+
+
+    @if(contactEmailCheckForm.hasErrors) {
+        @errorSummary(Messages("error.summary.heading"), contactEmailCheckForm, Seq.empty, Some("contact-email-check"))
+    }
+
+    @formHelper(
+        action = routes.ContactDetailsController.submitContactEmailCheck,
+        'class -> "form js-form") {
+
+        @uiInputRadioGroup(
+            contactEmailCheckForm("check"),
+            Seq(
+                "yes" -> s"$businessEmail",
+                "no" -> Messages("contactEmailCheck.option.differentEmail")
+            ),
+            '_legend -> Html(s"""<h1 class="heading-xlarge ${if(contactEmailCheckForm.hasErrors){"push--top"}}">${Messages("contactEmailCheck.title")}</h1>"""),
+            '_groupDivClass -> s"soft--ends",
+            '_legendClass -> "soft--ends",
+            '_fieldsetAttributes -> Html("""id='check'"""),
+            '_errorPrefix -> Messages("error.prefix")
+        )
+
+        <div class="form-field margin-top-30">
+
+            <button class="button" type="submit" id="submit-email-check">@Messages("contactEmailCheck.continue.button")</button>
+
+        </div>
+    }
+}
