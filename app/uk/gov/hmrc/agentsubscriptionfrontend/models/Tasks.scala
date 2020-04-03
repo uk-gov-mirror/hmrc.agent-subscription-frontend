@@ -72,20 +72,26 @@ final case class ContactDetailsEmailSubTask(contactEmailData: Option[ContactEmai
   override val link: String = routes.ContactDetailsController.showContactEmailCheck().url
 }
 
-final case class ContactTradingNameSubTask(contactDetailsBusinessNameData: Option[String], showLink: Boolean)
+final case class ContactTradingNameSubTask(contactTradingNameData: Option[ContactTradingNameData], showLink: Boolean)
     extends SubTask {
   override val taskKey: String = "contactDetailsTradingNameSubTask"
-  override val isComplete: Boolean = contactDetailsBusinessNameData.isDefined
-  override val link: String = ""
+  override val isComplete: Boolean = {
+    contactTradingNameData.fold(false) { data =>
+      (data.contactTradingNameCheck && data.contactTradingName.isDefined) || !data.contactTradingNameCheck
+    }
+  }
+  override val link: String = routes.ContactDetailsController.showTradingNameCheck().url
 }
 
 final case class ContactTradingAddressSubTask(
-  contactDetailsTradingAddressData: Option[BusinessAddress],
+  contactTradingAddressData: Option[ContactTradingAddressData],
   showLink: Boolean)
     extends SubTask {
   override val taskKey: String = "contactDetailsTradingAddressSubTask"
-  override val isComplete: Boolean = contactDetailsTradingAddressData.isDefined
-  override val link: String = ""
+  override val isComplete: Boolean = {
+    contactTradingAddressData.flatMap(_.contactTradingAddress).isDefined
+  }
+  override val link: String = routes.ContactDetailsController.showCheckMainTradingAddress().url
 }
 
 final case class MappingSubTask(

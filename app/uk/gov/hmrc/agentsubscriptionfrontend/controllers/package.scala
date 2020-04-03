@@ -271,6 +271,31 @@ package object controllers {
       )(BusinessEmail.apply)(BusinessEmail.unapply)
     )
 
+    val contactTradingNameCheckForm = Form[ContactTradingNameCheck](
+      mapping("check" -> optional(text).verifying(radioInputSelected("error.contact-trading-name-check.invalid")))(
+        answer => ContactTradingNameCheck(RadioInputAnswer.apply(answer.getOrElse(""))))(answer =>
+        Some(RadioInputAnswer.unapply(answer.check)))
+        .verifying(
+          "error.contact-trading-name-check.invalid",
+          submittedAnswer => Seq(Yes, No).contains(submittedAnswer.check)
+        )
+    )
+
+    val contactTradingNameForm = Form[BusinessName](
+      mapping(
+        "name" -> tradingName
+      )(BusinessName.apply)(BusinessName.unapply)
+    )
+
+    val contactTradingAddressCheckForm = Form[ContactTradingAddressCheck](
+      mapping("check" -> optional(text).verifying(radioInputSelected("error.contact-trading-address-check.invalid")))(
+        answer => ContactTradingAddressCheck(RadioInputAnswer.apply(answer.getOrElse(""))))(answer =>
+        Some(RadioInputAnswer.unapply(answer.check)))
+        .verifying(
+          "error.contact-trading-address-check.invalid",
+          submittedAnswer => Seq(Yes, No).contains(submittedAnswer.check)
+        )
+    )
   }
 
 }

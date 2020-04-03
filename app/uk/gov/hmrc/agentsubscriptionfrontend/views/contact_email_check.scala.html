@@ -50,7 +50,7 @@
                 "yes" -> s"$businessEmail",
                 "no" -> Messages("contactEmailCheck.option.differentEmail")
             ),
-            '_legend -> Html(s"""<h1 class="heading-xlarge ${if(contactEmailCheckForm.hasErrors){"push--top"}}">${Messages("contactEmailCheck.title")}</h1>"""),
+            '_legend -> Html(s"""<h1 class="heading-xlarge ${if(contactEmailCheckForm.hasErrors)"push--top" else ""}">${Messages("contactEmailCheck.title")}</h1>"""),
             '_groupDivClass -> s"soft--ends",
             '_legendClass -> "soft--ends",
             '_fieldsetAttributes -> Html("""id='check'"""),
@@ -59,7 +59,7 @@
 
         <div class="form-field margin-top-30">
 
-            <button class="button" type="submit" id="submit-email-check">@Messages("contactEmailCheck.continue.button")</button>
+            <button class="button" type="submit" id="continue">@Messages("contactEmailCheck.continue.button")</button>
 
         </div>
     }

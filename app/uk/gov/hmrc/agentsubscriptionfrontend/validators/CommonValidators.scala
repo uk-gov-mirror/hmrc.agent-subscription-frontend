@@ -108,6 +108,17 @@ object CommonValidators {
             desText(msgKeyRequired = "error.business-name.empty", msgKeyInvalid = "error.business-name.invalid"))
         ))
 
+  def tradingName: Mapping[String] =
+    text
+      .verifying(maxLength(BusinessNameMaxLength, "error.trading-name-name.maxlength"))
+      .verifying(
+        checkOneAtATime(
+          noAmpersand("error.trading-name.invalid"),
+          checkOneAtATime(
+            noApostrophe("error.trading-name.invalid"),
+            desText(msgKeyRequired = "error.trading-name.empty", msgKeyInvalid = "error.trading-name.invalid"))
+        ))
+
   def amlsCode(bodies: Set[String]): Mapping[String] = text verifying amlsCodeConstraint(bodies)
 
   def membershipNumber: Mapping[String] = nonEmptyTextWithMsg("error.moneyLaunderingCompliance.membershipNumber.empty")

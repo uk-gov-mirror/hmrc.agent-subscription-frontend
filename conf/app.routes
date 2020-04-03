@@ -90,6 +90,18 @@ POST        /contact-email-check                           uk.gov.hmrc.agentsubs
 GET         /contact-email-address                          uk.gov.hmrc.agentsubscriptionfrontend.controllers.ContactDetailsController.showContactEmailAddress
 POST        /contact-email-address                          uk.gov.hmrc.agentsubscriptionfrontend.controllers.ContactDetailsController.submitContactEmailAddress
 
+GET         /trading-name                                   uk.gov.hmrc.agentsubscriptionfrontend.controllers.ContactDetailsController.showTradingNameCheck
+POST        /trading-name                                   uk.gov.hmrc.agentsubscriptionfrontend.controllers.ContactDetailsController.submitTradingNameCheck
+
+GET         /main-trading-name                              uk.gov.hmrc.agentsubscriptionfrontend.controllers.ContactDetailsController.showTradingName
+POST        /main-trading-name                              uk.gov.hmrc.agentsubscriptionfrontend.controllers.ContactDetailsController.submitTradingName
+
+GET         /check-main-trading-address                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.ContactDetailsController.showCheckMainTradingAddress
+POST        /check-main-trading-address                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.ContactDetailsController.submitCheckMainTradingAddress
+
+GET         /find-main-trading-address                      uk.gov.hmrc.agentsubscriptionfrontend.controllers.ContactDetailsController.showMainTradingAddress
+GET         /lookup-trading-address                         uk.gov.hmrc.agentsubscriptionfrontend.controllers.ContactDetailsController.returnFromAddressLookup(id: String ?= "")
+
 GET         /business-email                                uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showBusinessEmailForm
 POST        /business-email                                uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.submitBusinessEmailForm
 GET         /change-business-email                         uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.changeBusinessEmail

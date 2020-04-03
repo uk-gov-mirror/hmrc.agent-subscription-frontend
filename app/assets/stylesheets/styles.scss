@@ -10,6 +10,10 @@
     margin-top: 10px !important;
 }
 
+.margin-top-0 {
+    margin-top: 0 !important;
+}
+
 .margin-bottom-0 {
     margin-bottom: 0 !important;
 }
@@ -22,6 +26,10 @@
     margin-bottom: 20px !important;
 }
 
+.margin-bottom-30 {
+    margin-bottom: 30px !important;
+}
+
 .margin-bottom-40 {
     margin-bottom: 40px !important;
 }
@@ -32,6 +40,12 @@
 
 .margin-right-5 {
     margin-right: 5px;
+}
+
+.error-container {
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-top: 0;
 }
 
 .govuk-tag {

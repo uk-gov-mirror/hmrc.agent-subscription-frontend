@@ -119,21 +119,41 @@ error.amls.pending.appliedOn.date.invalid=Nodwch ddyddiad go iawn
 error.amls.pending.appliedOn.date.too-old=Rhaid i’r dyddiad y gwnaethoch gais fod ar ôl {0}
 error.amls.pending.appliedOn.date.cannot-be-in-future=Rhaid i’r dyddiad y gwnaethoch gais fod heddiw neu yn y gorffennol
 
-error.contact-email-check.invalid=
-error.contact-email.empty=
-error.contact-email.maxLength=
-error.contact-email.missingSeparator=
-error.contact-email.invalidChar=
-
 #Contact Email Check
 contactEmailCheck.title=
 contactEmailCheck.option.differentEmail=
 contactEmailCheck.continue.button=
+error.contact-email-check.invalid=
 
 #Contact Email Address
 contactEmailAddress.title=
 contactEmailAddress.p=
 contactEmailAddress.button=
+error.contact-email.empty=
+error.contact-email.maxLength=
+error.contact-email.missingSeparator=
+error.contact-email.invalidChar=
+
+#Contact Trading Name Check
+contactTradingNameCheck.title=
+contactTradingNameCheck.option.yes=
+contactTradingNameCheck.option.no=
+contactTradingNameCheck.continue.button=
+error.contact-trading-name-check.invalid=
+
+#Contact Trading Name
+contactTradingName.title=
+contactTradingName.continue.button=
+error.trading-name-name.maxlength=
+error.trading-name.invalid=
+error.trading-name.empty=
+
+#Contact Trading Address Check
+contactTradingAddressCheck.title=
+contactTradingAddressCheck.option.yes=
+contactTradingAddressCheck.option.no=
+contactTradingAddressCheck.continue.button=
+error.contact-trading-address-check.invalid=
 
 ##Modifying address
 address.form.with-errors.error.summary =Gwiriwch y canlynol:

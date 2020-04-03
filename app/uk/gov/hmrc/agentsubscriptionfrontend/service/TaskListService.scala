@@ -76,11 +76,11 @@ class TaskListService @Inject()(agentAssuranceConnector: AgentAssuranceConnector
       amlsTask.isComplete
     )
     val contactTradingNameSubTask: SubTask = ContactTradingNameSubTask(
-      subscriptionJourneyRecord.contactDetailsTradingName,
+      subscriptionJourneyRecord.contactTradingNameData,
       contactEmailSubTask.isComplete
     )
     val contactTradingAddressSubTask: SubTask = ContactTradingAddressSubTask(
-      subscriptionJourneyRecord.contactDetailsTradingAddress,
+      subscriptionJourneyRecord.contactTradingAddressData,
       contactTradingNameSubTask.isComplete
     )
     val contactDetailsTask: Task = ContactDetailsTask(

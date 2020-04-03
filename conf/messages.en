@@ -119,21 +119,41 @@ error.amls.pending.appliedOn.date.invalid=Enter a real date
 error.amls.pending.appliedOn.date.too-old=The date you applied must be after {0}
 error.amls.pending.appliedOn.date.cannot-be-in-future=The date you applied must be today or in the past
 
-error.contact-email-check.invalid=Select if you want to use the email address displayed or a different email address
-error.contact-email.empty=Enter an email address
-error.contact-email.maxLength=Email address must be 132 characters or fewer
-error.contact-email.missingSeparator=Enter an email address in the correct format, like name@example.com
-error.contact-email.invalidChar=Email address must only contain letters a to z, numbers, full stops, hyphens, underscores and @ signs
-
 #Contact Email Check
 contactEmailCheck.title=Which email address do you want to use for your agent services account?
 contactEmailCheck.option.differentEmail=use a different email address
 contactEmailCheck.continue.button=Continue
+error.contact-email-check.invalid=Select if you want to use the email address displayed or a different email address
 
 #Contact Email Address
 contactEmailAddress.title=What is the email address you want to use?
 contactEmailAddress.p=We will only use this to send you a confirmation email. Your email address will only be updated in your agent services account.
 contactEmailAddress.button=Continue
+error.contact-email.empty=Enter an email address
+error.contact-email.maxLength=Email address must be 132 characters or fewer
+error.contact-email.missingSeparator=Enter an email address in the correct format, like name@example.com
+error.contact-email.invalidChar=Email address must only contain letters a to z, numbers, full stops, hyphens, underscores and @ signs
+
+#Contact Trading Name Check
+contactTradingNameCheck.title=Do you trade under a different name to {0}?
+contactTradingNameCheck.option.yes=Yes
+contactTradingNameCheck.option.no=No
+contactTradingNameCheck.continue.button=Continue
+error.contact-trading-name-check.invalid=Select yes if you trade under a different name
+
+#Contact Trading Name
+contactTradingName.title=What is the main trading name of your business?
+contactTradingName.continue.button=Continue
+error.trading-name-name.maxlength=Main trading name must be 40 characters or fewer
+error.trading-name.invalid=Name trading name must only include letters a to z, numbers, commas, full stops, apostrophes, hyphens, forward slashes and spaces
+error.trading-name.empty=Enter the main trading name of your business
+
+#Contact Trading Address Check
+contactTradingAddressCheck.title=Is this your main trading address?
+contactTradingAddressCheck.option.yes=Yes - I want to use this address for all my agents services correspondence
+contactTradingAddressCheck.option.no=No - I need to enter a different address
+contactTradingAddressCheck.continue.button=Continue
+error.contact-trading-address-check.invalid=Select yes if this is your main trading address
 
 #Modifying address
 address.form.with-errors.error.summary = Please check the following:
