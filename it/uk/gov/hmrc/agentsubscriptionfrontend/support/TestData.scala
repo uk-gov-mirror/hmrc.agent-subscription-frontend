@@ -21,7 +21,7 @@ object TestData {
   val testPostcode = "AA1 1AA"
   val registrationName = "My Agency"
   val tradingName = "My Trading Name"
-  val emailTooLong = "hgfhdgfjgfjsdjhfgsdjfgdjsgfjdsg@jhjkhdkhfkdhskhkdsjhjkfhskjfhshdkjfhjkshfkhkdshkfhksjhfhkjsdhdfhsdhfkhj.comjhgdjhgjdgasjgdjagjdhagjgjasgjhasgdasd"
+  val emailTooLong = "emailaddresstoolongxxxxxxxxxxxxxxxxxxxxxwaytoolong@emailaddressistoolongggggggggggggggg_________waytoolong.comxxxxxxxxxxxxxxxxxxxxxxx"
   val businessAddress =
     BusinessAddress(
       "AddressLine1 A",
@@ -90,8 +90,8 @@ object TestData {
             "supervisory",
             Right(RegisteredDetails("123456789", LocalDate.now().plusDays(10))))))),
     cleanCredsAuthProviderId = Some(id),
-    contactEmailData = Some(ContactEmailData(true, Some("email@email.com"))),
-    contactTradingNameData = Some(ContactTradingNameData(true, Some(registrationName))),
+    contactEmailData = Some(ContactEmailData(false, Some("email@email.com"))),
+    contactTradingNameData = Some(ContactTradingNameData(true, Some(tradingName))),
     contactTradingAddressData = Some(ContactTradingAddressData(true, Some(businessAddress)))
   )
 

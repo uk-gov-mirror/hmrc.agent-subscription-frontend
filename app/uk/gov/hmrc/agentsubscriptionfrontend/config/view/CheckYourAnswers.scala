@@ -28,8 +28,10 @@ import uk.gov.hmrc.agentsubscriptionfrontend.models.{BusinessAddress, PendingDet
 case class CheckYourAnswers(
   businessNameRow: AnswerRow,
   businessAddressRow: AnswerRow,
-  businessEmailRow: AnswerRow,
   maybeAmlsDataRow: Option[AnswerRow],
+  contactEmailRow: AnswerRow,
+  contactTradingNameRow: AnswerRow,
+  contactTradingAddressRow: AnswerRow,
   maybeMappingClientNumberRow: Option[AnswerRow],
   maybeMappingGGIdsRow: Option[AnswerRow])
 
@@ -38,17 +40,21 @@ object CheckYourAnswers {
   def apply(
     registrationName: String,
     address: BusinessAddress,
-    emailAddress: Option[String],
     amlsData: Option[AmlsData],
     isManuallyAssured: Boolean,
     userMappings: List[UserMapping],
     continueId: Option[String],
+    contactEmailAddress: String,
+    contactTradingName: Option[String],
+    contactTradingAddress: BusinessAddress,
     appConfig: AppConfig)(implicit messages: Messages): CheckYourAnswers =
     CheckYourAnswers(
       businessNameRow = makeBusinessNameRow(registrationName),
       businessAddressRow = makeBusinessAddressRow(address),
-      businessEmailRow = makeBusinessEmailRow(emailAddress),
       maybeAmlsDataRow = if (isManuallyAssured) None else makeAmlsDataRow(amlsData),
+      contactEmailRow = makeContactEmailRow(contactEmailAddress),
+      contactTradingNameRow = makeContactTradingNameRow(contactTradingName),
+      contactTradingAddressRow = makeContactTradingAddressRow(contactTradingAddress),
       maybeMappingClientNumberRow =
         if (userMappings.isEmpty)
           None
@@ -116,11 +122,32 @@ object CheckYourAnswers {
       case None => throw new Exception("AMLS details incomplete")
     }
 
-  private def makeBusinessEmailRow(emailAddress: Option[String])(implicit messages: Messages) =
+  private def makeContactEmailRow(emailAddress: String)(implicit messages: Messages) =
     AnswerRow(
-      question = Messages("checkAnswers.businessEmailAddress.label"),
-      answerLines = List(emailAddress).flatten,
-      changeLink = Some(routes.BusinessIdentificationController.changeBusinessEmail()),
+      question = Messages("checkAnswers.contactEmailAddress.label"),
+      answerLines = List(emailAddress),
+      changeLink = Some(routes.ContactDetailsController.changeContactEmailAddress()),
+      buttonText = Some(defaultButtonText)
+    )
+
+  private def makeContactTradingNameRow(contactTradingName: Option[String])(implicit messages: Messages) =
+    AnswerRow(
+      question = Messages("checkAnswers.contactTradingName.label"),
+      answerLines = List(contactTradingName.getOrElse(Messages("checkAnswers.tradingName.none"))),
+      changeLink = Some(routes.ContactDetailsController.changeTradingName()),
+      buttonText = Some(defaultButtonText)
+    )
+
+  private def makeContactTradingAddressRow(address: BusinessAddress)(implicit messages: Messages) =
+    AnswerRow(
+      question = Messages("checkAnswers.contactTradingAddress.label"),
+      answerLines = List(
+        Some(address.addressLine1),
+        address.addressLine2,
+        address.addressLine3,
+        address.addressLine4,
+        address.postalCode).flatten,
+      changeLink = Some(routes.ContactDetailsController.changeCheckMainTradingAddress()),
       buttonText = Some(defaultButtonText)
     )
 
@@ -133,16 +160,16 @@ object CheckYourAnswers {
         address.addressLine3,
         address.addressLine4,
         address.postalCode).flatten,
-      changeLink = Some(routes.SubscriptionController.showBusinessAddressForm()),
-      buttonText = Some(defaultButtonText)
+      changeLink = None,
+      buttonText = None
     )
 
   private def makeBusinessNameRow(registrationName: String)(implicit messages: Messages) =
     AnswerRow(
       question = Messages("checkAnswers.businessName.label"),
       answerLines = List(registrationName),
-      changeLink = Some(routes.BusinessIdentificationController.changeBusinessName()),
-      buttonText = Some(defaultButtonText)
+      changeLink = None,
+      buttonText = None
     )
 
 }

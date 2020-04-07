@@ -468,6 +468,14 @@ checkAnswers.userMapping.label=Nifer y perthnasoedd cleientiaid a gopïwyd
 checkAnswers.addMore.button=Ychwanegu rhagor
 checkAnswers.ggId.label=Dynodyddion Defnyddiwr (ID) ar gyfer Porth y Llywodraeth a nodwyd (er eich diogelwch dangosir y 4 rhif olaf yn unig)
 checkAnswers.ggId.xs=XXXX-XXXX-{0}
+checkAnswers.contactEmailAddress.label=
+checkAnswers.contactTradingName.label=
+checkAnswers.contactTradingAddress.label=
+checkAnswers.amls.h2=
+checkAnswers.businessDetails.h2=
+checkAnswers.contactDetails.h2=
+checkAnswers.mapping.h2=
+checkAnswers.tradingName.none=
 
 businessName.title=Beth yw enw eich busnes?
 businessName.updated.title=Diweddaru enw eich busnes

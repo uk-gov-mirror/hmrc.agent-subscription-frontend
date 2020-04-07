@@ -31,25 +31,14 @@ object SubscriptionDetails {
   implicit val formatDesAddress: Format[DesAddress] = Json.format[DesAddress]
   implicit val formatSubscriptionDetails: Format[SubscriptionDetails] = Json.format[SubscriptionDetails]
 
-  implicit def mapper(
-    utr: Utr,
-    postcode: Postcode,
-    registration: Registration,
-    amlsData: Option[AmlsData]): SubscriptionDetails = {
-    val desAddress = DesAddress(
-      registration.address.addressLine1,
-      registration.address.addressLine2,
-      registration.address.addressLine3,
-      registration.address.addressLine4,
-      registration.address.postalCode.getOrElse(throw new Exception("Postcode should not be empty")),
-      registration.address.countryCode
-    )
+  implicit def mapper(utr: Utr, postcode: Postcode, agency: Agency, amlsData: Option[AmlsData]): SubscriptionDetails = {
+    val desAddress = agency.address
 
     SubscriptionDetails(
       utr,
       postcode.value,
-      registration.taxpayerName.getOrElse(""),
-      registration.emailAddress.getOrElse(throw new Exception("email should not be empty")),
+      agency.name,
+      agency.email,
       desAddress,
       amlsData
     )

@@ -21,6 +21,7 @@ import java.util.UUID
 
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{JsPath, OFormat}
+import uk.gov.hmrc.agentsubscriptionfrontend.config.view.CYACheckResult
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, AuthProviderId, BusinessAddress, ContactEmailData, ContactTradingAddressData, ContactTradingNameData}
 
 /**

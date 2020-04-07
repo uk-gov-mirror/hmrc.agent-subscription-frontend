@@ -28,12 +28,13 @@
         uiInputRadioGroup: uk.gov.hmrc.play.views.html.helpers.InputRadioGroup
 )
 
-@(contactEmailCheckForm: Form[ContactEmailCheck], businessEmail: String)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+@(contactEmailCheckForm: Form[ContactEmailCheck], businessEmail: String, isChanging: Boolean)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
+@backLinkCall = @{if(isChanging){routes.SubscriptionController.showCheckAnswers()} else {routes.TaskListController.showTaskList()}}
 
 @mainTemplate(appConfig, title =  errorPrefix(contactEmailCheckForm) +  Messages("contactEmailCheck.title"), bodyClasses = None) {
 
-        <a href='@routes.TaskListController.showTaskList()' class="link-back">@Messages("button.back")</a>
+        <a href='@backLinkCall' class="link-back">@Messages("button.back")</a>
 
 
     @if(contactEmailCheckForm.hasErrors) {

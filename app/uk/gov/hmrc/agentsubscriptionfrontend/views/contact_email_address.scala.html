@@ -26,11 +26,8 @@
         errorSummary: uk.gov.hmrc.play.views.html.helpers.ErrorSummary
 )
 
-@(contactEmailForm: Form[BusinessEmail], isChange: Boolean)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+@(contactEmailForm: Form[BusinessEmail])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
-@backLinkUrl = @{
-    if(isChange){routes.SubscriptionController.showCheckAnswers()}else{routes.ContactDetailsController.showContactEmailCheck()}
-}
 
 @formValue = @{
     contactEmailForm.data.get("email").getOrElse("")
@@ -38,7 +35,7 @@
 
 @mainTemplate(appConfig, title =  errorPrefix(contactEmailForm) +  Messages("contactEmailAddress.title"), bodyClasses = None) {
 
-    <a href=@backLinkUrl class="link-back">@Messages("button.back")</a>
+    <a href='@routes.ContactDetailsController.showContactEmailCheck()' class="link-back">@Messages("button.back")</a>
 
 
     @if(contactEmailForm.hasErrors) {

@@ -42,6 +42,16 @@ trait TestSetupWithCompleteJourneyRecord {
   givenAgentIsNotManuallyAssured(utr.value)
 }
 
+trait TestSetupWithMinimalSubscriptionJourneyRecord {
+  givenSubscriptionJourneyRecordExists(AuthProviderId("12345-credId"), minimalSubscriptionJourneyRecord(AuthProviderId("12345-credId")))
+  givenAgentIsNotManuallyAssured(utr.value)
+}
+
+trait TestSetupWithMinimalSubscriptionJourneyRecordAndRegistration {
+  givenSubscriptionJourneyRecordExists(AuthProviderId("12345-credId"), completeJourneyRecordNoMappings.copy(amlsData = None))
+  givenAgentIsNotManuallyAssured(utr.value)
+}
+
 trait TestSetupWithCompleteJourneyRecordWithMapping {
   givenSubscriptionJourneyRecordExists(AuthProviderId("12345-credId"), completeJourneyRecordWithMappings)
   givenAgentIsNotManuallyAssured(utr.value)
@@ -86,6 +96,68 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       noMetricExpectedAtThisPoint()
     }
 
+    "redirect to /business-type if no registration data found" in new TestSetupWithMinimalSubscriptionJourneyRecord {
+      implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+
+      val result = await(controller.showCheckAnswers(request))
+      status(result) shouldBe 303
+
+      redirectLocation(result) shouldBe Some(routes.BusinessTypeController.showBusinessTypeForm().url)
+      noMetricExpectedAtThisPoint()
+    }
+
+    "redirect to /check-money-laundering-compliance if not manually assured and no amls data found" in
+      new TestSetupWithMinimalSubscriptionJourneyRecordAndRegistration {
+      implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+
+      val result = await(controller.showCheckAnswers(request))
+      status(result) shouldBe 303
+
+      redirectLocation(result) shouldBe Some(routes.AMLSController.showAmlsRegisteredPage().url)
+      noMetricExpectedAtThisPoint()
+    }
+
+    "redirect to /contact-email-check if no contact email address found" in {
+
+      givenSubscriptionJourneyRecordExists(AuthProviderId("12345-credId"), completeJourneyRecordWithMappings.copy(contactEmailData = None))
+      givenAgentIsNotManuallyAssured(utr.value)
+      implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+
+      val result = await(controller.showCheckAnswers(request))
+      status(result) shouldBe 303
+
+      redirectLocation(result) shouldBe Some(routes.ContactDetailsController.showContactEmailCheck().url)
+      noMetricExpectedAtThisPoint()
+    }
+
+    "redirect to /trading-name if no contact trading name data found" in {
+
+      givenSubscriptionJourneyRecordExists(AuthProviderId("12345-credId"), completeJourneyRecordWithMappings.copy(contactTradingNameData = None))
+      givenAgentIsNotManuallyAssured(utr.value)
+      implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+
+      val result = await(controller.showCheckAnswers(request))
+      status(result) shouldBe 303
+
+      redirectLocation(result) shouldBe Some(routes.ContactDetailsController.showTradingNameCheck().url)
+      noMetricExpectedAtThisPoint()
+    }
+
+    "redirect to /check-main-trading-address if no contact trading address data found" in {
+
+      givenSubscriptionJourneyRecordExists(AuthProviderId("12345-credId"), completeJourneyRecordWithMappings.copy(contactTradingAddressData = None))
+      givenAgentIsNotManuallyAssured(utr.value)
+      implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+
+      val result = await(controller.showCheckAnswers(request))
+      status(result) shouldBe 303
+
+      redirectLocation(result) shouldBe Some(routes.ContactDetailsController.showCheckMainTradingAddress().url)
+      noMetricExpectedAtThisPoint()
+    }
+
+
+
     "show subscription answers page if user has not already subscribed and has clean creds and also cache the goBack url" in
       new TestSetupWithCompleteJourneyRecord {
       implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
@@ -98,14 +170,20 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         "checkAnswers.change.button",
         "checkAnswers.confirm.button",
         "checkAnswers.businessName.label",
-        "checkAnswers.businessEmailAddress.label",
-        "checkAnswers.businessAddress.label"
+        "checkAnswers.businessAddress.label",
+        "checkAnswers.contactEmailAddress.label",
+        "checkAnswers.contactTradingName.label",
+        "checkAnswers.contactTradingAddress.label",
+        "checkAnswers.amls.h2",
+        "checkAnswers.businessDetails.h2",
+        "checkAnswers.contactDetails.h2"
+
       )
 
-      result shouldNot containMessages("checkAnswers.userMapping.label")
+      result shouldNot containMessages("checkAnswers.userMapping.label", "checkAnswers.mapping.h2")
 
       result should containSubstrings(
-        registrationName, testRegistration.emailAddress.get, testRegistration.address.addressLine1, testRegistration.address.postalCode.get)
+        registrationName,  testRegistration.address.addressLine1, testRegistration.address.postalCode.get)
 
       sessionStoreService.fetchGoBackUrl.futureValue shouldBe Some(routes.SubscriptionController.showCheckAnswers().url)
     }
@@ -123,19 +201,22 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         "checkAnswers.change.button",
         "checkAnswers.confirm.button",
         "checkAnswers.businessName.label",
-        "checkAnswers.businessEmailAddress.label",
-        "checkAnswers.businessAddress.label"
+        "checkAnswers.businessAddress.label",
+        "checkAnswers.contactEmailAddress.label",
+        "checkAnswers.contactTradingName.label",
+        "checkAnswers.contactTradingAddress.label",
+        "checkAnswers.businessDetails.h2",
+        "checkAnswers.contactDetails.h2"
       )
-      result should not(containMessages("checkAnswers.userMapping.label"))
+      result should not(containMessages("checkAnswers.userMapping.label", "checkAnswers.mapping.h2"))
       result should not(containMessages("checkAnswers.ggId.label"))
-      result should not(containMessages("checkAnswers.amlsDetails.pending.label"))
+      result should not(containMessages("checkAnswers.amlsDetails.pending.label", "checkAnswers.amls.h2"))
     }
 
     "show subscription answers page with mapping " in {
       givenSubscriptionJourneyRecordExists(AuthProviderId("12345-credId"), completeJourneyRecordWithMappings.copy(continueId = Some("continue-id")))
       givenAgentIsManuallyAssured(validUtr.value)
-      implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments
-      )
+      implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
 
       val result = await(controller.showCheckAnswers(request))
       result should containMessages(
@@ -145,12 +226,18 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         "checkAnswers.change.button",
         "checkAnswers.confirm.button",
         "checkAnswers.businessName.label",
-        "checkAnswers.businessEmailAddress.label",
         "checkAnswers.businessAddress.label",
         "checkAnswers.userMapping.label",
-        "checkAnswers.ggId.label"
+        "checkAnswers.ggId.label",
+        "checkAnswers.contactEmailAddress.label",
+        "checkAnswers.contactTradingName.label",
+        "checkAnswers.contactTradingAddress.label",
+        "checkAnswers.mapping.h2",
+        "checkAnswers.businessDetails.h2",
+        "checkAnswers.contactDetails.h2"
       )
-      result should not(containMessages("checkAnswers.amlsDetails.pending.label"))
+
+      result should not(containMessages("checkAnswers.amlsDetails.pending.label", "checkAnswers.amls.h2"))
       checkHtmlResultWithBodyText(result, "XXXX-XXXX-1234", "XXXX-XXXX-5678")
     }
 
@@ -223,7 +310,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         "subscriptionComplete.bullet-list.2"
       )
       bodyOf(result) should include(hasMessage("subscriptionComplete.p1", "AARN0000001"))
-      bodyOf(result) should include(hasMessage("subscriptionComplete.p2", "test@gmail.com"))
+      bodyOf(result) should include(hasMessage("subscriptionComplete.p2", "email@email.com"))
       bodyOf(result) should include(hasMessage("subscriptionComplete.p3", "https://www.gov.uk/guidance/get-an-hmrc-agent-services-account"))
     }
     "continue button redirects to agent services account if there is no continue url" in new AuthRequest with TestSetupWithCompleteJourneyRecord {
@@ -608,7 +695,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       utr = validUtr,
       knownFacts = SubscriptionRequestKnownFacts(validPostcode),
       agency = Agency(
-        name = registrationName,
+        name = "My Trading Name",
         address = DesAddress(
           addressLine1 = testRegistration.address.addressLine1,
           addressLine2 = testRegistration.address.addressLine2,
@@ -617,7 +704,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
           postcode = testRegistration.address.postalCode.get,
           countryCode = testRegistration.address.countryCode
         ),
-        email = testRegistration.emailAddress.get
+        email = "email@email.com"
       ),
       langForEmail = Some(Lang("en")),
       amlsDetails = Some(amlsDetails)

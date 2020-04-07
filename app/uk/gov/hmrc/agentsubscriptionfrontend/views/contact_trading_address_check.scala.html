@@ -28,15 +28,17 @@
         uiInputRadioGroup: uk.gov.hmrc.play.views.html.helpers.InputRadioGroup
 )
 
-@(contactTradingAddressCheckForm: Form[ContactTradingAddressCheck], businessAddress: List[String])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+@(contactTradingAddressCheckForm: Form[ContactTradingAddressCheck], businessAddress: List[String], isChange: Boolean)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 @prefilledValue = @{
     contactTradingAddressCheckForm.data.getOrElse("check","")
 }
 
+    @backLinkCall = @{if(isChange){routes.SubscriptionController.showCheckAnswers()} else {routes.TaskListController.showTaskList()}}
+
 @mainTemplate(appConfig, title =  errorPrefix(contactTradingAddressCheckForm) +  Messages("contactTradingAddressCheck.title"), bodyClasses = None) {
 
-    <a href='@routes.TaskListController.showTaskList()' class="link-back">@Messages("button.back")</a>
+    <a href='@backLinkCall' class="link-back">@Messages("button.back")</a>
 
 
     @if(contactTradingAddressCheckForm.hasErrors) {

@@ -468,6 +468,14 @@ checkAnswers.userMapping.label=Number of client relationships copied
 checkAnswers.addMore.button=Add more
 checkAnswers.ggId.label=Government Gateway user IDs entered (for your security only the last 4 numbers are shown)
 checkAnswers.ggId.xs=XXXX-XXXX-{0}
+checkAnswers.contactEmailAddress.label=Contact email address
+checkAnswers.contactTradingName.label=Contact trading name
+checkAnswers.contactTradingAddress.label=Contact trading address
+checkAnswers.amls.h2=Money laundering compliance details
+checkAnswers.businessDetails.h2=Business details
+checkAnswers.contactDetails.h2=Agent services account contact details
+checkAnswers.mapping.h2=Existing client relationships
+checkAnswers.tradingName.none=None
 
 businessName.title=What is your business name?
 businessName.updated.title=Update your business name

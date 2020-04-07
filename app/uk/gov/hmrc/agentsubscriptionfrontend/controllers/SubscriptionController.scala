@@ -24,10 +24,11 @@ import play.api.mvc.{AnyContent, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.{Agent, AuthActions}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.config.view.CheckYourAnswers
+import uk.gov.hmrc.agentsubscriptionfrontend.config.view._
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.{AddressLookupFrontendConnector, AgentAssuranceConnector}
 import uk.gov.hmrc.agentsubscriptionfrontend.form.DesAddressForm
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
+import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.SubscriptionJourneyRecord
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService, SubscriptionReturnedHttpError, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{address_form_with_errors, check_answers, sign_in_new_id, subscription_complete}
@@ -70,40 +71,37 @@ class SubscriptionController @Inject()(
         val sjr = agent.getMandatorySubscriptionRecord
         agentAssuranceConnector.isManuallyAssuredAgent(sjr.businessDetails.utr).flatMap { isMAAgent =>
           sessionStoreService.cacheIsChangingAnswers(changing = false).flatMap { _ =>
-            (sjr.businessDetails.registration, sjr.amlsData) match {
-              case (Some(registration), Some(amlsData)) =>
-                sessionStoreService
-                  .cacheGoBackUrl(routes.SubscriptionController.showCheckAnswers().url)
-                  .map { _ =>
-                    Ok(
-                      checkAnswersTemplate(CheckYourAnswers(
-                        registrationName = registration.taxpayerName.getOrElse(""),
-                        address = registration.address,
-                        emailAddress = registration.emailAddress,
-                        amlsData = Some(amlsData),
-                        isManuallyAssured = isMAAgent,
-                        userMappings = sjr.userMappings,
-                        continueId = sjr.continueId,
-                        appConfig)
-                      ))
-                  }
+            CYACheckResult.check(sjr) match {
+              case PassWithMaybeAmls(taxpayerName, address, maybeAmls, contactEmail, maybeTradingName, tradingAddress) => {
+                if (maybeAmls.isDefined || isMAAgent) {
+                  sessionStoreService
+                    .cacheGoBackUrl(routes.SubscriptionController.showCheckAnswers().url)
+                    .map { _ =>
+                      Ok(
+                        checkAnswersTemplate(CheckYourAnswers(
+                          registrationName = taxpayerName,
+                          address = address,
+                          amlsData = maybeAmls,
+                          isManuallyAssured = isMAAgent,
+                          userMappings = sjr.userMappings,
+                          continueId = sjr.continueId,
+                          contactEmailAddress = contactEmail,
+                          contactTradingName = maybeTradingName,
+                          contactTradingAddress = tradingAddress,
+                          appConfig)
+                        ))
+                    }
+                } else Redirect(routes.AMLSController.showAmlsRegisteredPage())
+              }
 
-              case (None, _) => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
+              case FailedRegistration => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
 
-              case (Some(registration), None) if isMAAgent =>
-                Ok(
-                  checkAnswersTemplate(CheckYourAnswers(
-                    registrationName = registration.taxpayerName.getOrElse(""),
-                    address = registration.address,
-                    emailAddress = registration.emailAddress,
-                    amlsData = None,
-                    isManuallyAssured = isMAAgent,
-                    userMappings = sjr.userMappings,
-                    continueId = sjr.continueId,
-                    appConfig)
-                  ))
+              case FailedContactEmail => Redirect(routes.ContactDetailsController.showContactEmailCheck())
 
-              case (_, None) => Redirect(routes.AMLSController.showAmlsRegisteredPage())
+              case FailedContactTradingName => Redirect(routes.ContactDetailsController.showTradingNameCheck())
+
+              case FailedContactTradingAddress => Redirect(routes.ContactDetailsController.showCheckMainTradingAddress())
+
             }
           }
         }
@@ -112,29 +110,42 @@ class SubscriptionController @Inject()(
   }
 
   //helper function to copy record details to session before the record is deleted allowing them to be displayed on subscription complete page
-  private def updateSessionBeforeSubscribing(registration: Registration)(implicit hc: HeaderCarrier) = {
-    val agencyName = registration.taxpayerName
-    val agencyEmail = registration.emailAddress
-    val agencyAddress = registration.address
+  private def updateSessionAndReturnAgencyBeforeSubscribing(registration: Registration)
+                                            (emailData: ContactEmailData,
+                                             nameData: ContactTradingNameData,
+                                             addressData: ContactTradingAddressData)(implicit hc: HeaderCarrier) = {
+    val agencyName = nameData.contactTradingName.orElse(registration.taxpayerName)
+    val agencyEmail = emailData.contactEmail
+    val agencyAddress: BusinessAddress = addressData.contactTradingAddress.getOrElse(
+      throw new Exception("contact trading address should be defined"))
 
     sessionStoreService.cacheAgentSession(AgentSession(registration = Some(
       Registration(taxpayerName = agencyName,
         isSubscribedToAgentServices = false,
         isSubscribedToETMP = false,
         agencyAddress,
-        agencyEmail))))
+        agencyEmail)))).map(_ => Agency(
+      agencyName.getOrElse(registration.taxpayerName.getOrElse(throw new Exception("taxpayer name should be defined"))),
+      DesAddress.fromBusinessAddress(agencyAddress),
+      agencyEmail.getOrElse(throw new Exception("contact email address should be defined"))))
   }
 
   def submitCheckAnswers: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { agent =>
       agent.withCleanCredsOrSignIn {
         val sjr = agent.getMandatorySubscriptionRecord
-        (sjr.businessDetails.utr, sjr.businessDetails.postcode, sjr.businessDetails.registration, sjr.amlsData) match {
-          case (utr, postcode, Some(registration), amlsData) =>
+        (sjr.businessDetails.utr,
+          sjr.businessDetails.postcode,
+          sjr.businessDetails.registration,
+          sjr.amlsData,
+          sjr.contactEmailData,
+          sjr.contactTradingNameData,
+          sjr.contactTradingAddressData) match {
+          case (utr, postcode, Some(registration), amlsData, Some(email), Some(name), Some(address)) =>
                     for {
-                    _ <- updateSessionBeforeSubscribing(registration)
+                    agencyDetails <- updateSessionAndReturnAgencyBeforeSubscribing(registration)(email, name, address)
                     langForEmail = extractLangPreferenceFromCookie
-                    subscriptionResponse <- subscriptionService.subscribe(utr, postcode, registration, langForEmail, amlsData)
+                    subscriptionResponse <- subscriptionService.subscribe(utr, postcode, agencyDetails, langForEmail, amlsData)
                     result <- redirectSubscriptionResponse(subscriptionResponse, agent)
                     } yield result
 
@@ -227,7 +238,50 @@ class SubscriptionController @Inject()(
     }
   }
 
+
   def showSubscriptionComplete: Action[AnyContent] = Action.async { implicit request =>
+    withSubscribedAgent { (arn: Arn, sjrOpt: Option[SubscriptionJourneyRecord]) =>
+      for{
+        maybeContinueUrl <- getMaybeContinueUrl
+        (name, email) <- agencyNameAndEmail(sjrOpt)
+      } yield Ok(
+        subscriptionCompleteTemplate(
+          maybeContinueUrl.getOrElse(appConfig.agentServicesAccountUrl),
+          arn.value, name, email))
+    }
+  }
+
+  private def agencyNameAndEmail(maybeSjr: Option[SubscriptionJourneyRecord])(implicit hc: HeaderCarrier): Future[(String, String)] = {
+    maybeSjr match {
+      case Some(sjr) => {
+        val agencyName = sjr.contactTradingNameData
+          .getOrElse(throw new Exception("trading name data should be defined"))
+          .contactTradingName.getOrElse(sjr.businessDetails.registration
+          .getOrElse(throw new Exception("registration should be defined"))
+          .taxpayerName
+          .getOrElse(throw new Exception("taxpayer name should be defined")))
+
+        val agencyEmail = sjr.contactEmailData
+          .getOrElse(throw new Exception("contact email data should be defined"))
+          .contactEmail
+          .getOrElse(throw new Exception("contact email should be defined"))
+        (agencyName, agencyEmail)
+      }
+      case None => {
+        sessionStoreService.fetchAgentSession.flatMap {
+          case Some(agentSession) => {
+            val reg = agentSession.registration.getOrElse(throw new Exception("agent session should have a registration "))
+            val agencyName = reg.taxpayerName.getOrElse(throw new Exception("taxpayer name should be defined"))
+            val agencyEmail = reg.emailAddress.getOrElse(throw new Exception("agency email should be defined"))
+            (agencyName, agencyEmail)
+          }
+          case None => throw new RuntimeException("no agent session found")
+        }
+      }
+    }
+  }
+
+  private def getMaybeContinueUrl(implicit hc: HeaderCarrier): Future[Option[String]] = {
 
     def recoverSessionStoreWithNone[T]: PartialFunction[Throwable, Option[T]] = {
       case NonFatal(ex) =>
@@ -235,44 +289,12 @@ class SubscriptionController @Inject()(
         None
     }
 
-    def handleRegistrationAndGoToComplete(registration: Option[Registration], result: (String, String, String) => Result): Future[Result] = {
-      registration match {
-        case Some(registration) =>
-          val agencyName = registration.taxpayerName.getOrElse(
-            throw new RuntimeException("agency name is missing from registration"))
-          val agencyEmail = registration.emailAddress.getOrElse(
-            throw new RuntimeException("agency email is missing from registration"))
-
-
-          for {
-          continueUrl <- sessionStoreService.fetchContinueUrl.recover(recoverSessionStoreWithNone)
-          redirectUrlOpt <- redirectUrlActions.getUrl(continueUrl)
-          } yield redirectUrlOpt match {
-              case Some(redirectUrl) => result(agencyName, agencyEmail, redirectUrl)
-              case None =>
-                val asaUrl = appConfig.agentServicesAccountUrl
-                result(agencyName, agencyEmail, asaUrl)
-            }
-
-        case None =>
-          Logger.warn("no registration details found for agent")
-          Redirect(routes.BusinessIdentificationController.showNoMatchFound())
-      }
-    }
-
-    withSubscribedAgent { (arn, sjrOpt) =>
-      sjrOpt match {
-        case Some(sjr) => handleRegistrationAndGoToComplete(sjr.businessDetails.registration, (agencyName, agencyEmail, redirectUrl) =>
-            Ok(subscriptionCompleteTemplate(redirectUrl, arn.value, agencyName, agencyEmail)))
-        case None => sessionStoreService.fetchAgentSession.flatMap {
-          case Some(agentSession) => handleRegistrationAndGoToComplete(agentSession.registration, (agencyName, agencyEmail, redirectUrl) =>
-            Ok(subscriptionCompleteTemplate(redirectUrl, arn.value, agencyName, agencyEmail)))
-
-          case None => throw new RuntimeException("no record found for agent")
-        }
-      }
-    }
+    for {
+      continueUrl <- sessionStoreService.fetchContinueUrl.recover(recoverSessionStoreWithNone)
+      redirectUrlOpt <- redirectUrlActions.getUrl(continueUrl)
+    } yield redirectUrlOpt
   }
+
 
   def showSignInWithNewID: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>

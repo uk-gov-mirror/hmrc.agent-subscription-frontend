@@ -62,80 +62,89 @@ class ContactDetailsController @Inject()(
 
   def showContactEmailCheck: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { agent =>
-      agent.getMandatorySubscriptionRecord.businessDetails.registration
-        .flatMap(_.emailAddress)
-        .fold(
-          Redirect(routes.StartController.start())
-        )(businessEmail =>
-          agent.getMandatorySubscriptionRecord.contactEmailData match {
-            case Some(data) => {
-              Ok(
-                contactEmailCheckTemplate(
+      sessionStoreService.fetchIsChangingAnswers.flatMap { isChanging =>
+        agent.getMandatorySubscriptionRecord.businessDetails.registration
+          .flatMap(_.emailAddress)
+          .fold(
+            Redirect(routes.StartController.start())
+          )(businessEmail =>
+            agent.getMandatorySubscriptionRecord.contactEmailData match {
+              case Some(data) => {
+                Ok(contactEmailCheckTemplate(
                   contactEmailCheckForm
                     .fill(ContactEmailCheck(RadioInputAnswer
-                      .apply(RadioInputAnswer.apply(data.contactEmailCheck)))),
-                  businessEmail))
-            }
-            case None => Ok(contactEmailCheckTemplate(contactEmailCheckForm, businessEmail))
-        })
+                      .apply(RadioInputAnswer.apply(data.useBusinessEmail)))),
+                  businessEmail,
+                  isChanging.getOrElse(false)
+                ))
+              }
+              case None =>
+                Ok(contactEmailCheckTemplate(contactEmailCheckForm, businessEmail, isChanging.getOrElse(false)))
+          })
+      }
     }
   }
 
   def submitContactEmailCheck: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { agent =>
-      val sjr = agent.getMandatorySubscriptionRecord
-      sjr.businessDetails.registration
-        .flatMap(_.emailAddress)
-        .fold(
-          Future successful Redirect(routes.StartController.start())
-        )(
-          businessEmail =>
-            contactEmailCheckForm.bindFromRequest
-              .fold(
-                formWithErrors => {
-                  Ok(contactEmailCheckTemplate(formWithErrors, businessEmail))
-                },
-                validForm => {
-                  val useBusinessEmail = RadioInputAnswer.toBoolean(validForm.check)
-                  val maybeBusinessEmail = if (useBusinessEmail) Some(businessEmail) else None
+      sessionStoreService.fetchIsChangingAnswers.flatMap { isChanging =>
+        val sjr = agent.getMandatorySubscriptionRecord
+        sjr.businessDetails.registration
+          .flatMap(_.emailAddress)
+          .fold(
+            Future successful Redirect(routes.StartController.start())
+          )(
+            businessEmail =>
+              contactEmailCheckForm.bindFromRequest
+                .fold(
+                  formWithErrors => {
+                    Ok(contactEmailCheckTemplate(formWithErrors, businessEmail, isChanging.getOrElse(false)))
+                  },
+                  validForm => {
+                    val useBusinessEmail = RadioInputAnswer.toBoolean(validForm.check)
+                    val maybeBusinessEmail = if (useBusinessEmail) Some(businessEmail) else None
 
-                  val (check, mayBeEmail): (Boolean, Option[String]) =
-                    sjr.contactEmailData
-                      .fold(useBusinessEmail, maybeBusinessEmail)(data =>
-                        if (useBusinessEmail) (true, maybeBusinessEmail)
-                        else (false, data.contactEmail))
+                    val (check, mayBeEmail): (Boolean, Option[String]) =
+                      sjr.contactEmailData
+                        .fold(useBusinessEmail, maybeBusinessEmail)(data =>
+                          if (useBusinessEmail) (true, maybeBusinessEmail)
+                          else (false, data.contactEmail))
 
-                  val call: Call =
-                    if (useBusinessEmail) routes.TaskListController.showTaskList()
-                    else
-                      routes.ContactDetailsController.showContactEmailAddress()
+                    val call: Call =
+                      if (!useBusinessEmail) routes.ContactDetailsController.showContactEmailAddress()
+                      else if (isChanging.getOrElse(false)) routes.SubscriptionController.showCheckAnswers()
+                      else routes.TaskListController.showTaskList()
 
-                  subscriptionJourneyService
-                    .saveJourneyRecord(sjr.copy(contactEmailData = Some(ContactEmailData(check, mayBeEmail))))
-                    .map(_ => Redirect(call))
-                }
-            )
-        )
+                    subscriptionJourneyService
+                      .saveJourneyRecord(sjr.copy(contactEmailData = Some(ContactEmailData(check, mayBeEmail))))
+                      .map(_ => Redirect(call))
+                  }
+              )
+          )
+      }
     }
   }
 
   def showContactEmailAddress: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { agent =>
-      sessionStoreService.fetchIsChangingAnswers.flatMap { isChanging =>
-        agent.getMandatorySubscriptionRecord.contactEmailData
-          .fold(Redirect(routes.ContactDetailsController.showContactEmailCheck())) { contactEmailData =>
-            contactEmailData.contactEmail match {
-              case Some(email) =>
-                Ok(
-                  contactEmailAddressTemplate(
-                    contactEmailAddressForm.fill(BusinessEmail(email)),
-                    isChanging.getOrElse(false)
-                  ))
-              case None => Ok(contactEmailAddressTemplate(contactEmailAddressForm, isChanging.getOrElse(false)))
-            }
+      agent.getMandatorySubscriptionRecord.contactEmailData
+        .fold(Redirect(routes.ContactDetailsController.showContactEmailCheck())) { contactEmailData =>
+          contactEmailData.contactEmail match {
+            case Some(email) =>
+              Ok(
+                contactEmailAddressTemplate(
+                  contactEmailAddressForm.fill(BusinessEmail(email))
+                ))
+            case None => Ok(contactEmailAddressTemplate(contactEmailAddressForm))
           }
-      }
+        }
     }
+  }
+
+  def changeContactEmailAddress: Action[AnyContent] = Action.async { implicit request =>
+    sessionStoreService
+      .cacheIsChangingAnswers(changing = true)
+      .map(_ => Redirect(routes.ContactDetailsController.showContactEmailCheck()))
   }
 
   def submitContactEmailAddress: Action[AnyContent] = Action.async { implicit request =>
@@ -144,17 +153,21 @@ class ContactDetailsController @Inject()(
         contactEmailAddressForm.bindFromRequest
           .fold(
             formWithErrors => {
-              Ok(contactEmailAddressTemplate(formWithErrors, isChanging.getOrElse(false)))
+              Ok(contactEmailAddressTemplate(formWithErrors))
             },
             validForm => {
               val sjr = agent.getMandatorySubscriptionRecord
               val emailData: Option[ContactEmailData] =
                 sjr.contactEmailData
-                  .map(data => ContactEmailData(data.contactEmailCheck, Some(validForm.email)))
+                  .map(data => ContactEmailData(data.useBusinessEmail, Some(validForm.email)))
+
+              val redirectCall =
+                if (isChanging.getOrElse(false)) routes.SubscriptionController.showCheckAnswers()
+                else routes.TaskListController.showTaskList()
 
               subscriptionJourneyService
                 .saveJourneyRecord(sjr.copy(contactEmailData = emailData))
-                .map(_ => Redirect(routes.TaskListController.showTaskList()))
+                .map(_ => Redirect(redirectCall))
             }
           )
       }
@@ -163,78 +176,91 @@ class ContactDetailsController @Inject()(
 
   def showTradingNameCheck: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { agent =>
-      agent.getMandatorySubscriptionRecord.businessDetails.registration
-        .flatMap(_.taxpayerName)
-        .fold(
-          Redirect(routes.StartController.start())
-        )(businessName =>
-          agent.getMandatorySubscriptionRecord.contactTradingNameData match {
-            case Some(data) => {
-              Ok(
-                contactTradingNameCheckTemplate(
+      sessionStoreService.fetchIsChangingAnswers.flatMap { isChanging =>
+        agent.getMandatorySubscriptionRecord.businessDetails.registration
+          .flatMap(_.taxpayerName)
+          .fold(
+            Redirect(routes.StartController.start())
+          )(businessName =>
+            agent.getMandatorySubscriptionRecord.contactTradingNameData match {
+              case Some(data) => {
+                Ok(contactTradingNameCheckTemplate(
                   contactTradingNameCheckForm
                     .fill(ContactTradingNameCheck(RadioInputAnswer
-                      .apply(RadioInputAnswer.apply(data.contactTradingNameCheck)))),
-                  businessName))
-            }
-            case None => Ok(contactTradingNameCheckTemplate(contactTradingNameCheckForm, businessName))
-        })
+                      .apply(RadioInputAnswer.apply(data.hasTradingName)))),
+                  businessName,
+                  isChanging.getOrElse(false)
+                ))
+              }
+              case None =>
+                Ok(
+                  contactTradingNameCheckTemplate(
+                    contactTradingNameCheckForm,
+                    businessName,
+                    isChanging.getOrElse(false)))
+          })
+      }
     }
   }
 
   def submitTradingNameCheck: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { agent =>
-      val sjr = agent.getMandatorySubscriptionRecord
-      sjr.businessDetails.registration
-        .flatMap(_.taxpayerName)
-        .fold(
-          Future successful Redirect(routes.StartController.start())
-        )(
-          businessName =>
-            contactTradingNameCheckForm.bindFromRequest
-              .fold(
-                formWithErrors => {
-                  Ok(contactTradingNameCheckTemplate(formWithErrors, businessName))
-                },
-                validForm => {
-                  val hasTradingName = RadioInputAnswer.toBoolean(validForm.check)
-                  val (check, maybeTradingName): (Boolean, Option[String]) =
-                    sjr.contactTradingNameData.fold(hasTradingName, Option.empty[String])(data =>
-                      if (hasTradingName) (true, data.contactTradingName)
-                      else (false, None))
+      sessionStoreService.fetchIsChangingAnswers.flatMap { isChanging =>
+        val sjr = agent.getMandatorySubscriptionRecord
+        sjr.businessDetails.registration
+          .flatMap(_.taxpayerName)
+          .fold(
+            Future successful Redirect(routes.StartController.start())
+          )(
+            businessName =>
+              contactTradingNameCheckForm.bindFromRequest
+                .fold(
+                  formWithErrors => {
+                    Ok(contactTradingNameCheckTemplate(formWithErrors, businessName, isChanging.getOrElse(false)))
+                  },
+                  validForm => {
+                    val hasTradingName = RadioInputAnswer.toBoolean(validForm.check)
+                    val (check, maybeTradingName): (Boolean, Option[String]) =
+                      sjr.contactTradingNameData.fold(hasTradingName, Option.empty[String])(data =>
+                        if (hasTradingName) (true, data.contactTradingName)
+                        else (false, None))
 
-                  val call: Call =
-                    if (hasTradingName) routes.ContactDetailsController.showTradingName
-                    else
-                      routes.TaskListController.showTaskList()
+                    val call: Call =
+                      if (hasTradingName) routes.ContactDetailsController.showTradingName
+                      else if (isChanging.getOrElse(false)) routes.SubscriptionController.showCheckAnswers()
+                      else routes.TaskListController.showTaskList()
 
-                  subscriptionJourneyService
-                    .saveJourneyRecord(
-                      sjr.copy(contactTradingNameData = Some(ContactTradingNameData(check, maybeTradingName))))
-                    .map(_ => Redirect(call))
-                }
-            )
-        )
+                    subscriptionJourneyService
+                      .saveJourneyRecord(
+                        sjr.copy(contactTradingNameData = Some(ContactTradingNameData(check, maybeTradingName))))
+                      .map(_ => Redirect(call))
+                  }
+              )
+          )
+      }
     }
   }
 
   def showTradingName: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { agent =>
-      sessionStoreService.fetchIsChangingAnswers.flatMap { isChanging =>
-        agent.getMandatorySubscriptionRecord.contactTradingNameData
-          .fold(Redirect(routes.ContactDetailsController.showTradingNameCheck())) { contactTradingData =>
-            contactTradingData.contactTradingName match {
-              case Some(tradingName) =>
-                Ok(
-                  contactTradingNameTemplate(
-                    contactTradingNameForm.fill(BusinessName(tradingName)),
-                    isChanging.getOrElse(false)
-                  ))
-              case None => Ok(contactTradingNameTemplate(contactTradingNameForm, isChanging.getOrElse(false)))
-            }
+      agent.getMandatorySubscriptionRecord.contactTradingNameData
+        .fold(Redirect(routes.ContactDetailsController.showTradingNameCheck())) { contactTradingData =>
+          contactTradingData.contactTradingName match {
+            case Some(tradingName) =>
+              Ok(
+                contactTradingNameTemplate(
+                  contactTradingNameForm.fill(BusinessName(tradingName))
+                ))
+            case None => Ok(contactTradingNameTemplate(contactTradingNameForm))
           }
-      }
+        }
     }
+  }
+
+  def changeTradingName: Action[AnyContent] = Action.async { implicit request =>
+    sessionStoreService
+      .cacheIsChangingAnswers(changing = true)
+      .map(_ => Redirect(routes.ContactDetailsController.showTradingNameCheck()))
   }
 
   def submitTradingName: Action[AnyContent] = Action.async { implicit request =>
@@ -243,13 +269,19 @@ class ContactDetailsController @Inject()(
         contactTradingNameForm.bindFromRequest
           .fold(
             formWithErrors => {
-              Ok(contactTradingNameTemplate(formWithErrors, isChanging.getOrElse(false)))
+              Ok(contactTradingNameTemplate(formWithErrors))
             },
             validForm => {
+
+              val redirectCall =
+                if (isChanging.getOrElse(false)) routes.SubscriptionController.showCheckAnswers()
+                else
+                  routes.TaskListController.showTaskList()
+
               subscriptionJourneyService
                 .saveJourneyRecord(agent.getMandatorySubscriptionRecord
                   .copy(contactTradingNameData = Some(ContactTradingNameData(true, Some(validForm.name)))))
-                .map(_ => Redirect(routes.TaskListController.showTaskList()))
+                .map(_ => Redirect(redirectCall))
             }
           )
       }
@@ -258,59 +290,68 @@ class ContactDetailsController @Inject()(
 
   def showCheckMainTradingAddress: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { agent =>
-      agent.getMandatorySubscriptionRecord.businessDetails.registration
-        .map(_.address)
-        .fold(
-          Redirect(routes.StartController.start())
-        )(businessAddress =>
-          agent.getMandatorySubscriptionRecord.contactTradingAddressData match {
-            case Some(data) => {
-              Ok(
-                contactTradingAddressCheckTemplate(
+      sessionStoreService.fetchIsChangingAnswers.flatMap { isChanging =>
+        agent.getMandatorySubscriptionRecord.businessDetails.registration
+          .map(_.address)
+          .fold(
+            Redirect(routes.StartController.start())
+          )(businessAddress =>
+            agent.getMandatorySubscriptionRecord.contactTradingAddressData match {
+              case Some(data) => {
+                Ok(contactTradingAddressCheckTemplate(
                   contactTradingAddressCheckForm
                     .fill(ContactTradingAddressCheck(RadioInputAnswer
-                      .apply(RadioInputAnswer.apply(data.check)))),
-                  formatBusinessAddress(businessAddress)
+                      .apply(RadioInputAnswer.apply(data.useBusinessAddress)))),
+                  formatBusinessAddress(businessAddress),
+                  isChanging.getOrElse(false)
                 ))
-            }
-            case None =>
-              Ok(
-                contactTradingAddressCheckTemplate(
-                  contactTradingAddressCheckForm,
-                  formatBusinessAddress(businessAddress)))
-        })
+              }
+              case None =>
+                Ok(
+                  contactTradingAddressCheckTemplate(
+                    contactTradingAddressCheckForm,
+                    formatBusinessAddress(businessAddress),
+                    isChanging.getOrElse(false)))
+          })
+      }
     }
   }
 
   def submitCheckMainTradingAddress: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { agent =>
-      val sjr = agent.getMandatorySubscriptionRecord
-      sjr.businessDetails.registration
-        .map(_.address)
-        .fold(
-          Future successful Redirect(routes.StartController.start())
-        )(
-          businessAddress =>
-            contactTradingAddressCheckForm.bindFromRequest
-              .fold(
-                formWithErrors => {
-                  Ok(contactTradingAddressCheckTemplate(formWithErrors, formatBusinessAddress(businessAddress)))
-                },
-                validForm => {
-                  val updatedSjr = if (validForm.check == Yes) {
-                    sjr.copy(contactTradingAddressData = Some(ContactTradingAddressData(true, Some(businessAddress))))
-                  } else {
-                    sjr.copy(contactTradingAddressData = Some(ContactTradingAddressData(false, None)))
-                  }
-                  val call: Call =
-                    if (validForm.check == Yes) routes.TaskListController.showTaskList
-                    else
-                      routes.ContactDetailsController.showMainTradingAddress
+      sessionStoreService.fetchIsChangingAnswers.flatMap { isChanging =>
+        val sjr = agent.getMandatorySubscriptionRecord
+        sjr.businessDetails.registration
+          .map(_.address)
+          .fold(
+            Future successful Redirect(routes.StartController.start())
+          )(
+            businessAddress =>
+              contactTradingAddressCheckForm.bindFromRequest
+                .fold(
+                  formWithErrors => {
+                    Ok(
+                      contactTradingAddressCheckTemplate(
+                        formWithErrors,
+                        formatBusinessAddress(businessAddress),
+                        isChanging.getOrElse(false)))
+                  },
+                  validForm => {
+                    val updatedSjr = if (validForm.check == Yes) {
+                      sjr.copy(contactTradingAddressData = Some(ContactTradingAddressData(true, Some(businessAddress))))
+                    } else {
+                      sjr.copy(contactTradingAddressData = Some(ContactTradingAddressData(false, None)))
+                    }
+                    val call: Call =
+                      if (validForm.check == No) routes.ContactDetailsController.showMainTradingAddress()
+                      else if (isChanging.getOrElse(false)) routes.SubscriptionController.showCheckAnswers()
+                      else routes.TaskListController.showTaskList()
 
-                  subscriptionJourneyService.saveJourneyRecord(updatedSjr).map(_ => Redirect(call))
-                }
-            )
-        )
+                    subscriptionJourneyService.saveJourneyRecord(updatedSjr).map(_ => Redirect(call))
+                  }
+              )
+          )
+      }
     }
   }
 
@@ -323,29 +364,41 @@ class ContactDetailsController @Inject()(
     }
   }
 
+  def changeCheckMainTradingAddress: Action[AnyContent] = Action.async { implicit request =>
+    sessionStoreService
+      .cacheIsChangingAnswers(changing = true)
+      .map(_ => Redirect(routes.ContactDetailsController.showCheckMainTradingAddress()))
+  }
+
   def returnFromAddressLookup(id: String): Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { agent =>
-      val sjr = agent.getMandatorySubscriptionRecord
-      sjr.businessDetails.utr match {
-        case utr =>
-          addressLookUpConnector.getAddressDetails(id).flatMap { address =>
-            desAddressForm
-              .bindAddressLookupFrontendAddress(utr, address)
-              .fold(
-                formWithErrors => Future successful Ok(addressFormWithErrorsTemplate(formWithErrors, true)),
-                validDesAddress => {
-                  mark("Count-Subscription-AddressLookup-Success")
-                  val updatedSjr =
-                    sjr.copy(contactTradingAddressData =
-                      Some(ContactTradingAddressData(true, Some(BusinessAddress(validDesAddress)))))
+      sessionStoreService.fetchIsChangingAnswers.flatMap { isChanging =>
+        val sjr = agent.getMandatorySubscriptionRecord
+        sjr.businessDetails.utr match {
+          case utr =>
+            addressLookUpConnector.getAddressDetails(id).flatMap { address =>
+              desAddressForm
+                .bindAddressLookupFrontendAddress(utr, address)
+                .fold(
+                  formWithErrors => Future successful Ok(addressFormWithErrorsTemplate(formWithErrors, true)),
+                  validDesAddress => {
+                    mark("Count-Subscription-AddressLookup-Success")
+                    val updatedSjr =
+                      sjr.copy(contactTradingAddressData =
+                        Some(ContactTradingAddressData(true, Some(BusinessAddress(validDesAddress)))))
 
-                  for {
-                    _    <- subscriptionJourneyService.saveJourneyRecord(updatedSjr)
-                    goto <- Redirect(routes.TaskListController.showTaskList())
-                  } yield goto
-                }
-              )
-          }
+                    val call: Call =
+                      if (isChanging.getOrElse(false)) routes.SubscriptionController.showCheckAnswers()
+                      else routes.TaskListController.showTaskList()
+
+                    for {
+                      _    <- subscriptionJourneyService.saveJourneyRecord(updatedSjr)
+                      goto <- Redirect(call)
+                    } yield goto
+                  }
+                )
+            }
+        }
       }
     }
   }

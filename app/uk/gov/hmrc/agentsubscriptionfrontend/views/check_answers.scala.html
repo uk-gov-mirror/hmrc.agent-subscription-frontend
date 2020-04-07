@@ -33,6 +33,7 @@ mainTemplate: main_template,
 @(checkYourAnswers: CheckYourAnswers)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 @checkAnswerBlock(id: String, answerRow: AnswerRow) = {
+    <dl class="app-check-your-answers app-check-your-answers--long margin-top-30 margin-bottom-20">
     <div class="app-check-your-answers__contents">
         <dt class="app-check-your-answers__question">@answerRow.question</dt>
         <dd class="app-check-your-answers__answer" id="@id">
@@ -44,6 +45,7 @@ mainTemplate: main_template,
             </a>
         </dd>
     </div>
+    </dl>
 }
 
 @mainTemplate(appConfig, title = Messages("checkAnswers.title"), bodyClasses = None) {
@@ -53,17 +55,28 @@ mainTemplate: main_template,
             <p>@Messages("checkAnswers.description.p1")</p>
             <p>@Messages("checkAnswers.description.p2")</p>
 
-            <dl class="app-check-your-answers app-check-your-answers--long margin-top-30 margin-bottom-20">
+    <h2 class="govuk-heading-m margin-top-30">@Messages("checkAnswers.businessDetails.h2")</h2>
+
 
                 @checkAnswerBlock("registration-name", checkYourAnswers.businessNameRow)
                 @checkAnswerBlock("address", checkYourAnswers.businessAddressRow)
-                @checkAnswerBlock("email", checkYourAnswers.businessEmailRow)
 
                 @for(amlsRow <- checkYourAnswers.maybeAmlsDataRow) {
+
+                    <h2 class="govuk-heading-m margin-top-30">@Messages("checkAnswers.amls.h2")</h2>
                     @checkAnswerBlock("amls", amlsRow)
                 }
 
+                <h2 class="govuk-heading-m margin-top-30">@Messages("checkAnswers.contactDetails.h2")</h2>
+                @checkAnswerBlock("email", checkYourAnswers.contactEmailRow)
+
+                @checkAnswerBlock("tradingName", checkYourAnswers.contactTradingNameRow)
+
+                @checkAnswerBlock("tradingAddress", checkYourAnswers.contactTradingAddressRow)
+
+
                 @for(mappingClientNumberRow <- checkYourAnswers.maybeMappingClientNumberRow) {
+                    <h2 class="govuk-heading-m margin-top-30">@Messages("checkAnswers.mapping.h2")</h2>
                     @checkAnswerBlock("mappings", mappingClientNumberRow)
                 }
 
@@ -71,7 +84,7 @@ mainTemplate: main_template,
                   @checkAnswerBlock("ggIds", mappingGGIdRow)
                 }
 
-            </dl>
+
 
     <p>@Messages("checkAnswers.description.p3")</p>
 

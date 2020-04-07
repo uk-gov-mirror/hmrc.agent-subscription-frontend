@@ -77,7 +77,7 @@ final case class ContactTradingNameSubTask(contactTradingNameData: Option[Contac
   override val taskKey: String = "contactDetailsTradingNameSubTask"
   override val isComplete: Boolean = {
     contactTradingNameData.fold(false) { data =>
-      (data.contactTradingNameCheck && data.contactTradingName.isDefined) || !data.contactTradingNameCheck
+      (data.hasTradingName && data.contactTradingName.isDefined) || !data.hasTradingName
     }
   }
   override val link: String = routes.ContactDetailsController.showTradingNameCheck().url

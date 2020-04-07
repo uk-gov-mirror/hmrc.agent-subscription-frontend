@@ -23,3 +23,16 @@ case class DesAddress(
   addressLine4: Option[String],
   postcode: String,
   countryCode: String)
+
+object DesAddress {
+
+  def fromBusinessAddress(businessAddress: BusinessAddress): DesAddress =
+    DesAddress(
+      addressLine1 = businessAddress.addressLine1,
+      addressLine2 = businessAddress.addressLine2,
+      addressLine3 = businessAddress.addressLine3,
+      addressLine4 = businessAddress.addressLine4,
+      postcode = businessAddress.postalCode.getOrElse(throw new NullPointerException("postal code should be defined")),
+      countryCode = businessAddress.countryCode
+    )
+}

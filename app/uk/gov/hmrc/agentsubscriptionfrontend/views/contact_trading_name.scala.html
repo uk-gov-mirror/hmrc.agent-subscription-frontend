@@ -27,11 +27,8 @@
         errorSummary: uk.gov.hmrc.play.views.html.helpers.ErrorSummary
 )
 
-@(contactTradingNameForm: Form[BusinessName], isChange: Boolean)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+@(contactTradingNameForm: Form[BusinessName])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
-@backLinkUrl = @{
-    if(isChange) routes.SubscriptionController.showCheckAnswers() else routes.ContactDetailsController.showTradingNameCheck()
-}
 
 @formValue = @{
     if(contactTradingNameForm.data.get("name").isDefined){
@@ -42,7 +39,7 @@
 @mainTemplate(appConfig, title =  errorPrefix(contactTradingNameForm) +  Messages("contactTradingName.title"), bodyClasses = None) {
 
 
-    <a href='@backLinkUrl.url' class="link-back">@Messages("button.back")</a>
+    <a href='@routes.ContactDetailsController.showTradingNameCheck().url' class="link-back">@Messages("button.back")</a>
 
 
     @if(contactTradingNameForm.hasErrors) {

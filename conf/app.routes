@@ -86,18 +86,22 @@ POST        /change-business-name                          uk.gov.hmrc.agentsubs
 
 GET         /contact-email-check                           uk.gov.hmrc.agentsubscriptionfrontend.controllers.ContactDetailsController.showContactEmailCheck
 POST        /contact-email-check                           uk.gov.hmrc.agentsubscriptionfrontend.controllers.ContactDetailsController.submitContactEmailCheck
+GET         /change-contact-email-address                   uk.gov.hmrc.agentsubscriptionfrontend.controllers.ContactDetailsController.changeContactEmailAddress
 
 GET         /contact-email-address                          uk.gov.hmrc.agentsubscriptionfrontend.controllers.ContactDetailsController.showContactEmailAddress
 POST        /contact-email-address                          uk.gov.hmrc.agentsubscriptionfrontend.controllers.ContactDetailsController.submitContactEmailAddress
 
+
 GET         /trading-name                                   uk.gov.hmrc.agentsubscriptionfrontend.controllers.ContactDetailsController.showTradingNameCheck
 POST        /trading-name                                   uk.gov.hmrc.agentsubscriptionfrontend.controllers.ContactDetailsController.submitTradingNameCheck
+GET         /change-main-trading-name                       uk.gov.hmrc.agentsubscriptionfrontend.controllers.ContactDetailsController.changeTradingName
 
 GET         /main-trading-name                              uk.gov.hmrc.agentsubscriptionfrontend.controllers.ContactDetailsController.showTradingName
 POST        /main-trading-name                              uk.gov.hmrc.agentsubscriptionfrontend.controllers.ContactDetailsController.submitTradingName
 
 GET         /check-main-trading-address                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.ContactDetailsController.showCheckMainTradingAddress
 POST        /check-main-trading-address                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.ContactDetailsController.submitCheckMainTradingAddress
+GET         /change-check-main-trading-address              uk.gov.hmrc.agentsubscriptionfrontend.controllers.ContactDetailsController.changeCheckMainTradingAddress
 
 GET         /find-main-trading-address                      uk.gov.hmrc.agentsubscriptionfrontend.controllers.ContactDetailsController.showMainTradingAddress
 GET         /lookup-trading-address                         uk.gov.hmrc.agentsubscriptionfrontend.controllers.ContactDetailsController.returnFromAddressLookup(id: String ?= "")
