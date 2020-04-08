@@ -120,40 +120,40 @@ error.amls.pending.appliedOn.date.too-old=Rhaid i’r dyddiad y gwnaethoch gais 
 error.amls.pending.appliedOn.date.cannot-be-in-future=Rhaid i’r dyddiad y gwnaethoch gais fod heddiw neu yn y gorffennol
 
 #Contact Email Check
-contactEmailCheck.title=
-contactEmailCheck.option.differentEmail=
-contactEmailCheck.continue.button=
-error.contact-email-check.invalid=
+contactEmailCheck.title=Pa gyfeiriad e-bost yr hoffech ei ddefnyddio ar gyfer eich cyfrif gwasanaethau asiant?
+contactEmailCheck.option.differentEmail=defnyddiwch gyfeiriad e-bost gwahanol
+contactEmailCheck.continue.button=Yn eich blaen
+error.contact-email-check.invalid=Dewiswch a hoffech ddefnyddio’r cyfeiriad e-bost a ddangosir neu gyfeiriad e-bost gwahanol
 
 #Contact Email Address
-contactEmailAddress.title=
-contactEmailAddress.p=
-contactEmailAddress.button=
-error.contact-email.empty=
-error.contact-email.maxLength=
-error.contact-email.missingSeparator=
-error.contact-email.invalidChar=
+contactEmailAddress.title=Beth yw’r cyfeiriad e-bost yr hoffech ei ddefnyddio?
+contactEmailAddress.p=Byddwn ond yn defnyddio hwn i anfon e-bost cadarnhau atoch. Bydd eich cyfeiriad e-bost yn cael ei ddiweddaru yn eich cyfrif gwasanaethau asiant yn unig.
+contactEmailAddress.button=Yn eich blaen
+error.contact-email.empty=Nodwch gyfeiriad e-bost
+error.contact-email.maxLength=Mae’n rhaid i’r cyfeiriad e-bost gynnwys 132 o gymeriadau neu lai
+error.contact-email.missingSeparator=Nodwch gyfeiriad e-bost yn y fformat cywir, megis enw@enghraifft.com
+error.contact-email.invalidChar=Mae’n rhaid i’r cyfeiriad e-bost gynnwys y llythrennau a i z, rhifau, atalnodau llawn, cysylltnodau, tanlinellau a’r symbol @ yn unig
 
 #Contact Trading Name Check
-contactTradingNameCheck.title=
-contactTradingNameCheck.option.yes=
-contactTradingNameCheck.option.no=
-contactTradingNameCheck.continue.button=
-error.contact-trading-name-check.invalid=
+contactTradingNameCheck.title=A ydych yn masnachu o dan enw gwahanol i {0}?
+contactTradingNameCheck.option.yes=Iawn
+contactTradingNameCheck.option.no=Na
+contactTradingNameCheck.continue.button=Yn eich blaen
+error.contact-trading-name-check.invalid=Dewiswch  ‘Iawn’ os ydych yn masnachu o dan enw gwahanol
 
 #Contact Trading Name
-contactTradingName.title=
-contactTradingName.continue.button=
-error.trading-name-name.maxlength=
-error.trading-name.invalid=
-error.trading-name.empty=
+contactTradingName.title=Beth yw prif enw masnachu eich busnes?
+contactTradingName.continue.button=Yn eich blaen
+error.trading-name-name.maxlength=Mae’n rhaid i’r prif enw masnachu gynnwys 40 o gymeriadau neu lai
+error.trading-name.invalid=Mae’n rhaid i’r prif enw masnachu gynnwys y llythrennau a i z, rhifau, comas, atalnodau llawn, collnodau, cysylltnodau, blaenslaesau a bylchau yn unig
+error.trading-name.empty=Nodwch brif enw masnachu eich busnes
 
 #Contact Trading Address Check
-contactTradingAddressCheck.title=
-contactTradingAddressCheck.option.yes=
-contactTradingAddressCheck.option.no=
-contactTradingAddressCheck.continue.button=
-error.contact-trading-address-check.invalid=
+contactTradingAddressCheck.title=Ai hwn yw’ch prif gyfeiriad masnachu?
+contactTradingAddressCheck.option.yes=Iawn – hoffwn ddefnyddio’r cyfeiriad hwn ar gyfer fy holl ohebiaeth ynghylch gwasanaethau asiant
+contactTradingAddressCheck.option.no=Na – mae angen i mi nodi cyfeiriad gwahanol
+contactTradingAddressCheck.continue.button=Yn eich blaen
+error.contact-trading-address-check.invalid=Dewiswch ‘Iawn’ os mai hwn yw’ch prif gyfeiriad masnachu
 
 ##Modifying address
 address.form.with-errors.error.summary =Gwiriwch y canlynol:
@@ -193,10 +193,10 @@ task-list.1.number=1.
 task-list.amlsTask.header=Nodwch eich manylion cydymffurfiad gwyngalchu arian
 task-list.amlsSubTask=Nodwch eich manylion cydymffurfiad gwyngalchu arian
 task-list.2.number=2.
-task-list.contactDetailsTask.header=
-task-list.contactDetailsEmailSubTask=
-task-list.contactDetailsTradingNameSubTask=
-task-list.contactDetailsTradingAddressSubTask=
+task-list.contactDetailsTask.header=Nodwch fanylion cyswllt eich cyfrif gwasanaethau asiant
+task-list.contactDetailsEmailSubTask=Nodwch gyfeiriad e-bost cyswllt
+task-list.contactDetailsTradingNameSubTask=Nodwch enw masnachu, os oes un gennych
+task-list.contactDetailsTradingAddressSubTask=Nodwch gyfeiriad masnachu, os oes un gennych
 task-list.3.number=3.
 task-list.mappingTask.header=Copïwch ar draws eich perthnasoedd presennol â chleientiaid
 task-list.mappingSubTask=Copïwch eich cleientiaid Hunanasesiad a TAW presennol ar draws i’ch cyfrif newydd
@@ -468,12 +468,12 @@ checkAnswers.userMapping.label=Nifer y perthnasoedd cleientiaid a gopïwyd
 checkAnswers.addMore.button=Ychwanegu rhagor
 checkAnswers.ggId.label=Dynodyddion Defnyddiwr (ID) ar gyfer Porth y Llywodraeth a nodwyd (er eich diogelwch dangosir y 4 rhif olaf yn unig)
 checkAnswers.ggId.xs=XXXX-XXXX-{0}
-checkAnswers.contactEmailAddress.label=
-checkAnswers.contactTradingName.label=
-checkAnswers.contactTradingAddress.label=
-checkAnswers.amls.h2=
+checkAnswers.contactEmailAddress.label=Cyfeiriad e-bost cyswllt
+checkAnswers.contactTradingName.label=Enw masnachu
+checkAnswers.contactTradingAddress.label=Cyfeiriad masnachu
+checkAnswers.amls.h2=Manylion cydymffurfiad gwyngalchu arian
 checkAnswers.businessDetails.h2=
-checkAnswers.contactDetails.h2=
+checkAnswers.contactDetails.h2=Manylion cyswllt y cyfrif gwasanaethau asiant
 checkAnswers.mapping.h2=
 checkAnswers.tradingName.none=
 

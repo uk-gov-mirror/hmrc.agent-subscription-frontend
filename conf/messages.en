@@ -145,7 +145,7 @@ error.contact-trading-name-check.invalid=Select yes if you trade under a differe
 contactTradingName.title=What is the main trading name of your business?
 contactTradingName.continue.button=Continue
 error.trading-name-name.maxlength=Main trading name must be 40 characters or fewer
-error.trading-name.invalid=Name trading name must only include letters a to z, numbers, commas, full stops, apostrophes, hyphens, forward slashes and spaces
+error.trading-name.invalid=Main trading name must only include letters a to z, numbers, commas, full stops, apostrophes, hyphens, forward slashes and spaces
 error.trading-name.empty=Enter the main trading name of your business
 
 #Contact Trading Address Check
@@ -469,8 +469,8 @@ checkAnswers.addMore.button=Add more
 checkAnswers.ggId.label=Government Gateway user IDs entered (for your security only the last 4 numbers are shown)
 checkAnswers.ggId.xs=XXXX-XXXX-{0}
 checkAnswers.contactEmailAddress.label=Contact email address
-checkAnswers.contactTradingName.label=Contact trading name
-checkAnswers.contactTradingAddress.label=Contact trading address
+checkAnswers.contactTradingName.label=Trading name
+checkAnswers.contactTradingAddress.label=Trading address
 checkAnswers.amls.h2=Money laundering compliance details
 checkAnswers.businessDetails.h2=Business details
 checkAnswers.contactDetails.h2=Agent services account contact details
