@@ -23,6 +23,7 @@ import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.CompanyRegistrationForms._
+import uk.gov.hmrc.agentsubscriptionfrontend.models.AgentSession
 import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.Llp
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
@@ -61,7 +62,7 @@ class CompanyRegistrationController @Inject()(
 
   def submitCompanyRegNumberForm(): Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { implicit agent =>
-      withValidSession { (_, existingSession) =>
+      withValidSession { (_, existingSession: AgentSession) =>
         crnForm
           .bindFromRequest()
           .fold(
@@ -69,21 +70,12 @@ class CompanyRegistrationController @Inject()(
             validCrn =>
               existingSession.utr match {
                 case Some(utr) =>
-                  existingSession.businessType match {
-                    case Some(businessType) => {
-                      subscriptionService.matchCorporationTaxUtrWithCrn(utr, validCrn).flatMap {
-                        foundMatch =>
-                          if (foundMatch || businessType == Llp) {
-                            if (businessType == Llp)
-                              Logger.warn(s"businessType $businessType CTUtr CRN match result was $foundMatch")
-                            updateSessionAndRedirect(existingSession.copy(companyRegistrationNumber = Some(validCrn)))(
-                              routes.VatDetailsController.showRegisteredForVatForm())
-                          } else {
-                            Redirect(routes.BusinessIdentificationController.showNoMatchFound())
-                          }
-                      }
-                    }
-                    case _ => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
+                  subscriptionService.matchCorporationTaxUtrWithCrn(utr, validCrn).flatMap { foundMatch =>
+                    if (foundMatch)
+                      updateSessionAndRedirect(existingSession.copy(companyRegistrationNumber = Some(validCrn)))(
+                        routes.VatDetailsController.showRegisteredForVatForm())
+                    else
+                      Redirect(routes.BusinessIdentificationController.showNoMatchFound())
                   }
                 case _ => Redirect(routes.UtrController.showUtrForm())
             }
