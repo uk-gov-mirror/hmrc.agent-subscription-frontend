@@ -24,16 +24,16 @@ import play.api.Logger
 import play.api.http.Status
 import play.api.i18n.Lang
 import play.api.mvc.Result
+import play.api.mvc.Results.{Conflict, Redirect}
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr, Vrn}
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentSubscriptionConnector
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.routes
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
-import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.{AmlsData, SubscriptionJourneyRecord}
-import uk.gov.hmrc.domain.Nino
-import uk.gov.hmrc.http.{HeaderCarrier, Upstream4xxResponse}
-import play.api.mvc.Results.{Conflict, Redirect}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.AmlsData
 import uk.gov.hmrc.agentsubscriptionfrontend.support.Monitoring
+import uk.gov.hmrc.domain.Nino
+import uk.gov.hmrc.http.{HeaderCarrier, Upstream4xxResponse, Upstream5xxResponse}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -96,6 +96,9 @@ class SubscriptionService @Inject()(
       case e: Upstream4xxResponse if Seq(Status.FORBIDDEN, Status.CONFLICT) contains e.upstreamResponseCode =>
         Logger.warn("Upstream error (in agent-subscription): see agent-subscription log for details")
         Left(e.upstreamResponseCode)
+      case e: Upstream5xxResponse if e.message contains("AGENT_TERMINATED") =>
+        Logger.warn(s"Terminated agent is trying to re-subscribe ${e.message}")
+        Left(e.upstreamResponseCode)
       case e =>
         Logger.error("Upstream error (in agent-subscription): see agent-subscription log for details", e)
         throw e
@@ -120,6 +123,10 @@ class SubscriptionService @Inject()(
     completePartialSubscription(utr, businessPostCode).map { _ =>
       mark("Count-Subscription-PartialSubscriptionCompleted")
       Redirect(routes.SubscriptionController.showSubscriptionComplete())
+    } recover {
+      case e: Upstream5xxResponse if e.message contains("AGENT_TERMINATED") =>
+        Logger.warn(s"Terminated agent has isASAgent flag and is trying to re-subscribe ${e.message}")
+        Redirect(routes.StartController.showCannotCreateAccount())
     }
 
   def redirectAfterGGCredsCreatedBasedOnStatus(continueId: ContinueId, agent: Agent)(

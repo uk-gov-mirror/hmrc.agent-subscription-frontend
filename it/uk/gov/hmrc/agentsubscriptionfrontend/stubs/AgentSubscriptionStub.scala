@@ -165,6 +165,23 @@ object AgentSubscriptionStub {
         .willReturn(aResponse()
           .withStatus(responseCode)))
 
+  // temporary test stub while we investigate 'partially terminated bug' in ETMP for agents that have been terminated
+
+  def partialSubscriptionWillFailAgentTerminated(request: CompletePartialSubscriptionBody, arn: String = "ARN00001"): StubMapping =
+    stubFor(
+      partialSubscriptionFixRequestFor(request)
+        .willReturn(
+          aResponse()
+            .withStatus(Status.INTERNAL_SERVER_ERROR)
+            .withBody(
+              s"""
+                 |{
+                 |"statusCode": 500,
+                 |"message": "GET of '/registration/personal-details/utr/${request.utr}' returned 403. Response body: '{\"code\": \"AGENT_TERMINATED\", \"reason\": \"The remote endpoint has indicated that $arn is terminated\"}'"}'"
+                 |""".stripMargin)
+        )
+    )
+
   def subscriptionWillSucceed(utr: Utr, request: SubscriptionRequest, arn: String = "ARN00001"): StubMapping =
     stubFor(
       subscriptionRequestFor(utr, request)
@@ -176,6 +193,21 @@ object AgentSubscriptionStub {
                          |  "arn": "$arn"
                          |}
                      """.stripMargin)))
+
+  def subscriptionWillFailForTerminatedAgent(utr: Utr, request: SubscriptionRequest, arn: String = "ARN00001"): StubMapping =
+    stubFor(
+      subscriptionRequestFor(utr, request)
+        .willReturn(
+          aResponse()
+            .withStatus(Status.INTERNAL_SERVER_ERROR)
+            .withBody(
+              s"""
+                 |{
+                 |"statusCode": 500,
+                 |"message": "GET of '/registration/personal-details/utr/${request.utr}' returned 403. Response body: '{\"code\": \"AGENT_TERMINATED\", \"reason\": \"The remote endpoint has indicated that $arn is terminated\"}'"}'"
+                 |""".stripMargin)
+        )
+    )
 
   def subscriptionWillConflict(utr: Utr, request: SubscriptionRequest): StubMapping =
     stubFor(

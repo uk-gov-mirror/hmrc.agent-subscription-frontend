@@ -188,6 +188,26 @@ class ConfirmBusinessISpec extends BaseISpec {
 
       }
 
+      "redirect to showCannotCreateAccount if the subscribing agent has been terminated" in new TestSetupNoJourneyRecord {
+        givenAgentIsNotManuallyAssured(utr.value)
+        withPartiallySubscribedAgent(utr, testPostcode) // this is a temporary case where terminated agents seem to only be partially terminated in ETMP
+        partialSubscriptionWillFailAgentTerminated(
+          CompletePartialSubscriptionBody(utr = utr, knownFacts = SubscriptionRequestKnownFacts(testPostcode))
+        )
+        implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
+          .withFormUrlEncodedBody("confirmBusiness" -> "yes")
+        sessionStoreService.currentSession.agentSession = Some(
+          AgentSession(
+            Some(BusinessType.SoleTrader),
+            utr = Some(utr),
+            registration = Some(testRegistration.copy(isSubscribedToETMP = true)),
+            postcode = Some(Postcode(testPostcode))))
+
+        val result = await(controller.submitConfirmBusinessForm(request))
+
+        result.header.headers(LOCATION) shouldBe routes.StartController.showCannotCreateAccount().url
+      }
+
       "redirect to sign in with new user ID if the user is partially subscribed with unclean creds" in new TestSetupNoJourneyRecord {
         val agentSession = AgentSession(
           Some(BusinessType.SoleTrader),

@@ -184,6 +184,10 @@ class SubscriptionController @Inject()(
         mark("Count-Subscription-AlreadySubscribed-APIResponse")
         Redirect(routes.BusinessIdentificationController.showAlreadySubscribed())
 
+      case Left(SubscriptionReturnedHttpError(INTERNAL_SERVER_ERROR)) =>
+        mark("Count-Subscription-Failed-Agent_Terminated")
+        Redirect(routes.StartController.showCannotCreateAccount())
+
       case Left(SubscriptionReturnedHttpError(status)) =>
         mark("Count-Subscription-Failed")
         throw new HttpException(s"Subscription failed: HTTP status $status from agent-subscription service ", status)

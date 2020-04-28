@@ -624,6 +624,22 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         metricShouldExistAndBeUpdated("Count-Subscription-Complete")
       }
     }
+
+    "send subscription request and redirect to showCannotCreateAccount" when {
+      "agent has been terminated" in new TestSetupWithCompleteJourneyRecordAndCreate {
+        AgentSubscriptionStub.subscriptionWillFailForTerminatedAgent(validUtr, subscriptionRequestWithNoEdit(), arn = "TARN00023")
+
+        implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments).withCookies(Cookie("PLAY_LANG", "en"))
+        sessionStoreService.currentSession.continueUrl = Some("/some/url")
+
+        val result = await(controller.submitCheckAnswers(request))
+        status(result) shouldBe 303
+        redirectLocation(result).head shouldBe routes.StartController.showCannotCreateAccount().url
+
+        verifySubscriptionRequestSent(subscriptionRequestWithNoEdit())
+        metricShouldExistAndBeUpdated("Count-Subscription-Failed-Agent_Terminated")
+      }
+    }
   }
 
   "GET /sign-in-with-new-user-id" should {
