@@ -20,7 +20,7 @@
 mainTemplate: main_template
 )
 
-@(continueUrl: String, arn: String, agencyName: String, agencyEmail: String)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+@(arn: String, agencyName: String, agencyEmail: String, copiedAcross: Int)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 @mainTemplate(appConfig, title = Messages("subscriptionComplete.title"), bodyClasses = None) {
 
@@ -34,16 +34,15 @@ mainTemplate: main_template
     </div>
 </div>
 
+<p>@Html(Messages("subscriptionComplete.copiedAcross", copiedAcross))</p>
 <p>@Html(Messages("subscriptionComplete.p1", s"$arn"))</p>
-<p>@Html(Messages("subscriptionComplete.p2", s"$agencyEmail"))</p>
-<h2 class="heading-medium">@Messages("subscriptionComplete.h2")</h2>
-<p>@Html(Messages("subscriptionComplete.p3", Messages("subscriptionComplete.href")))</p>
+<p>@Messages("subscriptionComplete.p2", s"$agencyEmail")</p>
+<h2 class="heading-medium">@Messages("subscriptionComplete.nextStepsMTD.header")</h2>
+<p>@Messages("subscriptionComplete.nextStepsMTD.p")</p>
+    <h2 class="heading-medium">@Messages("subscriptionComplete.nextStepsTERS.header")</h2>
+    <p>@Messages("subscriptionComplete.nextStepsTERS.p")</p>
 
 
-<ul class="list list-bullet">
-    <li>@Messages("subscriptionComplete.bullet-list.1")</li>
-    <li>@Messages("subscriptionComplete.bullet-list.2")</li>
-</ul>
 
-<a href="@continueUrl" class="button" id="continue" role="button">@Messages("subscriptionComplete.button.continueJourney")</a>
+<a href="@appConfig.agentServicesAccountUrl" class="button" id="continue" role="button">@Messages("subscriptionComplete.button.continueToASAccount")</a>
 }

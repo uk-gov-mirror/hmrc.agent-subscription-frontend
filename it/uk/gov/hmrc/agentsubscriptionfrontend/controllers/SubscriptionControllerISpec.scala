@@ -297,7 +297,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       resultOf(request) should containSubstrings(expectedArn)
     }
 
-    "display the static page content" in new AuthRequest with TestSetupWithCompleteJourneyRecord {
+    "display the static page content" in new AuthRequest with TestSetupWithCompleteJourneyRecordWithMapping {
 
       val result = resultOf(request)
 
@@ -305,18 +305,21 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         "subscriptionComplete.title",
         "subscriptionComplete.h1",
         "subscriptionComplete.accountName",
-        "subscriptionComplete.h2",
-        "subscriptionComplete.bullet-list.1",
-        "subscriptionComplete.bullet-list.2"
+        "subscriptionComplete.nextStepsMTD.header",
+        "subscriptionComplete.nextStepsMTD.p",
+        "subscriptionComplete.nextStepsTERS.header",
+        "subscriptionComplete.nextStepsTERS.p",
+        "subscriptionComplete.button.continueToASAccount"
       )
       bodyOf(result) should include(hasMessage("subscriptionComplete.p1", "AARN0000001"))
       bodyOf(result) should include(hasMessage("subscriptionComplete.p2", "email@email.com"))
-      bodyOf(result) should include(hasMessage("subscriptionComplete.p3", "https://www.gov.uk/guidance/get-an-hmrc-agent-services-account"))
+      bodyOf(result) should include(hasMessage("subscriptionComplete.copiedAcross", 40))
+
     }
-    "continue button redirects to agent services account if there is no continue url" in new AuthRequest with TestSetupWithCompleteJourneyRecord {
+    "continue button redirects to agent services account" in new AuthRequest with TestSetupWithCompleteJourneyRecord {
       val result = resultOf(request)
       result should containMessages(
-        "subscriptionComplete.button.continueJourney"
+        "subscriptionComplete.button.continueToASAccount"
       )
       checkHtmlResultWithBodyText(result, "/agent-services-account")
     }

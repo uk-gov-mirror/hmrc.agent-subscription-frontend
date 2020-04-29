@@ -371,17 +371,14 @@ linkClients.error.no-radio-selected=Dewiswch ‘Iawn’ os hoffech gysylltu’ch
 subscriptionComplete.title=Cyfrif gwasanaethau asiant wedi’i greu
 subscriptionComplete.h1=Cyfrif gwasanaethau asiant wedi’i greu
 subscriptionComplete.accountName=Rydych wedi creu cyfrif ar gyfer
-subscriptionComplete.h2=Yr hyn y gallwch ei wneud nesaf
-subscriptionComplete.p1=Gwnewch nodyn o gyfeirnod eich cyfrif <strong class="bold">{0}</strong>. Bydd angen hwn arnoch i gysylltu â CThEM os na allwch gael mynediad at eich cyfrif gwasanaethau asiant.
+subscriptionComplete.copiedAcross=Rydych hefyd wedi copïo ar draws <strong class="bold">{0}</strong> o gleientiaid i’ch cyfrif gwasanaethau asiant newydd.
+subscriptionComplete.p1=Gwnewch nodyn o gyfeirnod eich cyfrif <strong class="bold">{0}</strong>. Gwnewch yn siŵr bod gennych chi hyn os ydych yn cysylltu â ni ynglŷn â’ch cyfrif gwasanaethau asiant
 subscriptionComplete.p2=Rydym wedi anfon e-bost i {0} i gadarnhau’r manylion hyn.
-subscriptionComplete.p3=<a href="{0}">Gwiriwch yr arweiniad</a> i gael gwybod sut i wneud y canlynol:
-subscriptionComplete.bullet-list.1=mewngofnodi i’ch cyfrif gwasanaethau asiant
-subscriptionComplete.bullet-list.2=defnyddio gwasanaethau CThEM newydd ar ran eich cleientiaid
-subscriptionComplete.button=Ewch i’ch cyfrif gwasanaethau asiant
-subscriptionComplete.href=https://www.gov.uk/guidance/get-an-hmrc-agent-services-account.cy
-
+subscriptionComplete.nextStepsMTD.header=Camau nesaf ar gyfer y cynllun Troi Treth yn Ddigidol fel asiant
+subscriptionComplete.nextStepsMTD.p=
+subscriptionComplete.nextStepsTERS.header=Camau nesaf ar gyfer ymddiriedolaethau neu ystadau
+subscriptionComplete.nextStepsTERS.p=Gallwch nawr fynd yn eich blaen i gofrestru ymddiriedolaeth neu ystâd cleient
 subscriptionComplete.button.continueToASAccount=Ewch i’ch cyfrif gwasanaethau asiant
-subscriptionComplete.button.continueJourney=Yn eich blaen
 
 #Common
 button.startAgain=Rhoi cynnig arall arni
@@ -474,8 +471,8 @@ checkAnswers.contactTradingAddress.label=Cyfeiriad masnachu
 checkAnswers.amls.h2=Manylion cydymffurfiad gwyngalchu arian
 checkAnswers.businessDetails.h2=
 checkAnswers.contactDetails.h2=Manylion cyswllt y cyfrif gwasanaethau asiant
-checkAnswers.mapping.h2=
-checkAnswers.tradingName.none=
+checkAnswers.mapping.h2=Perthnasoedd â chleientiaid presennol
+checkAnswers.tradingName.none=Dim
 
 businessName.title=Beth yw enw eich busnes?
 businessName.updated.title=Diweddaru enw eich busnes

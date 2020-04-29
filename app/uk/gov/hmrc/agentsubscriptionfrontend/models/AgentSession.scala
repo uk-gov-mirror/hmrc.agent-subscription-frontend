@@ -34,7 +34,8 @@ case class AgentSession(
   registeredForVat: Option[String] = None,
   vatDetails: Option[VatDetails] = None,
   registration: Option[Registration] = None,
-  dateOfBirthFromCid: Option[DateOfBirth] = None //just caching this dob from CID so we dont need to make multiple calls to CID
+  dateOfBirthFromCid: Option[DateOfBirth] = None, //just caching this dob from CID so we dont need to make multiple calls to CID
+  clientCount: Option[Int] = None
 )
 
 object AgentSession {

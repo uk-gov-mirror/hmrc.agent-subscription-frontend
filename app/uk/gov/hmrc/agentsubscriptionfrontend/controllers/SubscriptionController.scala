@@ -28,7 +28,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.config.view._
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.{AddressLookupFrontendConnector, AgentAssuranceConnector}
 import uk.gov.hmrc.agentsubscriptionfrontend.form.DesAddressForm
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
-import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.SubscriptionJourneyRecord
+import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.{SubscriptionJourneyRecord, UserMapping}
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService, SubscriptionReturnedHttpError, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{address_form_with_errors, check_answers, sign_in_new_id, subscription_complete}
@@ -113,18 +113,19 @@ class SubscriptionController @Inject()(
   private def updateSessionAndReturnAgencyBeforeSubscribing(registration: Registration)
                                             (emailData: ContactEmailData,
                                              nameData: ContactTradingNameData,
-                                             addressData: ContactTradingAddressData)(implicit hc: HeaderCarrier) = {
+                                             addressData: ContactTradingAddressData, userMappings: List[UserMapping])(implicit hc: HeaderCarrier) = {
     val agencyName = nameData.contactTradingName.orElse(registration.taxpayerName)
     val agencyEmail = emailData.contactEmail
     val agencyAddress: BusinessAddress = addressData.contactTradingAddress.getOrElse(
       throw new Exception("contact trading address should be defined"))
+    val clientCount = userMappings.map(_.count).sum
 
     sessionStoreService.cacheAgentSession(AgentSession(registration = Some(
       Registration(taxpayerName = agencyName,
         isSubscribedToAgentServices = false,
         isSubscribedToETMP = false,
         agencyAddress,
-        agencyEmail)))).map(_ => Agency(
+        agencyEmail)), clientCount = Some(clientCount))).map(_ => Agency(
       agencyName.getOrElse(registration.taxpayerName.getOrElse(throw new Exception("taxpayer name should be defined"))),
       DesAddress.fromBusinessAddress(agencyAddress),
       agencyEmail.getOrElse(throw new Exception("contact email address should be defined"))))
@@ -140,10 +141,11 @@ class SubscriptionController @Inject()(
           sjr.amlsData,
           sjr.contactEmailData,
           sjr.contactTradingNameData,
-          sjr.contactTradingAddressData) match {
-          case (utr, postcode, Some(registration), amlsData, Some(email), Some(name), Some(address)) =>
+          sjr.contactTradingAddressData,
+        sjr.userMappings) match {
+          case (utr, postcode, Some(registration), amlsData, Some(email), Some(name), Some(address), userMappings) =>
                     for {
-                    agencyDetails <- updateSessionAndReturnAgencyBeforeSubscribing(registration)(email, name, address)
+                    agencyDetails <- updateSessionAndReturnAgencyBeforeSubscribing(registration)(email, name, address, userMappings)
                     langForEmail = extractLangPreferenceFromCookie
                     subscriptionResponse <- subscriptionService.subscribe(utr, postcode, agencyDetails, langForEmail, amlsData)
                     result <- redirectSubscriptionResponse(subscriptionResponse, agent)
@@ -247,15 +249,15 @@ class SubscriptionController @Inject()(
     withSubscribedAgent { (arn: Arn, sjrOpt: Option[SubscriptionJourneyRecord]) =>
       for{
         maybeContinueUrl <- getMaybeContinueUrl
-        (name, email) <- agencyNameAndEmail(sjrOpt)
+        (name, email, clientCount) <- agencyNameAndEmailClientCount(sjrOpt)
+
       } yield Ok(
         subscriptionCompleteTemplate(
-          maybeContinueUrl.getOrElse(appConfig.agentServicesAccountUrl),
-          arn.value, name, email))
+          arn.value, name, email, clientCount))
     }
   }
 
-  private def agencyNameAndEmail(maybeSjr: Option[SubscriptionJourneyRecord])(implicit hc: HeaderCarrier): Future[(String, String)] = {
+  private def agencyNameAndEmailClientCount(maybeSjr: Option[SubscriptionJourneyRecord])(implicit hc: HeaderCarrier): Future[(String, String, Int)] = {
     maybeSjr match {
       case Some(sjr) => {
         val agencyName = sjr.contactTradingNameData
@@ -269,7 +271,9 @@ class SubscriptionController @Inject()(
           .getOrElse(throw new Exception("contact email data should be defined"))
           .contactEmail
           .getOrElse(throw new Exception("contact email should be defined"))
-        (agencyName, agencyEmail)
+
+        val clientCount = sjr.userMappings.map(_.count).sum
+        (agencyName, agencyEmail, clientCount)
       }
       case None => {
         sessionStoreService.fetchAgentSession.flatMap {
@@ -277,7 +281,8 @@ class SubscriptionController @Inject()(
             val reg = agentSession.registration.getOrElse(throw new Exception("agent session should have a registration "))
             val agencyName = reg.taxpayerName.getOrElse(throw new Exception("taxpayer name should be defined"))
             val agencyEmail = reg.emailAddress.getOrElse(throw new Exception("agency email should be defined"))
-            (agencyName, agencyEmail)
+            val clientCount = agentSession.clientCount.getOrElse(throw new Exception("agent session should have a client count"))
+            (agencyName, agencyEmail, clientCount)
           }
           case None => throw new RuntimeException("no agent session found")
         }

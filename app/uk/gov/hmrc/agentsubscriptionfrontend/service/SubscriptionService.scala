@@ -96,7 +96,7 @@ class SubscriptionService @Inject()(
       case e: Upstream4xxResponse if Seq(Status.FORBIDDEN, Status.CONFLICT) contains e.upstreamResponseCode =>
         Logger.warn("Upstream error (in agent-subscription): see agent-subscription log for details")
         Left(e.upstreamResponseCode)
-      case e: Upstream5xxResponse if e.message contains("AGENT_TERMINATED") =>
+      case e: Upstream5xxResponse if e.message contains ("AGENT_TERMINATED") =>
         Logger.warn(s"Terminated agent is trying to re-subscribe ${e.message}")
         Left(e.upstreamResponseCode)
       case e =>
@@ -124,7 +124,7 @@ class SubscriptionService @Inject()(
       mark("Count-Subscription-PartialSubscriptionCompleted")
       Redirect(routes.SubscriptionController.showSubscriptionComplete())
     } recover {
-      case e: Upstream5xxResponse if e.message contains("AGENT_TERMINATED") =>
+      case e: Upstream5xxResponse if e.message contains ("AGENT_TERMINATED") =>
         Logger.warn(s"Terminated agent has isASAgent flag and is trying to re-subscribe ${e.message}")
         Redirect(routes.StartController.showCannotCreateAccount())
     }

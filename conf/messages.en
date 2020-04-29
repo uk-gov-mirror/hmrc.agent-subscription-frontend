@@ -371,17 +371,14 @@ linkClients.error.no-radio-selected= Select yes if you want to link your clients
 subscriptionComplete.title=Agent services account created
 subscriptionComplete.h1=Agent services account created
 subscriptionComplete.accountName=You created an account for
-subscriptionComplete.h2=What you can do next
-subscriptionComplete.p1=Make a note of your account reference number <strong class="bold">{0}</strong>. You will need this to contact HMRC if you cannot access your agent services account.
+subscriptionComplete.copiedAcross=You have also copied across <strong class="bold">{0}</strong> clients to your new agent services account.
+subscriptionComplete.p1=Make a note of your account reference number <strong class="bold">{0}</strong>. Make sure you have this with you if you contact us about your agent services account.
 subscriptionComplete.p2=We have sent an email to {0} confirming these details.
-subscriptionComplete.p3=<a href="{0}">Check the guidance</a> to find out how to:
-subscriptionComplete.bullet-list.1=sign in to your agent services account
-subscriptionComplete.bullet-list.2=use new HMRC services on behalf of your clients
-subscriptionComplete.button=Go to your agent services account
-subscriptionComplete.href=https://www.gov.uk/guidance/get-an-hmrc-agent-services-account
-
+subscriptionComplete.nextStepsMTD.header=Next steps for Making Tax Digital as an agent
+subscriptionComplete.nextStepsMTD.p=If you copied across clients who need to follow the rules for Making Tax Digital, you now need to sign your clients up for Making Tax Digital for VAT.
+subscriptionComplete.nextStepsTERS.header=Next steps for trusts or estates
+subscriptionComplete.nextStepsTERS.p=You can now continue with registering a client's trust or estate.
 subscriptionComplete.button.continueToASAccount=Go to your agent services account
-subscriptionComplete.button.continueJourney=Continue
 
 #Common
 button.startAgain=Try again
