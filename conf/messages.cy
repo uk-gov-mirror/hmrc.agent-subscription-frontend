@@ -375,7 +375,7 @@ subscriptionComplete.copiedAcross=Rydych hefyd wedi copïo ar draws <strong clas
 subscriptionComplete.p1=Gwnewch nodyn o gyfeirnod eich cyfrif <strong class="bold">{0}</strong>. Gwnewch yn siŵr bod gennych chi hyn os ydych yn cysylltu â ni ynglŷn â’ch cyfrif gwasanaethau asiant
 subscriptionComplete.p2=Rydym wedi anfon e-bost i {0} i gadarnhau’r manylion hyn.
 subscriptionComplete.nextStepsMTD.header=Camau nesaf ar gyfer y cynllun Troi Treth yn Ddigidol fel asiant
-subscriptionComplete.nextStepsMTD.p=
+subscriptionComplete.nextStepsMTD.p=Os gwnaethoch gopïo ar draws cleientiaid sydd angen dilyn rheolau’r cynllun Troi Treth yn Ddigidol, mae angen i chi nawr gofrestru’ch cleientiaid ar gyfer Troi Treth yn Ddigidol ar gyfer TAW.
 subscriptionComplete.nextStepsTERS.header=Camau nesaf ar gyfer ymddiriedolaethau neu ystadau
 subscriptionComplete.nextStepsTERS.p=Gallwch nawr fynd yn eich blaen i gofrestru ymddiriedolaeth neu ystâd cleient
 subscriptionComplete.button.continueToASAccount=Ewch i’ch cyfrif gwasanaethau asiant
@@ -469,7 +469,7 @@ checkAnswers.contactEmailAddress.label=Cyfeiriad e-bost cyswllt
 checkAnswers.contactTradingName.label=Enw masnachu
 checkAnswers.contactTradingAddress.label=Cyfeiriad masnachu
 checkAnswers.amls.h2=Manylion cydymffurfiad gwyngalchu arian
-checkAnswers.businessDetails.h2=
+checkAnswers.businessDetails.h2=Manylion y busnes
 checkAnswers.contactDetails.h2=Manylion cyswllt y cyfrif gwasanaethau asiant
 checkAnswers.mapping.h2=Perthnasoedd â chleientiaid presennol
 checkAnswers.tradingName.none=Dim
