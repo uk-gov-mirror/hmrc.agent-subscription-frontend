@@ -148,6 +148,16 @@ class AgentSubscriptionConnector @Inject()(
         }
     }
 
+  def officerListContainsNameToMatch(crn: CompanyRegistrationNumber, name: String)(
+    implicit hc: HeaderCarrier): Future[Boolean] =
+    monitor(s"ConsumedAPI-Agent-Subscription-getCompanyOfficers-GET") {
+      val url =
+        s"${appConfig.agentSubscriptionBaseUrl}/agent-subscription/companies-house-api-proxy/company/01234567/officers/$name"
+      http
+        .GET[HttpResponse](url)
+        .map(_.status == 200)
+    }
+
   private val subscriptionUrl = s"${appConfig.agentSubscriptionBaseUrl}/agent-subscription/subscription"
 
   private def getRegistrationUrlFor(utr: Utr, postcode: String) =

@@ -68,18 +68,28 @@ class CompanyRegistrationController @Inject()(
           .fold(
             formWithErrors => Ok(companyRegistrationTemplate(formWithErrors)),
             validCrn =>
-              existingSession.utr match {
-                case Some(utr) =>
-                  subscriptionService.matchCorporationTaxUtrWithCrn(utr, validCrn).flatMap { foundMatch =>
-                    if (foundMatch)
-                      updateSessionAndRedirect(existingSession.copy(companyRegistrationNumber = Some(validCrn)))(
-                        routes.VatDetailsController.showRegisteredForVatForm())
-                    else
-                      Redirect(routes.BusinessIdentificationController.showNoMatchFound())
-                  }
-                case _ => Redirect(routes.UtrController.showUtrForm())
+              existingSession.businessType match {
+                case Some(bt) =>
+                  if (bt == Llp)
+                    updateSessionAndRedirect(existingSession.copy(companyRegistrationNumber = Some(validCrn)))(
+                      routes.LLPController.showPartnerTypeForm()
+                    )
+                  else
+                    existingSession.utr match {
+                      case Some(utr) =>
+                        subscriptionService.matchCorporationTaxUtrWithCrn(utr, validCrn).flatMap { foundMatch =>
+                          if (foundMatch)
+                            updateSessionAndRedirect(existingSession.copy(companyRegistrationNumber = Some(validCrn)))(
+                              routes.VatDetailsController.showRegisteredForVatForm())
+                          else
+                            Redirect(routes.BusinessIdentificationController.showNoMatchFound())
+                        }
+                      case _ => Redirect(routes.UtrController.showUtrForm())
+                    }
+                case None => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
             }
           )
+
       }
     }
   }

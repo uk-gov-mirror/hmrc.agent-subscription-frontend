@@ -135,6 +135,24 @@ package object controllers {
           Some((radioInvasiveStartSaAgentCode.hasSaAgentCode.toString, radioInvasiveStartSaAgentCode.saAgentCode))))
   }
 
+  object LLPControllerForms {
+
+    private val partnerTypes: List[String] = List(
+      PartnerType.IndividualPartner.key,
+      PartnerType.CorporatePartner.key
+    )
+
+    val partnerTypeForm: Form[PartnerType] =
+      Form[PartnerType](
+        mapping(
+          "partnerType" -> optional(text)
+            .transform[String](_.getOrElse(""), s => Some(s))
+            .verifying("partnerType.error.invalid-choice", value => partnerTypes.contains(value))
+        )(input => PartnerType(input))(pType => Some(pType.key))
+      )
+
+  }
+
   object SubscriptionControllerForms {
     val linkClientsForm: Form[LinkClients] =
       Form[LinkClients](

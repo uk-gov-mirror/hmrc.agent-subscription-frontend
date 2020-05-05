@@ -238,6 +238,23 @@ businessType.progressive.content.p1=You can only get an agent services account i
 businessType.progressive.content.link=Finish and sign out
 businessType.error.invalid-choice = Select if your business type is limited company, sole trader, partnership or limited liability partnership (LLP)
 
+#Partner Type
+partnerType.title=What type of partner are you in the limited liability partnership (LLP)?
+partnerType.hint=This will help us to validate you as a partner in the limited liability partnership (LLP)
+partnerType.individual=Individual Partner
+partnerType.corporate=Corporate Partner (limited liability company)
+partnerType.error.invalid-choice=Select if you are a Individual partner or a Corporate Partner in the LLP
+partnerType.continue.button=Continue
+
+#LLP Partner UTR
+partnerUtr.title=What is the Unique Taxpayer Reference (UTR) of the corporate partner?
+partnerUtr.description=This is 10 numbers, for example 1234567890. It will be on tax returns and other letters about Corporation Tax. It may be called ‘reference’, ‘UTR’ or ‘official use’.
+error.llp-partner-utr.blank=Enter your company’s Unique Taxpayer Reference (UTR)
+error.llp-partner-utr.invalid=Your company’s Unique Taxpayer Reference (UTR) must be 10 numbers
+
+#LLP Partner Postcode
+partnerPostcode.title=What is the postcode of the corporate partner's registered address?
+
 #UTR details page
 utr.title=What is the Unique Taxpayer Reference (UTR) of your company?
 utr.header.sole_trader=What is your Self Assessment Unique Taxpayer Reference (UTR)?

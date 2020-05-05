@@ -24,11 +24,12 @@ import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationForms.ninoForm
 import uk.gov.hmrc.agentsubscriptionfrontend.models.AgentSession
-import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.{Partnership, SoleTrader}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.{Llp, Partnership, SoleTrader}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.DesignatoryDetails.Person
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TaxIdentifierFormatters.normalizeNino
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
-import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{national_insurance_number}
+import uk.gov.hmrc.agentsubscriptionfrontend.views.html.national_insurance_number
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
@@ -76,7 +77,7 @@ class NationalInsuranceController @Inject()(
   private def withValidBusinessType(agentSession: AgentSession)(result: Result)(
     implicit hc: HeaderCarrier): Future[Result] =
     agentSession.businessType match {
-      case Some(SoleTrader | Partnership) => Future.successful(result)
+      case Some(SoleTrader | Partnership | Llp) => Future.successful(result)
       case _ =>
         updateSessionAndRedirect(AgentSession())(routes.BusinessTypeController.showBusinessTypeForm())
     }
@@ -93,13 +94,13 @@ class NationalInsuranceController @Inject()(
               if (ninosMatched) {
                 subscriptionService
                   .getDesignatoryDetails(validNino)
-                  .map(_.person.flatMap(_.dateOfBirth))
+                  .flatMap(_.person)
                   .flatMap {
-                    case Some(dateOfBirth) =>
-                      updateSessionAndRedirect(
-                        existingSession.copy(nino = Some(validNino), dateOfBirthFromCid = Some(dateOfBirth)))(
+                    case Some(Person(name, Some(dateOfBirth))) =>
+                      updateSessionAndRedirect(existingSession
+                        .copy(nino = Some(validNino), dateOfBirthFromCid = Some(dateOfBirth), partnerName = name))(
                         routes.DateOfBirthController.showDateOfBirthForm())
-                    case None =>
+                    case _ =>
                       Logger.warn("no DateOfBirth in the /citizen-details response for logged in agent")
                       updateSessionAndRedirect(existingSession.copy(nino = Some(validNino)))(
                         routes.VatDetailsController.showRegisteredForVatForm())

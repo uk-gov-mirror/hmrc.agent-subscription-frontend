@@ -67,6 +67,8 @@ object CommonValidators {
         ("error.partnershiputr.blank", "error.partnershiputr.invalid")
       case "llp" =>
         ("error.llputr.blank", "error.llputr.invalid")
+      case "llp-partner" =>
+        ("error.llp-partner-utr.blank", "error.llp-partner-utr.invalid")
       case _ =>
         DefaultUtrErrors
     }
