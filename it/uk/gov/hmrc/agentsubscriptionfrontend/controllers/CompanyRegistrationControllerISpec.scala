@@ -52,11 +52,12 @@ class CompanyRegistrationControllerISpec extends BaseISpec with SessionDataMissi
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.VatDetailsController.showRegisteredForVatForm().url)
 
-      sessionStoreService.currentSession.agentSession shouldBe Some(agentSessionForLimitedCompany.copy(companyRegistrationNumber = Some(crn)))
+      sessionStoreService.currentSession.agentSession shouldBe Some(agentSessionForLimitedCompany.copy(companyRegistrationNumber = Some(crn), nino = None, ctUtrCheckResult = Some(true)))
     }
 
 
-    "redirect to /no-match page when supplied utr does not matches with DES utr (retrieved using crn)" in new TestSetupNoJourneyRecord{
+    "redirect to /no-match page when supplied utr does not matches with DES utr (retrieved using crn)" +
+      "when businessType is NOT LLP" in new TestSetupNoJourneyRecord{
       val crn = CompanyRegistrationNumber("12345678")
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
@@ -72,6 +73,26 @@ class CompanyRegistrationControllerISpec extends BaseISpec with SessionDataMissi
       redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showNoMatchFound().url)
 
       sessionStoreService.currentSession.agentSession shouldBe Some(agentSessionForLimitedCompany.copy(companyRegistrationNumber = None))
+    }
+
+    "redirect to /national-insurance-number page when supplied utr does not matches with DES utr (retrieved using crn) and" +
+      "businessType is Llp" in new TestSetupNoJourneyRecord{
+      val crn = CompanyRegistrationNumber("12345678")
+
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+        .withFormUrlEncodedBody("crn" -> "12345678")
+
+      AgentSubscriptionStub.withNonMatchingCtUtrAndCrn(agentSessionForLimitedPartnership.utr.get, crn)
+
+      sessionStoreService.currentSession.agentSession = Some(agentSessionForLimitedPartnership)
+
+      val result = await(controller.submitCompanyRegNumberForm()(request))
+
+      status(result) shouldBe 303
+      redirectLocation(result) shouldBe Some(routes.NationalInsuranceController.showNationalInsuranceNumberForm().url)
+
+      sessionStoreService.currentSession.agentSession shouldBe Some(agentSessionForLimitedPartnership
+        .copy(companyRegistrationNumber = Some(CompanyRegistrationNumber("12345678")), ctUtrCheckResult = Some(false)))
     }
 
     "redirect to /unique-taxpayer-reference page utr is not available in agent session" in new TestSetupNoJourneyRecord{

@@ -23,6 +23,7 @@ import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
 import play.api.Logger
 import play.api.libs.json.{JsValue, Json}
+import play.utils.UriEncoding
 import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr, Vrn}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
@@ -146,6 +147,23 @@ class AgentSubscriptionConnector @Inject()(
           case f: NotFoundException =>
             DesignatoryDetails()
         }
+    }
+
+  def officerListContainsNameToMatch(crn: CompanyRegistrationNumber, name: String)(
+    implicit hc: HeaderCarrier): Future[Boolean] =
+    monitor(s"ConsumedAPI-Agent-Subscription-getCompanyOfficers-GET") {
+      val encodedCrn = UriEncoding.encodePathSegment(crn.value, "UTF-8")
+      val nameLowerCase = name.toLowerCase
+      val url =
+        s"${appConfig.agentSubscriptionBaseUrl}/agent-subscription/companies-house-api-proxy/company/$encodedCrn/officers/$nameLowerCase"
+      http
+        .GET[HttpResponse](url)
+        .map(_.status == 200)
+    }.recover {
+      case e: NotFoundException => {
+        Logger.warn(s" ${e.message}")
+        false
+      }
     }
 
   private val subscriptionUrl = s"${appConfig.agentSubscriptionBaseUrl}/agent-subscription/subscription"

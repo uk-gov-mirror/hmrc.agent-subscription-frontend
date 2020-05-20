@@ -31,7 +31,7 @@ import uk.gov.hmrc.agentmtdidentifiers.model.Vrn
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.{Agent, AuthActions}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.VatDetailsController.{formWithRefinedErrors, registeredForVatForm, vatDetailsForm}
-import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.{Partnership, SoleTrader}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.{LimitedCompany, Llp, Partnership, SoleTrader}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService, SubscriptionService}
@@ -67,9 +67,12 @@ class VatDetailsController @Inject()(
             (agentSession.businessType, agentSession.registeredForVat) match {
               case (Some(businessType), Some(registeredForVat)) =>
                 val rfv = RegisteredForVat(RadioInputAnswer.apply(registeredForVat.toString))
-                Ok(registeredForVatTemplate(registeredForVatForm.fill(rfv), getBackLink(agent, businessType)))
+                Ok(
+                  registeredForVatTemplate(
+                    registeredForVatForm.fill(rfv),
+                    getBackLink(agent, businessType)(agentSession)))
               case (Some(businessType), None) =>
-                Ok(registeredForVatTemplate(registeredForVatForm, getBackLink(agent, businessType)))
+                Ok(registeredForVatTemplate(registeredForVatForm, getBackLink(agent, businessType)(agentSession)))
 
               case _ => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
             }
@@ -96,7 +99,20 @@ class VatDetailsController @Inject()(
               case None    => Redirect(routes.DateOfBirthController.showDateOfBirthForm())
             }
         }
-      case _ => result
+      case Some(Llp) => AAChecksForLlp(existingSession)(result)
+      case _         => result
+    }
+
+  private def AAChecksForLlp(existingSession: AgentSession)(result: Result): Result =
+    existingSession.ctUtrCheckResult match {
+      case Some(true) => result
+      case Some(false) =>
+        (existingSession.nino, existingSession.dateOfBirth) match {
+          case (Some(_), Some(_)) => result
+          case (None, _)          => Redirect(routes.NationalInsuranceController.showNationalInsuranceNumberForm())
+          case (_, None)          => Redirect(routes.DateOfBirthController.showDateOfBirthForm())
+        }
+      case None => Redirect(routes.CompanyRegistrationController.showCompanyRegNumberForm())
     }
 
   def submitRegisteredForVatForm: Action[AnyContent] = Action.async { implicit request =>
@@ -105,7 +121,8 @@ class VatDetailsController @Inject()(
         registeredForVatForm
           .bindFromRequest()
           .fold(
-            formWithErrors => Ok(registeredForVatTemplate(formWithErrors, getBackLink(agent, businessType))),
+            formWithErrors =>
+              Ok(registeredForVatTemplate(formWithErrors, getBackLink(agent, businessType)(existingSession))),
             choice => {
               val nextPage = if (choice.confirm == Yes) {
                 routes.VatDetailsController.showVatDetailsForm()
@@ -153,15 +170,22 @@ class VatDetailsController @Inject()(
     }
   }
 
-  private def getBackLink(agent: Agent, businessType: BusinessType) =
-    if (businessType == SoleTrader || businessType == Partnership) {
-      agent.authNino match {
-        case Some(_) => routes.DateOfBirthController.showDateOfBirthForm().url
-        case None    => routes.PostcodeController.showPostcodeForm().url
+  private def getBackLink(agent: Agent, businessType: BusinessType)(agentSession: AgentSession) =
+    businessType match {
+      case SoleTrader | Partnership => {
+        agent.authNino match {
+          case Some(_) => routes.DateOfBirthController.showDateOfBirthForm().url
+          case None    => routes.PostcodeController.showPostcodeForm().url
+        }
       }
-    } else {
-      routes.CompanyRegistrationController.showCompanyRegNumberForm().url
+      case Llp => {
+        if (agentSession.dateOfBirth.isDefined) routes.DateOfBirthController.showDateOfBirthForm().url
+        else routes.CompanyRegistrationController.showCompanyRegNumberForm().url
+
+      }
+      case LimitedCompany => routes.CompanyRegistrationController.showCompanyRegNumberForm().url
     }
+
 }
 
 object VatDetailsController {

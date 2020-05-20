@@ -27,6 +27,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.auth.{Agent, AuthActions}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentAssuranceConnector
 import uk.gov.hmrc.agentsubscriptionfrontend.models
+import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.Llp
 import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidationResult.FailureReason._
 import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidationResult.{Failure, Pass}
@@ -172,17 +173,20 @@ class BusinessIdentificationController @Inject()(
         Redirect(routes.BusinessIdentificationController.showBusinessEmailForm())
       case _ =>
 
-        def createRecordAndRedirectToTasklist(): Future[Result] = subscriptionJourneyService
-          .createJourneyRecord(existingSession, agent) map {
-          case Right(()) => Redirect(routes.TaskListController.showTaskList())
-          case Left(msg) => Logger.warn(msg); Conflict
-        }
-
           subscriptionService.handlePartiallySubscribedAndRedirect(
             agent,
             existingSession)(
-            whenNotPartiallySubscribed = createRecordAndRedirectToTasklist())
+            whenNotPartiallySubscribed = createRecordAndRedirectToTasklist(existingSession, agent))
+
     }
+
+  private def createRecordAndRedirectToTasklist(existingSession: AgentSession, agent: Agent)
+                                               (implicit hc: HeaderCarrier): Future[Result] =
+    subscriptionJourneyService
+    .createJourneyRecord(existingSession, agent) map {
+    case Right(()) => Redirect(routes.TaskListController.showTaskList())
+    case Left(msg) => Logger.warn(msg); Conflict
+  }
 
   def showBusinessEmailForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>

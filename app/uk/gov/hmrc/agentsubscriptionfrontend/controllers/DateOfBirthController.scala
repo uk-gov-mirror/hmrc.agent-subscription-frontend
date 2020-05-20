@@ -24,19 +24,21 @@ import play.api.{Configuration, Environment}
 import play.api.data.Forms.{mapping, text, tuple}
 import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
 import play.api.data.{Form, FormError, Mapping}
-import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
-import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
+import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Result}
+import uk.gov.hmrc.agentsubscriptionfrontend.auth.{Agent, AuthActions}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.DateOfBirthController._
-import uk.gov.hmrc.agentsubscriptionfrontend.models.DateOfBirth
+import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.{Llp, Partnership, SoleTrader}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, BusinessType, DateOfBirth}
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{AssuranceService, SessionStoreService, SubscriptionJourneyService, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.validators.CommonValidators.checkOneAtATime
-import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{date_of_birth}
+import uk.gov.hmrc.agentsubscriptionfrontend.views.html.date_of_birth
 import uk.gov.hmrc.auth.core.AuthConnector
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
 @Singleton
@@ -61,20 +63,12 @@ class DateOfBirthController @Inject()(
   def showDateOfBirthForm(): Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { agent =>
       withValidSession { (_, existingSession) =>
-        (agent.authNino, existingSession.nino, existingSession.dateOfBirthFromCid) match {
-
-          case (None, _, _) => Redirect(routes.VatDetailsController.showRegisteredForVatForm())
-
-          case (Some(_), None, _) => Redirect(routes.NationalInsuranceController.showNationalInsuranceNumberForm())
-
-          case (Some(_), Some(_), None) => Redirect(routes.VatDetailsController.showRegisteredForVatForm())
-
-          case (_, _, Some(_)) =>
-            existingSession.dateOfBirth match {
-              case Some(dob) =>
-                Ok(dateOfBirthTemplate(dateOfBirthForm.fill(dob)))
-              case None => Ok(dateOfBirthTemplate(dateOfBirthForm))
-            }
+        checkSessionStateAndBusinessType(existingSession, agent) { businessType =>
+          if (businessType == Llp)
+            existingSession.lastNameFromCid match {
+              case Some(_) => Ok(dateOfBirthTemplate(getForm(existingSession.dateOfBirth)))
+              case None    => Redirect(routes.BusinessIdentificationController.showNoMatchFound())
+            } else Ok(dateOfBirthTemplate(getForm(existingSession.dateOfBirth)))
         }
       }
     }
@@ -92,8 +86,10 @@ class DateOfBirthController @Inject()(
                 existingSession.nino match {
                   case Some(_) =>
                     if (existingSession.dateOfBirthFromCid.contains(validDob)) {
-                      updateSessionAndRedirect(existingSession.copy(dateOfBirth = Some(validDob)))(
-                        routes.VatDetailsController.showRegisteredForVatForm())
+                      companiesHouseCheckForLlp(existingSession) {
+                        updateSessionAndRedirect(existingSession.copy(dateOfBirth = Some(validDob)))(
+                          routes.VatDetailsController.showRegisteredForVatForm())
+                      }
                     } else {
                       Redirect(routes.BusinessIdentificationController.showNoMatchFound())
                     }
@@ -105,6 +101,50 @@ class DateOfBirthController @Inject()(
         )
     }
   }
+
+  private def companiesHouseCheckForLlp(agentSession: AgentSession)(f: => Future[Result])(
+    implicit hc: HeaderCarrier): Future[Result] =
+    agentSession.businessType match {
+      case Some(bt) =>
+        if (bt == Llp) {
+          (agentSession.companyRegistrationNumber, agentSession.lastNameFromCid) match {
+            case (Some(crn), Some(name)) =>
+              subscriptionService
+                .companiesHouseNameCheck(crn, name)
+                .flatMap(
+                  checkResult =>
+                    if (checkResult) f
+                    else Redirect(routes.BusinessIdentificationController.showNoMatchFound()))
+
+            case (None, Some(_)) => Redirect(routes.CompanyRegistrationController.showCompanyRegNumberForm())
+            case _               => Redirect(routes.NationalInsuranceController.showNationalInsuranceNumberForm())
+          }
+        } else f
+      case None => Future successful Redirect(routes.BusinessTypeController.showBusinessTypeForm())
+    }
+
+  private def getForm(dateOfBirth: Option[DateOfBirth]): Form[DateOfBirth] = dateOfBirth match {
+    case Some(dob) => dateOfBirthForm.fill(dob)
+    case None      => dateOfBirthForm
+  }
+
+  private def checkSessionStateAndBusinessType(agentSession: AgentSession, agent: Agent)(
+    result: (BusinessType => Future[Result]))(implicit hc: HeaderCarrier): Future[Result] =
+    agentSession.businessType match {
+      case b @ (Some(SoleTrader | Partnership | Llp)) => {
+        (agent.authNino, agentSession.nino, agentSession.dateOfBirthFromCid) match {
+          case (None, _, _) if (!b.contains(Llp)) => Redirect(routes.VatDetailsController.showRegisteredForVatForm())
+          case (_, Some(_), Some(_))              => result(b.get)
+          case (_, None, _)                       => Redirect(routes.NationalInsuranceController.showNationalInsuranceNumberForm())
+          case (_, _, None) =>
+            if (b.get != Llp) //check this handling
+              Redirect(routes.VatDetailsController.showRegisteredForVatForm())
+            else Redirect(routes.BusinessIdentificationController.showNoMatchFound())
+        }
+      }
+      case _ =>
+        updateSessionAndRedirect(AgentSession())(routes.BusinessTypeController.showBusinessTypeForm())
+    }
 }
 
 object DateOfBirthController {

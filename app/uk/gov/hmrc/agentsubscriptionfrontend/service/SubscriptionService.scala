@@ -206,4 +206,9 @@ class SubscriptionService @Inject()(
                else whenNotPartiallySubscribed
     } yield result
   }
+
+  def companiesHouseNameCheck(crn: CompanyRegistrationNumber, name: String)(
+    implicit hc: HeaderCarrier,
+    ec: ExecutionContext): Future[Boolean] =
+    agentSubscriptionConnector.officerListContainsNameToMatch(crn, name)
 }

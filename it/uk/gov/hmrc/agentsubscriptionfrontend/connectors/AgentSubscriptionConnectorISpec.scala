@@ -351,10 +351,11 @@ class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {
   "GET /citizen-details/nino/designatory-details" should {
     val nino = Nino("XX121212B")
     val dob = DateOfBirth(LocalDate.now)
+    val lastName = "Matchmaker"
 
     "return DesignatoryDetails if found for a given nino" in {
-      AgentSubscriptionStub.givenDesignatoryDetailsForNino(nino, dob)
-      await(connector.getDesignatoryDetails(nino)) shouldBe DesignatoryDetails(Some(Person(Some(dob))))
+      AgentSubscriptionStub.givenDesignatoryDetailsForNino(nino, Some(lastName), dob)
+      await(connector.getDesignatoryDetails(nino)) shouldBe DesignatoryDetails(Some(Person(Some(lastName), Some(dob))))
     }
 
     "handle the case when DesignatoryDetails are not found for a given nino" in {
