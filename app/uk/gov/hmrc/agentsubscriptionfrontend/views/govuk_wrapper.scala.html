@@ -149,7 +149,9 @@ uiMainContentHeader: uk.gov.hmrc.play.views.html.layouts.MainContentHeader,
 @uiServiceInfo(
     betaBanner = betaBanner,
     includeGridWrapper = false,
-    serviceInfoContent = Some(serviceInfoContent))
+    serviceInfoContent = Some(serviceInfoContent),
+    setLang = request.cookies
+            .get("PLAY_LANG").map(_.value).getOrElse("en"))
 }
 
 @mainContentHeader = {
