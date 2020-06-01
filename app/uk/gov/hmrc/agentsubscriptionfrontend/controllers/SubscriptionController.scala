@@ -260,19 +260,17 @@ class SubscriptionController @Inject()(
   private def agencyNameAndEmailClientCount(maybeSjr: Option[SubscriptionJourneyRecord])(implicit hc: HeaderCarrier): Future[(String, String, Int)] = {
     maybeSjr match {
       case Some(sjr) => {
-        val agencyName = sjr.contactTradingNameData
-          .getOrElse(throw new Exception("trading name data should be defined"))
-          .contactTradingName.getOrElse(sjr.businessDetails.registration
-          .getOrElse(throw new Exception("registration should be defined"))
-          .taxpayerName
-          .getOrElse(throw new Exception("taxpayer name should be defined")))
 
-        val agencyEmail = sjr.contactEmailData
-          .getOrElse(throw new Exception("contact email data should be defined"))
-          .contactEmail
-          .getOrElse(throw new Exception("contact email should be defined"))
+        val agencyName: String = sjr.contactTradingNameData.flatMap(_.contactTradingName).getOrElse(
+          sjr.businessDetails.registration.flatMap(_.taxpayerName).getOrElse(throw new Exception("taxpayer name should be defined"))
+        )
+
+        val agencyEmail: String = sjr.contactEmailData.flatMap(_.contactEmail).getOrElse(
+          sjr.businessDetails.registration.flatMap(_.emailAddress).getOrElse(throw new Exception("business email address should be defined"))
+        )
 
         val clientCount = sjr.userMappings.map(_.count).sum
+
         (agencyName, agencyEmail, clientCount)
       }
       case None => {
@@ -281,7 +279,7 @@ class SubscriptionController @Inject()(
             val reg = agentSession.registration.getOrElse(throw new Exception("agent session should have a registration "))
             val agencyName = reg.taxpayerName.getOrElse(throw new Exception("taxpayer name should be defined"))
             val agencyEmail = reg.emailAddress.getOrElse(throw new Exception("agency email should be defined"))
-            val clientCount = agentSession.clientCount.getOrElse(throw new Exception("agent session should have a client count"))
+            val clientCount = agentSession.clientCount.getOrElse(0)
             (agencyName, agencyEmail, clientCount)
           }
           case None => throw new RuntimeException("no agent session found")

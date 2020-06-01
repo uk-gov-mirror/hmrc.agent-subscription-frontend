@@ -42,6 +42,11 @@ trait TestSetupWithCompleteJourneyRecord {
   givenAgentIsNotManuallyAssured(utr.value)
 }
 
+trait TestSetupWithCouldBePartiallySubscribedRecord {
+  givenSubscriptionJourneyRecordExists(AuthProviderId("12345-credId"), couldBePartiallySubscribedJourneyRecord)
+  givenAgentIsNotManuallyAssured(utr.value)
+}
+
 trait TestSetupWithMinimalSubscriptionJourneyRecord {
   givenSubscriptionJourneyRecordExists(AuthProviderId("12345-credId"), minimalSubscriptionJourneyRecord(AuthProviderId("12345-credId")))
   givenAgentIsNotManuallyAssured(utr.value)
@@ -316,6 +321,28 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       bodyOf(result) should include(hasMessage("subscriptionComplete.copiedAcross", 40))
 
     }
+
+    "display the correct content when the user is partially-subscribed (has skipped task-list)" in new AuthRequest
+      with TestSetupWithCouldBePartiallySubscribedRecord {
+      val result = resultOf(request)
+
+      result should containMessages(
+        "subscriptionComplete.title",
+        "subscriptionComplete.h1",
+        "subscriptionComplete.accountName",
+        "subscriptionComplete.nextStepsMTD.header",
+        "subscriptionComplete.nextStepsMTD.p",
+        "subscriptionComplete.nextStepsTERS.header",
+        "subscriptionComplete.nextStepsTERS.p",
+        "subscriptionComplete.button.continueToASAccount"
+      )
+      bodyOf(result) should include(hasMessage("subscriptionComplete.p1", "AARN0000001"))
+      bodyOf(result) should include(hasMessage("subscriptionComplete.p2", "test@gmail.com"))
+      bodyOf(result) should include(hasMessage("subscriptionComplete.copiedAcross", 0))
+
+    }
+
+
     "continue button redirects to agent services account" in new AuthRequest with TestSetupWithCompleteJourneyRecord {
       val result = resultOf(request)
       result should containMessages(

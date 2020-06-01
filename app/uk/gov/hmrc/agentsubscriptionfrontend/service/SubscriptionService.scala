@@ -23,7 +23,7 @@ import javax.inject.{Inject, Singleton}
 import play.api.Logger
 import play.api.http.Status
 import play.api.i18n.Lang
-import play.api.mvc.Result
+import play.api.mvc.{Request, Result}
 import play.api.mvc.Results.{Conflict, Redirect}
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr, Vrn}
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent
@@ -138,9 +138,16 @@ class SubscriptionService @Inject()(
       //if user is partially subscribed when they come back with a new user ID can complete partial subscription with clean creds
       completePartialSubscriptionOrTaskList <- subscriptionStatus match {
                                                 case SubscriptionProcess(SubscribedButNotEnrolled, Some(_)) =>
-                                                  completePartialSubscriptionAndGoToComplete(
-                                                    record.businessDetails.utr,
-                                                    record.businessDetails.postcode)
+                                                  subscriptionJourneyService
+                                                    .saveJourneyRecord(
+                                                      record.copy(
+                                                        cleanCredsAuthProviderId = Some(agent.authProviderId)
+                                                      ))
+                                                    .flatMap(
+                                                      _ =>
+                                                        completePartialSubscriptionAndGoToComplete(
+                                                          record.businessDetails.utr,
+                                                          record.businessDetails.postcode))
 
                                                 case _ =>
                                                   subscriptionJourneyService

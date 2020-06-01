@@ -63,6 +63,30 @@ object TestData {
       authProviderId,
       businessDetails = BusinessDetails(SoleTrader, validUtr, Postcode(validPostcode)))
 
+  val couldBePartiallySubscribedJourneyRecord =
+    SubscriptionJourneyRecord(
+      id,
+      businessDetails = BusinessDetails(LimitedCompany, validUtr, Postcode(validPostcode),
+        registration = Some(Registration(
+          Some(registrationName),
+          isSubscribedToAgentServices = false,
+          isSubscribedToETMP = true,
+          businessAddress,
+          Some("test@gmail.com"))),
+        nino = None,
+        companyRegistrationNumber = Some(CompanyRegistrationNumber("01234567")),
+        dateOfBirth = None,
+        registeredForVat = Some(false),
+        vatDetails = None),
+      continueId = Some("/continue"),
+      amlsData = None,
+      userMappings = List.empty[UserMapping],
+      cleanCredsAuthProviderId = Some(id),
+      contactEmailData = None,
+      contactTradingAddressData = None,
+      contactTradingNameData = None
+    )
+
   def minimalSubscriptionJourneyRecordWithAmls(authProviderId: AuthProviderId) =
     SubscriptionJourneyRecord(
       authProviderId,
