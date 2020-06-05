@@ -153,7 +153,7 @@ class AgentSubscriptionConnector @Inject()(
     implicit hc: HeaderCarrier): Future[Boolean] =
     monitor(s"ConsumedAPI-Agent-Subscription-getCompanyOfficers-GET") {
       val encodedCrn = UriEncoding.encodePathSegment(crn.value, "UTF-8")
-      val nameLowerCase = name.toLowerCase
+      val nameLowerCase = UriEncoding.encodePathSegment(name.toLowerCase, "UTF-8")
       val url =
         s"${appConfig.agentSubscriptionBaseUrl}/agent-subscription/companies-house-api-proxy/company/$encodedCrn/officers/$nameLowerCase"
       http
