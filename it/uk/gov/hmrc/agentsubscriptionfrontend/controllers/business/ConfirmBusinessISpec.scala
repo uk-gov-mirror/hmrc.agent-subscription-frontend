@@ -1,6 +1,7 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers.business
 
-import play.api.mvc.AnyContentAsFormUrlEncoded
+import play.api.i18n.Lang
+import play.api.mvc.{AnyContentAsFormUrlEncoded, Cookie}
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{redirectLocation, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
@@ -171,10 +172,13 @@ class ConfirmBusinessISpec extends BaseISpec {
         givenAgentIsNotManuallyAssured(utr.value)
         withPartiallySubscribedAgent(utr, testPostcode)
         partialSubscriptionWillSucceed(
-          CompletePartialSubscriptionBody(utr = utr, knownFacts = SubscriptionRequestKnownFacts(testPostcode)))
+          CompletePartialSubscriptionBody(
+            utr = utr,
+            knownFacts = SubscriptionRequestKnownFacts(testPostcode),
+            langForEmail = Some(Lang("en"))))
 
         implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
-          .withFormUrlEncodedBody("confirmBusiness" -> "yes")
+          .withFormUrlEncodedBody("confirmBusiness" -> "yes").withCookies(Cookie("PLAY_LANG", "en"))
         sessionStoreService.currentSession.agentSession = Some(
           AgentSession(
             Some(BusinessType.SoleTrader),
@@ -192,10 +196,13 @@ class ConfirmBusinessISpec extends BaseISpec {
         givenAgentIsNotManuallyAssured(utr.value)
         withPartiallySubscribedAgent(utr, testPostcode) // this is a temporary case where terminated agents seem to only be partially terminated in ETMP
         partialSubscriptionWillFailAgentTerminated(
-          CompletePartialSubscriptionBody(utr = utr, knownFacts = SubscriptionRequestKnownFacts(testPostcode))
+          CompletePartialSubscriptionBody(
+            utr = utr,
+            knownFacts = SubscriptionRequestKnownFacts(testPostcode),
+            langForEmail = Some(Lang("en")))
         )
         implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
-          .withFormUrlEncodedBody("confirmBusiness" -> "yes")
+          .withFormUrlEncodedBody("confirmBusiness" -> "yes").withCookies(Cookie("PLAY_LANG", "en"))
         sessionStoreService.currentSession.agentSession = Some(
           AgentSession(
             Some(BusinessType.SoleTrader),
@@ -220,7 +227,7 @@ class ConfirmBusinessISpec extends BaseISpec {
         givenSubscriptionRecordCreated(AuthProviderId("12345-credId"), sjr.copy(continueId = None))
 
         implicit val request: FakeRequest[AnyContentAsFormUrlEncoded] = authenticatedAs(subscribingAgentEnrolledForNonMTD)
-          .withFormUrlEncodedBody("confirmBusiness" -> "yes")
+          .withFormUrlEncodedBody("confirmBusiness" -> "yes").withCookies(Cookie("PLAY_LANG", "en"))
         sessionStoreService.currentSession.agentSession = Some(agentSession)
 
         val result = await(controller.submitConfirmBusinessForm(request))

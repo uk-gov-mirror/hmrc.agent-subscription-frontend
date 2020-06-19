@@ -1,5 +1,6 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
+import play.api.i18n.Lang
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers.{redirectLocation, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.{LimitedCompany, Llp, Partnership, SoleTrader}
@@ -113,7 +114,7 @@ class PostcodeControllerWithOutAssuranceFlagISpec extends BaseISpec with Session
         isSubscribedToAgentServices = false,
         isSubscribedToETMP = true)
       partialSubscriptionWillSucceed(
-        CompletePartialSubscriptionBody(validUtr, knownFacts = SubscriptionRequestKnownFacts(validPostcode)),
+        CompletePartialSubscriptionBody(validUtr, knownFacts = SubscriptionRequestKnownFacts(validPostcode), langForEmail = Some(Lang("en"))),
         arn = "TARN00023")
 
       implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments.copy(nino = Some("AE123456C")))

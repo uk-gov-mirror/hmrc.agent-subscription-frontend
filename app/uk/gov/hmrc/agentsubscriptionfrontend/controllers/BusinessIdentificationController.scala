@@ -163,7 +163,7 @@ class BusinessIdentificationController @Inject()(
   }
 
   private def validatedBusinessDetailsAndRedirect(existingSession: AgentSession, agent: Agent)(
-    implicit hc: HeaderCarrier): Future[Result] =
+    implicit request: Request[_], hc: HeaderCarrier): Future[Result] =
     businessDetailsValidator.validate(existingSession.registration) match {
       case Failure(responses) if responses.contains(InvalidBusinessName) =>
         Redirect(routes.BusinessIdentificationController.showBusinessNameForm())
@@ -350,7 +350,9 @@ class BusinessIdentificationController @Inject()(
     }
   }
 
-  private def updateSessionsAndRedirect(updatedSession: AgentSession, agent: Agent)(implicit hc: HeaderCarrier) = {
+  private def updateSessionsAndRedirect(
+                                         updatedSession: AgentSession,
+                                         agent: Agent)(implicit request: Request[_], hc: HeaderCarrier) = {
 
     val result = for {
       _               <- sessionStoreService.cacheAgentSession(updatedSession)

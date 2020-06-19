@@ -45,7 +45,10 @@ object SubscriptionRequest {
   implicit val format: Format[SubscriptionRequest] = Json.format[SubscriptionRequest]
 }
 
-case class CompletePartialSubscriptionBody(utr: Utr, knownFacts: SubscriptionRequestKnownFacts)
+case class CompletePartialSubscriptionBody(
+  utr: Utr,
+  knownFacts: SubscriptionRequestKnownFacts,
+  langForEmail: Option[Lang])
 
 object CompletePartialSubscriptionBody {
   implicit val format: Format[CompletePartialSubscriptionBody] = Json.format[CompletePartialSubscriptionBody]

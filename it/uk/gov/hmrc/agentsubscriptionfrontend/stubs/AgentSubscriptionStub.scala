@@ -330,7 +330,8 @@ object AgentSubscriptionStub {
                                       |  "utr": "${request.utr.value}",
                                       |  "knownFacts": {
                                       |    "postcode": "${request.knownFacts.postcode}"
-                                      |   }
+                                      |   },
+                                      |   "langForEmail": "en"
                                       |}""".stripMargin))
 
 }

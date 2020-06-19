@@ -393,5 +393,5 @@ class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {
     )
 
   private val partialSubscriptionRequest =
-    CompletePartialSubscriptionBody(utr = utr, knownFacts = SubscriptionRequestKnownFacts("AA1 2AA"))
+    CompletePartialSubscriptionBody(utr = utr, knownFacts = SubscriptionRequestKnownFacts("AA1 2AA"), langForEmail = Some(Lang("en")))
 }

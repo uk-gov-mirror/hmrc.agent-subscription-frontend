@@ -105,21 +105,24 @@ class SubscriptionService @Inject()(
     }
   }
 
-  def completePartialSubscription(utr: Utr, businessPostCode: Postcode)(
-    implicit hc: HeaderCarrier,
-    ec: ExecutionContext): Future[Arn] =
+  def completePartialSubscription(
+    utr: Utr,
+    businessPostCode: Postcode)(implicit request: Request[_], hc: HeaderCarrier, ec: ExecutionContext): Future[Arn] =
     agentSubscriptionConnector
       .completePartialSubscription(
-        CompletePartialSubscriptionBody(utr, SubscriptionRequestKnownFacts(businessPostCode.value)))
+        CompletePartialSubscriptionBody(
+          utr,
+          SubscriptionRequestKnownFacts(businessPostCode.value),
+          extractLangPreferenceFromCookie))
       .recover {
         case e: Upstream4xxResponse if Seq(Status.FORBIDDEN, Status.CONFLICT) contains e.upstreamResponseCode =>
           Logger.warn(s"Eligibility checks failed for partialSubscriptionFix, with status: ${e.upstreamResponseCode}")
           throw e
       }
 
-  def completePartialSubscriptionAndGoToComplete(utr: Utr, businessPostCode: Postcode)(
-    implicit hc: HeaderCarrier,
-    ec: ExecutionContext): Future[Result] =
+  def completePartialSubscriptionAndGoToComplete(
+    utr: Utr,
+    businessPostCode: Postcode)(implicit request: Request[_], hc: HeaderCarrier, ec: ExecutionContext): Future[Result] =
     completePartialSubscription(utr, businessPostCode).map { _ =>
       mark("Count-Subscription-PartialSubscriptionCompleted")
       Redirect(routes.SubscriptionController.showSubscriptionComplete())
@@ -129,9 +132,9 @@ class SubscriptionService @Inject()(
         Redirect(routes.StartController.showCannotCreateAccount())
     }
 
-  def redirectAfterGGCredsCreatedBasedOnStatus(continueId: ContinueId, agent: Agent)(
-    implicit hc: HeaderCarrier,
-    ex: ExecutionContext): Future[Result] =
+  def redirectAfterGGCredsCreatedBasedOnStatus(
+    continueId: ContinueId,
+    agent: Agent)(implicit request: Request[_], hc: HeaderCarrier, ex: ExecutionContext): Future[Result] =
     for {
       record             <- subscriptionJourneyService.getMandatoryJourneyRecord(continueId)
       subscriptionStatus <- getSubscriptionStatus(record.businessDetails.utr, record.businessDetails.postcode)
@@ -194,7 +197,10 @@ class SubscriptionService @Inject()(
     agentSubscriptionConnector.matchVatKnownFacts(vrn, vatRegistrationDate)
 
   def handlePartiallySubscribedAndRedirect(agent: Agent, agentSession: AgentSession)(
-    whenNotPartiallySubscribed: => Future[Result])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Result] = {
+    whenNotPartiallySubscribed: => Future[Result])(
+    implicit request: Request[_],
+    hc: HeaderCarrier,
+    ec: ExecutionContext): Future[Result] = {
     val utr = agentSession.utr.getOrElse(Utr(""))
     val postcode = agentSession.postcode.getOrElse(Postcode(""))
     for {
@@ -218,4 +224,10 @@ class SubscriptionService @Inject()(
     implicit hc: HeaderCarrier,
     ec: ExecutionContext): Future[Boolean] =
     agentSubscriptionConnector.officerListContainsNameToMatch(crn, name)
+
+  private def extractLangPreferenceFromCookie(implicit request: Request[_]): Option[Lang] =
+    request.cookies
+      .get("PLAY_LANG")
+      .map(x => Lang(x.value))
+
 }

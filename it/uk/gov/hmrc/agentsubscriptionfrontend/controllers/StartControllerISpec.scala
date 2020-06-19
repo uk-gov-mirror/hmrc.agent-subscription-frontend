@@ -3,15 +3,16 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 import java.time.LocalDate
 
 import play.api.http.HeaderNames
+import play.api.i18n.Lang
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.mvc.AnyContentAsEmpty
+import play.api.mvc.{AnyContentAsEmpty, Cookie}
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{contentType, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{AmlsDetails, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionJourneyStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub.{partialSubscriptionWillSucceed, withMatchingUtrAndPostcode}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.{AgentSubscriptionJourneyStub, AgentSubscriptionStub, AuthStub}
-import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.{individual, subscribingAgentEnrolledForNonMTD,  subscribingCleanAgentWithoutEnrolments}
+import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.{individual, subscribingAgentEnrolledForNonMTD, subscribingCleanAgentWithoutEnrolments}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestData}
 
@@ -181,10 +182,15 @@ class StartControllerISpec extends BaseISpec {
       }
     }
 
-    "complete partial subscription and resirect to complete when the user comes back as partially subscribed" in new SetupUnsubscribed {
+    "complete partial subscription and redirect to complete when the user comes back as partially subscribed" in new SetupUnsubscribed {
       withMatchingUtrAndPostcode(validUtr, validPostcode, isSubscribedToAgentServices = false, isSubscribedToETMP = true)
-      partialSubscriptionWillSucceed(CompletePartialSubscriptionBody(validUtr, knownFacts = SubscriptionRequestKnownFacts(validPostcode)), arn = "TARN00023")
-      implicit val request = FakeRequest()
+      partialSubscriptionWillSucceed(
+        CompletePartialSubscriptionBody(
+          validUtr,
+          knownFacts = SubscriptionRequestKnownFacts(validPostcode),
+          langForEmail = Some(Lang("en"))),
+        arn = "TARN00023")
+      implicit val request = FakeRequest().withCookies(Cookie("PLAY_LANG", "en"))
 
       val result = await(controller.returnAfterGGCredsCreated(id = Some(continueId.value))(request))
 
