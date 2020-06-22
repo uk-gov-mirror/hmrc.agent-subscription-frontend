@@ -66,39 +66,35 @@ class DateOfBirthController @Inject()(
         checkSessionStateAndBusinessType(existingSession, agent) { businessType =>
           if (businessType == Llp)
             existingSession.lastNameFromCid match {
-              case Some(_) => Ok(dateOfBirthTemplate(getForm(existingSession.dateOfBirth)))
+              case Some(_) => Ok(dateOfBirthTemplate(getForm(existingSession.dateOfBirth), businessType))
               case None    => Redirect(routes.BusinessIdentificationController.showNoMatchFound())
-            } else Ok(dateOfBirthTemplate(getForm(existingSession.dateOfBirth)))
+            } else Ok(dateOfBirthTemplate(getForm(existingSession.dateOfBirth), businessType))
         }
       }
     }
   }
 
   def submitDateOfBirthForm(): Action[AnyContent] = Action.async { implicit request =>
-    withSubscribingAgent { _ =>
-      dateOfBirthForm
-        .bindFromRequest()
-        .fold(
-          formWithErrors => Ok(dateOfBirthTemplate(formWithRefinedErrors(formWithErrors))),
-          validDob => {
-            sessionStoreService.fetchAgentSession.flatMap {
-              case Some(existingSession) =>
-                existingSession.nino match {
-                  case Some(_) =>
-                    if (existingSession.dateOfBirthFromCid.contains(validDob)) {
-                      companiesHouseCheckForLlp(existingSession) {
-                        updateSessionAndRedirect(existingSession.copy(dateOfBirth = Some(validDob)))(
-                          routes.VatDetailsController.showRegisteredForVatForm())
-                      }
-                    } else {
-                      Redirect(routes.BusinessIdentificationController.showNoMatchFound())
-                    }
-                  case None => Redirect(routes.NationalInsuranceController.showNationalInsuranceNumberForm())
+    withSubscribingAgent { agent =>
+      withValidSession { (_, existingSession) =>
+        checkSessionStateAndBusinessType(existingSession, agent) { businessType =>
+          dateOfBirthForm
+            .bindFromRequest()
+            .fold(
+              formWithErrors => Ok(dateOfBirthTemplate(formWithRefinedErrors(formWithErrors), businessType)),
+              validDob => {
+                if (existingSession.dateOfBirthFromCid.contains(validDob)) {
+                  companiesHouseCheckForLlp(existingSession) {
+                    updateSessionAndRedirect(existingSession.copy(dateOfBirth = Some(validDob)))(
+                      routes.VatDetailsController.showRegisteredForVatForm())
+                  }
+                } else {
+                  Redirect(routes.BusinessIdentificationController.showNoMatchFound())
                 }
-              case None => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
-            }
-          }
-        )
+              }
+            )
+        }
+      }
     }
   }
 

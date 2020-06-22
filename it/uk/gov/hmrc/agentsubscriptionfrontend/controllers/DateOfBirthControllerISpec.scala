@@ -79,7 +79,7 @@ class DateOfBirthControllerISpec extends BaseISpec with SessionDataMissingSpec {
 
   "POST /date-of-birth form" should {
     "read the dob as expected and save it to the session" in new TestSetupNoJourneyRecord{
-      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD.copy(nino = Some("AE123456C")))
         .withFormUrlEncodedBody("dob.day" -> "01", "dob.month" -> "01", "dob.year" -> "1950")
       val dob = DateOfBirth(LocalDate.of(1950, 1, 1))
       AgentSubscriptionStub.givenDesignatoryDetailsForNino(Nino("AE123456C"), Some("Matchmaker"), dob)
@@ -136,7 +136,7 @@ class DateOfBirthControllerISpec extends BaseISpec with SessionDataMissingSpec {
       sessionStoreService.currentSession.agentSession.flatMap(_.dateOfBirth) shouldBe None
     }
     "show /no-match-found page when dob from citizen details and user entered input do not match" in new TestSetupNoJourneyRecord{
-      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD.copy(nino = Some("AE123456C")))
         .withFormUrlEncodedBody("dob.day" -> "01", "dob.month" -> "01", "dob.year" -> "1950")
       val dob = DateOfBirth(LocalDate.of(1950, 1, 1))
       AgentSubscriptionStub.givenDesignatoryDetailsForNino(Nino("AE123456C"), Some("Matchmaker"), dob)
@@ -149,7 +149,7 @@ class DateOfBirthControllerISpec extends BaseISpec with SessionDataMissingSpec {
     }
 
     "Redirect to enter nino page when the nino is not found in the session" in new TestSetupNoJourneyRecord{
-      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD.copy(nino = Some("AE123456C")))
         .withFormUrlEncodedBody("dob.day" -> "01", "dob.month" -> "01", "dob.year" -> "1950")
 
       await(sessionStoreService.cacheAgentSession(AgentSession(Some(SoleTrader), nino = None)))
@@ -161,9 +161,10 @@ class DateOfBirthControllerISpec extends BaseISpec with SessionDataMissingSpec {
     }
 
     "handle forms with date-of-birth in future" in new TestSetupNoJourneyRecord{
-      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD.copy(nino = Some("AE123456C")))
         .withFormUrlEncodedBody("dob.day" -> "01", "dob.month" -> "01", "dob.year" -> "2030")
-      sessionStoreService.currentSession.agentSession = Some(agentSession)
+      val dobCid = DateOfBirth(LocalDate.of(1950, 1, 1))
+      sessionStoreService.currentSession.agentSession = Some(agentSession.copy(dateOfBirthFromCid = Some(dobCid)))
 
       val result = await(controller.submitDateOfBirthForm()(request))
 
@@ -172,9 +173,10 @@ class DateOfBirthControllerISpec extends BaseISpec with SessionDataMissingSpec {
     }
 
     "handle forms with date-of-birth earlier than 1900" in new TestSetupNoJourneyRecord{
-      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD.copy(nino = Some("AE123456C")))
         .withFormUrlEncodedBody("dob.day" -> "01", "dob.month" -> "01", "dob.year" -> "1899")
-      sessionStoreService.currentSession.agentSession = Some(agentSession)
+      val dobCid = DateOfBirth(LocalDate.of(1950, 1, 1))
+      sessionStoreService.currentSession.agentSession = Some(agentSession.copy(dateOfBirthFromCid = Some(dobCid)))
 
       val result = await(controller.submitDateOfBirthForm()(request))
 
@@ -183,9 +185,10 @@ class DateOfBirthControllerISpec extends BaseISpec with SessionDataMissingSpec {
     }
 
     "handle forms with date-of-birth fields as non-digits" in new TestSetupNoJourneyRecord{
-      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD.copy(nino = Some("AE123456C")))
         .withFormUrlEncodedBody("dob.day" -> "xx", "dob.month" -> "11", "dob.year" -> "2010")
-      sessionStoreService.currentSession.agentSession = Some(agentSession)
+      val dobCid = DateOfBirth(LocalDate.of(1950, 1, 1))
+      sessionStoreService.currentSession.agentSession = Some(agentSession.copy(dateOfBirthFromCid = Some(dobCid)))
 
       val result = await(controller.submitDateOfBirthForm()(request))
 
@@ -194,9 +197,10 @@ class DateOfBirthControllerISpec extends BaseISpec with SessionDataMissingSpec {
     }
 
     "display consolidated error when month and year are empty" in new TestSetupNoJourneyRecord{
-      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD.copy(nino = Some("AE123456C")))
         .withFormUrlEncodedBody("dob.day" -> "1")
-      sessionStoreService.currentSession.agentSession = Some(agentSession)
+      val dobCid = DateOfBirth(LocalDate.of(1950, 1, 1))
+      sessionStoreService.currentSession.agentSession = Some(agentSession.copy(dateOfBirthFromCid = Some(dobCid)))
 
       val result = await(controller.submitDateOfBirthForm()(request))
 
@@ -205,9 +209,10 @@ class DateOfBirthControllerISpec extends BaseISpec with SessionDataMissingSpec {
     }
 
     "display consolidated error when day and year are empty" in new TestSetupNoJourneyRecord{
-      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD.copy(nino = Some("AE123456C")))
         .withFormUrlEncodedBody("dob.month" -> "1")
-      sessionStoreService.currentSession.agentSession = Some(agentSession)
+      val dobCid = DateOfBirth(LocalDate.of(1950, 1, 1))
+      sessionStoreService.currentSession.agentSession = Some(agentSession.copy(dateOfBirthFromCid = Some(dobCid)))
 
       val result = await(controller.submitDateOfBirthForm()(request))
 
@@ -216,9 +221,10 @@ class DateOfBirthControllerISpec extends BaseISpec with SessionDataMissingSpec {
     }
 
     "display consolidated error when day and month are empty" in new TestSetupNoJourneyRecord{
-      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD.copy(nino = Some("AE123456C")))
         .withFormUrlEncodedBody("dob.year" -> "1980")
-      sessionStoreService.currentSession.agentSession = Some(agentSession)
+      val dobCid = DateOfBirth(LocalDate.of(1950, 1, 1))
+      sessionStoreService.currentSession.agentSession = Some(agentSession.copy(dateOfBirthFromCid = Some(dobCid)))
 
       val result = await(controller.submitDateOfBirthForm()(request))
 

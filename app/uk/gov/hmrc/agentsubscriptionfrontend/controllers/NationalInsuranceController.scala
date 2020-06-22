@@ -63,11 +63,12 @@ class NationalInsuranceController @Inject()(
       withValidSession { (_, existingSession) =>
         withValidBusinessType(existingSession) { businessType =>
           val backUrl = Some(backUrlForBusinessType(businessType))
-          if (businessType == Llp) Ok(nationalInsuranceNumberTemplate(getForm(existingSession.nino), backUrl))
+          if (businessType == Llp)
+            Ok(nationalInsuranceNumberTemplate(getForm(existingSession.nino), businessType, backUrl))
           else
             agent.authNino match {
               case Some(_) =>
-                Ok(nationalInsuranceNumberTemplate(getForm(existingSession.nino), backUrl))
+                Ok(nationalInsuranceNumberTemplate(getForm(existingSession.nino), businessType, backUrl))
               case None => Redirect(routes.VatDetailsController.showRegisteredForVatForm())
             }
         }
@@ -84,7 +85,8 @@ class NationalInsuranceController @Inject()(
             .fold(
               formWithErrors => {
                 val backUrl = Some(backUrlForBusinessType(businessType))
-                Ok(nationalInsuranceNumberTemplate(formWithErrors, backUrl))
+                val isLlp = businessType == Llp
+                Ok(nationalInsuranceNumberTemplate(formWithErrors, businessType, backUrl))
               },
               validNino => {
                 def ninosMatched = agent.authNino.flatMap(normalizeNino) == normalizeNino(validNino.value)

@@ -41,7 +41,7 @@ class NationalInsuranceControllerISpec extends BaseISpec with SessionDataMissing
 
       result should containMessages(
         "nino.title",
-        "nino.hint"
+        "nino.hint-llp"
       )
       result should containLink("button.back", routes.CompanyRegistrationController.showCompanyRegNumberForm().url)
     }
