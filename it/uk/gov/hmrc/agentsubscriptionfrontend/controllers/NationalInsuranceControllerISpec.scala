@@ -43,7 +43,7 @@ class NationalInsuranceControllerISpec extends BaseISpec with SessionDataMissing
         "nino.title",
         "nino.hint-llp"
       )
-      result should containLink("button.back", routes.CompanyRegistrationController.showCompanyRegNumberForm().url)
+      result should containLink("button.back", routes.CompanyRegistrationController.showLlpInterrupt().url)
     }
 
     "redirect to /registered-for-vat page when businessType is S.T. or Partnership and nino doesn't exist" in new TestSetupNoJourneyRecord {

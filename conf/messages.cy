@@ -238,6 +238,12 @@ businessType.progressive.content.p1=Dim ond os yw’ch busnes yn unig fasnachwr,
 businessType.progressive.content.link=Gorffen ac allgofnodi
 businessType.error.invalid-choice =Dewiswch a yw’ch math o fusnes yn gwmni cyfyngedig, yn unig fasnachwr, yn bartneriaeth neu’n bartneriaeth atebolrwydd cyfyngedig (PAC)
 
+#LLP Interrupt
+llp-interrupt.title=We need more information to check your identity
+llp-interrupt.p1=You must be a registered member of the Limited Liability Partnership to proceed.
+llp-interrupt.p2=We need to ask you for some additional information to confirm this.
+llp-interrupt.link=<a href={0} target='_blank'>If you’re not sure if you’re a registered member or if your registration is up to date, check the Companies House website (opens in new tab).</a>
+
 #UTR details page
 utr.title=Beth yw Cyfeirnod Unigryw y Trethdalwr (UTR) eich cwmni?
 utr.header.sole_trader=Beth yw’ch Cyfeirnod Unigryw y Trethdalwr (UTR) ar gyfer Hunanasesiad?

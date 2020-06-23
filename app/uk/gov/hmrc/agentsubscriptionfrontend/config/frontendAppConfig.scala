@@ -59,6 +59,7 @@ trait AppConfig {
   val languageToggle: Boolean
   val languageMap: Map[String, Lang]
   def routeToSwitchLanguage: String => Call
+  val companiesHouseUrl: String
 }
 
 @Singleton
@@ -134,5 +135,7 @@ class FrontendAppConfig @Inject()(servicesConfig: ServicesConfig) extends AppCon
 
   override def routeToSwitchLanguage =
     (lang: String) => routes.AgentSubscriptionLanguageController.switchToLanguage(lang)
+
+  override val companiesHouseUrl: String = getConf("companies-house.url")
 
 }

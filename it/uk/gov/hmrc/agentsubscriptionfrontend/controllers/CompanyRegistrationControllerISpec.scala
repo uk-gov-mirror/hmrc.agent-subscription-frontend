@@ -1,7 +1,7 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import play.api.test.Helpers.{redirectLocation, _}
-import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.SoleTrader
+import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.{Llp, SoleTrader}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, CompanyRegistrationNumber}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.subscribingAgentEnrolledForNonMTD
@@ -75,7 +75,7 @@ class CompanyRegistrationControllerISpec extends BaseISpec with SessionDataMissi
       sessionStoreService.currentSession.agentSession shouldBe Some(agentSessionForLimitedCompany.copy(companyRegistrationNumber = None))
     }
 
-    "redirect to /national-insurance-number page when supplied utr does not matches with DES utr (retrieved using crn) and" +
+    "redirect to /interrupt page when supplied utr does not matches with DES utr (retrieved using crn) and" +
       "businessType is Llp" in new TestSetupNoJourneyRecord{
       val crn = CompanyRegistrationNumber("12345678")
 
@@ -89,7 +89,7 @@ class CompanyRegistrationControllerISpec extends BaseISpec with SessionDataMissi
       val result = await(controller.submitCompanyRegNumberForm()(request))
 
       status(result) shouldBe 303
-      redirectLocation(result) shouldBe Some(routes.NationalInsuranceController.showNationalInsuranceNumberForm().url)
+      redirectLocation(result) shouldBe Some(routes.CompanyRegistrationController.showLlpInterrupt().url)
 
       sessionStoreService.currentSession.agentSession shouldBe Some(agentSessionForLimitedPartnership
         .copy(companyRegistrationNumber = Some(CompanyRegistrationNumber("12345678")), ctUtrCheckResult = Some(false)))
@@ -159,6 +159,33 @@ class CompanyRegistrationControllerISpec extends BaseISpec with SessionDataMissi
       status(result) shouldBe 200
 
       result should containMessages("error.crn.invalid")
+    }
+  }
+
+  "GET /interrupt" should {
+
+    "display the page with expected content" in new TestSetupNoJourneyRecord {
+
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+      await(sessionStoreService.cacheAgentSession(AgentSession(Some(Llp))))
+      val result = await(controller.showLlpInterrupt()(request))
+
+      result should containMessages("llp-interrupt.title", "llp-interrupt.p1", "llp-interrupt.p2")
+
+      result should containLink("button.back", routes.CompanyRegistrationController.showCompanyRegNumberForm().url)
+
+      result should containLink("button.continue", routes.NationalInsuranceController.showNationalInsuranceNumberForm().url)
+    }
+
+    "redirect to /business-type if businessType is not LLP" in new TestSetupNoJourneyRecord {
+
+      implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
+      await(sessionStoreService.cacheAgentSession(AgentSession(Some(SoleTrader))))
+      val result = await(controller.showLlpInterrupt()(request))
+
+      status(result) shouldBe 303
+
+      redirectLocation(result) shouldBe Some(routes.BusinessTypeController.showBusinessTypeForm().url)
     }
   }
 }

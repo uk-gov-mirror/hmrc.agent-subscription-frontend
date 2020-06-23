@@ -137,7 +137,7 @@ class NationalInsuranceController @Inject()(
 
   private def backUrlForBusinessType(businessType: BusinessType): String =
     businessType match {
-      case Llp => routes.CompanyRegistrationController.showCompanyRegNumberForm().url
+      case Llp => routes.CompanyRegistrationController.showLlpInterrupt().url
       case _   => routes.PostcodeController.showPostcodeForm().url
     }
 

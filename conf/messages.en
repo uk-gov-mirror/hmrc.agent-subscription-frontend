@@ -238,6 +238,12 @@ businessType.progressive.content.p1=You can only get an agent services account i
 businessType.progressive.content.link=Finish and sign out
 businessType.error.invalid-choice = Select if your business type is limited company, sole trader, partnership or limited liability partnership (LLP)
 
+#LLP Interrupt
+llp-interrupt.title=We need more information to check your identity
+llp-interrupt.p1=You must be a registered member of the Limited Liability Partnership to proceed.
+llp-interrupt.p2=We need to ask you for some additional information to confirm this.
+llp-interrupt.link=<a href={0} target='_blank'>If you’re not sure if you’re a registered member or if your registration is up to date, check the Companies House website (opens in new tab).</a>
+
 #UTR details page
 utr.title=What is the Unique Taxpayer Reference (UTR) of your company?
 utr.header.sole_trader=What is your Self Assessment Unique Taxpayer Reference (UTR)?

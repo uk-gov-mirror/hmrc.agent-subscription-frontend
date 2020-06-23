@@ -19,6 +19,8 @@ POST        /unique-taxpayer-reference                     uk.gov.hmrc.agentsubs
 GET         /postcode                                      uk.gov.hmrc.agentsubscriptionfrontend.controllers.PostcodeController.showPostcodeForm
 POST        /postcode                                      uk.gov.hmrc.agentsubscriptionfrontend.controllers.PostcodeController.submitPostcodeForm
 
+GET         /interrupt                                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.CompanyRegistrationController.showLlpInterrupt()
+
 GET         /national-insurance-number                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.NationalInsuranceController.showNationalInsuranceNumberForm
 POST        /national-insurance-number                     uk.gov.hmrc.agentsubscriptionfrontend.controllers.NationalInsuranceController.submitNationalInsuranceNumberForm
 

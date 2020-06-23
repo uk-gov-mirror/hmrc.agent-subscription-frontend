@@ -27,7 +27,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.models.AgentSession
 import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.Llp
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
-import uk.gov.hmrc.agentsubscriptionfrontend.views.html.company_registration
+import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{company_registration, llp_interrupt}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
@@ -44,7 +44,8 @@ class CompanyRegistrationController @Inject()(
   val metrics: Metrics,
   val subscriptionJourneyService: SubscriptionJourneyService,
   mcc: MessagesControllerComponents,
-  companyRegistrationTemplate: company_registration
+  companyRegistrationTemplate: company_registration,
+  llpInterruptTemplate: llp_interrupt
 )(implicit val appConfig: AppConfig, val ec: ExecutionContext)
     extends FrontendController(mcc) with SessionBehaviour with AuthActions {
 
@@ -87,7 +88,7 @@ class CompanyRegistrationController @Inject()(
                             if (bt == Llp)
                               updateSessionAndRedirect(existingSession
                                 .copy(companyRegistrationNumber = Some(validCrn), ctUtrCheckResult = Some(foundMatch)))(
-                                routes.NationalInsuranceController.showNationalInsuranceNumberForm())
+                                routes.CompanyRegistrationController.showLlpInterrupt())
                             else
                               Redirect(routes.BusinessIdentificationController.showNoMatchFound())
                           case None => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
@@ -97,6 +98,17 @@ class CompanyRegistrationController @Inject()(
                 case _ => Redirect(routes.UtrController.showUtrForm())
             }
           )
+      }
+    }
+  }
+
+  def showLlpInterrupt(): Action[AnyContent] = Action.async { implicit request =>
+    withSubscribingAgent { implicit agent =>
+      withValidSession { (businessType, agentSession) =>
+        if (businessType == Llp) Ok(llpInterruptTemplate())
+        else {
+          updateSessionAndRedirect(AgentSession())(routes.BusinessTypeController.showBusinessTypeForm())
+        }
       }
     }
   }
