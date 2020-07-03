@@ -61,7 +61,7 @@ class AddressLookupFrontendConnector @Inject()(http: HttpClient, metrics: Metric
     s"${appConfig.addressLookupFrontendBaseUrl}/api/confirmed?id=$id"
 
   private def initJourneyUrl(journeyName: String): String =
-    s"${appConfig.addressLookupFrontendBaseUrl}/api/init/$journeyName"
+    s"${appConfig.addressLookupFrontendBaseUrl}/api/v2/init/$journeyName"
 }
 
 class ALFLocationHeaderNotSetException extends NoStackTrace

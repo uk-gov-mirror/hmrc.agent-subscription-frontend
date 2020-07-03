@@ -24,7 +24,7 @@ object AddressLookupFrontendStubs {
 
   def givenAddressLookupInit(journeyId: String, callbackUrl: String): StubMapping =
     stubFor(
-      post(urlEqualTo(s"/api/init/$journeyId"))
+      post(urlEqualTo(s"/api/v2/init/$journeyId"))
         .willReturn(
           aResponse()
             .withStatus(202)
