@@ -18,6 +18,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
+import play.api.i18n.{I18nSupport, Lang, Langs, MessagesApi}
 import play.api.mvc.{Action, AnyContent, Call, MessagesControllerComponents}
 import play.api.{Configuration, Environment, Logger}
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
@@ -55,7 +56,6 @@ class ContactDetailsController @Inject()(
 )(implicit val appConfig: AppConfig, val ec: ExecutionContext)
     extends FrontendController(mcc) with SessionBehaviour with AuthActions {
 
-  private val JourneyName: String = appConfig.journeyName
   private val blacklistedPostCodes: Set[String] = appConfig.blacklistedPostcodes
 
   val desAddressForm = new DesAddressForm(Logger, blacklistedPostCodes)
@@ -358,8 +358,9 @@ class ContactDetailsController @Inject()(
   def showMainTradingAddress: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
       mark("Count-Subscription-AddressLookup-Start")
+      implicit val language: Lang = mcc.messagesApi.preferred(request).lang
       addressLookUpConnector
-        .initJourney(routes.ContactDetailsController.returnFromAddressLookup(), JourneyName)
+        .initJourney(routes.ContactDetailsController.returnFromAddressLookup())
         .map(Redirect(_))
     }
   }

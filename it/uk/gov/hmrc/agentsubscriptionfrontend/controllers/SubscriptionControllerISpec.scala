@@ -76,6 +76,9 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
   protected val utr = Utr("2000000000")
   protected val knownFactsPostcode = "AA1 2AA"
 
+  protected val returnFromAddressLookupUrl: String = "/agent-subscription/return-from-address-lookup"
+  protected val showBusinessAddressFormUrl: String = "/agent-subscription/business-address"
+
   protected lazy val controller: SubscriptionController = app.injector.instanceOf[SubscriptionController]
 
   protected lazy val redirectUrl = "https://www.gov.uk/"
@@ -371,13 +374,13 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         ))
         AgentSubscriptionStub.subscriptionWillSucceed(utr, subscriptionRequest())
 
-        givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
+        givenAddressLookupInit(returnFromAddressLookupUrl)
 
         implicit val request = subscriptionDetailsRequest()
 
         val result = await(controller.showBusinessAddressForm(request))
         status(result) shouldBe 303
-        redirectLocation(result).head shouldBe "/api/dummy/callback"
+        redirectLocation(result).head shouldBe returnFromAddressLookupUrl
 
         val addressId = "addr1"
         stubAddressLookupReturnedAddress(addressId, subscriptionRequest())
@@ -405,13 +408,13 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         ))
         AgentSubscriptionStub.subscriptionWillSucceed(utr, subscriptionRequest())
 
-        givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
+        givenAddressLookupInit(returnFromAddressLookupUrl)
 
         implicit val request = subscriptionDetailsRequest()
 
         val result = await(controller.showBusinessAddressForm(request))
         status(result) shouldBe 303
-        redirectLocation(result).head shouldBe "/api/dummy/callback"
+        redirectLocation(result).head shouldBe returnFromAddressLookupUrl
 
         val addressId = "addr1"
         stubAddressLookupReturnedAddress(addressId, subscriptionRequest(), Seq("Line 4", "Line 5"))
@@ -440,10 +443,10 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
         implicit val request = subscriptionDetailsRequest()
         AgentSubscriptionStub.subscriptionWillSucceed(utr, subscriptionRequest(town = None))
 
-        givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
+        givenAddressLookupInit(returnFromAddressLookupUrl)
         val result = await(controller.showBusinessAddressForm(request))
         status(result) shouldBe 303
-        redirectLocation(result).head shouldBe "/api/dummy/callback"
+        redirectLocation(result).head shouldBe returnFromAddressLookupUrl
 
         stubAddressLookupReturnedAddress("addr1", subscriptionRequest(town = None))
         val result2 =
@@ -470,13 +473,13 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
 
       AgentSubscriptionStub.subscriptionWillSucceed(utr, subscriptionRequest(countryCode = "GB"))
 
-      givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
+      givenAddressLookupInit(returnFromAddressLookupUrl)
 
       implicit val detailsRequest = subscriptionDetailsRequest()
 
       val result = await(controller.showBusinessAddressForm(detailsRequest))
       status(result) shouldBe 303
-      redirectLocation(result).head shouldBe "/api/dummy/callback"
+      redirectLocation(result).head shouldBe returnFromAddressLookupUrl
 
       val addressId = "addr1"
       stubAddressLookupReturnedAddress(addressId, subscriptionRequest(countryCode = "AR"))
@@ -506,13 +509,13 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       val request = subscriptionRequest()
       AgentSubscriptionStub.subscriptionWillSucceed(utr, request)
 
-      givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
+      givenAddressLookupInit(returnFromAddressLookupUrl)
 
       implicit val fakeRequest1 = subscriptionDetailsRequest()
 
       val user1Result1 = await(controller.showBusinessAddressForm(fakeRequest1))
       status(user1Result1) shouldBe 303
-      redirectLocation(user1Result1).head shouldBe "/api/dummy/callback"
+      redirectLocation(user1Result1).head shouldBe returnFromAddressLookupUrl
 
       val request2 = subscriptionRequest2()
       AgentSubscriptionStub.subscriptionWillSucceed(utr, request2, "ARN00002")
@@ -521,7 +524,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
 
       val user2Result1 = await(controller.showBusinessAddressForm(fakeRequest2))
       status(user2Result1) shouldBe 303
-      redirectLocation(user2Result1).head shouldBe "/api/dummy/callback"
+      redirectLocation(user2Result1).head shouldBe returnFromAddressLookupUrl
 
       stubAddressLookupReturnedAddress("addr1", request)
 
@@ -545,10 +548,10 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       "postcode is blacklisted" in new TestSetupWithCompleteJourneyRecord {
         implicit val request = subscriptionDetailsRequest()
 
-        givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
+        givenAddressLookupInit(returnFromAddressLookupUrl)
         val result0 = await(controller.showBusinessAddressForm(request))
         status(result0) shouldBe 303
-        redirectLocation(result0).head shouldBe "/api/dummy/callback"
+        redirectLocation(result0).head shouldBe returnFromAddressLookupUrl
 
         givenAddressLookupReturnsAddress("addr1", postcode = "AB10 1ZT")
         val result =
@@ -560,10 +563,10 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       "the address is not valid according to DES's rules" in new TestSetupWithCompleteJourneyRecord {
         implicit val request = subscriptionDetailsRequest()
 
-        givenAddressLookupInit("agents-subscr", "/api/dummy/callback")
+        givenAddressLookupInit(returnFromAddressLookupUrl)
         val result0 = await(controller.showBusinessAddressForm(request))
         status(result0) shouldBe 303
-        redirectLocation(result0).head shouldBe "/api/dummy/callback"
+        redirectLocation(result0).head shouldBe returnFromAddressLookupUrl
 
         val tooLongLine = "123456789012345678901234567890123456"
         givenAddressLookupReturnsAddress("addr1", addressLine1 = tooLongLine)

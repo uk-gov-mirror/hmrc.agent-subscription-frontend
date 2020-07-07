@@ -34,7 +34,6 @@ trait AppConfig {
   val betaFeedbackUnauthenticatedUrl: String
   val governmentGatewayUrl: String
   val blacklistedPostcodes: Set[String]
-  val journeyName: String
   val agentServicesAccountUrl: String
   val agentAssuranceBaseUrl: String
   val agentAssuranceRun: Boolean
@@ -84,8 +83,6 @@ class FrontendAppConfig @Inject()(servicesConfig: ServicesConfig) extends AppCon
   override val governmentGatewayUrl: String = getConf("government-gateway.url")
   override val blacklistedPostcodes: Set[String] =
     PostcodesLoader.load("/po_box_postcodes_abp_49.csv").map(x => x.toUpperCase.replace(" ", "")).toSet
-  override val journeyName: String =
-    getConf("microservice.services.address-lookup-frontend.journeyName")
   override val agentServicesAccountUrl: String = s"$servicesAccountUrl$servicesAccountPath"
   override lazy val agentAssuranceBaseUrl = servicesConfig.baseUrl("agent-assurance")
   override val agentAssuranceRun: Boolean = servicesConfig.getBoolean("features.agent-assurance-run")

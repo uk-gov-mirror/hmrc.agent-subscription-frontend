@@ -18,7 +18,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
-import play.api.i18n.Lang
+import play.api.i18n.{Lang, Langs}
 import play.api.{Configuration, Environment, Logger}
 import play.api.mvc.{AnyContent, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
@@ -60,7 +60,6 @@ class SubscriptionController @Inject()(
     extends FrontendController(mcc)
     with SessionBehaviour  with AuthActions {
 
-  private val JourneyName: String = appConfig.journeyName
   private val blacklistedPostCodes: Set[String] = appConfig.blacklistedPostcodes
 
   val desAddressForm = new DesAddressForm(Logger, blacklistedPostCodes)
@@ -162,8 +161,9 @@ class SubscriptionController @Inject()(
   def showBusinessAddressForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { agent =>
       mark("Count-Subscription-AddressLookup-Start")
+      implicit val language: Lang = mcc.messagesApi.preferred(request).lang
       addressLookUpConnector
-        .initJourney(routes.SubscriptionController.returnFromAddressLookup(), JourneyName)
+        .initJourney(routes.SubscriptionController.returnFromAddressLookup())
         .map(Redirect(_))
     }
   }

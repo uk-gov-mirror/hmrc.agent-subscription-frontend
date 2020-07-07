@@ -22,9 +22,50 @@ import play.api.http.HeaderNames
 
 object AddressLookupFrontendStubs {
 
-  def givenAddressLookupInit(journeyId: String, callbackUrl: String): StubMapping =
+  def givenAddressLookupInit(callbackUrl: String): StubMapping =
     stubFor(
-      post(urlEqualTo(s"/api/v2/init/$journeyId"))
+      post(urlEqualTo(s"/api/v2/init"))
+        .withRequestBody(equalToJson(
+          s"""
+             |{
+             |  "version": 2,
+             |  "options": {
+             |    "continueUrl": "http://localhost:9437$callbackUrl",
+             |    "includeHMRCBranding": true,
+             |     "signOutHref": "http://tax.service.gov.uk/agent-subscription/finish-sign-out",
+             |    "selectPageConfig": {
+             |      "proposedListLimit": 30,
+             |      "showSearchLinkAgain": true
+             |    },
+             |    "allowedCountryCodes": [
+             |    "GB"
+             |    ],
+             |    "confirmPageConfig": {
+             |      "showChangeLink": true,
+             |      "showSubHeadingAndInfo": true,
+             |      "showSearchAgainLink": false,
+             |      "showConfirmChangeText": true
+             |    },
+             |     "timeoutConfig": {
+             |      "timeoutAmount": 900,
+             |      "timeoutUrl": "http://tax.service.gov.uk/agent-subscription/timed-out"
+             |    }
+             |  },
+             |  "labels": {
+             |  "en": {
+             |    "appLevelLabels": {
+             |    "navTitle": "Create an agent services account"
+             |    }
+             |  },
+             |  "cy": {
+             |    "appLevelLabels": {
+             |    "navTitle": "Creu cyfrif gwasanaethau asiant"
+             |    }
+             |   }
+             | }
+             |}
+             |""".stripMargin)
+        )
         .willReturn(
           aResponse()
             .withStatus(202)

@@ -21,6 +21,7 @@ class ContactDetailsControllerISpec extends BaseISpec {
 
   val id = AuthProviderId("12345-credId")
 
+  val returnFromAddressLookupUrl: String = routes.ContactDetailsController.returnFromAddressLookup().url
 
   "showContactEmailCheck (GET /contact-email-check) " should {
     behave like anAgentAffinityGroupOnlyEndpoint(controller.showContactEmailCheck(_))
@@ -856,11 +857,11 @@ class ContactDetailsControllerISpec extends BaseISpec {
 
     "303 redirect to specified location if init journey at address-lookup-frontend was successful" in {
       givenSubscriptionJourneyRecordExists(id, TestData.minimalSubscriptionJourneyRecordWithAmls(id))
-      givenAddressLookupInit("agents-subscr", "/redirect-url")
+      givenAddressLookupInit( returnFromAddressLookupUrl)
       val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
       val result = await(controller.showMainTradingAddress(request))
       status(result) shouldBe 303
-      redirectLocation(result) shouldBe Some("/redirect-url")
+      redirectLocation(result) shouldBe Some(returnFromAddressLookupUrl)
     }
   }
 
