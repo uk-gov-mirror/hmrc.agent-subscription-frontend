@@ -55,11 +55,19 @@ object AddressLookupFrontendStubs {
              |  "en": {
              |    "appLevelLabels": {
              |    "navTitle": "Create an agent services account"
+             |    },
+             |    "lookupPageLabels": {
+             |      "title": "What is your business address?- Create an agent services account - GOV.UK",
+             |      "heading": "What is your business address?"
              |    }
              |  },
              |  "cy": {
              |    "appLevelLabels": {
              |    "navTitle": "Creu cyfrif gwasanaethau asiant"
+             |    },
+             |     "lookupPageLabels": {
+             |      "title": "What is your business address?- Create an agent services account - GOV.UK",
+             |      "heading": "What is your business address?"
              |    }
              |   }
              | }

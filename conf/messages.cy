@@ -591,3 +591,6 @@ accessibility.statement.howtested.p3=Paratowyd y dudalen hon ar 23 Medi 2019. Ca
 
 footer.links.accessibility.text=Hygyrchedd
 footer.links.accessibility.url=/agent-subscription/accessibility-statement
+
+address.lookup.title=What is your business address?- Create an agent services account - GOV.UK
+address.lookup.header=What is your business address?
