@@ -59,7 +59,11 @@ object AddressLookupFrontendStubs {
              |    "lookupPageLabels": {
              |      "title": "What is your business address?- Create an agent services account - GOV.UK",
              |      "heading": "What is your business address?"
-             |    }
+             |    },
+             |     "editPageLabels" : {
+             |      "title": "Change your address- Create an agent services account - GOV.UK",
+             |      "header": "Change your address"
+             |      }
              |  },
              |  "cy": {
              |    "appLevelLabels": {
@@ -68,7 +72,11 @@ object AddressLookupFrontendStubs {
              |     "lookupPageLabels": {
              |      "title": "What is your business address?- Create an agent services account - GOV.UK",
              |      "heading": "What is your business address?"
-             |    }
+             |    },
+             |     "editPageLabels" : {
+             |      "title": "Change your address- Create an agent services account - GOV.UK",
+             |      "header": "Change your address"
+             |      }
              |   }
              | }
              |}

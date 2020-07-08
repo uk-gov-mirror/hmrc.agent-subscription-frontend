@@ -594,3 +594,5 @@ footer.links.accessibility.url=/agent-subscription/accessibility-statement
 
 address.lookup.title=What is your business address?- Create an agent services account - GOV.UK
 address.lookup.header=What is your business address?
+address.lookup.editPageLabels.title=Change your address- Create an agent services account - GOV.UK
+address.lookup.editPageLabels.header=Change your address

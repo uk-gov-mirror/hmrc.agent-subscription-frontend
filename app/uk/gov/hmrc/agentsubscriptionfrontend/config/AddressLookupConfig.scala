@@ -59,7 +59,11 @@ class AddressLookupConfig @Inject()(appConfig: AppConfig, messagesApi: MessagesA
     "lookupPageLabels": {
       "title": "${messagesApi("address.lookup.title")}",
       "heading": "${messagesApi("address.lookup.header")}"
-    }
+    },
+    "editPageLabels" : {
+      "title": "${messagesApi("address.lookup.editPageLabels.title")}",
+      "header": "${messagesApi("address.lookup.editPageLabels.header")}"
+      }
   },
   "cy": {
     "appLevelLabels": {
@@ -68,7 +72,11 @@ class AddressLookupConfig @Inject()(appConfig: AppConfig, messagesApi: MessagesA
      "lookupPageLabels": {
       "title": "${messagesApi("address.lookup.title")(cy)}",
       "heading": "${messagesApi("address.lookup.header")(cy)}"
-    }
+    },
+     "editPageLabels" : {
+      "title": "${messagesApi("address.lookup.editPageLabels.title")(cy)}",
+      "header": "${messagesApi("address.lookup.editPageLabels.header")(cy)}"
+      }
    }
  }
 }"""
