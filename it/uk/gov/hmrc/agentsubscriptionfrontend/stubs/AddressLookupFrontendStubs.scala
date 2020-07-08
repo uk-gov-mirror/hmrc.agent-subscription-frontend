@@ -62,7 +62,7 @@ object AddressLookupFrontendStubs {
              |    },
              |     "editPageLabels" : {
              |      "title": "Change your address- Create an agent services account - GOV.UK",
-             |      "header": "Change your address"
+             |      "heading": "Change your address"
              |      }
              |  },
              |  "cy": {
@@ -75,7 +75,7 @@ object AddressLookupFrontendStubs {
              |    },
              |     "editPageLabels" : {
              |      "title": "Change your address- Create an agent services account - GOV.UK",
-             |      "header": "Change your address"
+             |      "heading": "Change your address"
              |      }
              |   }
              | }
