@@ -592,7 +592,7 @@ accessibility.statement.howtested.p3=Paratowyd y dudalen hon ar 23 Medi 2019. Ca
 footer.links.accessibility.text=Hygyrchedd
 footer.links.accessibility.url=/agent-subscription/accessibility-statement
 
-address.lookup.title=What is your business address?- Create an agent services account - GOV.UK
-address.lookup.header=What is your business address?
-address.lookup.editPageLabels.title=Change your address- Create an agent services account - GOV.UK
-address.lookup.editPageLabels.header=Change your address
+address.lookup.title=Beth yw cyfeiriad eich busnes?- Creu cyfrif gwasanaethau asiant - GOV.UK
+address.lookup.header=Beth yw cyfeiriad eich busnes?
+address.lookup.editPageLabels.title=Newid eich cyfeiriad- Creu cyfrif gwasanaethau asiant - GOV.UK
+address.lookup.editPageLabels.header=Newid eich cyfeiriad
