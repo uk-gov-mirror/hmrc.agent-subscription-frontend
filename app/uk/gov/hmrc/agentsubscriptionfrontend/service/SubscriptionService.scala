@@ -220,10 +220,10 @@ class SubscriptionService @Inject()(
     } yield result
   }
 
-  def companiesHouseNameCheck(crn: CompanyRegistrationNumber, name: String)(
+  def companiesHouseKnownFactCheck(crn: CompanyRegistrationNumber, name: String)(
     implicit hc: HeaderCarrier,
     ec: ExecutionContext): Future[Boolean] =
-    agentSubscriptionConnector.officerListContainsNameToMatch(crn, name)
+    agentSubscriptionConnector.companiesHouseKnownFactCheck(crn, name)
 
   private def extractLangPreferenceFromCookie(implicit request: Request[_]): Option[Lang] =
     request.cookies

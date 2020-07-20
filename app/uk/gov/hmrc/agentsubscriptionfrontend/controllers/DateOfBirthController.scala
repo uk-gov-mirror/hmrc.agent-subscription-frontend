@@ -84,7 +84,7 @@ class DateOfBirthController @Inject()(
               formWithErrors => Ok(dateOfBirthTemplate(formWithRefinedErrors(formWithErrors), businessType)),
               validDob => {
                 if (existingSession.dateOfBirthFromCid.contains(validDob)) {
-                  companiesHouseCheckForLlp(existingSession) {
+                  companiesHouseKnownFactCheck(existingSession) {
                     updateSessionAndRedirect(existingSession.copy(dateOfBirth = Some(validDob)))(
                       routes.VatDetailsController.showRegisteredForVatForm())
                   }
@@ -98,7 +98,7 @@ class DateOfBirthController @Inject()(
     }
   }
 
-  private def companiesHouseCheckForLlp(agentSession: AgentSession)(f: => Future[Result])(
+  private def companiesHouseKnownFactCheck(agentSession: AgentSession)(f: => Future[Result])(
     implicit hc: HeaderCarrier): Future[Result] =
     agentSession.businessType match {
       case Some(bt) =>
@@ -106,7 +106,7 @@ class DateOfBirthController @Inject()(
           (agentSession.companyRegistrationNumber, agentSession.lastNameFromCid) match {
             case (Some(crn), Some(name)) =>
               subscriptionService
-                .companiesHouseNameCheck(crn, name)
+                .companiesHouseKnownFactCheck(crn, name)
                 .flatMap(
                   checkResult =>
                     if (checkResult) f

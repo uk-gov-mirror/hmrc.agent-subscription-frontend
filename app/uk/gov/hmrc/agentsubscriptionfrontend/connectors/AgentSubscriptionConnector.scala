@@ -149,13 +149,13 @@ class AgentSubscriptionConnector @Inject()(
         }
     }
 
-  def officerListContainsNameToMatch(crn: CompanyRegistrationNumber, name: String)(
+  def companiesHouseKnownFactCheck(crn: CompanyRegistrationNumber, surname: String)(
     implicit hc: HeaderCarrier): Future[Boolean] =
     monitor(s"ConsumedAPI-Agent-Subscription-getCompanyOfficers-GET") {
       val encodedCrn = UriEncoding.encodePathSegment(crn.value, "UTF-8")
-      val nameLowerCase = UriEncoding.encodePathSegment(name.toLowerCase, "UTF-8")
+      val encodedName = UriEncoding.encodePathSegment(surname.toUpperCase, "UTF-8")
       val url =
-        s"${appConfig.agentSubscriptionBaseUrl}/agent-subscription/companies-house-api-proxy/company/$encodedCrn/officers/$nameLowerCase"
+        s"${appConfig.agentSubscriptionBaseUrl}/agent-subscription/companies-house-api-proxy/company/$encodedCrn/officers/$encodedName"
       http
         .GET[HttpResponse](url)
         .map(_.status == 200)

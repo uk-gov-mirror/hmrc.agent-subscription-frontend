@@ -98,14 +98,14 @@ class DateOfBirthControllerISpec extends BaseISpec with SessionDataMissingSpec {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("dob.day" -> "01", "dob.month" -> "01", "dob.year" -> "1950")
       val dob = DateOfBirth(LocalDate.of(1950, 1, 1))
-      AgentSubscriptionStub.givenDesignatoryDetailsForNino(Nino("AE123456C"), Some("Matchmaker"), dob)
-      AgentSubscriptionStub.givenCompaniesHouseNameCheckReturnsStatus(CompanyRegistrationNumber("01234567"), "matchmaker", 200)
+      AgentSubscriptionStub.givenDesignatoryDetailsForNino(Nino("AE123456C"), Some("Ferguson"), dob)
+      AgentSubscriptionStub.givenCompaniesHouseNameCheckReturnsStatus(CompanyRegistrationNumber("01234567"), "FERGUSON", 200)
       sessionStoreService.currentSession.agentSession = Some(agentSession
         .copy(businessType= Some(Llp),
           companyRegistrationNumber = Some(CompanyRegistrationNumber("01234567")),
           nino = Some(Nino("AE123456C")),
           dateOfBirthFromCid = Some(dob),
-          lastNameFromCid = Some("Matchmaker")))
+          lastNameFromCid = Some("Ferguson")))
 
       val result = await(controller.submitDateOfBirthForm()(request))
 
@@ -119,14 +119,14 @@ class DateOfBirthControllerISpec extends BaseISpec with SessionDataMissingSpec {
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("dob.day" -> "01", "dob.month" -> "01", "dob.year" -> "1950")
       val dob = DateOfBirth(LocalDate.of(1950, 1, 1))
-      AgentSubscriptionStub.givenDesignatoryDetailsForNino(Nino("AE123456C"), Some("Matchmaker"), dob)
-      AgentSubscriptionStub.givenCompaniesHouseNameCheckReturnsStatus(CompanyRegistrationNumber("01234567"), "Matchmaker", 404)
+      AgentSubscriptionStub.givenDesignatoryDetailsForNino(Nino("AE123456C"), Some("Ferguson"), dob)
+      AgentSubscriptionStub.givenCompaniesHouseNameCheckReturnsStatus(CompanyRegistrationNumber("01234567"), "FERGUSON", 404)
       sessionStoreService.currentSession.agentSession = Some(agentSession
         .copy(businessType= Some(Llp),
           companyRegistrationNumber = Some(CompanyRegistrationNumber("01234567")),
           nino = Some(Nino("AE123456C")),
           dateOfBirthFromCid = Some(dob),
-          lastNameFromCid = Some("Matchmaker")))
+          lastNameFromCid = Some("Ferguson")))
 
       val result = await(controller.submitDateOfBirthForm()(request))
 
