@@ -20,7 +20,7 @@ import uk.gov.hmrc.http.cache.client.SessionCache
 
 class FrontendModule extends AbstractModule {
 
-  def configure(): Unit = {
+  override def configure(): Unit = {
 
     bind(classOf[SessionStoreService])
 

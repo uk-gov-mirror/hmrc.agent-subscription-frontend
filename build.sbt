@@ -1,3 +1,4 @@
+import sbt.CrossVersion
 import uk.gov.hmrc.SbtAutoBuildPlugin
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin._
 
@@ -64,18 +65,18 @@ lazy val wartRemoverSettings = {
 
 lazy val compileDeps = Seq(
   ws,
-  "uk.gov.hmrc" %% "bootstrap-play-26" % "1.1.0",
-  "uk.gov.hmrc" %% "govuk-template" % "5.43.0-play-26",
-  "uk.gov.hmrc" %% "play-ui" % "8.7.0-play-26",
-  "uk.gov.hmrc" %% "auth-client" % "2.31.0-play-26",
-  "uk.gov.hmrc" %% "play-partials" % "6.9.0-play-26",
-  "uk.gov.hmrc" %% "agent-kenshoo-monitoring" % "4.3.0",
-  "uk.gov.hmrc" %% "agent-mtd-identifiers" % "0.17.0-play-26",
-  "uk.gov.hmrc" %% "simple-reactivemongo" % "7.22.0-play-26",
-  "uk.gov.hmrc" %% "http-caching-client" % "9.0.0-play-26",
-  "uk.gov.hmrc" %% "play-conditional-form-mapping" % "1.2.0-play-26",
+  "uk.gov.hmrc" %% "bootstrap-frontend-play-27" % "2.24.0",
+  "uk.gov.hmrc" %% "govuk-template" % "5.55.0-play-27",
+  "uk.gov.hmrc" %% "play-ui" % "8.11.0-play-27",
+  "uk.gov.hmrc" %% "auth-client" % "3.0.0-play-27",
+  "uk.gov.hmrc" %% "play-partials" % "6.11.0-play-27",
+  "uk.gov.hmrc" %% "agent-kenshoo-monitoring" % "4.4.0",
+  "uk.gov.hmrc" %% "agent-mtd-identifiers" % "0.19.0-play-27",
+  "uk.gov.hmrc" %% "simple-reactivemongo" % "7.30.0-play-27",
+  "uk.gov.hmrc" %% "http-caching-client" % "9.1.0-play-27",
+  "uk.gov.hmrc" %% "play-conditional-form-mapping" % "1.3.0-play-26",
   "org.typelevel" %% "cats" % "0.9.0",
-  "uk.gov.hmrc" %% "play-language" % "4.2.0-play-26"
+  "uk.gov.hmrc" %% "play-language" % "4.3.0-play-27"
 )
 
 def tmpMacWorkaround(): Seq[ModuleID] =
@@ -87,9 +88,9 @@ def testDeps(scope: String) = Seq(
   "uk.gov.hmrc" %% "hmrctest" % "3.9.0-play-26" % scope,
   "org.scalatest" %% "scalatest" % "3.0.8" % scope,
   "org.mockito" % "mockito-core" % "2.27.0" % scope,
-  "org.scalatestplus.play" %% "scalatestplus-play" % "3.1.2" % scope,
+  "org.scalatestplus.play" %% "scalatestplus-play" % "3.1.3" % scope,
   "com.github.tomakehurst" % "wiremock-jre8" % "2.23.2" % scope,
-  "uk.gov.hmrc" %% "reactivemongo-test" % "4.15.0-play-26" % scope,
+  "uk.gov.hmrc" %% "reactivemongo-test" % "4.21.0-play-27" % scope,
   "org.scalamock" %% "scalamock" % "4.4.0" % scope,
   "org.jsoup" % "jsoup" % "1.12.1" % scope
 )
@@ -98,9 +99,9 @@ lazy val root = Project("agent-subscription-frontend", file("."))
   .settings(
     name := "agent-subscription-frontend",
     organization := "uk.gov.hmrc",
-    scalaVersion := "2.11.11",
+    scalaVersion := "2.12.10",
     scalacOptions ++= Seq(
-      "-Xfatal-warnings",
+      //"-Xfatal-warnings",
       "-Xlint:-missing-interpolator,_",
       "-Yno-adapted-args",
       "-Ywarn-value-discard",
@@ -108,7 +109,8 @@ lazy val root = Project("agent-subscription-frontend", file("."))
       "-deprecation",
       "-feature",
       "-unchecked",
-      "-language:implicitConversions"),
+      "-language:implicitConversions",
+      "-P:silencer:pathFilters=Routes.scala"),
     PlayKeys.playDefaultPort := 9437,
     resolvers := Seq(
       Resolver.bintrayRepo("hmrc", "releases"),
@@ -117,6 +119,10 @@ lazy val root = Project("agent-subscription-frontend", file("."))
       Resolver.jcenterRepo
     ),
     libraryDependencies ++= tmpMacWorkaround ++ compileDeps ++ testDeps("test") ++ testDeps("it"),
+    libraryDependencies ++= Seq(
+      compilerPlugin("com.github.ghik" % "silencer-plugin" % "1.4.4" cross CrossVersion.full),
+      "com.github.ghik" % "silencer-lib" % "1.4.4" % Provided cross CrossVersion.full
+    ),
     publishingSettings,
     scoverageSettings,
     unmanagedResourceDirectories in Compile += baseDirectory.value / "resources",
