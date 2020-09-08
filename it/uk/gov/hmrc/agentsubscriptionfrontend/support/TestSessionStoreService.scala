@@ -36,9 +36,9 @@ class TestSessionStoreService extends SessionStoreService(null) {
 
   private val sessions = collection.mutable.Map[String, Session]()
 
-  private def sessionKey(implicit hc: HeaderCarrier): String = hc.userId match {
+  private def sessionKey(implicit hc: HeaderCarrier): String = hc.sessionId match {
     case None         => "default"
-    case Some(userId) => userId.toString
+    case Some(sessionId) => sessionId.toString
   }
 
   var currentSessionTest: SessionTest = NormalSession

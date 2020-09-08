@@ -18,8 +18,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.stubs
 
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
-import uk.gov.hmrc.agentsubscriptionfrontend.support.{SampleUser, SessionKeysForTesting}
-import uk.gov.hmrc.http.SessionKeys
+import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser
 
 object AuthStub {
   def authIsDown(): StubMapping =
@@ -111,6 +110,6 @@ object AuthStub {
 
 
   def sessionKeysForMockAuth(user: SampleUser): Seq[(String, String)] =
-    Seq(SessionKeys.userId -> user.userId, SessionKeysForTesting.token -> "fakeToken")
+    Seq.empty
 
 }
