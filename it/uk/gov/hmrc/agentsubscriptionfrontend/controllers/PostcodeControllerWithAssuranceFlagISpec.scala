@@ -37,21 +37,21 @@ class PostcodeControllerWithAssuranceFlagISpec extends BaseISpec with SessionDat
 
   "POST /postcode" when {
 
-    def stubs = {
+    def stubs(isMAA: Boolean = false) = {
       withMatchingUtrAndPostcode(validUtr, validPostcode)
       givenUserIsAnAgentWithAnAcceptableNumberOfClients("IR-PAYE")
       givenUserIsAnAgentWithAnAcceptableNumberOfClients("IR-SA")
       givenUserIsAnAgentWithAnAcceptableNumberOfClients("HMCE-VATDEC-ORG")
       givenUserIsAnAgentWithAnAcceptableNumberOfClients("IR-CT")
       givenRefusalToDealWithUtrIsNotForbidden(validUtr.value)
-      givenAgentIsNotManuallyAssured(validUtr.value)
+      if(isMAA) givenAgentIsManuallyAssured(validUtr.value) else givenAgentIsNotManuallyAssured(validUtr.value)
     }
 
     "businessType is SoleTrader or Partnership" should {
 
       "redirect to /national-insurance-number page if nino exists" in new TestSetupNoJourneyRecord {
         List(SoleTrader, Partnership).foreach { businessType =>
-          stubs
+          stubs()
           implicit val request =
             authenticatedAs(subscribingAgentEnrolledForNonMTD.copy(nino = Some("AE123456C"))).withFormUrlEncodedBody("postcode" -> validPostcode)
 
@@ -69,13 +69,14 @@ class PostcodeControllerWithAssuranceFlagISpec extends BaseISpec with SessionDat
                 businessType = Some(businessType),
                 postcode = Some(Postcode(validPostcode)),
                 nino = None,
-                registration = Some(testRegistration.copy(emailAddress = Some("someone@example.com")))))
+                registration = Some(testRegistration.copy(emailAddress = Some("someone@example.com"))),
+              isMAA = Some(false)))
         }
       }
 
       "redirect to /registered-for-vat page if nino doesn't exist" in new TestSetupNoJourneyRecord {
         List(SoleTrader, Partnership).foreach { businessType =>
-          stubs
+          stubs()
           implicit val request =
             authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("postcode" -> validPostcode)
 
@@ -93,20 +94,21 @@ class PostcodeControllerWithAssuranceFlagISpec extends BaseISpec with SessionDat
                 businessType = Some(businessType),
                 postcode = Some(Postcode(validPostcode)),
                 nino = None,
-                registration = Some(testRegistration.copy(emailAddress = Some("someone@example.com")))))
+                registration = Some(testRegistration.copy(emailAddress = Some("someone@example.com"))),
+              isMAA = Some(false)))
         }
       }
     }
 
-    "businessType is Limited Company or Llp" should {
+    "businessType is Limited Company" should {
 
       "redirect to /company-registration-number" in new TestSetupNoJourneyRecord {
-        List(LimitedCompany, Llp).foreach { businessType =>
-         stubs
+
+         stubs()
           implicit val request =
             authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("postcode" -> validPostcode)
           sessionStoreService.currentSession.agentSession =
-            Some(agentSession.copy(businessType = Some(businessType), postcode = None, nino = None))
+            Some(agentSession.copy(businessType = Some(LimitedCompany), postcode = None, nino = None))
 
           val result = await(controller.submitPostcodeForm()(request))
 
@@ -116,7 +118,45 @@ class PostcodeControllerWithAssuranceFlagISpec extends BaseISpec with SessionDat
 
           sessionStoreService.currentSession.agentSession.get.registration shouldBe Some(
             testRegistration.copy(emailAddress = Some("someone@example.com")))
-        }
+
+      }
+    }
+
+    "business type is Llp" should {
+      "redirect to /confirm-business when the agent is on the manually assured list" in new TestSetupNoJourneyRecord {
+        stubs(true)
+        implicit val request =
+          authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("postcode" -> validPostcode)
+        sessionStoreService.currentSession.agentSession =
+          Some(agentSession.copy(businessType = Some(Llp), postcode = None, nino = None))
+
+        val result = await(controller.submitPostcodeForm()(request))
+
+        status(result) shouldBe 303
+
+        redirectLocation(result) shouldBe Some(routes.BusinessIdentificationController.showConfirmBusinessForm().url)
+
+        sessionStoreService.currentSession.agentSession.get.registration shouldBe Some(
+          testRegistration.copy(emailAddress = Some("someone@example.com")))
+
+      }
+
+      "redirect to /company-registration-number when the agent is not on the manually assured list" in new TestSetupNoJourneyRecord {
+        stubs(false)
+        implicit val request =
+          authenticatedAs(subscribingAgentEnrolledForNonMTD).withFormUrlEncodedBody("postcode" -> validPostcode)
+        sessionStoreService.currentSession.agentSession =
+          Some(agentSession.copy(businessType = Some(Llp), postcode = None, nino = None))
+
+        val result = await(controller.submitPostcodeForm()(request))
+
+        status(result) shouldBe 303
+
+        redirectLocation(result) shouldBe Some(routes.CompanyRegistrationController.showCompanyRegNumberForm().url)
+
+        sessionStoreService.currentSession.agentSession.get.registration shouldBe Some(
+          testRegistration.copy(emailAddress = Some("someone@example.com")))
+
       }
     }
 

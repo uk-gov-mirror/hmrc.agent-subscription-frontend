@@ -106,6 +106,8 @@ class BusinessIdentificationController @Inject()(
     implicit request: Request[_]) = {
 
     val getBackLinkForConfirmBusiness =
+    if(existingSession.businessType.contains(Llp) && existingSession.isMAA.contains(true)) routes.PostcodeController.showPostcodeForm()
+    else
       existingSession.registeredForVat match {
         case Some("Yes") => routes.VatDetailsController.showVatDetailsForm()
         case _           => routes.VatDetailsController.showRegisteredForVatForm()

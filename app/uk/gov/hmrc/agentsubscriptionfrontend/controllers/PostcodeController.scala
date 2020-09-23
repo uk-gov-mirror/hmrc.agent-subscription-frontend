@@ -27,11 +27,11 @@ import uk.gov.hmrc.agentsubscriptionfrontend.auth.{Agent, AuthActions}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationForms.postcodeForm
 import uk.gov.hmrc.agentsubscriptionfrontend.models.AssuranceResults._
-import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.{Partnership, SoleTrader}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.{Llp, Partnership, SoleTrader}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.service._
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
-import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{postcode}
+import uk.gov.hmrc.agentsubscriptionfrontend.views.html.postcode
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
@@ -128,16 +128,20 @@ class PostcodeController @Inject()(
               .sendAgentAssuranceAuditEvent(utr, postcode, assuranceResults)
               .flatMap { _ =>
                 updateSessionAndRedirect(
-                  agentSession.copy(postcode = Some(postcode), registration = Some(registration)))(
-                  getNextPage(agentSession.businessType))
+                  agentSession.copy(
+                    postcode = Some(postcode),
+                    registration = Some(registration),
+                    isMAA = Some(assuranceResults.isManuallyAssured)))(
+                  getNextPage(agentSession.businessType, maybeAssured))
               }
           case None =>
             updateSessionAndRedirect(agentSession.copy(postcode = Some(postcode), registration = Some(registration)))(
-              getNextPage(agentSession.businessType))
+              getNextPage(agentSession.businessType, maybeAssured))
         }
     }
 
-  private def getNextPage(businessType: Option[BusinessType])(implicit agent: Agent) =
+  private def getNextPage(businessType: Option[BusinessType], assuranceResults: Option[AssuranceResults])(
+    implicit agent: Agent) =
     businessType match {
       case Some(bt) =>
         if (bt == SoleTrader || bt == Partnership) {
@@ -148,7 +152,13 @@ class PostcodeController @Inject()(
               routes.VatDetailsController.showRegisteredForVatForm()
           }
         } else {
-          routes.CompanyRegistrationController.showCompanyRegNumberForm()
+          assuranceResults.fold(routes.CompanyRegistrationController.showCompanyRegNumberForm()) { ar =>
+            if (ar.isManuallyAssured && bt == Llp) {
+              Logger(getClass).warn(s"Manually assured agent with business type LLP - skipping Companies House check")
+              routes.BusinessIdentificationController.showConfirmBusinessForm()
+            } else routes.CompanyRegistrationController.showCompanyRegNumberForm()
+          }
+
         }
 
       case None => routes.BusinessTypeController.showBusinessTypeForm()
