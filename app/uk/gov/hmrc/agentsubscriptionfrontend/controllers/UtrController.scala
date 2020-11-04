@@ -17,17 +17,16 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
-import play.api.{Configuration, Environment}
-import play.api.i18n.MessagesApi
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import play.api.{Configuration, Environment}
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationForms.utrForm
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
-import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{utr_details}
+import uk.gov.hmrc.agentsubscriptionfrontend.views.html.utr_details
 import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.play.bootstrap.controller.FrontendController
+import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
 import scala.concurrent.ExecutionContext
 
@@ -45,7 +44,7 @@ class UtrController @Inject()(
     extends FrontendController(mcc) with SessionBehaviour with AuthActions {
 
   def showUtrForm(): Action[AnyContent] = Action.async { implicit request =>
-    withSubscribingAgent { implicit agent =>
+    withSubscribingAgent { agent =>
       sessionStoreService.fetchAgentSession.flatMap {
         case Some(agentSession) =>
           (agentSession.businessType, agentSession.utr) match {
@@ -61,7 +60,7 @@ class UtrController @Inject()(
   }
 
   def submitUtrForm(): Action[AnyContent] = Action.async { implicit request =>
-    withSubscribingAgent { implicit agent =>
+    withSubscribingAgent { agent =>
       withValidSession { (businessType, existingSession) =>
         utrForm(businessType.key)
           .bindFromRequest()
@@ -69,9 +68,7 @@ class UtrController @Inject()(
             formWithErrors => {
               Ok(utrDetailsTemplate(formWithErrors, businessType))
             },
-            validUtr =>
-              updateSessionAndRedirect(existingSession.copy(utr = Some(validUtr)))(
-                routes.PostcodeController.showPostcodeForm())
+            validUtr => updateSessionAndRedirect(existingSession.copy(utr = Some(validUtr)))(routes.PostcodeController.showPostcodeForm())
           )
       }
     }

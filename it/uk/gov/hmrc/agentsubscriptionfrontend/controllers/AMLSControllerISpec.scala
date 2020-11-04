@@ -19,7 +19,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 import java.time.LocalDate
 
 import org.jsoup.Jsoup
-import play.api.mvc.{AnyContentAsEmpty, Cookie}
+import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr

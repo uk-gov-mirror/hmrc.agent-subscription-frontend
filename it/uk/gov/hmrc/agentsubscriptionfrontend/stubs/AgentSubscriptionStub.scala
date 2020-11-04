@@ -21,7 +21,6 @@ import java.time.LocalDate
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import play.api.http.Status
-import play.utils.UriEncoding
 import uk.gov.hmrc.agentmtdidentifiers.model.{Utr, Vrn}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.domain.Nino

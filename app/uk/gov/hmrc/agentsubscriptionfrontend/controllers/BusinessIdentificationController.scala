@@ -21,7 +21,7 @@ import javax.inject.{Inject, Singleton}
 import play.api.data.Form
 import play.api.i18n.I18nSupport
 import play.api.mvc.{AnyContent, Request, _}
-import play.api.{Configuration, Environment, Logger}
+import play.api.{Configuration, Environment, Logging}
 import uk.gov.hmrc.agentsubscriptionfrontend.audit.AuditService
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.{Agent, AuthActions}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
@@ -40,7 +40,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.validators.BusinessDetailsValidator
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html._
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.bootstrap.controller.FrontendController
+import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -72,7 +72,7 @@ class BusinessIdentificationController @Inject()(
   implicit val appConfig: AppConfig,
   val ec: ExecutionContext)
     extends FrontendController(mcc) with AuthActions
-    with SessionBehaviour with I18nSupport {
+    with SessionBehaviour with I18nSupport with Logging {
 
   import BusinessIdentificationForms._
 
@@ -127,13 +127,13 @@ class BusinessIdentificationController @Inject()(
             getBackLinkForConfirmBusiness
           ))
       case (None, _, _) =>
-        Logger.warn("utr is missing from registration, redirecting to /unique-taxpayer-reference")
+        logger.warn("utr is missing from registration, redirecting to /unique-taxpayer-reference")
         Redirect(routes.UtrController.showUtrForm())
       case (_, None, _) =>
-        Logger.warn("taxpayerName is missing from registration, redirecting to /business-name")
+        logger.warn("taxpayerName is missing from registration, redirecting to /business-name")
         Redirect(routes.BusinessIdentificationController.showBusinessNameForm())
       case (_, _, None) =>
-        Logger.warn("business address is missing from registration, redirecting to /business-address")
+        logger.warn("business address is missing from registration, redirecting to /business-address")
         Redirect(routes.SubscriptionController.showBusinessAddressForm())
       case _ =>
         Redirect(routes.BusinessTypeController.showBusinessTypeForm())
@@ -187,7 +187,7 @@ class BusinessIdentificationController @Inject()(
     subscriptionJourneyService
     .createJourneyRecord(existingSession, agent) map {
     case Right(()) => Redirect(routes.TaskListController.showTaskList())
-    case Left(msg) => Logger.warn(msg); Conflict
+    case Left(msg) => logger.warn(msg); Conflict
   }
 
   def showBusinessEmailForm: Action[AnyContent] = Action.async { implicit request =>

@@ -17,7 +17,7 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.validators
 
 import javax.inject.{Inject, Singleton}
-import play.api.data.validation.{Constraint, Constraints, Invalid, Valid, ValidationError, ValidationResult => PlayValdationResult}
+import play.api.data.validation.{Constraints, Invalid, Valid, ValidationResult => PlayValdationResult}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.models.ValidationResult.FailureReason._
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{BusinessAddress, Registration, ValidationResult}
@@ -92,12 +92,8 @@ class BusinessDetailsValidator @Inject()(appConfig: AppConfig) {
       .map(postcode => CommonValidators.postcode.constraints.map(_(postcode)))
       .getOrElse(Seq(Invalid("invalid postcode")))
 
-    val validators: Seq[PlayValdationResult] = Seq(
-      addressLine1Validator,
-      addressLine2Validator,
-      addressLine3Validator,
-      addressLine4Validator,
-      basicPostcodeValidator).flatten
+    val validators: Seq[PlayValdationResult] =
+      Seq(addressLine1Validator, addressLine2Validator, addressLine3Validator, addressLine4Validator, basicPostcodeValidator).flatten
 
     if (validators.forall(_ == Valid)) Pass else Failure(InvalidBusinessAddress)
   }

@@ -1,7 +1,7 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import org.scalatest.Assertion
-import play.api.i18n.{Lang, Messages, MessagesApi, MessagesProvider}
+import play.api.i18n.{Lang, Messages, MessagesApi}
 import play.api.mvc.{AnyContentAsEmpty, AnyContentAsFormUrlEncoded, Result}
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{redirectLocation, _}

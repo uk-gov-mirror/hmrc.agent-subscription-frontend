@@ -18,9 +18,8 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
-import play.api.i18n.Lang
-import play.api.{Configuration, Environment, Logger}
 import play.api.mvc.{AnyContent, _}
+import play.api.{Configuration, Environment}
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.{Agent, AuthActions}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.config.amls.AMLSLoader
@@ -30,11 +29,10 @@ import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.AmlsData
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
-import uk.gov.hmrc.agentsubscriptionfrontend.views.html
-import uk.gov.hmrc.agentsubscriptionfrontend.views.html.amls.{amls_applied_for, amls_details, amls_not_applied, amls_pending_details, check_amls}
+import uk.gov.hmrc.agentsubscriptionfrontend.views.html.amls._
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.bootstrap.controller.FrontendController
+import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
 import scala.collection.immutable.Map
 import scala.concurrent.{ExecutionContext, Future}
@@ -100,10 +98,7 @@ class AMLSController @Inject()(
                     routes.AMLSController.showAmlsDetailsForm()
                   case No => routes.AMLSController.showCheckAmlsAlreadyAppliedForm()
                 }
-                val cleanAmlsData = AmlsData(
-                  amlsRegistered = RadioInputAnswer.toBoolean(validForm),
-                  amlsAppliedFor = None,
-                  amlsDetails = None)
+                val cleanAmlsData = AmlsData(amlsRegistered = RadioInputAnswer.toBoolean(validForm), amlsAppliedFor = None, amlsDetails = None)
 
                 updateAmlsJourneyRecord(
                   agent, { amlsData =>
@@ -147,9 +142,7 @@ class AMLSController @Inject()(
               case Yes => routes.AMLSController.showAmlsApplicationDatePage()
               case No  => routes.AMLSController.showAmlsNotAppliedPage()
             }
-            updateAmlsJourneyRecord(
-              agent,
-              amlsData => Some(amlsData.copy(amlsAppliedFor = Some(RadioInputAnswer.toBoolean(validForm))))).map(
+            updateAmlsJourneyRecord(agent, amlsData => Some(amlsData.copy(amlsAppliedFor = Some(RadioInputAnswer.toBoolean(validForm))))).map(
               _ => Redirect(continueOrStop(continue, routes.AMLSController.showCheckAmlsAlreadyAppliedForm()))
             )
           }
@@ -202,10 +195,8 @@ class AMLSController @Inject()(
                 updateAmlsJourneyRecord(
                   agent,
                   amlsData =>
-                    Some(
-                      amlsData.copy(amlsDetails = Some(AmlsDetails(
-                        supervisoryBodyData,
-                        Right(RegisteredDetails(validForm.membershipNumber, validForm.expiry))))))
+                    Some(amlsData.copy(
+                      amlsDetails = Some(AmlsDetails(supervisoryBodyData, Right(RegisteredDetails(validForm.membershipNumber, validForm.expiry))))))
                 ).map(
                   _ => Redirect(continueOrStop(continue, routes.AMLSController.showAmlsDetailsForm()))
                 )
@@ -266,9 +257,7 @@ class AMLSController @Inject()(
                 val continue = toTaskListOrCheckYourAnswers(isChanging)
                 updateAmlsJourneyRecord(
                   agent,
-                  amlsData =>
-                    Some(amlsData.copy(
-                      amlsDetails = Some(AmlsDetails(supervisoryBodyData, Left(PendingDetails(validForm.appliedOn))))))
+                  amlsData => Some(amlsData.copy(amlsDetails = Some(AmlsDetails(supervisoryBodyData, Left(PendingDetails(validForm.appliedOn))))))
                 ).map(
                   _ => Redirect(continueOrStop(continue, routes.AMLSController.showAmlsApplicationDatePage()))
                 )
@@ -283,8 +272,7 @@ class AMLSController @Inject()(
     if (isChanging.getOrElse(false)) routes.SubscriptionController.showCheckAnswers()
     else routes.TaskListController.showTaskList()
 
-  private def withManuallyAssuredAgent(agent: Agent)(body: => Future[Result])(
-    implicit hc: HeaderCarrier): Future[Result] = {
+  private def withManuallyAssuredAgent(agent: Agent)(body: => Future[Result])(implicit hc: HeaderCarrier): Future[Result] = {
     val utr = agent.getMandatorySubscriptionRecord.businessDetails.utr
     agentAssuranceConnector.isManuallyAssuredAgent(utr).flatMap { response =>
       if (response) toFuture(Redirect(routes.TaskListController.showTaskList()))

@@ -18,9 +18,9 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
-import play.api.i18n.{Lang, Langs}
-import play.api.{Configuration, Environment, Logger}
+import play.api.i18n.Lang
 import play.api.mvc.{AnyContent, _}
+import play.api.{Configuration, Environment, Logger}
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.{Agent, AuthActions}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
@@ -34,7 +34,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{address_form_with_errors, check_answers, sign_in_new_id, subscription_complete}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.{HeaderCarrier, HttpException}
-import uk.gov.hmrc.play.bootstrap.controller.FrontendController
+import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
@@ -173,8 +173,7 @@ class SubscriptionController @Inject()(
       .get("PLAY_LANG").map(x => Lang(x.value))
 
 
-  private def redirectSubscriptionResponse(either: Either[SubscriptionReturnedHttpError, (Arn, String)], agent: Agent)(
-    implicit request: Request[AnyContent]): Future[Result] =
+  private def redirectSubscriptionResponse(either: Either[SubscriptionReturnedHttpError, (Arn, String)], agent: Agent): Future[Result] =
     either match {
       case Right((_, _)) =>
         mark("Count-Subscription-Complete")

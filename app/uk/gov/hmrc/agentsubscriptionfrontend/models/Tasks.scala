@@ -65,15 +65,13 @@ final case class AmlsSubTask(isMaa: Boolean, amlsData: Option[AmlsData]) extends
   override val link: String = routes.AMLSController.showAmlsRegisteredPage().url
 }
 
-final case class ContactDetailsEmailSubTask(contactEmailData: Option[ContactEmailData], showLink: Boolean)
-    extends SubTask {
+final case class ContactDetailsEmailSubTask(contactEmailData: Option[ContactEmailData], showLink: Boolean) extends SubTask {
   override val taskKey: String = "contactDetailsEmailSubTask"
   override val isComplete: Boolean = contactEmailData.flatMap(_.contactEmail).isDefined
   override val link: String = routes.ContactDetailsController.showContactEmailCheck().url
 }
 
-final case class ContactTradingNameSubTask(contactTradingNameData: Option[ContactTradingNameData], showLink: Boolean)
-    extends SubTask {
+final case class ContactTradingNameSubTask(contactTradingNameData: Option[ContactTradingNameData], showLink: Boolean) extends SubTask {
   override val taskKey: String = "contactDetailsTradingNameSubTask"
   override val isComplete: Boolean = {
     contactTradingNameData.fold(false) { data =>
@@ -83,10 +81,7 @@ final case class ContactTradingNameSubTask(contactTradingNameData: Option[Contac
   override val link: String = routes.ContactDetailsController.showTradingNameCheck().url
 }
 
-final case class ContactTradingAddressSubTask(
-  contactTradingAddressData: Option[ContactTradingAddressData],
-  showLink: Boolean)
-    extends SubTask {
+final case class ContactTradingAddressSubTask(contactTradingAddressData: Option[ContactTradingAddressData], showLink: Boolean) extends SubTask {
   override val taskKey: String = "contactDetailsTradingAddressSubTask"
   override val isComplete: Boolean = {
     contactTradingAddressData.flatMap(_.contactTradingAddress).isDefined

@@ -66,8 +66,7 @@ object CheckYourAnswers {
               changeLink = Some(
                 Call(
                   "GET",
-                  url = appConfig.agentMappingFrontendStartUrl(
-                    continueId.getOrElse(throw new RuntimeException("no continueId found in record"))))),
+                  url = appConfig.agentMappingFrontendStartUrl(continueId.getOrElse(throw new RuntimeException("no continueId found in record"))))),
               buttonText = Some(Messages("checkAnswers.addMore.button"))
             )),
       maybeMappingGGIdsRow =
@@ -141,12 +140,7 @@ object CheckYourAnswers {
   private def makeContactTradingAddressRow(address: BusinessAddress)(implicit messages: Messages) =
     AnswerRow(
       question = Messages("checkAnswers.contactTradingAddress.label"),
-      answerLines = List(
-        Some(address.addressLine1),
-        address.addressLine2,
-        address.addressLine3,
-        address.addressLine4,
-        address.postalCode).flatten,
+      answerLines = List(Some(address.addressLine1), address.addressLine2, address.addressLine3, address.addressLine4, address.postalCode).flatten,
       changeLink = Some(routes.ContactDetailsController.changeCheckMainTradingAddress()),
       buttonText = Some(defaultButtonText)
     )
@@ -154,12 +148,7 @@ object CheckYourAnswers {
   private def makeBusinessAddressRow(address: BusinessAddress)(implicit messages: Messages) =
     AnswerRow(
       question = Messages("checkAnswers.businessAddress.label"),
-      answerLines = List(
-        Some(address.addressLine1),
-        address.addressLine2,
-        address.addressLine3,
-        address.addressLine4,
-        address.postalCode).flatten,
+      answerLines = List(Some(address.addressLine1), address.addressLine2, address.addressLine3, address.addressLine4, address.postalCode).flatten,
       changeLink = None,
       buttonText = None
     )

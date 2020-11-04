@@ -40,8 +40,7 @@ object PostcodesLoader {
         if (invalidPostcodes.isEmpty)
           postcodes
         else
-          throw new PostcodeLoaderException(
-            s"Invalid entries found in the blacklisted postcodes file: ${invalidPostcodes.mkString(",")}")
+          throw new PostcodeLoaderException(s"Invalid entries found in the blacklisted postcodes file: ${invalidPostcodes.mkString(",")}")
       case Failure(ex) =>
         throw new PostcodeLoaderException(ex.getMessage)
     }

@@ -34,9 +34,7 @@ class DesAddressForm(logger: LoggerLike, blacklistedPostcodes: Set[String]) {
       "countryCode"  -> text
     )(DesAddress.apply)(DesAddress.unapply))
 
-  def bindAddressLookupFrontendAddress(
-    utr: Utr,
-    addressLookupFrontendAddress: AddressLookupFrontendAddress): Form[DesAddress] = {
+  def bindAddressLookupFrontendAddress(utr: Utr, addressLookupFrontendAddress: AddressLookupFrontendAddress): Form[DesAddress] = {
     if (addressLookupFrontendAddress.lines.length > 4) {
       logger.warn(s"More than 4 address lines for UTR: ${utr.value}, discarding lines 5 and up")
     }

@@ -20,13 +20,12 @@ import java.time.LocalDate
 
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
-import play.api.{Configuration, Environment}
 import play.api.data.Forms.{mapping, of, optional, text, _}
 import play.api.data.format.Formats._
 import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
 import play.api.data.{Form, Mapping, _}
-import play.api.i18n.MessagesApi
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Result}
+import play.api.{Configuration, Environment}
 import uk.gov.hmrc.agentmtdidentifiers.model.Vrn
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.{Agent, AuthActions}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
@@ -39,7 +38,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.validators.CommonValidators.{checkOneAtATime, radioInputSelected}
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{registered_for_vat, vat_details}
 import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.play.bootstrap.controller.FrontendController
+import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success, Try}
@@ -67,10 +66,7 @@ class VatDetailsController @Inject()(
             (agentSession.businessType, agentSession.registeredForVat) match {
               case (Some(businessType), Some(registeredForVat)) =>
                 val rfv = RegisteredForVat(RadioInputAnswer.apply(registeredForVat.toString))
-                Ok(
-                  registeredForVatTemplate(
-                    registeredForVatForm.fill(rfv),
-                    getBackLink(agent, businessType)(agentSession)))
+                Ok(registeredForVatTemplate(registeredForVatForm.fill(rfv), getBackLink(agent, businessType)(agentSession)))
               case (Some(businessType), None) =>
                 Ok(registeredForVatTemplate(registeredForVatForm, getBackLink(agent, businessType)(agentSession)))
 
@@ -121,8 +117,7 @@ class VatDetailsController @Inject()(
         registeredForVatForm
           .bindFromRequest()
           .fold(
-            formWithErrors =>
-              Ok(registeredForVatTemplate(formWithErrors, getBackLink(agent, businessType)(existingSession))),
+            formWithErrors => Ok(registeredForVatTemplate(formWithErrors, getBackLink(agent, businessType)(existingSession))),
             choice => {
               val nextPage = if (choice.confirm == Yes) {
                 routes.VatDetailsController.showVatDetailsForm()
@@ -192,13 +187,9 @@ object VatDetailsController {
 
   val registeredForVatForm: Form[RegisteredForVat] =
     Form[RegisteredForVat](
-      mapping("registeredForVat" -> optional(text).verifying(
-        radioInputSelected("registered-for-vat.error.no-radio-selected")))(answer =>
-        RegisteredForVat(RadioInputAnswer.apply(answer.getOrElse(""))))(answer =>
-        Some(RadioInputAnswer.unapply(answer.confirm)))
-        .verifying(
-          "registered-for-vat.confirm-business-value.invalid",
-          submittedAnswer => Seq(Yes, No).contains(submittedAnswer.confirm)))
+      mapping("registeredForVat" -> optional(text).verifying(radioInputSelected("registered-for-vat.error.no-radio-selected")))(answer =>
+        RegisteredForVat(RadioInputAnswer.apply(answer.getOrElse(""))))(answer => Some(RadioInputAnswer.unapply(answer.confirm)))
+        .verifying("registered-for-vat.confirm-business-value.invalid", submittedAnswer => Seq(Yes, No).contains(submittedAnswer.confirm)))
 
   val normalizedText: Mapping[String] = of[String].transform(_.replaceAll("\\s", ""), identity)
 
@@ -238,33 +229,31 @@ object VatDetailsController {
         (date: LocalDate) => (date.getYear.toString, date.getMonthValue.toString, date.getDayOfMonth.toString)
       )
 
-  private def realDateConstraint: Constraint[(String, String, String)] = Constraint[(String, String, String)] {
-    data: (String, String, String) =>
-      val (year, month, day) = data
-      Try {
-        val date = LocalDate.of(year.toInt, month.toInt, day.toInt)
-        if (date.isBefore(LocalDate.of(1900, 1, 1)))
-          Invalid(ValidationError("vat-details.regDate.must.be.later.than.1900"))
-        else
-          Valid
-      } match {
-        case Failure(_) => Invalid(ValidationError("vat-details.regDate.invalid"))
-        case Success(p) => p
-      }
+  private def realDateConstraint: Constraint[(String, String, String)] = Constraint[(String, String, String)] { data: (String, String, String) =>
+    val (year, month, day) = data
+    Try {
+      val date = LocalDate.of(year.toInt, month.toInt, day.toInt)
+      if (date.isBefore(LocalDate.of(1900, 1, 1)))
+        Invalid(ValidationError("vat-details.regDate.must.be.later.than.1900"))
+      else
+        Valid
+    } match {
+      case Failure(_) => Invalid(ValidationError("vat-details.regDate.invalid"))
+      case Success(p) => p
+    }
   }
 
-  private def futureDateConstraint: Constraint[(String, String, String)] = Constraint[(String, String, String)] {
-    data: (String, String, String) =>
-      val (year, month, day) = data
-      Try {
-        if (LocalDate.of(year.toInt, month.toInt, day.toInt).isAfter(LocalDate.now()))
-          Invalid(ValidationError("vat-details.regDate.must.be.in.past"))
-        else
-          Valid
-      } match {
-        case Failure(_) => Invalid(ValidationError("vat-details.regDate.invalid"))
-        case Success(p) => p
-      }
+  private def futureDateConstraint: Constraint[(String, String, String)] = Constraint[(String, String, String)] { data: (String, String, String) =>
+    val (year, month, day) = data
+    Try {
+      if (LocalDate.of(year.toInt, month.toInt, day.toInt).isAfter(LocalDate.now()))
+        Invalid(ValidationError("vat-details.regDate.must.be.in.past"))
+      else
+        Valid
+    } match {
+      case Failure(_) => Invalid(ValidationError("vat-details.regDate.invalid"))
+      case Success(p) => p
+    }
   }
 
   def formWithRefinedErrors(form: Form[VatDetails]): Form[VatDetails] = {

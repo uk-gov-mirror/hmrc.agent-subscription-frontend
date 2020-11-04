@@ -89,8 +89,7 @@ class FrontendAppConfig @Inject()(servicesConfig: ServicesConfig) extends AppCon
   override val addressLookupContinueUrl: String =
     getConf("microservice.services.address-lookup-frontend.new-address-callback.url")
   override val surveyRedirectUrl: String = getConf("surveyRedirectUrl")
-  override val agentSubscriptionFrontendExternalUrl: String = getConf(
-    "microservice.services.agent-subscription-frontend.external-url")
+  override val agentSubscriptionFrontendExternalUrl: String = getConf("microservice.services.agent-subscription-frontend.external-url")
   override val sessionCacheBaseUrl: String = servicesConfig.baseUrl("cachable.session-cache")
 
   override val companyAuthSignInUrl: String = getConf("microservice.services.companyAuthSignInUrl")
@@ -99,8 +98,7 @@ class FrontendAppConfig @Inject()(servicesConfig: ServicesConfig) extends AppCon
     getConf("microservice.services.cachable.session-cache.domain")
   override val agentMappingBaseUrl: String = servicesConfig.baseUrl("agent-mapping")
   override def agentMappingFrontendStartUrl(continueId: String): String =
-    s"${getConf("microservice.services.agent-mapping-frontend.external-url")}${getConf(
-      "microservice.services.agent-mapping-frontend.start.path")}?continueId=$continueId"
+    s"${getConf("microservice.services.agent-mapping-frontend.external-url")}${getConf("microservice.services.agent-mapping-frontend.start.path")}?continueId=$continueId"
 
   override val addressLookupFrontendBaseUrl: String = servicesConfig.baseUrl("address-lookup-frontend")
 

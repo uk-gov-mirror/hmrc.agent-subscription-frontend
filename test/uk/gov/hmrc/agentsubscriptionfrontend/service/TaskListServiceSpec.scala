@@ -74,13 +74,8 @@ class TaskListServiceSpec extends UnitSpec with MockitoSugar {
 
   val tradingName = "My Trading Name"
 
-  val tradingAddress = BusinessAddress(
-    "TradingAddress1 A",
-    Some("TradingAddress2 A"),
-    Some("TradingAddress3 A"),
-    Some("TradingAddress4 A"),
-    Some("TT11TT"),
-    "GB")
+  val tradingAddress =
+    BusinessAddress("TradingAddress1 A", Some("TradingAddress2 A"), Some("TradingAddress3 A"), Some("TradingAddress4 A"), Some("TT11TT"), "GB")
 
   "when the user has unclean creds show the full task list" should {
     "AmlsTask" should {
@@ -106,10 +101,7 @@ class TaskListServiceSpec extends UnitSpec with MockitoSugar {
         givenNotManuallyAssured
         val amlsRecord = minimalUncleanCredsRecord.copy(
           amlsData = Some(
-            AmlsData(
-              amlsRegistered = true,
-              None,
-              Some(AmlsDetails("supervisory", Right(RegisteredDetails("123", LocalDate.now().plusDays(20))))))))
+            AmlsData(amlsRegistered = true, None, Some(AmlsDetails("supervisory", Right(RegisteredDetails("123", LocalDate.now().plusDays(20))))))))
         val tasks = await(taskListService.createTasks(amlsRecord))
 
         tasks.length shouldBe 5
@@ -120,11 +112,8 @@ class TaskListServiceSpec extends UnitSpec with MockitoSugar {
       "when agent has pending AMLS data show AMLS as complete" in {
         givenNotManuallyAssured
         val amlsRecord = minimalUncleanCredsRecord.copy(
-          amlsData = Some(
-            AmlsData(
-              amlsRegistered = true,
-              None,
-              Some(AmlsDetails("supervisory", Left(PendingDetails(LocalDate.now().minusDays(20))))))))
+          amlsData =
+            Some(AmlsData(amlsRegistered = true, None, Some(AmlsDetails("supervisory", Left(PendingDetails(LocalDate.now().minusDays(20))))))))
         val tasks = await(taskListService.createTasks(amlsRecord))
 
         tasks.length shouldBe 5
@@ -155,11 +144,8 @@ class TaskListServiceSpec extends UnitSpec with MockitoSugar {
       "when agent has no clean creds auth provider id and the amls task is complete show the contact details email task link" in {
         givenNotManuallyAssured
         val record = minimalUncleanCredsRecord.copy(
-          amlsData = Some(
-            AmlsData(
-              amlsRegistered = true,
-              None,
-              Some(AmlsDetails("supervisory", Left(PendingDetails(LocalDate.now().minusDays(20)))))))
+          amlsData =
+            Some(AmlsData(amlsRegistered = true, None, Some(AmlsDetails("supervisory", Left(PendingDetails(LocalDate.now().minusDays(20)))))))
         )
         val tasks = await(taskListService.createTasks(record))
 
@@ -173,11 +159,8 @@ class TaskListServiceSpec extends UnitSpec with MockitoSugar {
       "when agent has no clean creds auth provider id and the email task is complete show the business name task link" in {
         givenNotManuallyAssured
         val record = minimalUncleanCredsRecord.copy(
-          amlsData = Some(
-            AmlsData(
-              amlsRegistered = true,
-              None,
-              Some(AmlsDetails("supervisory", Left(PendingDetails(LocalDate.now().minusDays(20))))))),
+          amlsData =
+            Some(AmlsData(amlsRegistered = true, None, Some(AmlsDetails("supervisory", Left(PendingDetails(LocalDate.now().minusDays(20))))))),
           contactEmailData = Some(ContactEmailData(true, Some("email@email.com")))
         )
         val tasks = await(taskListService.createTasks(record))
@@ -193,11 +176,8 @@ class TaskListServiceSpec extends UnitSpec with MockitoSugar {
       "when agent has no clean creds auth provider id and the email and the business name tasks are complete show the business address task link" in {
         givenNotManuallyAssured
         val record = minimalUncleanCredsRecord.copy(
-          amlsData = Some(
-            AmlsData(
-              amlsRegistered = true,
-              None,
-              Some(AmlsDetails("supervisory", Left(PendingDetails(LocalDate.now().minusDays(20))))))),
+          amlsData =
+            Some(AmlsData(amlsRegistered = true, None, Some(AmlsDetails("supervisory", Left(PendingDetails(LocalDate.now().minusDays(20))))))),
           contactEmailData = Some(ContactEmailData(true, Some("email@email.com"))),
           contactTradingNameData = Some(ContactTradingNameData(true, Some(tradingName)))
         )
@@ -216,11 +196,8 @@ class TaskListServiceSpec extends UnitSpec with MockitoSugar {
       "when agent has no clean creds auth provider id and the previous task is complete show the mapping task link" in {
         givenNotManuallyAssured
         val record = minimalUncleanCredsRecord.copy(
-          amlsData = Some(
-            AmlsData(
-              amlsRegistered = true,
-              None,
-              Some(AmlsDetails("supervisory", Left(PendingDetails(LocalDate.now().minusDays(20))))))),
+          amlsData =
+            Some(AmlsData(amlsRegistered = true, None, Some(AmlsDetails("supervisory", Left(PendingDetails(LocalDate.now().minusDays(20))))))),
           contactEmailData = Some(ContactEmailData(true, Some("email@email.com"))),
           contactTradingAddressData = Some(ContactTradingAddressData(true, Some(tradingAddress))),
           contactTradingNameData = Some(ContactTradingNameData(true, Some(tradingName)))
@@ -254,11 +231,8 @@ class TaskListServiceSpec extends UnitSpec with MockitoSugar {
         givenNotManuallyAssured
         val record = minimalUncleanCredsRecord.copy(
           mappingComplete = true,
-          amlsData = Some(
-            AmlsData(
-              amlsRegistered = true,
-              None,
-              Some(AmlsDetails("supervisory", Left(PendingDetails(LocalDate.now().minusDays(20))))))),
+          amlsData =
+            Some(AmlsData(amlsRegistered = true, None, Some(AmlsDetails("supervisory", Left(PendingDetails(LocalDate.now().minusDays(20))))))),
           contactEmailData = Some(ContactEmailData(true, Some("email@email.com"))),
           contactTradingNameData = Some(ContactTradingNameData(true, Some(tradingName))),
           contactTradingAddressData = Some(ContactTradingAddressData(true, Some(tradingAddress)))
@@ -337,10 +311,7 @@ class TaskListServiceSpec extends UnitSpec with MockitoSugar {
         givenNotManuallyAssured
         val amlsRecord = minimalCleanCredsRecord.copy(
           amlsData = Some(
-            AmlsData(
-              amlsRegistered = true,
-              None,
-              Some(AmlsDetails("supervisory", Right(RegisteredDetails("123", LocalDate.now().plusDays(20))))))))
+            AmlsData(amlsRegistered = true, None, Some(AmlsDetails("supervisory", Right(RegisteredDetails("123", LocalDate.now().plusDays(20))))))))
         val tasks = await(taskListService.createTasks(amlsRecord))
 
         tasks.length shouldBe 3
@@ -351,11 +322,8 @@ class TaskListServiceSpec extends UnitSpec with MockitoSugar {
       "when agent has pending AMLS data show AMLS as complete" in {
         givenNotManuallyAssured
         val amlsRecord = minimalCleanCredsRecord.copy(
-          amlsData = Some(
-            AmlsData(
-              amlsRegistered = true,
-              None,
-              Some(AmlsDetails("supervisory", Left(PendingDetails(LocalDate.now().minusDays(20))))))))
+          amlsData =
+            Some(AmlsData(amlsRegistered = true, None, Some(AmlsDetails("supervisory", Left(PendingDetails(LocalDate.now().minusDays(20))))))))
         val tasks = await(taskListService.createTasks(amlsRecord))
 
         tasks.length shouldBe 3
@@ -386,11 +354,8 @@ class TaskListServiceSpec extends UnitSpec with MockitoSugar {
       "when an agent has completed amls task show the contact details task" in {
         givenManuallyAssured
         val record = minimalCleanCredsRecord.copy(
-          amlsData = Some(
-            AmlsData(
-              amlsRegistered = true,
-              None,
-              Some(AmlsDetails("supervisory", Left(PendingDetails(LocalDate.now().minusDays(20))))))))
+          amlsData =
+            Some(AmlsData(amlsRegistered = true, None, Some(AmlsDetails("supervisory", Left(PendingDetails(LocalDate.now().minusDays(20))))))))
         val tasks = await(taskListService.createTasks(record))
 
         tasks.length shouldBe 3
@@ -404,11 +369,8 @@ class TaskListServiceSpec extends UnitSpec with MockitoSugar {
       "when an agent has completed the previous task show the check answers link" in {
         givenManuallyAssured
         val record = minimalCleanCredsRecord.copy(
-          amlsData = Some(
-            AmlsData(
-              amlsRegistered = true,
-              None,
-              Some(AmlsDetails("supervisory", Left(PendingDetails(LocalDate.now().minusDays(20))))))),
+          amlsData =
+            Some(AmlsData(amlsRegistered = true, None, Some(AmlsDetails("supervisory", Left(PendingDetails(LocalDate.now().minusDays(20))))))),
           contactEmailData = Some(ContactEmailData(true, Some("email@email.com"))),
           contactTradingNameData = Some(ContactTradingNameData(true, Some(tradingName))),
           contactTradingAddressData = Some(ContactTradingAddressData(true, Some(tradingAddress)))

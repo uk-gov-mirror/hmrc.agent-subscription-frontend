@@ -1,16 +1,16 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
+import org.jsoup.Jsoup
+import play.api.test.Helpers._
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.SoleTrader
 import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.BusinessDetails
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, AuthProviderId, BusinessAddress, ContactEmailData, ContactTradingAddressData, ContactTradingNameData, Postcode, Registration}
-import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestData}
+import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AddressLookupFrontendStubs._
-import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionJourneyStub.{givenNoSubscriptionJourneyRecordExists, givenSubscriptionJourneyRecordExists, givenSubscriptionRecordCreated}
-import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.{subscribingAgentEnrolledForHMRCASAGENT, subscribingAgentEnrolledForNonMTD}
+import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionJourneyStub.{givenSubscriptionJourneyRecordExists, givenSubscriptionRecordCreated}
+import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.subscribingAgentEnrolledForNonMTD
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData.{businessAddress, registrationName, validPostcode, validUtr}
-import play.api.test.Helpers._
-import org.jsoup.Jsoup
+import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestData}
 import uk.gov.hmrc.http.BadRequestException
 
 

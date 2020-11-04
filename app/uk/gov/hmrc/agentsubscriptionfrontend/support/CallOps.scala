@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.support
 
-import java.net.{URL, URLEncoder}
+import java.net.URLEncoder
 
 import play.api.mvc.Call
 

@@ -62,8 +62,7 @@ class ViewsSpec extends UnitSpec with GuiceOneAppPerSuite {
         contentHeader = Some(Html("contentHeader")),
         bodyClasses = Some("bodyClasses"),
         mainClass = Some("mainClass"),
-        scriptElem = Some(Html(
-          "<script src=\"@controllers.routes.Assets.at(\"javascripts/scripts.js\")\" type=\"text/javascript\"></script>")),
+        scriptElem = Some(Html("<script src=\"@controllers.routes.Assets.at(\"javascripts/scripts.js\")\" type=\"text/javascript\"></script>")),
         userIsLoggedIn = true,
         mainContent = Html("mainContent"),
         request = FakeRequest(),
@@ -88,8 +87,7 @@ class ViewsSpec extends UnitSpec with GuiceOneAppPerSuite {
         Some(Html("contentHeader")),
         Some("bodyClasses"),
         Some("mainClass"),
-        Some(Html(
-          "<script src=\"@controllers.routes.Assets.at(\"javascripts/scripts.js\")\" type=\"text/javascript\"></script>")),
+        Some(Html("<script src=\"@controllers.routes.Assets.at(\"javascripts/scripts.js\")\" type=\"text/javascript\"></script>")),
         true,
         true
       )(Html("mainContent"))(FakeRequest(), messages)

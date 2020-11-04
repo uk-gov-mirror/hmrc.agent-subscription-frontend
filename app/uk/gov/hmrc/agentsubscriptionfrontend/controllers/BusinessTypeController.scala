@@ -28,7 +28,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, Subsc
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{business_type}
 import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.play.bootstrap.controller.FrontendController
+import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -46,7 +46,7 @@ class BusinessTypeController @Inject()(
 )(implicit val appConfig: AppConfig, val ec: ExecutionContext)
     extends FrontendController(mcc) with AuthActions with SessionBehaviour {
 
-  def redirectToBusinessTypeForm: Action[AnyContent] = Action.async { implicit request =>
+  def redirectToBusinessTypeForm: Action[AnyContent] = Action.async {
     Redirect(routes.BusinessTypeController.showBusinessTypeForm())
   }
 
@@ -71,7 +71,7 @@ class BusinessTypeController @Inject()(
   }
 
   def submitBusinessTypeForm: Action[AnyContent] = Action.async { implicit request =>
-    withSubscribingAgent { implicit agent =>
+    withSubscribingAgent { agent =>
       businessTypeForm
         .bindFromRequest()
         .fold(
@@ -80,8 +80,7 @@ class BusinessTypeController @Inject()(
             sessionStoreService.fetchAgentSession
               .flatMap(_.getOrElse(AgentSession()))
               .flatMap { agentSession =>
-                updateSessionAndRedirect(agentSession.copy(businessType = Some(validatedBusinessType)))(
-                  routes.UtrController.showUtrForm())
+                updateSessionAndRedirect(agentSession.copy(businessType = Some(validatedBusinessType)))(routes.UtrController.showUtrForm())
               }
           }
         )

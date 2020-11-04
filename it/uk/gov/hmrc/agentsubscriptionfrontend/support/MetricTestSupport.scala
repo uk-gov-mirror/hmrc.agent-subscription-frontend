@@ -3,10 +3,9 @@ package uk.gov.hmrc.agentsubscriptionfrontend.support
 import com.codahale.metrics.MetricRegistry
 import com.kenshoo.play.metrics.Metrics
 import org.scalatest.{Assertion, Matchers}
-import org.scalatestplus.play.OneAppPerSuite
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 
-import scala.collection.JavaConversions
+import scala.collection.JavaConverters._
 
 trait MetricTestSupport {
   self: GuiceOneAppPerSuite with Matchers =>
@@ -15,7 +14,7 @@ trait MetricTestSupport {
 
   def givenCleanMetricRegistry(): Unit = {
     val registry = app.injector.instanceOf[Metrics].defaultRegistry
-    for (metric <- JavaConversions.asScalaIterator[String](registry.getMetrics.keySet().iterator())) {
+    for (metric <- registry.getMetrics.keySet().iterator().asScala) {
       registry.remove(metric)
     }
     metricsRegistry = registry

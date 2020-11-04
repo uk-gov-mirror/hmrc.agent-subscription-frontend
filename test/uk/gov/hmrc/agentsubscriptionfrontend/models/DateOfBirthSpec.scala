@@ -18,7 +18,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.models
 
 import java.time.LocalDate
 
-import play.api.libs.json.{JsError, JsNumber, JsResultException, JsString, Json}
+import play.api.libs.json.{JsNumber, JsResultException, JsString, Json}
 import uk.gov.hmrc.play.test.UnitSpec
 
 class DateOfBirthSpec extends UnitSpec {

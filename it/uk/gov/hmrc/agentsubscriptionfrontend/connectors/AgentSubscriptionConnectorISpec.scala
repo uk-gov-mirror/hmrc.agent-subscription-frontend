@@ -17,7 +17,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData.{validPostcode, va
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, MetricTestSupport, TestData}
 import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.http._
-import uk.gov.hmrc.play.bootstrap.http.HttpClient
+import uk.gov.hmrc.http.HttpClient
 
 import scala.concurrent.ExecutionContext.Implicits.global
 class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {
@@ -107,7 +107,7 @@ class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {
     "throw a runtime exception when the endpoint returns a bad request" in {
       AgentSubscriptionJourneyStub
         .givenSubscriptionRecordNotCreated(authProviderId, TestData.minimalSubscriptionJourneyRecord(authProviderId), Status.BAD_REQUEST)
-      intercept[BadRequestException] {
+      intercept[UpstreamErrorResponse] {
         await(connector.createOrUpdateJourney(TestData.minimalSubscriptionJourneyRecord(authProviderId)))
       }
     }
@@ -179,7 +179,7 @@ class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {
       withMetricsTimerUpdate("ConsumedAPI-Agent-Subscription-hasAcceptableNumberOfClients-GET") {
         AgentSubscriptionStub.withErrorForUtrAndPostcode(utr, "AA1 1AA")
 
-        intercept[Upstream5xxResponse] {
+        intercept[UpstreamErrorResponse] {
           await(connector.getRegistration(utr, "AA1 1AA"))
         }
       }
@@ -208,11 +208,11 @@ class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {
       withMetricsTimerUpdate("ConsumedAPI-Agent-Subscription-subscribeAgencyToMtd-POST") {
         AgentSubscriptionStub.subscriptionWillConflict(utr, subscriptionRequest)
 
-        val e = intercept[Upstream4xxResponse] {
+        val e = intercept[UpstreamErrorResponse] {
           await(connector.subscribeAgencyToMtd(subscriptionRequest))
         }
 
-        e.upstreamResponseCode shouldBe 409
+        e.statusCode shouldBe 409
       }
     }
 
@@ -220,11 +220,11 @@ class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {
       withMetricsTimerUpdate("ConsumedAPI-Agent-Subscription-subscribeAgencyToMtd-POST") {
         AgentSubscriptionStub.subscriptionWillBeForbidden(utr, subscriptionRequest)
 
-        val e = intercept[Upstream4xxResponse] {
+        val e = intercept[UpstreamErrorResponse] {
           await(connector.subscribeAgencyToMtd(subscriptionRequest))
         }
 
-        e.upstreamResponseCode shouldBe 403
+        e.statusCode shouldBe 403
       }
     }
   }
@@ -244,11 +244,11 @@ class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {
       withMetricsTimerUpdate("ConsumedAPI-Agent-Subscription-completePartialAgencySubscriptionToMtd-PUT") {
         AgentSubscriptionStub.partialSubscriptionWillReturnStatus(partialSubscriptionRequest, 409)
 
-        val e = intercept[Upstream4xxResponse] {
+        val e = intercept[UpstreamErrorResponse] {
           await(connector.completePartialSubscription(partialSubscriptionRequest))
         }
 
-        e.upstreamResponseCode shouldBe 409
+        e.statusCode shouldBe 409
       }
     }
 
@@ -256,11 +256,11 @@ class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {
       withMetricsTimerUpdate("ConsumedAPI-Agent-Subscription-completePartialAgencySubscriptionToMtd-PUT") {
         AgentSubscriptionStub.partialSubscriptionWillReturnStatus(partialSubscriptionRequest, 403)
 
-        val e = intercept[Upstream4xxResponse] {
+        val e = intercept[UpstreamErrorResponse] {
           await(connector.completePartialSubscription(partialSubscriptionRequest))
         }
 
-        e.upstreamResponseCode shouldBe 403
+        e.statusCode shouldBe 403
       }
     }
 
@@ -268,11 +268,11 @@ class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {
       withMetricsTimerUpdate("ConsumedAPI-Agent-Subscription-completePartialAgencySubscriptionToMtd-PUT") {
         AgentSubscriptionStub.partialSubscriptionWillReturnStatus(partialSubscriptionRequest, 400)
 
-        val e = intercept[BadRequestException] {
+        val e = intercept[UpstreamErrorResponse] {
           await(connector.completePartialSubscription(partialSubscriptionRequest))
         }
 
-        e.responseCode shouldBe 400
+        e.statusCode shouldBe 400
       }
     }
 
@@ -280,11 +280,11 @@ class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {
       withMetricsTimerUpdate("ConsumedAPI-Agent-Subscription-completePartialAgencySubscriptionToMtd-PUT") {
         AgentSubscriptionStub.partialSubscriptionWillReturnStatus(partialSubscriptionRequest, 500)
 
-        val e = intercept[Upstream5xxResponse] {
+        val e = intercept[UpstreamErrorResponse] {
           await(connector.completePartialSubscription(partialSubscriptionRequest))
         }
 
-        e.upstreamResponseCode shouldBe 500
+        e.statusCode shouldBe 500
       }
     }
   }
@@ -312,7 +312,7 @@ class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {
       withMetricsTimerUpdate("ConsumedAPI-Agent-Subscription-matchCorporationTaxUtrWithCrn-GET") {
         AgentSubscriptionStub.withErrorForCtUtrAndCrn(utr, crn)
 
-        intercept[Upstream5xxResponse] {
+        intercept[UpstreamErrorResponse] {
           await(connector.matchCorporationTaxUtrWithCrn(utr, crn))
         }
       }
@@ -341,7 +341,7 @@ class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {
       withMetricsTimerUpdate("ConsumedAPI-Agent-Subscription-matchVatKnownFacts-GET") {
         AgentSubscriptionStub.withErrorForVrnAndDateOfReg(vrn, dateOfReg)
 
-        intercept[Upstream5xxResponse] {
+        intercept[UpstreamErrorResponse] {
           await(connector.matchVatKnownFacts(vrn, dateOfReg))
         }
       }
@@ -365,11 +365,11 @@ class AgentSubscriptionConnectorISpec extends BaseISpec with MetricTestSupport {
 
     "throw a Upstream5xxResponse error when there is a network problem" in {
       AgentSubscriptionStub.givenDesignatoryDetailsReturnsStatus(nino, 500)
-      val e = intercept[Upstream5xxResponse] {
+      val e = intercept[UpstreamErrorResponse] {
         await(connector.getDesignatoryDetails(nino))
       }
 
-      e.upstreamResponseCode shouldBe 500
+      e.statusCode shouldBe 500
     }
   }
 

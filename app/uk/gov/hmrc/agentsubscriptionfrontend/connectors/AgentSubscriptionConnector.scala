@@ -21,7 +21,8 @@ import java.time.LocalDate
 import com.codahale.metrics.MetricRegistry
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
-import play.api.Logger
+import play.api.Logging
+import play.api.http.Status._
 import play.api.libs.json.{JsValue, Json}
 import play.utils.UriEncoding
 import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
@@ -29,9 +30,11 @@ import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr, Vrn}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.SubscriptionJourneyRecord
+import uk.gov.hmrc.agentsubscriptionfrontend.util.HttpClientConverter._
 import uk.gov.hmrc.domain.Nino
-import uk.gov.hmrc.http.{NotFoundException, _}
-import uk.gov.hmrc.play.bootstrap.http.HttpClient
+import uk.gov.hmrc.http.HttpErrorFunctions._
+import uk.gov.hmrc.http.HttpReads.Implicits._
+import uk.gov.hmrc.http.{HttpClient, _}
 import uk.gov.hmrc.play.encoding.UriPathEncoding.encodePathSegment
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -42,51 +45,49 @@ class AgentSubscriptionConnector @Inject()(
   metrics: Metrics,
   appConfig: AppConfig
 )(implicit ec: ExecutionContext)
-    extends HttpAPIMonitor {
+    extends HttpAPIMonitor with Logging {
 
   override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
 
-  def getJourneyById(internalId: AuthProviderId)(
-    implicit hc: HeaderCarrier): Future[Option[SubscriptionJourneyRecord]] =
+  def getJourneyById(internalId: AuthProviderId)(implicit hc: HeaderCarrier): Future[Option[SubscriptionJourneyRecord]] =
     monitor(s"ConsumedAPI-Agent-Subscription-getJourneyByPrimaryId-GET") {
       val url =
         s"${appConfig.agentSubscriptionBaseUrl}/agent-subscription/subscription/journey/id/${encodePathSegment(internalId.id)}"
       http
-        .GET[HttpResponse](url.toString)
+        .GET[HttpResponse](url)
         .map(response =>
           response.status match {
-            case 200 => Some(Json.parse(response.body).as[SubscriptionJourneyRecord])
-            case 204 => None
+            case 200           => Some(Json.parse(response.body).as[SubscriptionJourneyRecord])
+            case s if is2xx(s) => None
+            case s             => throw UpstreamErrorResponse(response.body, s)
         })
     }
 
-  def getJourneyByContinueId(continueId: ContinueId)(
-    implicit hc: HeaderCarrier): Future[Option[SubscriptionJourneyRecord]] =
+  def getJourneyByContinueId(continueId: ContinueId)(implicit hc: HeaderCarrier): Future[Option[SubscriptionJourneyRecord]] =
     monitor(s"ConsumedAPI-Agent-Subscription-getJourneyByContinueId-GET") {
-      val url =
-        s"${appConfig.agentSubscriptionBaseUrl}/agent-subscription/subscription/journey/continueId/${encodePathSegment(continueId.value)}"
-      http.GET[Option[SubscriptionJourneyRecord]](url.toString)
+      val url = s"${appConfig.agentSubscriptionBaseUrl}/agent-subscription/subscription/journey/continueId/${encodePathSegment(continueId.value)}"
+      transformOptionResponse[SubscriptionJourneyRecord](http.GET[HttpResponse](url.toString))
     }
 
   def getJourneyByUtr(utr: Utr)(implicit hc: HeaderCarrier): Future[Option[SubscriptionJourneyRecord]] =
     monitor(s"ConsumedAPI-Agent-Subscription-getJourneyByUtr-GET") {
-      val url =
-        s"${appConfig.agentSubscriptionBaseUrl}/agent-subscription/subscription/journey/utr/${encodePathSegment(utr.value)}"
-      http.GET[Option[SubscriptionJourneyRecord]](url.toString)
+      val url = s"${appConfig.agentSubscriptionBaseUrl}/agent-subscription/subscription/journey/utr/${encodePathSegment(utr.value)}"
+      transformOptionResponse[SubscriptionJourneyRecord](http.GET[HttpResponse](url))
     }
 
   def createOrUpdateJourney(journeyRecord: SubscriptionJourneyRecord)(implicit hc: HeaderCarrier): Future[Int] =
     monitor("ConsumedAPI-Agent-Subscription-createOrUpdate-POST") {
-      val path =
-        s"/agent-subscription/subscription/journey/primaryId/${encodePathSegment(journeyRecord.authProviderId.id)}"
+      val path = s"/agent-subscription/subscription/journey/primaryId/${encodePathSegment(journeyRecord.authProviderId.id)}"
       http
         .POST[SubscriptionJourneyRecord, HttpResponse](s"${appConfig.agentSubscriptionBaseUrl}$path", journeyRecord)
-        .map(_.status)
-        .recoverWith {
-          case ex: Upstream4xxResponse if ex.upstreamResponseCode == 409 => Future successful 409
-          case ex =>
-            Logger.error(s"creating subscription journey record failed for reason: ${ex.getMessage}")
-            throw ex
+        .map { response =>
+          response.status match {
+            case s if is2xx(s) => s
+            case CONFLICT      => CONFLICT
+            case s =>
+              logger.error(s"creating subscription journey record failed for reason: ${response.body}")
+              throw UpstreamErrorResponse(response.body, s)
+          }
         }
     }
 
@@ -96,17 +97,20 @@ class AgentSubscriptionConnector @Inject()(
       http.GET[Option[Registration]](url)
     }
 
-  def matchCorporationTaxUtrWithCrn(utr: Utr, crn: CompanyRegistrationNumber)(
-    implicit hc: HeaderCarrier): Future[Boolean] =
+  def matchCorporationTaxUtrWithCrn(utr: Utr, crn: CompanyRegistrationNumber)(implicit hc: HeaderCarrier): Future[Boolean] =
     monitor(s"ConsumedAPI-Agent-Subscription-matchCorporationTaxUtrWithCrn-GET") {
       val url =
         s"${appConfig.agentSubscriptionBaseUrl}/agent-subscription/corporation-tax-utr/${encodePathSegment(utr.value)}/crn/${encodePathSegment(crn.value)}"
 
       http
         .GET[HttpResponse](url.toString)
-        .map(_.status == 200)
-        .recover {
-          case _: NotFoundException => false
+        .map { response =>
+          response.status match {
+            case OK            => true
+            case s if is2xx(s) => false
+            case NOT_FOUND     => false
+            case s             => throw UpstreamErrorResponse(response.body, s)
+          }
         }
     }
 
@@ -117,53 +121,53 @@ class AgentSubscriptionConnector @Inject()(
 
       http
         .GET[HttpResponse](url.toString)
-        .map(_.status == 200)
-        .recover {
-          case _: NotFoundException => false
+        .map { response =>
+          response.status match {
+            case OK            => true
+            case s if is2xx(s) => false
+            case NOT_FOUND     => false
+            case s             => throw UpstreamErrorResponse(response.body, s)
+          }
         }
     }
 
   def subscribeAgencyToMtd(subscriptionRequest: SubscriptionRequest)(implicit hc: HeaderCarrier): Future[Arn] =
     monitor(s"ConsumedAPI-Agent-Subscription-subscribeAgencyToMtd-POST") {
-      http.POST[SubscriptionRequest, JsValue](subscriptionUrl.toString, subscriptionRequest) map { js =>
-        (js \ "arn").as[Arn]
-      }
+      transformResponse[JsValue](http.POST[SubscriptionRequest, HttpResponse](subscriptionUrl, subscriptionRequest))
+        .map(js => (js \ "arn").as[Arn])
     }
 
   def completePartialSubscription(details: CompletePartialSubscriptionBody)(implicit hc: HeaderCarrier): Future[Arn] =
     monitor(s"ConsumedAPI-Agent-Subscription-completePartialAgencySubscriptionToMtd-PUT") {
-      http.PUT[CompletePartialSubscriptionBody, JsValue](subscriptionUrl.toString, details).map { js =>
-        (js \ "arn").as[Arn]
-      }
+      transformResponse[JsValue](http.PUT[CompletePartialSubscriptionBody, HttpResponse](subscriptionUrl, details))
+        .map(js => (js \ "arn").as[Arn])
     }
 
   def getDesignatoryDetails(nino: Nino)(implicit hc: HeaderCarrier): Future[DesignatoryDetails] =
     monitor(s"ConsumedAPI-Agent-Subscription-getDesignatoryDetails-GET") {
       val url =
         s"${appConfig.agentSubscriptionBaseUrl}/agent-subscription/citizen-details/${nino.value}/designatory-details"
-      http
-        .GET[DesignatoryDetails](url)
+      transformResponse[DesignatoryDetails](http.GET[HttpResponse](url))
         .recover {
-          case f: NotFoundException =>
-            DesignatoryDetails()
+          case ex: UpstreamErrorResponse if ex.statusCode == NOT_FOUND => DesignatoryDetails()
         }
     }
 
-  def companiesHouseKnownFactCheck(crn: CompanyRegistrationNumber, surname: String)(
-    implicit hc: HeaderCarrier): Future[Boolean] =
+  def companiesHouseKnownFactCheck(crn: CompanyRegistrationNumber, surname: String)(implicit hc: HeaderCarrier): Future[Boolean] =
     monitor(s"ConsumedAPI-Agent-Subscription-getCompanyOfficers-GET") {
       val encodedCrn = UriEncoding.encodePathSegment(crn.value, "UTF-8")
       val encodedName = UriEncoding.encodePathSegment(surname.toUpperCase, "UTF-8")
-      val url =
-        s"${appConfig.agentSubscriptionBaseUrl}/agent-subscription/companies-house-api-proxy/company/$encodedCrn/officers/$encodedName"
+      val url = s"${appConfig.agentSubscriptionBaseUrl}/agent-subscription/companies-house-api-proxy/company/$encodedCrn/officers/$encodedName"
       http
         .GET[HttpResponse](url)
-        .map(_.status == 200)
-    }.recover {
-      case e: NotFoundException => {
-        Logger.warn(s" ${e.message}")
-        false
-      }
+        .map { response =>
+          response.status match {
+            case OK            => true
+            case s if is2xx(s) => false
+            case NOT_FOUND     => false
+            case s             => throw UpstreamErrorResponse(response.body, s)
+          }
+        }
     }
 
   private val subscriptionUrl = s"${appConfig.agentSubscriptionBaseUrl}/agent-subscription/subscription"

@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend
 
-import play.api.Logger
+import play.api.Logging
 import play.api.data.Form
 import play.api.data.Forms.{mapping, _}
 import play.api.i18n.Messages
@@ -24,12 +24,12 @@ import play.api.mvc.{AnyContent, Call, Request}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
-import uk.gov.hmrc.agentsubscriptionfrontend.support.TaxIdentifierFormatters.{normalizeUtr, normalizedText}
+import uk.gov.hmrc.agentsubscriptionfrontend.support.TaxIdentifierFormatters.normalizedText
 import uk.gov.hmrc.agentsubscriptionfrontend.validators.CommonValidators._
 import uk.gov.hmrc.domain.Nino
 import uk.gov.voa.play.form.ConditionalMappings.{mandatoryIfEqual, mandatoryIfTrue}
 
-package object controllers {
+package object controllers extends Logging {
 
   def continueOrStop(next: Call, previous: Call)(implicit request: Request[AnyContent]): Call = {
 
@@ -40,7 +40,7 @@ package object controllers {
       case Some("continue") => next
       case Some("save")     => routes.TaskListController.savedProgress(Some(previous.url))
       case _ => {
-        Logger.warn("unexpected value in submit")
+        logger.warn("unexpected value in submit")
         routes.TaskListController.showTaskList()
       }
     }
@@ -49,11 +49,7 @@ package object controllers {
 
   object BusinessIdentificationForms {
 
-    private val businessTypes = List(
-      BusinessType.LimitedCompany.key,
-      BusinessType.Llp.key,
-      BusinessType.Partnership.key,
-      BusinessType.SoleTrader.key)
+    private val businessTypes = List(BusinessType.LimitedCompany.key, BusinessType.Llp.key, BusinessType.Partnership.key, BusinessType.SoleTrader.key)
 
     val businessTypeForm: Form[BusinessType] =
       Form[BusinessType](
@@ -81,10 +77,8 @@ package object controllers {
 
     val confirmBusinessForm: Form[ConfirmBusiness] =
       Form[ConfirmBusiness](
-        mapping(
-          "confirmBusiness" -> optional(text).verifying(radioInputSelected("error.confirm-business-value.invalid")))(
-          answer => ConfirmBusiness(RadioInputAnswer.apply(answer.getOrElse(""))))(answer =>
-          Some(RadioInputAnswer.unapply(answer.confirm)))
+        mapping("confirmBusiness" -> optional(text).verifying(radioInputSelected("error.confirm-business-value.invalid")))(answer =>
+          ConfirmBusiness(RadioInputAnswer.apply(answer.getOrElse(""))))(answer => Some(RadioInputAnswer.unapply(answer.confirm)))
           .verifying(
             "error.confirm-business-value.invalid",
             submittedAnswer => Seq(Yes, No).contains(submittedAnswer.confirm)
@@ -130,20 +124,16 @@ package object controllers {
           .verifying(radioInputStringSelected("invasive.error.no-radio.selected")),
         "saAgentCode" -> mandatoryIfTrue("hasSaAgentCode", saAgentCode)
           .transform[String](_.getOrElse(""), s => Some(s))
-      )((hasSaAgentCode, saAgentCode) => RadioInvasiveStartSaAgentCode(hasSaAgentCode.toBoolean, saAgentCode))(
-        radioInvasiveStartSaAgentCode =>
-          Some((radioInvasiveStartSaAgentCode.hasSaAgentCode.toString, radioInvasiveStartSaAgentCode.saAgentCode))))
+      )((hasSaAgentCode, saAgentCode) => RadioInvasiveStartSaAgentCode(hasSaAgentCode.toBoolean, saAgentCode))(radioInvasiveStartSaAgentCode =>
+        Some((radioInvasiveStartSaAgentCode.hasSaAgentCode.toString, radioInvasiveStartSaAgentCode.saAgentCode))))
   }
 
   object SubscriptionControllerForms {
     val linkClientsForm: Form[LinkClients] =
       Form[LinkClients](
-        mapping("autoMapping" -> optional(text).verifying(radioInputSelected("linkClients.error.no-radio-selected")))(
-          ans => LinkClients(RadioInputAnswer.apply(ans.getOrElse(""))))(lc =>
-          Some(RadioInputAnswer.unapply(lc.autoMapping)))
-          .verifying(
-            "error.link-clients-value.invalid",
-            submittedLinkClients => Seq(Yes, No).contains(submittedLinkClients.autoMapping)))
+        mapping("autoMapping" -> optional(text).verifying(radioInputSelected("linkClients.error.no-radio-selected")))(ans =>
+          LinkClients(RadioInputAnswer.apply(ans.getOrElse(""))))(lc => Some(RadioInputAnswer.unapply(lc.autoMapping)))
+          .verifying("error.link-clients-value.invalid", submittedLinkClients => Seq(Yes, No).contains(submittedLinkClients.autoMapping)))
   }
 
   object CompanyRegistrationForms {
@@ -158,8 +148,8 @@ package object controllers {
     def checkAmlsForm: Form[RadioInputAnswer] =
       Form[RadioInputAnswer](
         mapping("registeredAmls" -> optional(text)
-          .verifying("error.check-amls-value.invalid", a => a.contains("yes") || a.contains("no")))(a =>
-          RadioInputAnswer.apply(a.getOrElse("")))(a => Some(RadioInputAnswer.unapply(a))))
+          .verifying("error.check-amls-value.invalid", a => a.contains("yes") || a.contains("no")))(a => RadioInputAnswer.apply(a.getOrElse("")))(a =>
+          Some(RadioInputAnswer.unapply(a))))
 
     def appliedForAmlsForm: Form[RadioInputAnswer] =
       Form[RadioInputAnswer](
@@ -188,8 +178,7 @@ package object controllers {
 
       val expiry = "expiry"
       val dateFields =
-        (error: FormError) =>
-          error.key == s"$expiry.day" || error.key == s"$expiry.month" || error.key == s"$expiry.year"
+        (error: FormError) => error.key == s"$expiry.day" || error.key == s"$expiry.month" || error.key == s"$expiry.year"
 
       def refineErrors(dateFieldErrors: Seq[FormError]): Option[String] =
         dateFieldErrors.map(_.key).map(k => "expiry.".r.replaceFirstIn(k, "")).sorted match {
@@ -222,8 +211,7 @@ package object controllers {
 
       val appliedOn = "appliedOn"
       val dateFields =
-        (error: FormError) =>
-          error.key == s"$appliedOn.day" || error.key == s"$appliedOn.month" || error.key == s"$appliedOn.year"
+        (error: FormError) => error.key == s"$appliedOn.day" || error.key == s"$appliedOn.month" || error.key == s"$appliedOn.year"
 
       def refineErrors(dateFieldErrors: Seq[FormError]): Option[String] =
         dateFieldErrors.map(_.key).map(k => s"$appliedOn.".r.replaceFirstIn(k, "")).sorted match {
@@ -257,8 +245,7 @@ package object controllers {
 
     val contactEmailCheckForm = Form[ContactEmailCheck](
       mapping("check" -> optional(text).verifying(radioInputSelected("error.contact-email-check.invalid")))(answer =>
-        ContactEmailCheck(RadioInputAnswer.apply(answer.getOrElse(""))))(answer =>
-        Some(RadioInputAnswer.unapply(answer.check)))
+        ContactEmailCheck(RadioInputAnswer.apply(answer.getOrElse(""))))(answer => Some(RadioInputAnswer.unapply(answer.check)))
         .verifying(
           "error.contact-email-check.invalid",
           submittedAnswer => Seq(Yes, No).contains(submittedAnswer.check)
@@ -272,9 +259,8 @@ package object controllers {
     )
 
     val contactTradingNameCheckForm = Form[ContactTradingNameCheck](
-      mapping("check" -> optional(text).verifying(radioInputSelected("error.contact-trading-name-check.invalid")))(
-        answer => ContactTradingNameCheck(RadioInputAnswer.apply(answer.getOrElse(""))))(answer =>
-        Some(RadioInputAnswer.unapply(answer.check)))
+      mapping("check" -> optional(text).verifying(radioInputSelected("error.contact-trading-name-check.invalid")))(answer =>
+        ContactTradingNameCheck(RadioInputAnswer.apply(answer.getOrElse(""))))(answer => Some(RadioInputAnswer.unapply(answer.check)))
         .verifying(
           "error.contact-trading-name-check.invalid",
           submittedAnswer => Seq(Yes, No).contains(submittedAnswer.check)
@@ -288,9 +274,8 @@ package object controllers {
     )
 
     val contactTradingAddressCheckForm = Form[ContactTradingAddressCheck](
-      mapping("check" -> optional(text).verifying(radioInputSelected("error.contact-trading-address-check.invalid")))(
-        answer => ContactTradingAddressCheck(RadioInputAnswer.apply(answer.getOrElse(""))))(answer =>
-        Some(RadioInputAnswer.unapply(answer.check)))
+      mapping("check" -> optional(text).verifying(radioInputSelected("error.contact-trading-address-check.invalid")))(answer =>
+        ContactTradingAddressCheck(RadioInputAnswer.apply(answer.getOrElse(""))))(answer => Some(RadioInputAnswer.unapply(answer.check)))
         .verifying(
           "error.contact-trading-address-check.invalid",
           submittedAnswer => Seq(Yes, No).contains(submittedAnswer.check)

@@ -21,8 +21,7 @@ import java.util.UUID
 
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{JsPath, OFormat}
-import uk.gov.hmrc.agentsubscriptionfrontend.config.view.CYACheckResult
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, AuthProviderId, BusinessAddress, ContactEmailData, ContactTradingAddressData, ContactTradingNameData}
+import uk.gov.hmrc.agentsubscriptionfrontend.models._
 
 /**
   * A Mongo record which represents the user's current journey in setting up a new
@@ -59,9 +58,7 @@ object SubscriptionJourneyRecord {
       (JsPath \ "contactEmailData").formatNullable[ContactEmailData] and
       (JsPath \ "contactTradingNameData").formatNullable[ContactTradingNameData] and
       (JsPath \ "contactTradingAddressData")
-        .formatNullable[ContactTradingAddressData])(
-      SubscriptionJourneyRecord.apply,
-      unlift(SubscriptionJourneyRecord.unapply))
+        .formatNullable[ContactTradingAddressData])(SubscriptionJourneyRecord.apply, unlift(SubscriptionJourneyRecord.unapply))
 
   def fromAgentSession(
     agentSession: AgentSession,
@@ -71,8 +68,7 @@ object SubscriptionJourneyRecord {
       authProviderId = authProviderId,
       continueId = Some(UUID.randomUUID().toString.replace("-", "")),
       businessDetails = BusinessDetails(
-        businessType =
-          agentSession.businessType.getOrElse(throw new RuntimeException("no business type found in agent session")),
+        businessType = agentSession.businessType.getOrElse(throw new RuntimeException("no business type found in agent session")),
         utr = agentSession.utr.getOrElse(throw new RuntimeException("no utr found in agent session")),
         postcode = agentSession.postcode.getOrElse(throw new RuntimeException("no postcode found in agent session")),
         registration = agentSession.registration,

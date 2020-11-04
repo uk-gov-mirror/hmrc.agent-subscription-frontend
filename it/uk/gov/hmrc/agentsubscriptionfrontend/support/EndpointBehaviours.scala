@@ -2,7 +2,6 @@ package uk.gov.hmrc.agentsubscriptionfrontend.support
 
 import java.net.URLEncoder
 
-import akka.stream.Materializer
 import org.scalatest.Assertion
 import play.api.mvc._
 import play.api.test.FakeRequest
@@ -18,8 +17,6 @@ import scala.concurrent.ExecutionContext.Implicits.global
 trait EndpointBehaviours {
   me: BaseISpec =>
   type PlayRequest = Request[AnyContent] => Result
-
-  private implicit val materializer: Materializer = app.materializer
 
   protected def authenticatedAs(user: SampleUser): FakeRequest[AnyContentAsEmpty.type]
 

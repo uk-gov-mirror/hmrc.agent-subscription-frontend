@@ -77,11 +77,7 @@ class AuditService @Inject()(val auditConnector: AuditConnector)(implicit ec: Ex
     utr: Utr,
     postcode: Postcode,
     assuranceResults: AssuranceResults,
-    assuranceCheckInput: Option[AssuranceCheckInput] = None)(
-    implicit request: Request[AnyContent],
-    agent: Agent,
-    hc: HeaderCarrier,
-    ec: ExecutionContext): Future[Unit] = {
+    assuranceCheckInput: Option[AssuranceCheckInput] = None)(implicit request: Request[AnyContent], agent: Agent, hc: HeaderCarrier): Future[Unit] = {
     implicit val auditData: AuditData = new AuditData
 
     auditData
@@ -130,8 +126,7 @@ class AuditService @Inject()(val auditConnector: AuditConnector)(implicit ec: Ex
     sendAgentAssuranceAuditEvent(auditData)
   }
 
-  def sendAgentAssuranceAuditEvent(
-    auditData: AuditData)(implicit hc: HeaderCarrier, request: Request[Any]): Future[Unit] =
+  def sendAgentAssuranceAuditEvent(auditData: AuditData)(implicit hc: HeaderCarrier, request: Request[Any]): Future[Unit] =
     auditEvent(AgentAssurance, "agent-assurance", collectDetails(auditData.getDetails, agentAssuranceDetailsFields))
 
   private[audit] def collectDetails(data: Map[String, Any], fields: Seq[(String, Option[Any])]): Seq[(String, Any)] =
@@ -140,16 +135,14 @@ class AuditService @Inject()(val auditConnector: AuditConnector)(implicit ec: Ex
       case (f, Some(d))                  => (f, d)
     }
 
-  private[audit] def auditEvent(
-    event: AgentSubscriptionFrontendEvent,
-    transactionName: String,
-    details: Seq[(String, Any)] = Seq.empty)(implicit hc: HeaderCarrier, request: Request[Any]): Future[Unit] =
+  private[audit] def auditEvent(event: AgentSubscriptionFrontendEvent, transactionName: String, details: Seq[(String, Any)] = Seq.empty)(
+    implicit hc: HeaderCarrier,
+    request: Request[Any]): Future[Unit] =
     send(createEvent(event, transactionName, details: _*))
 
-  private[audit] def createEvent(
-    event: AgentSubscriptionFrontendEvent,
-    transactionName: String,
-    details: (String, Any)*)(implicit hc: HeaderCarrier, request: Request[Any]): DataEvent = {
+  private[audit] def createEvent(event: AgentSubscriptionFrontendEvent, transactionName: String, details: (String, Any)*)(
+    implicit hc: HeaderCarrier,
+    request: Request[Any]): DataEvent = {
 
     def toString(x: Any): String = x match {
       case t: TaxIdentifier => t.value

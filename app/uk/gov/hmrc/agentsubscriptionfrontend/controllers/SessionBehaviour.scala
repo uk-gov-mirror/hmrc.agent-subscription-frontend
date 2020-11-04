@@ -32,8 +32,7 @@ trait SessionBehaviour {
   implicit val ec: ExecutionContext
   val subscriptionJourneyService: SubscriptionJourneyService
 
-  protected def withValidSession(body: (BusinessType, AgentSession) => Future[Result])(
-    implicit hc: HeaderCarrier): Future[Result] =
+  protected def withValidSession(body: (BusinessType, AgentSession) => Future[Result])(implicit hc: HeaderCarrier): Future[Result] =
     sessionStoreService.fetchAgentSession.flatMap {
       case Some(agentSession) =>
         agentSession.businessType match {
@@ -44,14 +43,12 @@ trait SessionBehaviour {
       case None => Redirect(routes.BusinessTypeController.showBusinessTypeForm())
     }
 
-  protected def updateSessionAndRedirect(updatedSession: AgentSession)(redirectTo: Call)(
-    implicit hc: HeaderCarrier): Future[Result] =
+  protected def updateSessionAndRedirect(updatedSession: AgentSession)(redirectTo: Call)(implicit hc: HeaderCarrier): Future[Result] =
     sessionStoreService
       .cacheAgentSession(updatedSession)
       .map(_ => Redirect(redirectTo))
 
-  protected def updateSubscriptionJourneyRecordAndRedirect(subscriptionJourneyRecord: SubscriptionJourneyRecord)(
-    redirectTo: Call)(
+  protected def updateSubscriptionJourneyRecordAndRedirect(subscriptionJourneyRecord: SubscriptionJourneyRecord)(redirectTo: Call)(
     implicit hc: HeaderCarrier
   ): Future[Result] =
     subscriptionJourneyService.saveJourneyRecord(subscriptionJourneyRecord).map(_ => Redirect(redirectTo))

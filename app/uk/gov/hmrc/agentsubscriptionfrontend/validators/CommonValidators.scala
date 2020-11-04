@@ -130,8 +130,7 @@ object CommonValidators {
       "year"  -> text.verifying("year", y => !y.trim.isEmpty || y.matches("^[0-9]{1,4}$")),
       "month" -> text.verifying("month", y => !y.trim.isEmpty || y.matches("^[0-9]{1,2}$")),
       "day"   -> text.verifying("day", d => !d.trim.isEmpty || d.matches("^[0-9]{1,2}$"))
-    ).verifying(
-        checkOneAtATime(Seq(invalidDateConstraint, pastExpiryDateConstraint, within13MonthsExpiryDateConstraint)))
+    ).verifying(checkOneAtATime(Seq(invalidDateConstraint, pastExpiryDateConstraint, within13MonthsExpiryDateConstraint)))
       .transform(
         { case (y, m, d) => LocalDate.of(y.trim.toInt, m.trim.toInt, d.trim.toInt) },
         (date: LocalDate) => (date.getYear.toString, date.getMonthValue.toString, date.getDayOfMonth.toString)
@@ -142,8 +141,7 @@ object CommonValidators {
       "year"  -> text.verifying("year", y => !y.trim.isEmpty || y.matches("^[0-9]{1,4}$")),
       "month" -> text.verifying("month", y => !y.trim.isEmpty || y.matches("^[0-9]{1,2}$")),
       "day"   -> text.verifying("day", d => !d.trim.isEmpty || d.matches("^[0-9]{1,2}$"))
-    ).verifying(
-        checkOneAtATime(Seq(invalidDateConstraint, within6MonthsPastDateConstraint, futureApplicationConstraint)))
+    ).verifying(checkOneAtATime(Seq(invalidDateConstraint, within6MonthsPastDateConstraint, futureApplicationConstraint)))
       .transform(
         { case (y, m, d) => LocalDate.of(y.trim.toInt, m.trim.toInt, d.trim.toInt) },
         (date: LocalDate) => (date.getYear.toString, date.getMonthValue.toString, date.getDayOfMonth.toString)
@@ -158,10 +156,7 @@ object CommonValidators {
     optional(
       text
         .verifying(maxLength(AddresslineMaxLength, s"error.addressline.$lineNumber.maxlength"))
-        .verifying(
-          desText(
-            msgKeyRequired = s"error.addressline.$lineNumber.empty",
-            msgKeyInvalid = s"error.addressline.$lineNumber.invalid")))
+        .verifying(desText(msgKeyRequired = s"error.addressline.$lineNumber.empty", msgKeyInvalid = s"error.addressline.$lineNumber.invalid")))
 
   def radioInputSelected[T](message: String = "error.no-radio-selected"): Constraint[Option[T]] =
     Constraint[Option[T]] { fieldValue: Option[T] =>
@@ -190,7 +185,7 @@ object CommonValidators {
   }
 
   // Same as play.api.data.validation.Constraints.maxLength but with a chance to use a custom message instead of error.maxLength
-  private def maxLength(length: Int, messageKey: String = "error.maxLength"): Constraint[String] =
+  private def maxLength(length: Int, messageKey: String): Constraint[String] =
     Constraint[String]("constraint.maxLength", length) { o =>
       require(length >= 0, "string maxLength must not be negative")
       if (o == null) Invalid(ValidationError(messageKey, length))
@@ -288,12 +283,11 @@ object CommonValidators {
       Valid
   }
 
-  private def checkOneAtATime[T](firstConstraint: Constraint[T], secondConstraint: Constraint[T]) = Constraint[T] {
-    fieldValue: T =>
-      firstConstraint(fieldValue) match {
-        case i @ Invalid(_) => i
-        case Valid          => secondConstraint(fieldValue)
-      }
+  private def checkOneAtATime[T](firstConstraint: Constraint[T], secondConstraint: Constraint[T]) = Constraint[T] { fieldValue: T =>
+    firstConstraint(fieldValue) match {
+      case i @ Invalid(_) => i
+      case Valid          => secondConstraint(fieldValue)
+    }
   }
 
   def checkOneAtATime[A](constraints: Seq[Constraint[A]]): Constraint[A] = Constraint[A] { fieldValue: A =>
@@ -311,21 +305,20 @@ object CommonValidators {
     loop(constraints)
   }
 
-  private def utrConstraint(errorMessages: UtrErrors = DefaultUtrErrors): Constraint[String] = Constraint[String] {
-    fieldValue: String =>
-      val formattedField = fieldValue.replace(" ", "")
-      val (blank, invalid) = errorMessages
+  private def utrConstraint(errorMessages: UtrErrors = DefaultUtrErrors): Constraint[String] = Constraint[String] { fieldValue: String =>
+    val formattedField = fieldValue.replace(" ", "")
+    val (blank, invalid) = errorMessages
 
-      def isNumber(str: String): Boolean = str.map(_.isDigit).reduceOption(_ && _).getOrElse(false)
+    def isNumber(str: String): Boolean = str.map(_.isDigit).reduceOption(_ && _).getOrElse(false)
 
-      Constraints.nonEmpty.apply(formattedField) match {
-        case _: Invalid => Invalid(ValidationError(blank))
-        case _ if !isNumber(formattedField) || formattedField.length != UtrMaxLength =>
-          Invalid(ValidationError(invalid))
-        case _ if !Utr.isValid(formattedField) =>
-          Invalid(ValidationError(invalid))
-        case _ => Valid
-      }
+    Constraints.nonEmpty.apply(formattedField) match {
+      case _: Invalid => Invalid(ValidationError(blank))
+      case _ if !isNumber(formattedField) || formattedField.length != UtrMaxLength =>
+        Invalid(ValidationError(invalid))
+      case _ if !Utr.isValid(formattedField) =>
+        Invalid(ValidationError(invalid))
+      case _ => Valid
+    }
   }
 
   private val ninoConstraint: Constraint[String] = Constraint[String] { fieldValue: String =>
@@ -347,17 +340,16 @@ object CommonValidators {
     }
   }
 
-  private val invalidDateConstraint: Constraint[(String, String, String)] = Constraint[(String, String, String)] {
-    data: (String, String, String) =>
-      val (year, month, day) = data
+  private val invalidDateConstraint: Constraint[(String, String, String)] = Constraint[(String, String, String)] { data: (String, String, String) =>
+    val (year, month, day) = data
 
-      Try {
-        require(year.length == 4, "Year must be 4 digits")
-        LocalDate.of(year.toInt, month.toInt, day.toInt)
-      } match {
-        case Failure(_) => Invalid(ValidationError("error.moneyLaunderingCompliance.date.invalid"))
-        case Success(_) => Valid
-      }
+    Try {
+      require(year.length == 4, "Year must be 4 digits")
+      LocalDate.of(year.toInt, month.toInt, day.toInt)
+    } match {
+      case Failure(_) => Invalid(ValidationError("error.moneyLaunderingCompliance.date.invalid"))
+      case Success(_) => Valid
+    }
   }
 
   private val pastExpiryDateConstraint: Constraint[(String, String, String)] = Constraint[(String, String, String)] {
@@ -394,9 +386,7 @@ object CommonValidators {
       else
         Invalid(
           ValidationError(
-            Messages(
-              "error.amls.pending.appliedOn.date.too-old",
-              sixMonthsEarlier.format(DateTimeFormatter.ofPattern("dd MMMM yyyy")))))
+            Messages("error.amls.pending.appliedOn.date.too-old", sixMonthsEarlier.format(DateTimeFormatter.ofPattern("dd MMMM yyyy")))))
     }
 
   private def validateAMLSBodies(amlsCode: String, bodies: Set[String]): Boolean =

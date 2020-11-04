@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.auth
 
-import play.api.{Configuration, Logger}
+import play.api.{Configuration, Logging}
 import play.api.mvc.Results._
 import play.api.mvc.{Request, Result}
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
@@ -44,9 +44,11 @@ class Agent(
   val authNino: Option[String]) {
 
   def hasIrPayeAgent: Option[Enrolment] = enrolments.find(e => e.key == "IR-PAYE-AGENT" && e.isActivated)
+
   def hasIrsaAgent: Option[Enrolment] = enrolments.find(e => e.key == "IR-SA-AGENT" && e.isActivated)
 
   def authProviderId: AuthProviderId = AuthProviderId(maybeCredentials.fold("unknown")(_.providerId))
+
   def authProviderType: String = "GovernmentGateway"
 
   def getMandatorySubscriptionRecord: SubscriptionJourneyRecord =
@@ -65,12 +67,10 @@ class Agent(
     cleanCredsFold(None: Option[AuthProviderId])(Some(this.authProviderId))
 
   def withCleanCredsOrCreateNewAccount(cleanCredsBody: => Future[Result]): Future[Result] =
-    this.cleanCredsFold(isDirty = toFuture(Redirect(routes.BusinessIdentificationController.showCreateNewAccount())))(
-      isClean = cleanCredsBody)
+    this.cleanCredsFold(isDirty = toFuture(Redirect(routes.BusinessIdentificationController.showCreateNewAccount())))(isClean = cleanCredsBody)
 
   def withCleanCredsOrSignIn(cleanCredsBody: => Future[Result]): Future[Result] =
-    this.cleanCredsFold(isDirty = toFuture(Redirect(routes.SubscriptionController.showSignInWithNewID())))(
-      isClean = cleanCredsBody)
+    this.cleanCredsFold(isDirty = toFuture(Redirect(routes.SubscriptionController.showSignInWithNewID())))(isClean = cleanCredsBody)
 
 }
 
@@ -80,19 +80,22 @@ object Agent {
     def unapply(agent: Agent): Option[Unit] =
       if (agent.enrolments.nonEmpty) Some(()) else None
   }
+
 }
 
-trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring {
+trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring with Logging {
 
   def redirectUrlActions: RedirectUrlActions
+
   def appConfig: AppConfig
+
   def config: Configuration
 
   def subscriptionJourneyService: SubscriptionJourneyService
 
   /**
     * For a user logged in as a subscribed agent (finished journey)
-    * */
+    **/
   def withSubscribedAgent[A](body: (Arn, Option[SubscriptionJourneyRecord]) => Future[Result])(
     implicit request: Request[A],
     hc: HeaderCarrier,
@@ -107,12 +110,12 @@ trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring
                   case Some(arn) =>
                     body(arn, sjrOpt)
                   case None =>
-                    Logger.warn("could not find the Arn for the logged in agent to continue")
+                    logger.warn("could not find the Arn for the logged in agent to continue")
                     Future successful Forbidden
                 }
               }
             case None =>
-              Logger.warn("User does not have the correct credentials")
+              logger.warn("User does not have the correct credentials")
               Redirect(routes.SignedOutController.signOut())
           }
       }
@@ -121,12 +124,9 @@ trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring
       }
 
   /**
-    *  User is half way through a setup/onboarding journey
-    * */
-  def withSubscribingAgent[A](body: Agent => Future[Result])(
-    implicit request: Request[A],
-    hc: HeaderCarrier,
-    ec: ExecutionContext): Future[Result] =
+    * User is half way through a setup/onboarding journey
+    **/
+  def withSubscribingAgent[A](body: Agent => Future[Result])(implicit request: Request[A], hc: HeaderCarrier, ec: ExecutionContext): Future[Result] =
     authorised(AuthProviders(GovernmentGateway) and AffinityGroup.Agent)
       .retrieve(allEnrolments and credentials and nino) {
         case enrolments ~ creds ~ mayBeNino =>
@@ -151,8 +151,7 @@ trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring
         handleException
       }
 
-  def withAuthenticatedUser[A](
-    body: => Future[Result])(implicit request: Request[A], hc: HeaderCarrier, ec: ExecutionContext): Future[Result] =
+  def withAuthenticatedUser[A](body: => Future[Result])(implicit request: Request[A], hc: HeaderCarrier, ec: ExecutionContext): Future[Result] =
     authorised(AuthProviders(GovernmentGateway))(body)
       .recover {
         handleException
@@ -167,7 +166,7 @@ trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring
       identifier <- enrolment.getIdentifier("AgentReferenceNumber")
     } yield Arn(identifier.value)
 
-  private def handleException(implicit ec: ExecutionContext, request: Request[_]): PartialFunction[Throwable, Result] = {
+  private def handleException(implicit request: Request[_]): PartialFunction[Throwable, Result] = {
 
     case _: UnsupportedAffinityGroup =>
       mark("Count-Subscription-NonAgent")
@@ -177,11 +176,11 @@ trait AuthActions extends AuthorisedFunctions with AuthRedirects with Monitoring
       toGGLogin(s"${appConfig.agentSubscriptionFrontendExternalUrl}${request.uri}")
 
     case _: InsufficientEnrolments =>
-      Logger.warn(s"Logged in user does not have required enrolments")
+      logger.warn(s"Logged in user does not have required enrolments")
       Forbidden
 
     case _: UnsupportedAuthProvider =>
-      Logger.warn("User is not logged in via  GovernmentGateway, signing out and redirecting")
+      logger.warn("User is not logged in via  GovernmentGateway, signing out and redirecting")
       Redirect(routes.SignedOutController.signOut())
   }
 }

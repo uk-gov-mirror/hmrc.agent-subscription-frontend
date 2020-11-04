@@ -130,9 +130,7 @@ class NationalInsuranceControllerISpec extends BaseISpec with SessionDataMissing
         AgentSubscriptionStub.givenDesignatoryDetailsReturnsStatus(Nino("AE123456C"), 404)
         implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD.copy(nino = Some("AE123456C"))).withFormUrlEncodedBody("nino" -> "AE123456C")
         sessionStoreService.currentSession.agentSession = Some(agentSession)
-
         val result = await(controller.submitNationalInsuranceNumberForm()(request))
-
         status(result) shouldBe 303
 
         redirectLocation(result) shouldBe Some(routes.VatDetailsController.showRegisteredForVatForm().url)

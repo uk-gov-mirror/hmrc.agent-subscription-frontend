@@ -96,7 +96,6 @@ class CompanyRegistrationControllerISpec extends BaseISpec with SessionDataMissi
     }
 
     "redirect to /unique-taxpayer-reference page utr is not available in agent session" in new TestSetupNoJourneyRecord{
-      val crn = CompanyRegistrationNumber("12345678")
 
       implicit val request = authenticatedAs(subscribingAgentEnrolledForNonMTD)
         .withFormUrlEncodedBody("crn" -> "12345678")

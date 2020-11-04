@@ -7,7 +7,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, MetricTestSupport}
 import uk.gov.hmrc.domain.{Nino, SaAgentReference}
 import uk.gov.hmrc.http._
-import uk.gov.hmrc.play.bootstrap.http.HttpClient
+import uk.gov.hmrc.http.HttpClient
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -124,13 +124,13 @@ class AgentAssuranceConnectorISpec extends BaseISpec with MetricTestSupport {
     }
     "throw Upstream4xxResponse when agent-assurance responds with 401" in {
       givenManuallyAssuredAgentsReturns(utr.value, 401)
-      intercept[Upstream4xxResponse] {
+      intercept[UpstreamErrorResponse] {
         await(connector.isManuallyAssuredAgent(utr))
       }
     }
     "throw Upstream5xxResponse when agent-assurance responds with 500" in {
       givenManuallyAssuredAgentsReturns(utr.value, 500)
-      intercept[Upstream5xxResponse] {
+      intercept[UpstreamErrorResponse] {
         await(connector.isManuallyAssuredAgent(utr))
       }
     }

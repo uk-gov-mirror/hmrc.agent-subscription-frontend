@@ -18,7 +18,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
-import play.api.i18n.{I18nSupport, Lang, Langs, MessagesApi}
+import play.api.i18n.Lang
 import play.api.mvc.{Action, AnyContent, Call, MessagesControllerComponents}
 import play.api.{Configuration, Environment, Logger}
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
@@ -32,7 +32,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, Subsc
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html._
 import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.play.bootstrap.controller.FrontendController
+import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -106,7 +106,7 @@ class ContactDetailsController @Inject()(
 
                     val (check, mayBeEmail): (Boolean, Option[String]) =
                       sjr.contactEmailData
-                        .fold(useBusinessEmail, maybeBusinessEmail)(data =>
+                        .fold((useBusinessEmail, maybeBusinessEmail))(data =>
                           if (useBusinessEmail) (true, maybeBusinessEmail)
                           else (false, data.contactEmail))
 
@@ -193,11 +193,7 @@ class ContactDetailsController @Inject()(
                 ))
               }
               case None =>
-                Ok(
-                  contactTradingNameCheckTemplate(
-                    contactTradingNameCheckForm,
-                    businessName,
-                    isChanging.getOrElse(false)))
+                Ok(contactTradingNameCheckTemplate(contactTradingNameCheckForm, businessName, isChanging.getOrElse(false)))
           })
       }
     }
@@ -221,7 +217,7 @@ class ContactDetailsController @Inject()(
                   validForm => {
                     val hasTradingName = RadioInputAnswer.toBoolean(validForm.check)
                     val (check, maybeTradingName): (Boolean, Option[String]) =
-                      sjr.contactTradingNameData.fold(hasTradingName, Option.empty[String])(data =>
+                      sjr.contactTradingNameData.fold((hasTradingName, Option.empty[String]))(data =>
                         if (hasTradingName) (true, data.contactTradingName)
                         else (false, None))
 
@@ -231,8 +227,7 @@ class ContactDetailsController @Inject()(
                       else routes.TaskListController.showTaskList()
 
                     subscriptionJourneyService
-                      .saveJourneyRecord(
-                        sjr.copy(contactTradingNameData = Some(ContactTradingNameData(check, maybeTradingName))))
+                      .saveJourneyRecord(sjr.copy(contactTradingNameData = Some(ContactTradingNameData(check, maybeTradingName))))
                       .map(_ => Redirect(call))
                   }
               )
@@ -330,11 +325,7 @@ class ContactDetailsController @Inject()(
               contactTradingAddressCheckForm.bindFromRequest
                 .fold(
                   formWithErrors => {
-                    Ok(
-                      contactTradingAddressCheckTemplate(
-                        formWithErrors,
-                        formatBusinessAddress(businessAddress),
-                        isChanging.getOrElse(false)))
+                    Ok(contactTradingAddressCheckTemplate(formWithErrors, formatBusinessAddress(businessAddress), isChanging.getOrElse(false)))
                   },
                   validForm => {
                     val updatedSjr = if (validForm.check == Yes) {
@@ -385,8 +376,7 @@ class ContactDetailsController @Inject()(
                   validDesAddress => {
                     mark("Count-Subscription-AddressLookup-Success")
                     val updatedSjr =
-                      sjr.copy(contactTradingAddressData =
-                        Some(ContactTradingAddressData(true, Some(BusinessAddress(validDesAddress)))))
+                      sjr.copy(contactTradingAddressData = Some(ContactTradingAddressData(true, Some(BusinessAddress(validDesAddress)))))
 
                     val call: Call =
                       if (isChanging.getOrElse(false)) routes.SubscriptionController.showCheckAnswers()
@@ -405,11 +395,6 @@ class ContactDetailsController @Inject()(
   }
 
   private def formatBusinessAddress(address: BusinessAddress): List[String] =
-    List(
-      Some(address.addressLine1),
-      address.addressLine2,
-      address.addressLine3,
-      address.addressLine4,
-      address.postalCode).flatten
+    List(Some(address.addressLine1), address.addressLine2, address.addressLine3, address.addressLine4, address.postalCode).flatten
 
 }

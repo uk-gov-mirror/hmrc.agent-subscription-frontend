@@ -42,6 +42,5 @@ object AMLSLoader {
       case Failure(ex)               => throw new AMLSLoaderException(ex.getMessage)
     }
 
-  final class AMLSLoaderException(message: String)
-      extends Exception(s"Unexpected error while loading AMLS Bodies: $message")
+  final class AMLSLoaderException(message: String) extends Exception(s"Unexpected error while loading AMLS Bodies: $message")
 }

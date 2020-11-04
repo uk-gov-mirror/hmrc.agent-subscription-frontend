@@ -3,15 +3,15 @@ import java.time.LocalDate
 
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
+import play.api.test.Helpers._
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.models.{AmlsDetails, AuthProviderId, ContactEmailData, ContactTradingAddressData, ContactTradingNameData, PendingDetails, RegisteredDetails}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.AmlsData
+import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionJourneyStub.{givenNoSubscriptionJourneyRecordExists, givenSubscriptionJourneyRecordExists}
-import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.{subscribingAgentEnrolledForHMRCASAGENT, subscribingAgentEnrolledForNonMTD}
+import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.subscribingAgentEnrolledForNonMTD
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestData}
-import play.api.test.Helpers._
 
 class TaskListControllerISpec extends BaseISpec {
   lazy val controller: TaskListController = app.injector.instanceOf[TaskListController]

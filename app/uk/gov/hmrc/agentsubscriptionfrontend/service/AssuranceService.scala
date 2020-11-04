@@ -83,56 +83,51 @@ class AssuranceService @Inject()(
       Future.successful(None)
     }
 
-  def checkActiveCesaRelationship(
-    userEnteredNinoOrUtr: TaxIdentifier,
-    name: String,
-    saAgentReference: SaAgentReference)(
+  def checkActiveCesaRelationship(userEnteredNinoOrUtr: TaxIdentifier, name: String, saAgentReference: SaAgentReference)(
     implicit
     hc: HeaderCarrier,
     ec: ExecutionContext,
     request: Request[AnyContent],
     agent: Agent): Future[Boolean] =
-    assuranceConnector.hasActiveCesaRelationship(userEnteredNinoOrUtr, name, saAgentReference).map {
-      relationshipExists =>
-        val (userEnteredNino, userEnteredUtr) = userEnteredNinoOrUtr match {
-          case nino @ Nino(_) => (Some(nino), None)
-          case utr @ Utr(_)   => (None, Some(utr))
-        }
+    assuranceConnector.hasActiveCesaRelationship(userEnteredNinoOrUtr, name, saAgentReference).map { relationshipExists =>
+      val (userEnteredNino, userEnteredUtr) = userEnteredNinoOrUtr match {
+        case nino @ Nino(_) => (Some(nino), None)
+        case utr @ Utr(_)   => (None, Some(utr))
+      }
 
-        for {
-          agentSessionOpt <- sessionStoreService.fetchAgentSession
-          _ <- agentSessionOpt match {
-                case Some(agentSession) =>
-                  (agentSession.utr, agentSession.postcode) match {
-                    case (Some(utr), Some(postcode)) =>
-                      auditService.sendAgentAssuranceAuditEvent(
-                        utr = utr,
-                        postcode = postcode,
-                        assuranceResults = AssuranceResults(
-                          isOnRefusalToDealWithList = false,
-                          isManuallyAssured = false,
-                          hasAcceptableNumberOfPayeClients = Some(false),
-                          hasAcceptableNumberOfSAClients = Some(false),
-                          hasAcceptableNumberOfVatDecOrgClients = Some(false),
-                          hasAcceptableNumberOfIRCTClients = Some(false)
-                        ),
-                        assuranceCheckInput = Some(
-                          AssuranceCheckInput(
-                            passCesaAgentAssuranceCheck = Some(relationshipExists),
-                            userEnteredSaAgentRef = Some(saAgentReference.value),
-                            userEnteredUtr = userEnteredUtr,
-                            userEnteredNino = userEnteredNino
-                          ))
-                      )
-                    case _ => toFuture(())
-                  }
+      for {
+        agentSessionOpt <- sessionStoreService.fetchAgentSession
+        _ <- agentSessionOpt match {
+              case Some(agentSession) =>
+                (agentSession.utr, agentSession.postcode) match {
+                  case (Some(utr), Some(postcode)) =>
+                    auditService.sendAgentAssuranceAuditEvent(
+                      utr = utr,
+                      postcode = postcode,
+                      assuranceResults = AssuranceResults(
+                        isOnRefusalToDealWithList = false,
+                        isManuallyAssured = false,
+                        hasAcceptableNumberOfPayeClients = Some(false),
+                        hasAcceptableNumberOfSAClients = Some(false),
+                        hasAcceptableNumberOfVatDecOrgClients = Some(false),
+                        hasAcceptableNumberOfIRCTClients = Some(false)
+                      ),
+                      assuranceCheckInput = Some(
+                        AssuranceCheckInput(
+                          passCesaAgentAssuranceCheck = Some(relationshipExists),
+                          userEnteredSaAgentRef = Some(saAgentReference.value),
+                          userEnteredUtr = userEnteredUtr,
+                          userEnteredNino = userEnteredNino
+                        ))
+                    )
+                  case _ => toFuture(())
+                }
 
-                case None =>
-                  Future.successful(
-                    Logger(getClass).warn("Could not send audit events due to empty knownfacts results"))
-              }
-        } yield ()
+              case None =>
+                Future.successful(Logger(getClass).warn("Could not send audit events due to empty knownfacts results"))
+            }
+      } yield ()
 
-        relationshipExists
+      relationshipExists
     }
 }

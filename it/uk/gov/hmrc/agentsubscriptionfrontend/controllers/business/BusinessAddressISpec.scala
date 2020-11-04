@@ -5,15 +5,14 @@ import play.api.mvc.AnyContentAsFormUrlEncoded
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{redirectLocation, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.{BusinessIdentificationController, routes}
-import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.SubscriptionJourneyRecord
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
-import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, SampleUser, TestSetupNoJourneyRecord}
-import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.subscribingCleanAgentWithoutEnrolments
-import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData.{businessAddress, validUtr, _}
+import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.SubscriptionJourneyRecord
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentAssuranceStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionJourneyStub.{givenSubscriptionRecordCreated, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionStub._
-import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent
+import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser.subscribingCleanAgentWithoutEnrolments
+import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData.{businessAddress, validUtr, _}
+import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, TestSetupNoJourneyRecord}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 

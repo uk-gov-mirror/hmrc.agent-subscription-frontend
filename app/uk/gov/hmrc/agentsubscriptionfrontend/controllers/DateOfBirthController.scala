@@ -36,7 +36,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.validators.CommonValidators.checkOn
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html.date_of_birth
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.bootstrap.controller.FrontendController
+import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
@@ -98,8 +98,7 @@ class DateOfBirthController @Inject()(
     }
   }
 
-  private def companiesHouseKnownFactCheck(agentSession: AgentSession)(f: => Future[Result])(
-    implicit hc: HeaderCarrier): Future[Result] =
+  private def companiesHouseKnownFactCheck(agentSession: AgentSession)(f: => Future[Result])(implicit hc: HeaderCarrier): Future[Result] =
     agentSession.businessType match {
       case Some(bt) =>
         if (bt == Llp) {
@@ -124,8 +123,8 @@ class DateOfBirthController @Inject()(
     case None      => dateOfBirthForm
   }
 
-  private def checkSessionStateAndBusinessType(agentSession: AgentSession, agent: Agent)(
-    result: (BusinessType => Future[Result]))(implicit hc: HeaderCarrier): Future[Result] =
+  private def checkSessionStateAndBusinessType(agentSession: AgentSession, agent: Agent)(result: (BusinessType => Future[Result]))(
+    implicit hc: HeaderCarrier): Future[Result] =
     agentSession.businessType match {
       case b @ (Some(SoleTrader | Partnership | Llp)) => {
         (agent.authNino, agentSession.nino, agentSession.dateOfBirthFromCid) match {
@@ -161,28 +160,26 @@ object DateOfBirthController {
         (date: LocalDate) => (date.getYear.toString, date.getMonthValue.toString, date.getDayOfMonth.toString)
       )
 
-  private val tooOldConstraint: Constraint[(String, String, String)] = Constraint[(String, String, String)] {
-    data: (String, String, String) =>
-      val (year, month, day) = data
-      Try {
-        val dob = LocalDate.of(year.toInt, month.toInt, day.toInt)
-        if (dob.isBefore(LocalDate.of(1900, 1, 1)))
-          Invalid(ValidationError("date-of-birth.must.be.later.than.1900"))
-        else
-          Valid
-      } match {
-        case Failure(_) => Invalid(ValidationError("date-of-birth.invalid"))
-        case Success(p) => p
-      }
-  }
-
-  private val futureDateConstraint: Constraint[(String, String, String)] = Constraint[(String, String, String)] {
-    data: (String, String, String) =>
-      val (year, month, day) = data
-      if (LocalDate.of(year.toInt, month.toInt, day.toInt).isAfter(LocalDate.now()))
-        Invalid(ValidationError("date-of-birth.must.be.past"))
+  private val tooOldConstraint: Constraint[(String, String, String)] = Constraint[(String, String, String)] { data: (String, String, String) =>
+    val (year, month, day) = data
+    Try {
+      val dob = LocalDate.of(year.toInt, month.toInt, day.toInt)
+      if (dob.isBefore(LocalDate.of(1900, 1, 1)))
+        Invalid(ValidationError("date-of-birth.must.be.later.than.1900"))
       else
         Valid
+    } match {
+      case Failure(_) => Invalid(ValidationError("date-of-birth.invalid"))
+      case Success(p) => p
+    }
+  }
+
+  private val futureDateConstraint: Constraint[(String, String, String)] = Constraint[(String, String, String)] { data: (String, String, String) =>
+    val (year, month, day) = data
+    if (LocalDate.of(year.toInt, month.toInt, day.toInt).isAfter(LocalDate.now()))
+      Invalid(ValidationError("date-of-birth.must.be.past"))
+    else
+      Valid
   }
 
   def formWithRefinedErrors(form: Form[DateOfBirth]): Form[DateOfBirth] = {

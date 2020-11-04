@@ -83,14 +83,12 @@ class CommonValidatorsSpec extends UnitSpec with EitherValues {
     behave like aUtrValidatingMapping("limited_company")(fieldValue =>
       businessUtr("limited_company").withPrefix("testKey").bind(Map("testKey" -> fieldValue)))
     behave like aUtrValidatingMapping("partnership")(fieldValue =>
-      businessUtr("partnership").withPrefix("testKey").bind(Map("testKey" -> fieldValue)))
-    behave like aUtrValidatingMapping("llp")(fieldValue =>
-      businessUtr("llp").withPrefix("testKey").bind(Map("testKey" -> fieldValue)))
+      businessUtr("partnership").withPrefix("testKey").bind(Map("testKey"                                              -> fieldValue)))
+    behave like aUtrValidatingMapping("llp")(fieldValue => businessUtr("llp").withPrefix("testKey").bind(Map("testKey" -> fieldValue)))
   }
 
   "clientDetailsUtr bind" should {
-    behave like aUtrValidatingMapping("clientDetails")(fieldValue =>
-      clientDetailsUtr.withPrefix("testKey").bind(Map("testKey" -> fieldValue)))
+    behave like aUtrValidatingMapping("clientDetails")(fieldValue => clientDetailsUtr.withPrefix("testKey").bind(Map("testKey" -> fieldValue)))
   }
 
   def aUtrValidatingMapping(errorMessageFor: String)(bind: String => Either[Seq[FormError], String]) = {
@@ -304,9 +302,7 @@ class CommonValidatorsSpec extends UnitSpec with EitherValues {
       }
 
       "input has length more than 132 characters" in {
-        bind(s"${Random.alphanumeric.take(132).mkString}@example.com").left.value should contain only FormError(
-          "testKey",
-          "error.email.maxlength")
+        bind(s"${Random.alphanumeric.take(132).mkString}@example.com").left.value should contain only FormError("testKey", "error.email.maxlength")
       }
 
       "input is only whitespace" in {
@@ -438,7 +434,6 @@ class CommonValidatorsSpec extends UnitSpec with EitherValues {
   private def anAddressLineValidatingMapping(unprefixedAddressLineMapping: Mapping[String], lineNumber: Int): Unit = {
 
     val addressLine1Mapping = unprefixedAddressLineMapping.withPrefix("testKey")
-    val emptyError = s"error.addressline.$lineNumber.empty"
 
     def bind(fieldValue: String) = addressLine1Mapping.bind(Map("testKey" -> fieldValue))
 
@@ -448,8 +443,7 @@ class CommonValidatorsSpec extends UnitSpec with EitherValues {
       }
 
     def shouldRejectFieldValueAsTooLong(fieldValue: String): Assertion =
-      bind(fieldValue) shouldBe Left(
-        List(FormError("testKey", List(s"error.addressline.$lineNumber.maxlength"), List(35))))
+      bind(fieldValue) shouldBe Left(List(FormError("testKey", List(s"error.addressline.$lineNumber.maxlength"), List(35))))
 
     def shouldAcceptFieldValue(fieldValue: String): Assertion =
       if (fieldValue.isEmpty) bind(fieldValue) shouldBe Right(None)
@@ -654,9 +648,7 @@ class CommonValidatorsSpec extends UnitSpec with EitherValues {
     }
 
     "return validation error if the field is blank" in {
-      bind("").left.value should contain only FormError(
-        "testKey",
-        "error.moneyLaunderingCompliance.membershipNumber.empty")
+      bind("").left.value should contain only FormError("testKey", "error.moneyLaunderingCompliance.membershipNumber.empty")
     }
   }
 
@@ -669,8 +661,7 @@ class CommonValidatorsSpec extends UnitSpec with EitherValues {
     def futureDate = LocalDate.now().plusYears(2)
 
     "accept valid expiry date number" in {
-      bind(validDate.getYear.toString, validDate.getMonthValue.toString, validDate.getDayOfMonth.toString) shouldBe Right(
-        validDate)
+      bind(validDate.getYear.toString, validDate.getMonthValue.toString, validDate.getDayOfMonth.toString) shouldBe Right(validDate)
     }
 
     "return validation error" when {
@@ -687,15 +678,11 @@ class CommonValidatorsSpec extends UnitSpec with EitherValues {
       }
 
       "invalid date" in {
-        bind(year = "2000", month = "15", day = "45").left.value should contain only FormError(
-          "",
-          "error.moneyLaunderingCompliance.date.invalid")
+        bind(year = "2000", month = "15", day = "45").left.value should contain only FormError("", "error.moneyLaunderingCompliance.date.invalid")
       }
 
       "Membership expiry date in the past" in {
-        bind(year = "2000", month = "01", day = "30").left.value should contain only FormError(
-          "",
-          "error.moneyLaunderingCompliance.date.past")
+        bind(year = "2000", month = "01", day = "30").left.value should contain only FormError("", "error.moneyLaunderingCompliance.date.past")
       }
 
       "Membership expiry date is today" in {

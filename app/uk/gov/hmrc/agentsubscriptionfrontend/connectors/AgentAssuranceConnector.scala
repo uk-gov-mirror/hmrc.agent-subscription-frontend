@@ -19,18 +19,19 @@ package uk.gov.hmrc.agentsubscriptionfrontend.connectors
 import com.codahale.metrics.MetricRegistry
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
+import play.api.http.Status._
 import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.domain.{SaAgentReference, TaxIdentifier}
-import uk.gov.hmrc.http._
-import uk.gov.hmrc.play.bootstrap.http.HttpClient
+import uk.gov.hmrc.http.HttpErrorFunctions._
+import uk.gov.hmrc.http.HttpReads.Implicits._
+import uk.gov.hmrc.http.{HttpClient, _}
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class AgentAssuranceConnector @Inject()(http: HttpClient, metrics: Metrics, appConfig: AppConfig)(
-  implicit ec: ExecutionContext)
+class AgentAssuranceConnector @Inject()(http: HttpClient, metrics: Metrics, appConfig: AppConfig)(implicit ec: ExecutionContext)
     extends HttpAPIMonitor {
 
   override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
@@ -38,24 +39,27 @@ class AgentAssuranceConnector @Inject()(http: HttpClient, metrics: Metrics, appC
   def hasAcceptableNumberOfClients(regime: String)(implicit hc: HeaderCarrier): Future[Boolean] =
     monitor(s"ConsumedAPI-AgentAssurance-hasAcceptableNumberOfClients-GET") {
       http
-        .GET[HttpResponse](
-          s"${appConfig.agentAssuranceBaseUrl}/agent-assurance/acceptableNumberOfClients/service/$regime")
+        .GET[HttpResponse](s"${appConfig.agentAssuranceBaseUrl}/agent-assurance/acceptableNumberOfClients/service/$regime")
         .map { response =>
-          response.status == 204
-        } recover {
-        case e: Upstream4xxResponse =>
-          if (e.upstreamResponseCode == 401 || e.upstreamResponseCode == 403) false else throw e
-      }
+          response.status match {
+            case NO_CONTENT               => true
+            case s if is2xx(s)            => false
+            case UNAUTHORIZED | FORBIDDEN => false
+            case s                        => throw UpstreamErrorResponse(response.body, s)
+          }
+        }
     }
 
   def getActiveCesaRelationship(url: String)(implicit hc: HeaderCarrier): Future[Boolean] =
     monitor(s"ConsumedAPI-AgentAssurance-getActiveCesaRelationship-GET") {
       http
         .GET[HttpResponse](s"${appConfig.agentAssuranceBaseUrl}$url")
-        .map(_ => true)
-        .recover {
-          case e: Upstream4xxResponse if e.upstreamResponseCode == 403 => false
-          case _: NotFoundException                                    => false
+        .map { response =>
+          response.status match {
+            case s if is2xx(s)         => true
+            case FORBIDDEN | NOT_FOUND => false
+            case s                     => throw UpstreamErrorResponse(response.body, s)
+          }
         }
     }
 
@@ -65,13 +69,13 @@ class AgentAssuranceConnector @Inject()(http: HttpClient, metrics: Metrics, appC
       http
         .GET[HttpResponse](s"${appConfig.agentAssuranceBaseUrl}$endpoint")
         .map { response =>
-          response.status == 403
-        }
-        .recover {
-          case e: Upstream4xxResponse if e.upstreamResponseCode == 403 => true
-          case _: NotFoundException => {
-            throw new IllegalStateException(
-              s"unable to reach ${appConfig.agentAssuranceBaseUrl}$endpoint. R2dw list might not have been configured")
+          response.status match {
+            case s if is2xx(s) => false
+            case FORBIDDEN     => true
+            case NOT_FOUND =>
+              throw new IllegalStateException(
+                s"unable to reach ${appConfig.agentAssuranceBaseUrl}$endpoint. R2dw list might not have been configured")
+            case s => throw UpstreamErrorResponse(response.body, s)
           }
         }
     }
@@ -82,13 +86,13 @@ class AgentAssuranceConnector @Inject()(http: HttpClient, metrics: Metrics, appC
       http
         .GET[HttpResponse](s"${appConfig.agentAssuranceBaseUrl}$endpoint")
         .map { response =>
-          (200 until 300) contains response.status
-        }
-        .recover {
-          case e: Upstream4xxResponse if e.upstreamResponseCode == 403 => false
-          case _: NotFoundException => {
-            throw new IllegalStateException(
-              s"unable to reach ${appConfig.agentAssuranceBaseUrl}/$endpoint. Manually assured agents list might not have been configured")
+          response.status match {
+            case s if is2xx(s) => true
+            case FORBIDDEN     => false
+            case NOT_FOUND =>
+              throw new IllegalStateException(
+                s"unable to reach ${appConfig.agentAssuranceBaseUrl}/$endpoint. Manually assured agents list might not have been configured")
+            case s => throw UpstreamErrorResponse(response.body, s)
           }
         }
     }

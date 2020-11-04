@@ -27,7 +27,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.support.CallOps.addParamsToUrl
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html.timed_out
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.cache.client.NoSessionException
-import uk.gov.hmrc.play.bootstrap.controller.FrontendController
+import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -95,11 +95,11 @@ class SignedOutController @Inject()(
     }
   }
 
-  def startSurvey: Action[AnyContent] = Action { implicit request =>
+  def startSurvey: Action[AnyContent] = Action {
     SeeOther(appConfig.surveyRedirectUrl).withNewSession
   }
 
-  def redirectToASAccountPage: Action[AnyContent] = Action { implicit request =>
+  def redirectToASAccountPage: Action[AnyContent] = Action {
     SeeOther(appConfig.agentServicesAccountUrl).withNewSession
   }
 
@@ -107,7 +107,7 @@ class SignedOutController @Inject()(
     startNewSession
   }
 
-  def keepAlive: Action[AnyContent] = Action.async { implicit request =>
+  def keepAlive: Action[AnyContent] = Action.async {
     Future successful Ok("OK")
   }
 
@@ -118,7 +118,7 @@ class SignedOutController @Inject()(
   private def startNewSession: Result =
     Redirect(routes.TaskListController.showTaskList()).withNewSession
 
-  def redirectToBusinessTypeForm: Action[AnyContent] = Action { implicit request =>
+  def redirectToBusinessTypeForm: Action[AnyContent] = Action {
     Redirect(routes.BusinessTypeController.showBusinessTypeForm()).withNewSession
   }
 }

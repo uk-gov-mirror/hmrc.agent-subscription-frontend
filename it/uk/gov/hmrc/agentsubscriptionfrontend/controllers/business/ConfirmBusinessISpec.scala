@@ -53,8 +53,6 @@ class ConfirmBusinessISpec extends BaseISpec {
 
     "show utr in the correct format" in new TestSetupNoJourneyRecord {
       val utr = Utr("0123456789")
-      val postcode = "AA11AA"
-      val registrationName = "My Agency"
 
       implicit val request = authenticatedAs(subscribingCleanAgentWithoutEnrolments)
       sessionStoreService.currentSession.agentSession =

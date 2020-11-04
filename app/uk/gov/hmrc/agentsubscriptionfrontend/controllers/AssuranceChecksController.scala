@@ -17,8 +17,8 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
-import play.api.{Configuration, Environment}
 import play.api.mvc._
+import play.api.{Configuration, Environment}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.{Agent, AuthActions}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
@@ -27,12 +27,11 @@ import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.{LimitedCompany
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{BusinessType, TaxPayerNino, TaxPayerUtr, ValidVariantsTaxPayerOptionForm}
 import uk.gov.hmrc.agentsubscriptionfrontend.service.{AssuranceService, SessionStoreService, SubscriptionJourneyService}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
-import uk.gov.hmrc.agentsubscriptionfrontend.views.html
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{client_details, invasive_check_start}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.bootstrap.controller.FrontendController
+import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
 import scala.concurrent.{ExecutionContext, Future}
 

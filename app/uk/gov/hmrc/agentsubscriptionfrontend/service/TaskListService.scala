@@ -28,16 +28,13 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class TaskListService @Inject()(agentAssuranceConnector: AgentAssuranceConnector, appConfig: AppConfig) {
 
-  def createTasks(subscriptionJourneyRecord: SubscriptionJourneyRecord)(
-    implicit hc: HeaderCarrier,
-    ec: ExecutionContext): Future[List[Task]] =
+  def createTasks(subscriptionJourneyRecord: SubscriptionJourneyRecord)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[List[Task]] =
     for {
       maa <- agentAssuranceConnector.isManuallyAssuredAgent(subscriptionJourneyRecord.businessDetails.utr)
     } yield {
       if (isCleanCredsAgent(subscriptionJourneyRecord)) {
         val amlsAndContactDetailsTaskList: List[Task] = amlsAndContactDetailsTasks(subscriptionJourneyRecord, maa)
-        val checkAnswersTask: Task = CheckAnswersTask(
-          List(CheckAnswersSubTask(amlsAndContactDetailsTaskList.forall(_.isComplete))))
+        val checkAnswersTask: Task = CheckAnswersTask(List(CheckAnswersSubTask(amlsAndContactDetailsTaskList.forall(_.isComplete))))
         amlsAndContactDetailsTaskList ::: List(checkAnswersTask)
 
       } else {
@@ -55,8 +52,7 @@ class TaskListService @Inject()(agentAssuranceConnector: AgentAssuranceConnector
             )
           )
         )
-        val createIDTask: Task = CreateIDTask(
-          List(CreateIDSubTask(subscriptionJourneyRecord.cleanCredsAuthProviderId, mappingTask.isComplete)))
+        val createIDTask: Task = CreateIDTask(List(CreateIDSubTask(subscriptionJourneyRecord.cleanCredsAuthProviderId, mappingTask.isComplete)))
         val checkAnswersTask: Task = CheckAnswersTask(List(CheckAnswersSubTask(createIDTask.isComplete)))
         amlsAndContactDetailsTaskList ::: List(mappingTask, createIDTask, checkAnswersTask)
       }
@@ -65,9 +61,7 @@ class TaskListService @Inject()(agentAssuranceConnector: AgentAssuranceConnector
   def isCleanCredsAgent(subscriptionJourneyRecord: SubscriptionJourneyRecord) =
     subscriptionJourneyRecord.cleanCredsAuthProviderId.contains(subscriptionJourneyRecord.authProviderId)
 
-  private def amlsAndContactDetailsTasks(
-    subscriptionJourneyRecord: SubscriptionJourneyRecord,
-    maa: Boolean): List[Task] = {
+  private def amlsAndContactDetailsTasks(subscriptionJourneyRecord: SubscriptionJourneyRecord, maa: Boolean): List[Task] = {
 
     val amlsTask: Task = AmlsTask(List(AmlsSubTask(maa, subscriptionJourneyRecord.amlsData)))
 

@@ -19,13 +19,7 @@ import play.api.libs.json.{Format, Json}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.AmlsData
 
-case class SubscriptionDetails(
-  utr: Utr,
-  knownFactsPostcode: String,
-  name: String,
-  email: String,
-  address: DesAddress,
-  amlsData: Option[AmlsData])
+case class SubscriptionDetails(utr: Utr, knownFactsPostcode: String, name: String, email: String, address: DesAddress, amlsData: Option[AmlsData])
 
 object SubscriptionDetails {
   implicit val formatDesAddress: Format[DesAddress] = Json.format[DesAddress]

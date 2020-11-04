@@ -27,8 +27,8 @@ import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
 import uk.gov.hmrc.agentsubscriptionfrontend.config.{AddressLookupConfig, AppConfig}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.AddressLookupFrontendAddress
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
-import uk.gov.hmrc.play.bootstrap.http.HttpClient
-
+import uk.gov.hmrc.http.HttpClient
+import uk.gov.hmrc.http.HttpReads.Implicits._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NoStackTrace
 
@@ -55,8 +55,7 @@ class AddressLookupFrontendConnector @Inject()(
       }
     }
 
-  def getAddressDetails(
-    id: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[AddressLookupFrontendAddress] = {
+  def getAddressDetails(id: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[AddressLookupFrontendAddress] = {
     import AddressLookupFrontendAddress._
 
     monitor(s"ConsumedAPI-Address-Lookup-Frontend-getAddressDetails-GET") {

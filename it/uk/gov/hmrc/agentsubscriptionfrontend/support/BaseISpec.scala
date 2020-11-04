@@ -1,8 +1,6 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.support
 
-import com.codahale.metrics.MetricRegistry
 import com.google.inject.AbstractModule
-import com.kenshoo.play.metrics.Metrics
 import org.jsoup.Jsoup
 import org.scalatest.Assertion
 import org.scalatest.matchers.{MatchResult, Matcher}
@@ -53,12 +51,6 @@ abstract class BaseISpec
   }
 
   protected lazy val sessionStoreService = new TestSessionStoreService
-
-  private object FakeMetrics extends Metrics {
-    override def defaultRegistry: MetricRegistry = new MetricRegistry
-
-    override def toJson: String = ???
-  }
 
   private class TestGuiceModule extends AbstractModule {
     override def configure(): Unit = {
@@ -209,14 +201,14 @@ abstract class BaseISpec
   }
 
   protected def containLink(expectedMessageKey: String, expectedHref: String): Matcher[Result] = {
-    import scala.collection.JavaConversions._
+    import scala.collection.JavaConverters._
     new Matcher[Result] {
       override def apply(result: Result): MatchResult = {
         val doc = Jsoup.parse(bodyOf(result))
         checkMessageIsDefined(expectedMessageKey)
         val foundElements = doc.select(s"a[href=$expectedHref]")
 
-        val wasFoundWithCorrectMessage = foundElements.toList.exists(_.text() == htmlEscapedMessage(expectedMessageKey))
+        val wasFoundWithCorrectMessage = foundElements.asScala.toList.exists(_.text() == htmlEscapedMessage(expectedMessageKey))
         MatchResult(
           wasFoundWithCorrectMessage,
           s"""Response does not contain a link to "$expectedHref" with content for message key "$expectedMessageKey" """,
@@ -227,13 +219,13 @@ abstract class BaseISpec
   }
 
   protected def containLinkText(expectedMessageText: String, expectedHref: String): Matcher[Result] = {
-    import scala.collection.JavaConversions._
+    import scala.collection.JavaConverters._
     new Matcher[Result] {
       override def apply(result: Result): MatchResult = {
         val doc = Jsoup.parse(bodyOf(result))
         val foundElements = doc.select(s"a[href=$expectedHref]")
 
-        val wasFoundWithCorrectMessage = foundElements.toList.exists(_.text() == expectedMessageText)
+        val wasFoundWithCorrectMessage = foundElements.asScala.toList.exists(_.text() == expectedMessageText)
         MatchResult(
           wasFoundWithCorrectMessage,
           s"""Response does not contain a link to "$expectedHref" with link text "$expectedMessageText" """,

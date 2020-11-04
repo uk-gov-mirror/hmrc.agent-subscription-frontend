@@ -18,7 +18,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
-import play.api.{Configuration, Environment, Logger}
+import play.api.{Configuration, Environment}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
@@ -29,7 +29,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, Subsc
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{company_registration, llp_interrupt}
 import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.play.bootstrap.controller.FrontendController
+import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
 import scala.concurrent.ExecutionContext
 
@@ -62,7 +62,7 @@ class CompanyRegistrationController @Inject()(
   }
 
   def submitCompanyRegNumberForm(): Action[AnyContent] = Action.async { implicit request =>
-    withSubscribingAgent { implicit agent =>
+    withSubscribingAgent { agent =>
       withValidSession { (_, existingSession: AgentSession) =>
         crnForm
           .bindFromRequest()
@@ -103,7 +103,7 @@ class CompanyRegistrationController @Inject()(
   }
 
   def showLlpInterrupt(): Action[AnyContent] = Action.async { implicit request =>
-    withSubscribingAgent { implicit agent =>
+    withSubscribingAgent { agent =>
       withValidSession { (businessType, agentSession) =>
         if (businessType == Llp) Ok(llpInterruptTemplate())
         else {

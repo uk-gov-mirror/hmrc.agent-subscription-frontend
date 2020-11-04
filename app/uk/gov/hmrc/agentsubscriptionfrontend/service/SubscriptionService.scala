@@ -20,11 +20,11 @@ import java.time.LocalDate
 
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
-import play.api.Logger
+import play.api.Logging
 import play.api.http.Status
 import play.api.i18n.Lang
-import play.api.mvc.{Request, Result}
 import play.api.mvc.Results.{Conflict, Redirect}
+import play.api.mvc.{Request, Result}
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr, Vrn}
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentSubscriptionConnector
@@ -33,16 +33,20 @@ import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.AmlsData
 import uk.gov.hmrc.agentsubscriptionfrontend.support.Monitoring
 import uk.gov.hmrc.domain.Nino
-import uk.gov.hmrc.http.{HeaderCarrier, Upstream4xxResponse, Upstream5xxResponse}
+import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
 
 import scala.concurrent.{ExecutionContext, Future}
 
 case class SubscriptionReturnedHttpError(httpStatusCode: Int) extends Product with Serializable
 
 sealed abstract class SubscriptionState
+
 case object Unsubscribed extends SubscriptionState
+
 case object SubscribedButNotEnrolled extends SubscriptionState
+
 case object SubscribedAndEnrolled extends SubscriptionState
+
 case object NoRegistrationFound extends SubscriptionState
 
 case class SubscriptionProcess(state: SubscriptionState, details: Option[Registration])
@@ -53,7 +57,7 @@ class SubscriptionService @Inject()(
   sessionStoreService: SessionStoreService,
   subscriptionJourneyService: SubscriptionJourneyService,
   val metrics: Metrics)
-    extends Monitoring {
+    extends Monitoring with Logging {
 
   import SubscriptionDetails._
 
@@ -71,7 +75,7 @@ class SubscriptionService @Inject()(
     implicit hc: HeaderCarrier,
     ec: ExecutionContext): Future[Either[Int, Arn]] = {
     val address = if (subscriptionDetails.address.countryCode != "GB") {
-      Logger(getClass).warn(
+      logger.warn(
         s"Non-GB country code chosen by user for UTR ${subscriptionDetails.utr.value}. " +
           s"Overriding with GB. A better fix for this is coming in APB-1288.")
       subscriptionDetails.address.copy(countryCode = "GB")
@@ -93,14 +97,14 @@ class SubscriptionService @Inject()(
     agentSubscriptionConnector.subscribeAgencyToMtd(request).map[Either[Int, Arn]] { arn =>
       Right(arn)
     } recover {
-      case e: Upstream4xxResponse if Seq(Status.FORBIDDEN, Status.CONFLICT) contains e.upstreamResponseCode =>
-        Logger.warn("Upstream error (in agent-subscription): see agent-subscription log for details")
-        Left(e.upstreamResponseCode)
-      case e: Upstream5xxResponse if e.message contains ("AGENT_TERMINATED") =>
-        Logger.warn(s"Terminated agent is trying to re-subscribe ${e.message}")
-        Left(e.upstreamResponseCode)
+      case e: UpstreamErrorResponse if Seq(Status.FORBIDDEN, Status.CONFLICT) contains e.statusCode =>
+        logger.warn("Upstream error (in agent-subscription): see agent-subscription log for details")
+        Left(e.statusCode)
+      case e: UpstreamErrorResponse if e.message contains ("AGENT_TERMINATED") =>
+        logger.warn(s"Terminated agent is trying to re-subscribe ${e.message}")
+        Left(e.statusCode)
       case e =>
-        Logger.error("Upstream error (in agent-subscription): see agent-subscription log for details", e)
+        logger.error("Upstream error (in agent-subscription): see agent-subscription log for details", e)
         throw e
     }
   }
@@ -110,13 +114,10 @@ class SubscriptionService @Inject()(
     businessPostCode: Postcode)(implicit request: Request[_], hc: HeaderCarrier, ec: ExecutionContext): Future[Arn] =
     agentSubscriptionConnector
       .completePartialSubscription(
-        CompletePartialSubscriptionBody(
-          utr,
-          SubscriptionRequestKnownFacts(businessPostCode.value),
-          extractLangPreferenceFromCookie))
+        CompletePartialSubscriptionBody(utr, SubscriptionRequestKnownFacts(businessPostCode.value), extractLangPreferenceFromCookie))
       .recover {
-        case e: Upstream4xxResponse if Seq(Status.FORBIDDEN, Status.CONFLICT) contains e.upstreamResponseCode =>
-          Logger.warn(s"Eligibility checks failed for partialSubscriptionFix, with status: ${e.upstreamResponseCode}")
+        case e: UpstreamErrorResponse if Seq(Status.FORBIDDEN, Status.CONFLICT) contains e.statusCode =>
+          logger.warn(s"Eligibility checks failed for partialSubscriptionFix, with status: ${e.statusCode}")
           throw e
       }
 
@@ -127,8 +128,8 @@ class SubscriptionService @Inject()(
       mark("Count-Subscription-PartialSubscriptionCompleted")
       Redirect(routes.SubscriptionController.showSubscriptionComplete())
     } recover {
-      case e: Upstream5xxResponse if e.message contains ("AGENT_TERMINATED") =>
-        Logger.warn(s"Terminated agent has isASAgent flag and is trying to re-subscribe ${e.message}")
+      case e: UpstreamErrorResponse if e.message contains ("AGENT_TERMINATED") =>
+        logger.warn(s"Terminated agent has isASAgent flag and is trying to re-subscribe ${e.message}")
         Redirect(routes.StartController.showCannotCreateAccount())
     }
 
@@ -154,18 +155,14 @@ class SubscriptionService @Inject()(
 
                                                 case _ =>
                                                   subscriptionJourneyService
-                                                    .saveJourneyRecord(
-                                                      record.copy(
-                                                        cleanCredsAuthProviderId = Some(agent.authProviderId)))
+                                                    .saveJourneyRecord(record.copy(cleanCredsAuthProviderId = Some(agent.authProviderId)))
                                                     .map { _ =>
                                                       Redirect(routes.TaskListController.showTaskList())
                                                     }
                                               }
     } yield completePartialSubscriptionOrTaskList
 
-  def getSubscriptionStatus(utr: Utr, postcode: Postcode)(
-    implicit hc: HeaderCarrier,
-    ec: ExecutionContext): Future[SubscriptionProcess] =
+  def getSubscriptionStatus(utr: Utr, postcode: Postcode)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[SubscriptionProcess] =
     agentSubscriptionConnector.getRegistration(utr, postcode.value).map {
 
       case Some(reg) if reg.isSubscribedToAgentServices =>
@@ -183,24 +180,17 @@ class SubscriptionService @Inject()(
       case None => SubscriptionProcess(NoRegistrationFound, None)
     }
 
-  def getDesignatoryDetails(nino: Nino)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[DesignatoryDetails] =
+  def getDesignatoryDetails(nino: Nino)(implicit hc: HeaderCarrier): Future[DesignatoryDetails] =
     agentSubscriptionConnector.getDesignatoryDetails(nino)
 
-  def matchCorporationTaxUtrWithCrn(utr: Utr, crn: CompanyRegistrationNumber)(
-    implicit hc: HeaderCarrier,
-    ec: ExecutionContext): Future[Boolean] =
+  def matchCorporationTaxUtrWithCrn(utr: Utr, crn: CompanyRegistrationNumber)(implicit hc: HeaderCarrier): Future[Boolean] =
     agentSubscriptionConnector.matchCorporationTaxUtrWithCrn(utr, crn)
 
-  def matchVatKnownFacts(vrn: Vrn, vatRegistrationDate: LocalDate)(
-    implicit hc: HeaderCarrier,
-    ec: ExecutionContext): Future[Boolean] =
+  def matchVatKnownFacts(vrn: Vrn, vatRegistrationDate: LocalDate)(implicit hc: HeaderCarrier): Future[Boolean] =
     agentSubscriptionConnector.matchVatKnownFacts(vrn, vatRegistrationDate)
 
   def handlePartiallySubscribedAndRedirect(agent: Agent, agentSession: AgentSession)(
-    whenNotPartiallySubscribed: => Future[Result])(
-    implicit request: Request[_],
-    hc: HeaderCarrier,
-    ec: ExecutionContext): Future[Result] = {
+    whenNotPartiallySubscribed: => Future[Result])(implicit request: Request[_], hc: HeaderCarrier, ec: ExecutionContext): Future[Result] = {
     val utr = agentSession.utr.getOrElse(Utr(""))
     val postcode = agentSession.postcode.getOrElse(Postcode(""))
     for {
@@ -211,7 +201,7 @@ class SubscriptionService @Inject()(
                      .createJourneyRecord(agentSession, agent)
                      .map {
                        case Right(()) => Redirect(routes.SubscriptionController.showSignInWithNewID())
-                       case Left(msg) => Logger.warn(msg); Conflict
+                       case Left(msg) => logger.warn(msg); Conflict
                      }
                  })(
                    isClean = completePartialSubscriptionAndGoToComplete(utr, postcode)
@@ -220,9 +210,7 @@ class SubscriptionService @Inject()(
     } yield result
   }
 
-  def companiesHouseKnownFactCheck(crn: CompanyRegistrationNumber, name: String)(
-    implicit hc: HeaderCarrier,
-    ec: ExecutionContext): Future[Boolean] =
+  def companiesHouseKnownFactCheck(crn: CompanyRegistrationNumber, name: String)(implicit hc: HeaderCarrier): Future[Boolean] =
     agentSubscriptionConnector.companiesHouseKnownFactCheck(crn, name)
 
   private def extractLangPreferenceFromCookie(implicit request: Request[_]): Option[Lang] =

@@ -27,8 +27,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class SubscriptionJourneyService @Inject()(agentSubscriptionConnector: AgentSubscriptionConnector)(
-  implicit ec: ExecutionContext) {
+class SubscriptionJourneyService @Inject()(agentSubscriptionConnector: AgentSubscriptionConnector)(implicit ec: ExecutionContext) {
 
   def getMandatoryJourneyRecord(continueId: ContinueId)(implicit hc: HeaderCarrier): Future[SubscriptionJourneyRecord] =
     for {
@@ -38,14 +37,12 @@ class SubscriptionJourneyService @Inject()(agentSubscriptionConnector: AgentSubs
   def existsJourneyForUtr(utr: Utr)(implicit hc: HeaderCarrier): Future[Boolean] =
     agentSubscriptionConnector.getJourneyByUtr(utr).map(_.isDefined)
 
-  def getJourneyRecord(internalId: AuthProviderId)(
-    implicit hc: HeaderCarrier): Future[Option[SubscriptionJourneyRecord]] =
+  def getJourneyRecord(internalId: AuthProviderId)(implicit hc: HeaderCarrier): Future[Option[SubscriptionJourneyRecord]] =
     for {
       record <- agentSubscriptionConnector.getJourneyById(internalId)
     } yield record
 
-  def getMandatoryJourneyRecord(internalId: AuthProviderId)(
-    implicit hc: HeaderCarrier): Future[SubscriptionJourneyRecord] =
+  def getMandatoryJourneyRecord(internalId: AuthProviderId)(implicit hc: HeaderCarrier): Future[SubscriptionJourneyRecord] =
     for {
       record <- agentSubscriptionConnector.getJourneyById(internalId)
     } yield extractMandatoryRecord(record)
@@ -59,8 +56,7 @@ class SubscriptionJourneyService @Inject()(agentSubscriptionConnector: AgentSubs
   def saveJourneyRecord(subscriptionJourneyRecord: SubscriptionJourneyRecord)(implicit hc: HeaderCarrier): Future[Int] =
     agentSubscriptionConnector.createOrUpdateJourney(subscriptionJourneyRecord)
 
-  def createJourneyRecord(agentSession: AgentSession, agent: Agent)(
-    implicit hc: HeaderCarrier): Future[Either[String, Unit]] = {
+  def createJourneyRecord(agentSession: AgentSession, agent: Agent)(implicit hc: HeaderCarrier): Future[Either[String, Unit]] = {
     val sjr =
       SubscriptionJourneyRecord
         .fromAgentSession(agentSession, agent.authProviderId, agent.maybeCleanCredsAuthProviderId)

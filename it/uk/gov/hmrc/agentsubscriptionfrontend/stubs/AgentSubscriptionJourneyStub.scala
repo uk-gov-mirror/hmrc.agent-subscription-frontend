@@ -16,16 +16,13 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.stubs
 
-import java.time.LocalDate
-
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import play.api.http.Status
 import play.api.libs.json.Json
-import uk.gov.hmrc.agentmtdidentifiers.model.{Utr, Vrn}
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.SubscriptionJourneyRecord
-import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.play.encoding.UriPathEncoding.encodePathSegment
 
 object AgentSubscriptionJourneyStub {

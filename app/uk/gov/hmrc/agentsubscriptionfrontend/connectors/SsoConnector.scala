@@ -19,19 +19,18 @@ package uk.gov.hmrc.agentsubscriptionfrontend.connectors
 import com.codahale.metrics.MetricRegistry
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
-import play.api.Logger
+import play.api.Logging
 import play.api.libs.json.JsObject
 import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.bootstrap.http.HttpClient
-
+import uk.gov.hmrc.http.HttpClient
+import uk.gov.hmrc.http.HttpReads.Implicits._
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class SsoConnector @Inject()(http: HttpClient, metrics: Metrics, appConfig: AppConfig)(
-  implicit val ec: ExecutionContext)
-    extends HttpAPIMonitor {
+class SsoConnector @Inject()(http: HttpClient, metrics: Metrics, appConfig: AppConfig)(implicit val ec: ExecutionContext)
+    extends HttpAPIMonitor with Logging {
   override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
 
   def getWhitelistedDomains()(implicit hc: HeaderCarrier): Future[Set[String]] =
@@ -44,7 +43,7 @@ class SsoConnector @Inject()(http: HttpClient, metrics: Metrics, appConfig: AppC
         })
         .recover {
           case e =>
-            Logger.error(s"retrieval of whitelisted domains failed: $e")
+            logger.error(s"retrieval of whitelisted domains failed: $e")
             Set.empty[String]
         }
     }

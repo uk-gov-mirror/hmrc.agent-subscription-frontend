@@ -63,7 +63,7 @@ class TestSessionStoreService extends SessionStoreService(null) {
   override def cacheGoBackUrl(url: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
     toFuture(currentSession.goBackUrl =  Some(url))
 
-  private def fetchFromSession[A](property: Option[A])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[A]] =
+  private def fetchFromSession[A](property: Option[A]): Future[Option[A]] =
     currentSessionTest match {
       case NormalSession => toFuture(property)
       case SessionLost => Future.failed(NoSessionException)

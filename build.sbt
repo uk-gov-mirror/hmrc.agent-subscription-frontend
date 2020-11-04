@@ -101,7 +101,7 @@ lazy val root = Project("agent-subscription-frontend", file("."))
     organization := "uk.gov.hmrc",
     scalaVersion := "2.12.10",
     scalacOptions ++= Seq(
-      //"-Xfatal-warnings",
+      "-Xfatal-warnings",
       "-Xlint:-missing-interpolator,_",
       "-Yno-adapted-args",
       "-Ywarn-value-discard",
@@ -110,7 +110,7 @@ lazy val root = Project("agent-subscription-frontend", file("."))
       "-feature",
       "-unchecked",
       "-language:implicitConversions",
-      "-P:silencer:pathFilters=Routes.scala"),
+      "-P:silencer:pathFilters=views;routes"),
     PlayKeys.playDefaultPort := 9437,
     resolvers := Seq(
       Resolver.bintrayRepo("hmrc", "releases"),

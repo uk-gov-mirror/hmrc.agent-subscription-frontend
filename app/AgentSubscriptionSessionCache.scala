@@ -17,7 +17,7 @@
 import javax.inject.{Inject, Singleton}
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.http.cache.client.SessionCache
-import uk.gov.hmrc.play.bootstrap.http.HttpClient
+import uk.gov.hmrc.http.HttpClient
 
 @Singleton
 class AgentSubscriptionSessionCache @Inject()(val http: HttpClient, appConfig: AppConfig) extends SessionCache {

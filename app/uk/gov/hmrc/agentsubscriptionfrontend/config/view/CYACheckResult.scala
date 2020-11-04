@@ -41,12 +41,7 @@ case object FailedContactTradingAddress extends CYACheckResult
 object CYACheckResult {
 
   def check(sjr: SubscriptionJourneyRecord): CYACheckResult =
-    (
-      sjr.businessDetails.registration,
-      sjr.amlsData,
-      sjr.contactEmailData,
-      sjr.contactTradingNameData,
-      sjr.contactTradingAddressData) match {
+    (sjr.businessDetails.registration, sjr.amlsData, sjr.contactEmailData, sjr.contactTradingNameData, sjr.contactTradingAddressData) match {
 
       case (Some(reg), _, Some(email), Some(tradingName), Some(tradingAddress)) =>
         checkContactDetails(email, tradingName, tradingAddress)(reg, sjr.amlsData)

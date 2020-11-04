@@ -9,7 +9,7 @@ import play.api.test.Helpers.{redirectLocation, _}
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AgentSubscriptionJourneyStub._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.SampleUser._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TestData._
-import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, SessionLost, TestData, TestSessionStoreService}
+import uk.gov.hmrc.agentsubscriptionfrontend.support.{BaseISpec, SessionLost, TestData}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.HeaderCarrierConverter
 import uk.gov.hmrc.play.bootstrap.binders.RedirectUrl
