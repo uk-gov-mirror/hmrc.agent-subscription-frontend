@@ -29,12 +29,6 @@ mainTemplate: main_template,
 )
 @(confirmBusinessRadioForm: Form[ConfirmBusiness], registrationName: String, utr: String, businessAddress: BusinessAddress, backLink: Call)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
-
-
-
-
-
-
 @mainTemplate(appConfig, title = errorPrefix(confirmBusinessRadioForm) + Messages("confirmBusiness.title"), bodyClasses = None) {
 
     <a href="@backLink" class="link-back">@Messages("button.back")</a>
