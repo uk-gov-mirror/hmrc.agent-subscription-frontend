@@ -58,7 +58,7 @@ errorPrefixTemplate: error_prefix,
         || error.key.contains("expiry.month") || error.key.contains("expiry.year")))
     }
 
-@value = @{ amlsForm("amlsCode").value match { case Some(x) => x case None => "" }}
+@value = @{ amlsForm("amlsCode").value.getOrElse("")}
 
 
 @mainTemplate(appConfig, title =  errorPrefixTemplate(amlsForm) + Messages("moneyLaunderingCompliance.title"), bodyClasses = None) {
