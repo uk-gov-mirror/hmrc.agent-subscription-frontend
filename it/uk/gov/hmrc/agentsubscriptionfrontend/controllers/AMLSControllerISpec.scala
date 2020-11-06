@@ -731,7 +731,7 @@ class AMLSControllerISpec extends BaseISpec {
 
       result should containSubstrings(
         "To find details of supervisory bodies, see",
-        "anti-money laundering registration (opens in a new window or tab).")
+        "anti-money laundering registration (opens in a new tab).")
     }
   }
 

@@ -25,9 +25,15 @@ mainTemplate: main_template,
     errorPrefix: error_prefix,
         uiErrorSummary: uk.gov.hmrc.play.views.html.helpers.ErrorSummary,
         uiFormHelper: uk.gov.hmrc.play.views.html.helpers.FormWithCSRF,
-        uiInputRadioGroup: uk.gov.hmrc.play.views.html.helpers.InputRadioGroup
+        uiInputRadioGroupCustom: uk.gov.hmrc.agentsubscriptionfrontend.views.html.helpers.input_radio_group_custom
 )
 @(confirmBusinessRadioForm: Form[ConfirmBusiness], registrationName: String, utr: String, businessAddress: BusinessAddress, backLink: Call)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+
+
+
+
+
+
 
 @mainTemplate(appConfig, title = errorPrefix(confirmBusinessRadioForm) + Messages("confirmBusiness.title"), bodyClasses = None) {
 
@@ -37,46 +43,66 @@ mainTemplate: main_template,
         @uiErrorSummary(Messages("error.summary.heading"), confirmBusinessRadioForm, Seq.empty, Some("confirm-business"))
     }
 
-    <h1 class="heading-xlarge margin-bottom-20">@Messages("confirmBusiness.title")</h1>
-
-    <span class="heading-medium">@registrationName</span>
-
-    <p>
-        @businessAddress.addressLine1 <br />
-        @businessAddress.addressLine2 @if(businessAddress.addressLine2.nonEmpty) {
-        <br />
-    }
-        @businessAddress.addressLine3 @if(businessAddress.addressLine3.nonEmpty) {
-        <br />
-    }
-        @businessAddress.addressLine4 @if(businessAddress.addressLine4.nonEmpty) {
-        <br />
-    }
-        @businessAddress.postalCode
-    </p>
-
-
-    <p class="panel panel-border-wide">@Html(Messages("confirmBusiness.content.utr", utr))</p>
-
 
     @uiFormHelper(
         action = routes.BusinessIdentificationController.submitConfirmBusinessForm(),
         'class -> "form js-form") {
 
-        <div class="form-group margin-top-30">
-        @uiInputRadioGroup(
-            confirmBusinessRadioForm("confirmBusiness"),
-            Seq(
-                "yes" -> Messages("confirmBusiness.option.yes"),
-                "no" -> Messages("confirmBusiness.option.no")
-            ),
-            '_legend -> Messages("confirmBusiness.title"),
-            '_groupDivClass -> "soft--ends",
-            '_legendClass -> "visuallyhidden",
-            '_fieldsetAttributes -> Html("""id='confirmBusiness'"""),
-            '_errorPrefix -> Messages("error.prefix")
-        )
-        </div>
+      <div class="form-group @if(confirmBusinessRadioForm.hasErrors){form-field--error soft--ends}">
+      <fieldset>
+          <legend>
+              <h1 class="heading-xlarge">@Messages("confirmBusiness.title")</h1>
+          </legend>
+          <p class="hint-text">@Html(Messages("confirmBusiness.content.utr", utr))</p>
+
+
+            <div class="margin-bottom-30">
+          <span class="heading-medium">@registrationName</span>
+
+          <p>
+              @businessAddress.addressLine1 <br />
+              @businessAddress.addressLine2 @if(businessAddress.addressLine2.nonEmpty) {
+              <br />
+          }
+              @businessAddress.addressLine3 @if(businessAddress.addressLine3.nonEmpty) {
+              <br />
+          }
+              @businessAddress.addressLine4 @if(businessAddress.addressLine4.nonEmpty) {
+              <br />
+          }
+              @businessAddress.postalCode
+          </p>
+            </div>
+
+          @confirmBusinessRadioForm.error("confirmBusiness").map { formError => <span class="error-notification" id="confirmBusiness-error">
+              <span class="visuallyhidden">@Messages("error.prefix")</span>
+              @Messages(formError.message)
+          </span>
+          }
+
+          <div class="multiple-choice">
+              <input
+              type="radio"
+              id="confirmBusiness.yes"
+              name="confirmBusiness"
+              value="yes"
+              @confirmBusinessRadioForm.data.get("confirmBusiness").map { v => @if(v == "yes"){checked="checked"}}
+              >
+              <label for="confirmBusiness.yes">@Messages("confirmBusiness.option.yes")</label>
+          </div>
+
+          <div class="multiple-choice">
+              <input
+              type="radio"
+              id="confirmBusiness.no"
+              name="confirmBusiness"
+              value="no"
+                  @confirmBusinessRadioForm.data.get("confirmBusiness").map { v => @if(v == "no"){checked="checked"}}
+              >
+              <label for="confirmBusiness.no">@Messages("confirmBusiness.option.no")</label>
+          </div>
+      </fieldset>
+      </div>
 
         <div class="form-group">
             <button class="button" type="submit" id="continue">@Messages("button.continue")</button>

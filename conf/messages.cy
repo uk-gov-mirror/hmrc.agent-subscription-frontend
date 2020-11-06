@@ -167,7 +167,7 @@ address.form.with-errors.button.confirm_address=Cadarnhewch y cyfeiriad
 
 ##Confirm business
 confirmBusiness.title=Ai dyma’ch busnes?
-confirmBusiness.content.utr=Dyma’r manylion sydd gennym ar gyfer Cyfeirnod Unigryw y Trethdalwr (UTR) <strong class="bold">{0}</strong>. Byddwch yn gallu newid y manylion hyn mewn eiliad ar gyfer eich cyfrif gwasanaethau asiant.
+confirmBusiness.content.utr=Dyma’r manylion sydd gennym ar gyfer Cyfeirnod Unigryw y Trethdalwr (UTR) <strong class="bold">{0}</strong>. You will be able to change these details before you finish creating an agent services account.
 confirmBusiness.option.yes=Iawn
 confirmBusiness.option.no=Na – hoffwn nodi UTR gwahanol
 confirmBusiness.error.no-radio-selected=Dewiswch ‘Iawn’ os mai dyma’ch busnes

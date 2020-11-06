@@ -65,19 +65,30 @@ errorPrefix: error_prefix
 
     @uiFormHelper(action = routes.VatDetailsController.submitVatDetailsForm(), 'class -> "form js-form") {
 
-        <fieldset>
-            <legend class="margin-bottom-10">
-                <h1 class="heading-xlarge margin-bottom-20">@Messages(s"vat-details.title")</h1>
-            </legend>
-            <div class="form-group">
-                @uiInput(
-                vatDetailsForm("vrn"),
-                '_label -> Messages("vat-details.vrn.title"),
-                '_inputHint -> Messages("vat-details.vrn.hint"),
-                '_inputClass -> "form-control input--cleared",
-                '_hintId -> "vat-details",
-                '_errorPrefix -> Messages("error.prefix")
-                )
+
+
+            <h1 class="heading-xlarge margin-bottom-20">@Messages(s"vat-details.title")</h1>
+
+            <div class="form-group @if(vatDetailsForm.error("vrn").isDefined){form-field--error soft--ends}">
+                <label for="vrn">@Messages("vat-details.vrn.title")</label>
+                <span class="hint-text" id="vrn-hint">@Messages("vat-details.vrn.hint")</span>
+                @vatDetailsForm.error("vrn").map { formError => <span class="error-notification" id="vrn-error">
+                    <span class="visuallyhidden">@Messages("error.prefix")</span>
+                    @Messages(formError.message)
+                </span>
+                }
+
+                <input
+                type="text"
+                inputmode="numeric"
+                pattern="[0-9]*"
+                class="form-control input--cleared"
+                id="vrn"
+                name="vrn"
+                @vatDetailsForm.data.get("vrn").map { v => value="@v"}
+                aria-describedby="vrn-hint @if(vatDetailsForm.error("vrn").isDefined){vrn-error}"
+                >
+
             </div>
 
             <div class="@DayFieldError @MonthFieldError @YearFieldError @DateFieldErrorsAll">
@@ -92,7 +103,7 @@ errorPrefix: error_prefix
                 '_errorPrefix -> Messages("error.prefix")
                 )
             </div>
-        </fieldset>
+
 
         <div class="form-field">
             <button class="button" type="submit" id="submit-vat-details">@Messages("button.continue")</button>

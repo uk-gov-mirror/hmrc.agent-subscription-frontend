@@ -29,18 +29,9 @@
 
 @(contactTradingNameForm: Form[BusinessName])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
-
-@formValue = @{
-    if(contactTradingNameForm.data.get("name").isDefined){
-        contactTradingNameForm.data.get("name").get
-    }
-    else{""}}
-
 @mainTemplate(appConfig, title =  errorPrefix(contactTradingNameForm) +  Messages("contactTradingName.title"), bodyClasses = None) {
 
-
     <a href='@routes.ContactDetailsController.showTradingNameCheck().url' class="link-back">@Messages("button.back")</a>
-
 
     @if(contactTradingNameForm.hasErrors) {
         @errorSummary(Messages("error.summary.heading"), contactTradingNameForm, Seq.empty, Some("contact-trading-name"))
@@ -50,19 +41,28 @@
         action = routes.ContactDetailsController.submitTradingName,
         'class -> "form js-form") {
 
-        <div class="form-group @if(contactTradingNameForm("name").hasErrors){form-field--error error-container"}>
-            <label for="name"><h1 class="heading-xlarge @if(contactTradingNameForm.hasErrors){push--top}">@Messages("contactTradingName.title")</h1></label>
-            @contactTradingNameForm.error("name").map{formError =>
-                <span class="error-notification" role="tooltip" data-journey="search-page:error:contact-trading-name">
+        <div class="form-group @if(contactTradingNameForm("name").hasErrors){form-field--error soft--ends}">
+            <h1>
+                <label for="name" class="heading-xlarge">@Messages("contactTradingName.title")</label>
+            </h1>
+            @contactTradingNameForm.error("name").map { formError =>
+                <span class="error-notification" data-journey="search-page:error:contact-trading-name" id="name-error">
                     <span class="visuallyhidden">@Messages("error.prefix")</span>
                     @Messages(formError.message)
                 </span>
             }
-            <input class="form-control" type="text" id="name" name="name" aria-invalid="true" value="@formValue">
+            <input
+            class="form-control"
+            type="text"
+            spellcheck="false"
+            id="name"
+            name="name"
+            @contactTradingNameForm.data.get("name").map { v => value="@v"}
+            @if(contactTradingNameForm.error("name").isDefined){aria-describedby="name-error"}
+            >
         </div>
 
-        <div class="form-field margin-top-20">
             <button class="button" type="submit" id="continue">@Messages("contactTradingName.continue.button")</button>
-        </div>
+
     }
 }

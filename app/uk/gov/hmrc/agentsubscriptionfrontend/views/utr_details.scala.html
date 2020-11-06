@@ -44,18 +44,29 @@ uiInput: uk.gov.hmrc.play.views.html.helpers.Input
         'class -> "form js-form") {
 
         @* Can't use play ui text input as h1 needs to wrap a label *@
-        <div class="form-group @if(utrForm.hasErrors){form-field--error}">
-            <h1 @if(utrForm.hasErrors){class="push--top"}>
-                <label for="utr" class="heading-xlarge @if(utrForm.hasErrors){push--top}">@Messages(s"utr.header.${businessType.key}")</label>
+        <div class="form-group @if(utrForm.hasErrors){form-field--error soft--ends}">
+            <h1>
+                <label for="utr" class="heading-xlarge">@Messages(s"utr.header.${businessType.key}")</label>
             </h1>
-            <p class="panel-border-wide">
+            <p class="hint-text margin-bottom-10" id="utr-hint">
                 @Messages("utr.description.start")
                 @Messages(s"utr.description.about.${businessType.key}")
                 @Messages("utr.description.end")
                 <a href="https://www.gov.uk/find-lost-utr-number" target="_blank" rel="noopener noreferrer">@Messages("utr.find-lost")</a>.
             </p>
-            @utrForm.error("utr").map{formError => <span class="error-message"><span class="visuallyhidden">@Messages("error.prefix")</span> @Messages(formError.message)</span>}
-            <input type="text" class="form-control input--cleared" name="utr" id="utr" value="@utrForm("utr").value">
+            @utrForm.error("utr").map { formError => <span class="error-notification" id="utr-error">
+                <span class="visuallyhidden">@Messages("error.prefix")</span>
+                @Messages(formError.message)
+            </span>
+            }
+            <input
+            type="text"
+            class="form-control input--cleared"
+            name="utr"
+            id="utr"
+            @utrForm("utr").value.map{ v => value="@v"}
+                aria-describedby="utr-hint @if(utrForm.hasErrors){utr-error}"
+            >
         </div>
 
         <div class="form-field">

@@ -24,7 +24,7 @@
 mainTemplate: main_template,
 errorPrefixTemplate: error_prefix,
 uiErrorSummary: uk.gov.hmrc.play.views.html.helpers.ErrorSummary,
-uiInputRadioGroup: uk.gov.hmrc.play.views.html.helpers.InputRadioGroup,
+uiInputRadioGroupCustom: uk.gov.hmrc.agentsubscriptionfrontend.views.html.helpers.input_radio_group_custom,
 formHelper: uk.gov.hmrc.play.views.html.helpers.FormWithCSRF
 )
 
@@ -46,7 +46,7 @@ formHelper: uk.gov.hmrc.play.views.html.helpers.FormWithCSRF
         'class -> "form js-form") {
 
         <div class="form-group">
-        @uiInputRadioGroup(
+        @uiInputRadioGroupCustom(
             businessTypeRadioForm("businessType"),
             Seq(
                 "limited_company" -> Messages("businessType.option.limited-company"),
@@ -55,9 +55,7 @@ formHelper: uk.gov.hmrc.play.views.html.helpers.FormWithCSRF
                 "llp" -> Messages("businessType.option.partnership-llp")
             ),
             '_legend -> headerTitle,
-            '_groupDivClass -> "soft--ends",
-            '_fieldsetAttributes -> Html("""id='businessType'"""),
-            '_errorPrefix -> Messages("error.prefix")
+            '_fieldsetAttributes -> Html("""id='businessType'""")
         )
         </div>
 

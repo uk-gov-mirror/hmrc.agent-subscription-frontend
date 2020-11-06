@@ -41,22 +41,32 @@ uiInput: uk.gov.hmrc.play.views.html.helpers.Input
  @uiFormHelper(action = routes.CompanyRegistrationController.submitCompanyRegNumberForm(), 'class -> "form js-form"){
 
     @* Can't use play ui text input as h1 needs to wrap a label *@
-     <div class="form-group @if(crnForm.hasErrors){form-field--error}">
-         <h1 @if(crnForm.hasErrors){class="push--top"}>
-             <label for="crn" class="heading-xlarge margin-bottom-20 @if(crnForm.hasErrors){push--top}">
+     <div class="form-group @if(crnForm.hasErrors){form-field--error soft--ends}">
+         <h1>
+             <label for="crn" class="heading-xlarge">
              @Messages(s"crn.title")
              </label>
          </h1>
 
-         <p class="form-hint">@Messages("crn.hint")</p>
+         <p class="hint-text margin-bottom-10" id="crn-hint">@Messages("crn.hint")</p>
 
-         @crnForm.error("crn").map{formError => <span class="error-message"><span class="visuallyhidden">@Messages("error.prefix")</span> @Messages(formError.message)</span>}
-       <input type="text" class="form-control input--cleared" name="crn" id="crn" value="@crnForm("crn").value">
+         @crnForm.error("crn").map { formError => <span class="error-notification" id="crn-error">
+             <span class="visuallyhidden">@Messages("error.prefix")</span>
+             @Messages(formError.message)
+         </span>
+         }
+       <input
+       type="text"
+       class="form-control input--cleared"
+       name="crn"
+       id="crn"
+         @crnForm("crn").value.map { v =>  value="@v"}
+       aria-describedby="crn-hint @if(crnForm.hasErrors){crn-error}"
+       >
     </div>
 
-    <div class="form-field">
         <button class="button" type="submit" id="submit-crn">@Messages("button.continue")</button>
-    </div>
+
  }
 }
 

@@ -24,13 +24,13 @@
 mainTemplate: main_template,
     errorPrefix: error_prefix,
 uiErrorSummary: uk.gov.hmrc.play.views.html.helpers.ErrorSummary,
-        uiInputRadioGroup: uk.gov.hmrc.play.views.html.helpers.InputRadioGroup,
+        uiInputRadioGroupCustom: uk.gov.hmrc.agentsubscriptionfrontend.views.html.helpers.input_radio_group_custom,
         uiFormHelper: uk.gov.hmrc.play.views.html.helpers.FormWithCSRF)
 
 @(amlsAppliedForForm: Form[RadioInputAnswer], mayBeGoBackUrl: Option[String] = None)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 @headerTitle = {
-    <h1 class="heading-xlarge margin-bottom-20">@Messages(s"amlsAppliedFor.title")</h1>
+
 }
 
 @mainTemplate(appConfig, title = errorPrefix(amlsAppliedForForm) + Messages("amlsAppliedFor.title"), bodyClasses = None) {
@@ -44,19 +44,18 @@ uiErrorSummary: uk.gov.hmrc.play.views.html.helpers.ErrorSummary,
 @uiFormHelper(
 action = routes.AMLSController.submitCheckAmlsAlreadyAppliedForm, 'class -> "form js-form") {
 
-    <div class="form-group margin-top-30">
-        @uiInputRadioGroup(
+
+        @uiInputRadioGroupCustom(
         amlsAppliedForForm("amlsAppliedFor"),
         Seq(
         "yes" -> Messages("button.yes"),
         "no" -> Messages("button.no")
         ),
-        '_groupDivClass -> "soft--ends",
-        '_legend -> headerTitle,
-        '_fieldsetAttributes -> Html("""id='amls-applied-for'"""),
-        '_errorPrefix -> Messages("error.prefix")
+        '_groupDivClass -> "form-group",
+        '_legend -> Html("""<h1 class="heading-xlarge">""" + Messages(s"amlsAppliedFor.title") + """</h1>"""),
+        '_fieldsetAttributes -> Html("""id='amlsAppliedFor'""")
         )
-    </div>
+
 
     <div class="form-field">
         <button class="button margin-bottom-10 margin-right-5" id="amls-applied-for-continue" name="continue" value="continue">@Messages("button.saveContinue")</button>

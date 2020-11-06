@@ -26,6 +26,7 @@ class BusinessNameISpec extends BaseISpec {
       val result = await(controller.showBusinessNameForm(request))
       result should containMessages("businessName.title", "businessName.description", "businessName.continue.button")
       val doc = Jsoup.parse(bodyOf(result))
+
       doc.getElementById("name").`val` shouldBe "My Agency"
 
       val backLink = doc.getElementsByClass("link-back")

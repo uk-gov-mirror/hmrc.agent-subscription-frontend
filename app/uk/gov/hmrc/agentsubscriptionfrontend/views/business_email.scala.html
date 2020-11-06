@@ -43,12 +43,27 @@ errorSummary: uk.gov.hmrc.play.views.html.helpers.ErrorSummary
         action = if(isChange) routes.BusinessIdentificationController.submitChangeBusinessEmail else routes.BusinessIdentificationController.submitBusinessEmailForm(),
         'class -> "form js-form") {
 
-        <div class="form-group @if(businessEmailForm.hasErrors) {form-field--error}">
-        <label for="email"><h1 class="heading-xlarge @if(businessEmailForm.hasErrors){push--top}">@Messages("businessEmail.title")</h1></label>
-        <p class="panel panel-border-wide">@Messages("businessEmail.description")</p>
+        <div class="form-group @if(businessEmailForm.hasErrors) {form-field--error soft--ends}">
+            <h1>
+                <label for="email" class="heading-xlarge">@Messages("businessEmail.title")</label>
+            </h1>
+        <p class="panel panel-border-wide" id="email-panel">@Messages("businessEmail.description")</p>
 
-            @businessEmailForm.error("email").map { formError => <span class="error-message"><span class="visuallyhidden">@Messages("error.prefix")</span>@Messages(formError.message)</span>}
-                <input type="text" class="form-control input--cleared" name="email" id="email" value="@businessEmailForm("email").value">
+            @businessEmailForm.error("email").map { formError => <span class="error-message" id="email-error">
+                <span class="visuallyhidden">@Messages("error.prefix")</span>
+                @Messages(formError.message)
+            </span>
+            }
+
+            <input
+            type="text"
+            class="form-control input--cleared"
+            name="email"
+            id="email"
+            spellcheck="false"
+            @businessEmailForm.data.get("email").map { v => value="@v"}
+            aria-describedby="@if(businessEmailForm.hasErrors){email-error} else {email-panel}"
+            >
             </div>
 
         <div class="form-field">

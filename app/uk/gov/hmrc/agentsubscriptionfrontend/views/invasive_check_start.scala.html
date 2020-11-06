@@ -34,13 +34,13 @@ uiErrorSummary: uk.gov.hmrc.play.views.html.helpers.ErrorSummary)
     }
 
     @uiFormHelper(action = routes.AssuranceChecksController.invasiveSaAgentCodePost(), 'class -> "form js-form") {
-        <div class="form-group @if(radioResponseForm.error("hasSaAgentCode").isDefined){form-group-error}" id="hasSaAgentCode">
-            <fieldset>
+        <div class="form-group @if(radioResponseForm.error("hasSaAgentCode").isDefined){form-field--error soft--ends}">
+            <fieldset aria-describedby="agentCode-hint @if(radioResponseForm.hasErrors){agentCode-error}">
                 <legend>
-                    <h1 class="heading-xlarge margin-top-10 margin-bottom-40 @if(radioResponseForm.hasErrors){push--top}">@Messages("invasive.title.saCode")</h1>
+                    <h1 class="heading-xlarge">@Messages("invasive.title.saCode")</h1>
                 </legend>
 
-                <p>@Messages("invasive.check.p1")</p>
+                <p class="hint-text" id="agentCode-hint">@Messages("invasive.check.p1")</p>
 
                 <details class="form-group govuk-details">
                     <summary class="govuk-details__summary">
@@ -51,13 +51,16 @@ uiErrorSummary: uk.gov.hmrc.play.views.html.helpers.ErrorSummary)
                     </div>
                 </details>
 
-                @if(radioResponseForm.error("hasSaAgentCode").isDefined){
-                    <span class="error-message"><span>@Messages("error.prefix")</span>@Messages("invasive.error.no-radio.selected")</span>
+                @radioResponseForm.error("hasSaAgentCode").map { formError =>
+                  <span class="error-notification" id="agent-code-error">
+                      <span class="visuallyhidden">@Messages("error.prefix")</span>
+                      @Messages(formError.message)
+                  </span>
                 }
 
                 <div class="multiple-choice" data-target="hasSaAgentCodeField">
-                    <input id="hasSaAgentCode_true" type="radio" name="hasSaAgentCode" value="true" @if(radioResponseForm.error("saAgentCode").isDefined){checked}>
-                    <label for="hasSaAgentCode_true">@Messages("invasive.radioResponse.yes")</label>
+                    <input id="hasSaAgentCode" type="radio" name="hasSaAgentCode" value="true" @if(radioResponseForm.error("saAgentCode").isDefined){checked}>
+                    <label for="hasSaAgentCode">@Messages("invasive.radioResponse.yes")</label>
                 </div>
                 <div class="panel panel-border-narrow js-hidden @if(radioResponseForm.error("saAgentCode").isDefined){form-group-error}" id="hasSaAgentCodeField">
                     <label class="form-label" for="saAgentCode">@Messages("invasive.radioResponse.hidden.input.label.sa")</label>
@@ -72,8 +75,7 @@ uiErrorSummary: uk.gov.hmrc.play.views.html.helpers.ErrorSummary)
             </fieldset>
         </div>
 
-        <div class="form-group">
             <button class="button" type="submit" id="continue">@Messages("button.continue")</button>
-        </div>
+
     }
 }

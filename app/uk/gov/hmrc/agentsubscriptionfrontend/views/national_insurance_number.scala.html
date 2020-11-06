@@ -41,20 +41,33 @@ uiInput: uk.gov.hmrc.play.views.html.helpers.Input
         @uiErrorSummary(Messages("error.summary.heading"), ninoForm, Seq.empty, Some("nino"))
     }
 
-    <h1 class="heading-xlarge margin-bottom-20">@Messages(s"nino.title")</h1>
-    <p class="form-hint">@if(businessType == Llp){ @Messages("nino.hint-llp")} else {@Messages("nino.hint")}</p>
+
+
 
     @uiFormHelper(action = routes.NationalInsuranceController.submitNationalInsuranceNumberForm(), 'class -> "form js-form") {
-        <div class="form-group">
-            @uiInput(
-            ninoForm("nino"),
-            '_inputClass -> "form-control input--cleared",
-            '_errorPrefix -> Messages("error.prefix")
-            )
+        <div class="form-group @if(ninoForm.hasErrors){form-field--error soft--ends}">
+            <h1>
+                <label for="nino" class="heading-xlarge">@Messages("nino.title")</label>
+            </h1>
+            <p class="hint-text" id="nino-hint">@if(businessType == Llp){ @Messages("nino.hint-llp")} else {@Messages("nino.hint")}</p>
+            @ninoForm.error("nino").map { formError => <span class="error-notification" id="nino-error">
+                <span class="visuallyhidden">@Messages("error.prefix")</span>
+                @Messages(formError.message)
+            </span>
+            }
+            <input
+            type="text"
+            name="nino"
+            id="nino"
+            class="form-control input--cleared"
+            spellcheck="false"
+            @ninoForm.data.get("nino").map { v => value="@v"}
+            aria-describedby="nino-hint @if(ninoForm.hasErrors){nino-error}"
+            >
+
         </div>
 
-        <div class="form-field">
             <button class="button" type="submit" id="submit-nino">@Messages("button.continue")</button>
-        </div>
+
     }
 }
