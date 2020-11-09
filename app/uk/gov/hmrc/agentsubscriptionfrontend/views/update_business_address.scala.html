@@ -37,9 +37,11 @@ uiInput: uk.gov.hmrc.play.views.html.helpers.Input
     }
     <h1 class="heading-xlarge">@Messages("updateBusinessAddress.title")</h1>
 
-    <p>@Messages("updateBusinessAddress.p1")</p>
+    <p class="hint-text">@Messages("updateBusinessAddress.p1")</p>
 
     <p class="panel panel-border-wide">@Messages("updateBusinessAddress.p2")</p>
+
+
 
     @uiFormHelper(action = routes.BusinessIdentificationController.submitUpdateBusinessAddressForm(), 'class -> "form js-form") {
 

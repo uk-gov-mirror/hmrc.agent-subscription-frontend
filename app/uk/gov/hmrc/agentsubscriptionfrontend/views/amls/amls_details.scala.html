@@ -58,6 +58,8 @@ errorPrefixTemplate: error_prefix,
         || error.key.contains("expiry.month") || error.key.contains("expiry.year")))
     }
 
+@value = @{ amlsForm("amlsCode").value.getOrElse("")}
+
 
 @mainTemplate(appConfig, title =  errorPrefixTemplate(amlsForm) + Messages("moneyLaunderingCompliance.title"), bodyClasses = None) {
 
@@ -67,24 +69,32 @@ errorPrefixTemplate: error_prefix,
     @if(amlsForm.hasErrors) {
         @uiErrorSummary(Messages("error.summary.heading"), dateFormWithRefinedErrors, Seq.empty, Some("money-laundering-compliance"))
     }
-    <h1 class="heading-xlarge margin-bottom-20">@Messages("moneyLaunderingCompliance.title")</h1>
+    <h1 class="heading-xlarge">@Messages("moneyLaunderingCompliance.title")</h1>
 
-    <p class="panel panel-border-wide">@Messages("moneyLaunderingCompliance.p1")</p>
+    <p class="hint-text">@Messages("moneyLaunderingCompliance.p1")</p>
 
     @formHelper(action = routes.AMLSController.submitAmlsDetailsForm(), 'class -> "form js-form", 'id -> "dropForm") {
 
-        <div class="form-group" id="amlsCode">
-            @amlsDropdownTemplate(
-            amlsForm("amlsCode"),
-            amlsBodies.toSeq,
-            true,
-            '_errorsAboveInput -> true,
-            '_label -> Messages("moneyLaunderingCompliance.amls.title"),
-            '_inputClass -> "form-control input--cleared",
-            '_labelClass -> "form-element-bold soft--ends",
-            '_selectWrapper -> Html("""class="autocomplete-wrapper"""")
-            )
+      <div class="form-group @if(amlsForm.error("amlsCode").isDefined){form-field--error soft--ends}">
+          <label class="form-element-bold" for="amls-auto-complete">@Messages("moneyLaunderingCompliance.amls.title")</label>
+          <span class="hint-text">@Messages("moneyLaunderingCompliance.amls.hint")</span>
+          @amlsForm.error("amlsCode").map { formError => <span class="error-notification">
+              <span class="visuallyhidden">@Messages("error.prefix")</span>
+              @Messages(formError.message)
+          </span>
+          }
+        <div class="autocomplete-wrapper" id="amlsCode">
+            <select id="amls-auto-complete" name="amlsCode">
+                <option value=""></option>
+                @for(option <- amlsBodies.toSeq) {
+                    <option
+                    id="amlsCode-@option._1"
+                    value="@option._1"
+                        @if(value==option._1){selected="selected"}>@option._2</option>
+                }
+            </select>
         </div>
+      </div>
 
         <div class="form-group">
             @inputTemplate(

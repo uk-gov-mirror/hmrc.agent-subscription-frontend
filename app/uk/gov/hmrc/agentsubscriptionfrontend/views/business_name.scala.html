@@ -45,13 +45,26 @@ errorPrefix: error_prefix
         action = if(isChange) routes.BusinessIdentificationController.submitChangeBusinessName else routes.BusinessIdentificationController.submitBusinessNameForm(),
         'class -> "form js-form") {
 
-        <div class="form-group @if(businessNameForm.hasErrors) {form-field--error}">
-            <label for="name"><h1 class="heading-xlarge @if(businessNameForm.hasErrors){push--top}">@title</h1></label>
-            @if(desErrorExists){<p>@Messages("businessName.updated.p1")</p>}
-            <p class="panel panel-border-wide">@Messages("businessName.description")</p>
+        <div class="form-group @if(businessNameForm.hasErrors) {form-field--error soft--ends}">
+            <h1>
+                <label class="heading-xlarge" for="name">@title</label>
+            </h1>
+            @if(desErrorExists){<p class="hint-text" id="business-name-hint">@Messages("businessName.updated.p1")</p>}
+            <p class="panel panel-border-wide" id="business-name-panel">@Messages("businessName.description")</p>
 
-            @businessNameForm.error("name").map { formError => <span class="error-message"><span class="visuallyhidden">@Messages("error.prefix")</span>@Messages(formError.message)</span>}
-            <input type="text" class="form-control input--cleared" name="name" id="name" value="@businessNameForm("name").value">
+            @businessNameForm.error("name").map { formError => <span class="error-message" id="business-name-error">
+                <span class="visuallyhidden">@Messages("error.prefix")</span>
+                @Messages(formError.message)</span>
+            }
+            <input
+            type="text"
+            class="form-control input--cleared"
+            name="name"
+            id="name"
+            @businessNameForm.data.get("name").map { v => value="@v"}
+            spellcheck="false"
+            aria-describedby="@if(businessNameForm.hasErrors) {business-name-error} else {business-name-hint business-name-panel}"
+            >
         </div>
 
         <div class="form-field">

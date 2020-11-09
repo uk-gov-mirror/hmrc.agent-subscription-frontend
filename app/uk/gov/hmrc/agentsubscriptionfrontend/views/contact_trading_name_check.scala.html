@@ -25,7 +25,7 @@
   errorPrefix: error_prefix,
   formHelper: uk.gov.hmrc.play.views.html.helpers.FormWithCSRF,
   errorSummary: uk.gov.hmrc.play.views.html.helpers.ErrorSummary,
-  uiInputRadioGroup: uk.gov.hmrc.play.views.html.helpers.InputRadioGroup
+  uiInputRadioGroupCustom: uk.gov.hmrc.agentsubscriptionfrontend.views.html.helpers.input_radio_group_custom
 )
 
 @(contactTradingNameCheckForm: Form[ContactTradingNameCheck], businessName: String, isChanging: Boolean)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
@@ -47,23 +47,17 @@
     action = routes.ContactDetailsController.submitTradingNameCheck,
     'class -> "form js-form") {
 
-    @uiInputRadioGroup(
+    @uiInputRadioGroupCustom(
       contactTradingNameCheckForm("check"),
       Seq(
         "yes" -> Messages("contactTradingNameCheck.option.yes"),
         "no" -> Messages("contactTradingNameCheck.option.no")
       ),
-      '_legend -> Html(s"""<h1 class="heading-xlarge ${if(contactTradingNameCheckForm.hasErrors)"push--top" else ""}">${Messages("contactTradingNameCheck.title", businessName)}</h1>"""),
-      '_groupDivClass -> s"soft--ends",
-      '_legendClass -> "soft--ends",
-      '_fieldsetAttributes -> Html("""id='check'"""),
-      '_errorPrefix -> Messages("error.prefix")
+      '_legend -> Html(s"""<h1 class="heading-xlarge">${Messages("contactTradingNameCheck.title", businessName)}</h1>"""),
+      '_groupDivClass -> "form-group",
+      '_fieldsetAttributes -> Html("""id='check'""")
     )
-
-    <div class="form-field margin-top-30">
-
       <button class="button" type="submit" id="continue">@Messages("contactTradingNameCheck.continue.button")</button>
 
-    </div>
   }
 }

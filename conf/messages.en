@@ -82,7 +82,7 @@ error.business-name.empty = Enter your business name
 error.business-name.invalid = Business name must only include letters a to z, numbers, commas, full stops, apostrophes, hyphens, forward slashes, and spaces
 error.business-name.maxlength = Business name must be 40 characters or less
 error.business-email.empty=Enter your business email address
-error.confirm-business-value.invalid=Please choose one of the below options
+error.confirm-business-value.invalid=Select yes if this is your business
 error.summary.heading=There is a problem
 error.prefix=Error:
 error.nino.empty=Enter your National Insurance number
@@ -167,7 +167,7 @@ address.form.with-errors.button.confirm_address= Confirm address
 
 ##Confirm business
 confirmBusiness.title=Is this your business?
-confirmBusiness.content.utr=These are the details we hold for Unique Taxpayer Reference (UTR) <strong class="bold">{0}</strong>. You will be able to change these details in a moment for your agent services account.
+confirmBusiness.content.utr=These are the details we hold for Unique Taxpayer Reference (UTR) <strong class="bold">{0}</strong>. You will be able to change these details before you finish creating an agent services account.
 confirmBusiness.option.yes=Yes
 confirmBusiness.option.no=No - I want to enter a different UTR
 confirmBusiness.error.no-radio-selected=Select yes if this is your business
@@ -213,7 +213,7 @@ saved-progress.title=Your progress has been saved for 30 days
 saved-progress.p1=What you need to do next
 saved-progress.p2=You need to come back and complete this form within 30 days.
 saved-progress.p3=To complete this form later, go to the {0} on GOV.UK and sign in to this service again.
-saved-progress.link=guidance page about creating an agent services account (opens in a new window or tab)
+saved-progress.link=guidance page about creating an agent services account (opens in a new tab)
 saved-progress.p4=You will need to sign in with the same Government Gateway user ID you used when you started filling out this form.
 saved-progress.continue=Continue where you left off
 saved-progress.finish=Finish and sign out
@@ -258,7 +258,7 @@ utr.description.about.partnership=about Self Assessment.
 utr.description.about.llp=from HMRC about the limited liability partnership.
 utr.description.end=It may be called ‘reference’, ‘UTR’ or ‘official use’.
 
-utr.find-lost=Find a lost UTR (opens in a new window or tab)
+utr.find-lost=Find a lost UTR (opens in a new tab)
 
 #CRN details page
 crn.title=What is the company registration number of your business?
@@ -328,7 +328,7 @@ businessDetails.label.utr.partnership=Partnership Unique Taxpayer Reference (UTR
 businessDetails.label.utr.llp=Partnership Unique Taxpayer Reference (UTR)
 
 businessDetails.details.heading.sole_trader=Where to find your Self Assessment UTR
-businessDetails.details.content.sole_trader=You’ll <a href="https://www.gov.uk/find-lost-utr-number" target="_blank" rel="noopener noreferrer">find your UTR (opens in a new window or tab)</a> on the letter HMRC sent you when you registered for Self Assessment. It’s a 10-digit number, sometimes with a letter ''K'' on the end.
+businessDetails.details.content.sole_trader=You’ll <a href="https://www.gov.uk/find-lost-utr-number" target="_blank" rel="noopener noreferrer">find your UTR (opens in a new tab)</a> on the letter HMRC sent you when you registered for Self Assessment. It’s a 10-digit number, sometimes with a letter ''K'' on the end.
 businessDetails.details.heading.limited_company=Where to find your Corporation Tax or company UTR
 businessDetails.details.content.limited_company=You can usually find your Corporation Tax or company UTR in the header of letters from HM Revenue & Customs (HMRC), next to headings such as ‘Tax Reference’, ‘UTR’ or ‘Official Use’.
 businessDetails.details.heading.partnership=Where to find your partnership UTR
@@ -435,7 +435,7 @@ amls-not-applied.title=You cannot create an agent services account
 amls-not-applied.p1=You can only create an agent account if your business has either:
 amls-not-applied.p1.bullet1=registered with a money laundering supervisory body
 amls-not-applied.p1.bullet2=applied to register for money laundering supervision with HMRC and not yet received the decision
-amls-not-applied.p2=To find details of supervisory bodies, see <a href="https://www.gov.uk/anti-money-laundering-registration" target="_blank" rel="noopener noreferrer">anti-money laundering registration (opens in a new window or tab).</a>
+amls-not-applied.p2=To find details of supervisory bodies, see <a href="https://www.gov.uk/anti-money-laundering-registration" target="_blank" rel="noopener noreferrer">anti-money laundering registration (opens in a new tab).</a>
 amls-not-applied.finish=Finish and sign out
 
 # AMLS applied for
@@ -558,7 +558,7 @@ accessibility.statement.whattodo.heading=What to do if you have difficulty using
 accessibility.statement.whattodo.p1=If you have difficulty using this service, use the ‘Get help with this page’ link on the page in the online service.
 
 accessibility.statement.reporting.heading=Reporting accessibility problems with this service
-accessibility.statement.reporting.p1=We are always looking to improve the accessibility of this service. If you find any problems that are not listed on this page or think we are not meeting accessibility requirements, report the <a href="{0}" target="_blank">accessibility problem (opens in a new window or tab)</a>.
+accessibility.statement.reporting.p1=We are always looking to improve the accessibility of this service. If you find any problems that are not listed on this page or think we are not meeting accessibility requirements, report the <a href="{0}" target="_blank">accessibility problem (opens in a new tab)</a>.
 
 accessibility.statement.enforcement.heading=What to do if you are not happy with how we respond to your complaint
 accessibility.statement.enforcement.p1=The Equality and Human Rights Commission (EHRC) is responsible for enforcing the Public Sector Bodies (Websites and Mobile Applications) (No. 2) Accessibility Regulations 2018 (the ‘accessibility regulations’). If you are not happy with how we respond to your complaint, <a href="https://www.equalityadvisoryservice.com/">contact the Equality Advisory and Support Service</a> (EASS), or the <a href="https://www.equalityni.org/Home">Equality Commission for Northern Ireland</a> (ECNI) if you live in Northern Ireland.

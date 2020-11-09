@@ -25,13 +25,13 @@
     errorPrefix: error_prefix,
         uiErrorSummary: uk.gov.hmrc.play.views.html.helpers.ErrorSummary,
         uiFormHelper: uk.gov.hmrc.play.views.html.helpers.FormWithCSRF,
-        uiInputRadioGroup: uk.gov.hmrc.play.views.html.helpers.InputRadioGroup
+        uiInputRadioGroupCustom: uk.gov.hmrc.agentsubscriptionfrontend.views.html.helpers.input_radio_group_custom
 )
 
 @(checkAmlsForm: Form[RadioInputAnswer], isChange: Boolean)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
 @headerTitle = {
-    <h1 class="heading-xlarge margin-bottom-20 @if(checkAmlsForm.hasErrors){push--top}">@Messages(s"check-amls.title")</h1>
+    <h1 class="heading-xlarge @if(checkAmlsForm.hasErrors){push--top}">@Messages(s"check-amls.title")</h1>
 }
 
 @backLink = @{if(isChange) routes.SubscriptionController.showCheckAnswers() else routes.TaskListController.showTaskList()}
@@ -48,19 +48,18 @@
 @uiFormHelper(
 action = routes.AMLSController.submitAmlsRegistered(), 'class -> "form js-form") {
 
-    <div class="form-group margin-top-30">
-        @uiInputRadioGroup(
+
+        @uiInputRadioGroupCustom(
         checkAmlsForm("registeredAmls"),
         Seq(
         "yes" -> Messages("button.yes"),
         "no" -> Messages("button.no")
         ),
         '_legend -> headerTitle,
-        '_groupDivClass -> "soft--ends",
-        '_fieldsetAttributes -> Html("""id='registeredAmls'"""),
-        '_errorPrefix -> Messages("error.prefix")
+        '_groupDivClass -> "form-group",
+        '_fieldsetAttributes -> Html("""id='registeredAmls'""")
         )
-    </div>
+
 
     <div class="form-field">
         <button class="button margin-bottom-10 margin-right-5" id="check-amls-continue" name="continue" value="continue">@Messages("button.saveContinue")</button>

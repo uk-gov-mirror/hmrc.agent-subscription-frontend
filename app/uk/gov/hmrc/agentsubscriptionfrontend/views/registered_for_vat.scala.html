@@ -24,14 +24,11 @@ mainTemplate: main_template,
 errorPrefix: error_prefix,
 uiErrorSummary: uk.gov.hmrc.play.views.html.helpers.ErrorSummary,
 uiFormHelper: uk.gov.hmrc.play.views.html.helpers.FormWithCSRF,
-uiInputRadioGroup: uk.gov.hmrc.play.views.html.helpers.InputRadioGroup
+uiInputRadioGroupCustom: uk.gov.hmrc.agentsubscriptionfrontend.views.html.helpers.input_radio_group_custom
 )
 
 @(rfvForm: Form[RegisteredForVat], backLink: String)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
 
-@legend = {
-    <h1 class="heading-xlarge margin-bottom-20 @if(rfvForm.hasErrors){push--top}">@Messages("registered-for-vat.title")</h1>
-}
 
 @mainTemplate(appConfig, title =  errorPrefix(rfvForm) + Messages("registered-for-vat.title"), bodyClasses = None) {
 
@@ -46,22 +43,20 @@ uiInputRadioGroup: uk.gov.hmrc.play.views.html.helpers.InputRadioGroup
         action = routes.VatDetailsController.submitRegisteredForVatForm(),
         'class -> "form js-form") {
 
-        <div class="form-group margin-top-30">
-            @uiInputRadioGroup(
+
+            @uiInputRadioGroupCustom(
                 rfvForm("registeredForVat"),
                 Seq(
                 "yes" -> Messages("registered-for-vat.option.yes"),
                 "no" -> Messages("registered-for-vat.option.no")
                 ),
-                '_groupDivClass -> "soft--ends",
-                '_legend -> legend,
-                '_fieldsetAttributes -> Html("""id='registeredForVat'"""),
-            '_errorPrefix -> Messages("error.prefix")
+                '_legend -> Html("""<h1 class="heading-xlarge">""" + Messages("registered-for-vat.title") + """</h1>"""),
+                '_groupDivClass -> "form-group",
+                '_fieldsetAttributes -> Html("""id='registeredForVat'""")
             )
-        </div>
 
-        <div class="form-field">
-            <button class="button" type="submit" id="submit-registered-for-vat">@Messages("button.continue")</button>
-        </div>
+
+            <button class="button form-field--submit" type="submit" id="submit-registered-for-vat">@Messages("button.continue")</button>
+
     }
 }

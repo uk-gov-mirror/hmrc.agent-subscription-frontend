@@ -35,15 +35,15 @@ uiErrorSummary: uk.gov.hmrc.play.views.html.helpers.ErrorSummary,
     }
 
     @formHelper(action = routes.AssuranceChecksController.submitClientDetailsForm, 'class -> "form js-form") {
-        <div class="form-group @if(radioResponseForm.error("variant").isDefined){form-group-error}" id="radioResponse">
-            <fieldset>
+        <div class="form-group @if(radioResponseForm.error("variant").isDefined){form-field--error soft--ends}">
+            <fieldset aria-describedby="client-details-hint @if(radioResponseForm.hasErrors){client-details-error}">
                 <legend>
-                    <h1 class="heading-xlarge margin-bottom-20 @if(radioResponseForm.hasErrors){push--top}">@Messages("invasive.title.option")</h1>
+                    <h1 class="heading-xlarge">@Messages("invasive.title.option")</h1>
                 </legend>
-                <p>@Messages("invasive.p1")</p>
+                <p class="hint-text" id="client-details-hint">@Messages("invasive.p1")</p>
                 <p>@Messages("invasive.p2")</p>
                 @if(radioResponseForm.error("variant").isDefined){
-                    <span class="error-message"><span class="visuallyhidden">@Messages("error.prefix")</span>@Messages("clientDetails.error.no-radio.selected")</span>
+                    <span class="error-notification" id="client-details-error"><span class="visuallyhidden">@Messages("error.prefix")</span>@Messages("clientDetails.error.no-radio.selected")</span>
                 }
                 <div id="variant" data-target="variant">
                     <div class="multiple-choice" data-target="ninoRadioInput">

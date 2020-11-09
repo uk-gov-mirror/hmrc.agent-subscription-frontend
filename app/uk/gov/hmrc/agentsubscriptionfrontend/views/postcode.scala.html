@@ -42,18 +42,27 @@ uiInput: uk.gov.hmrc.play.views.html.helpers.Input
     action = routes.PostcodeController.submitPostcodeForm(), 'class -> "form js-form") {
 
     @* Can't use play ui text input as h1 needs to wrap a label *@
-    <div class="form-group @if(postcodeForm.hasErrors){form-field--error}">
-        <h1 @if(postcodeForm.hasErrors){class="push--top"}>
-            <label class="heading-xlarge @if(postcodeForm.hasErrors){push--top}" for="postcode">
+    <div class="form-group @if(postcodeForm.hasErrors){form-field--error soft--ends}">
+        <h1>
+            <label class="heading-xlarge" for="postcode">
             @Messages(s"postcode.${businessType.key}.title")
             </label>
         </h1>
-        @postcodeForm.error("postcode").map{formError => <span class="error-message"><span class="visuallyhidden">@Messages("error.prefix")</span>@Messages(formError.message)</span>}
-        <input type="text" class="form-control input--cleared" name="postcode" id="postcode" value="@postcodeForm("postcode").value">
+        @postcodeForm.error("postcode").map { formError =>
+            <span class="error-notification" id="postcode-error"><span class="visuallyhidden">@Messages("error.prefix")</span>
+            @Messages(formError.message)
+        </span>
+        }
+        <input
+        type="text"
+        class="form-control input--cleared"
+        name="postcode"
+        id="postcode"
+        @postcodeForm("postcode").value.map{ v => value="@v"}
+        @postcodeForm.error("postcode").map{ _ => aria-describedby="postcode-error"}
+        >
     </div>
 
-    <div class="form-field">
         <button class="button" type="submit" id="submit-postcode">@Messages("button.continue")</button>
-    </div>
     }
 }
