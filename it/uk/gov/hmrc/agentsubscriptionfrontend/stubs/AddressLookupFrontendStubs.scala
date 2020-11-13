@@ -70,12 +70,12 @@ object AddressLookupFrontendStubs {
              |    "navTitle": "Creu cyfrif gwasanaethau asiant"
              |    },
              |     "lookupPageLabels": {
-             |      "title": "What is your business address?- Create an agent services account - GOV.UK",
-             |      "heading": "What is your business address?"
+             |      "title": "Beth yw cyfeiriad eich busnes?- Creu cyfrif gwasanaethau asiant - GOV.UK",
+             |      "heading": "Beth yw cyfeiriad eich busnes?"
              |    },
              |     "editPageLabels" : {
-             |      "title": "Change your address- Create an agent services account - GOV.UK",
-             |      "heading": "Change your address"
+             |      "title": "Newid eich cyfeiriad- Creu cyfrif gwasanaethau asiant - GOV.UK",
+             |      "heading": "Newid eich cyfeiriad"
              |      }
              |   }
              | }
