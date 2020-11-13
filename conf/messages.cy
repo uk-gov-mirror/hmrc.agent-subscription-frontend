@@ -79,10 +79,10 @@ error.client.sautr.invalid=Rhaid i Gyfeirnod Unigryw y Trethdalwr (UTR) ar gyfer
 error.crn.empty=Nodwch rif cofrestru cwmni eich busnes
 error.crn.invalid=Rhaid i’r rhif cofrestru cwmni fod yn 8 rhif, neu’n 2 lythyren wedi’u dilyn gan 6 rhif
 error.business-name.empty =Nodwch enw eich busnes
-error.business-name.invalid =Rhaid i enw’r busnes gynnwys dim ond y llythrennau a-z, rhifau, comas, atalnodau llawn, collnodau, blaenslaesau, a bylchau
+error.business-name.invalid = Nodwch enw eich busnes yn y fformat cywir
 error.business-name.maxlength =Rhaid i enw’r busnes fod yn 40 o gymeriadau neu lai
 error.business-email.empty=Nodwch gyfeiriad e-bost eich busnes
-error.confirm-business-value.invalid=Dewiswch un o’r opsiynau isod
+error.confirm-business-value.invalid=Dewiswch ‘Iawn’ os mai’ch busnes chi yw hwn
 error.summary.heading=Mae problem wedi codi
 error.prefix=Gwall:
 error.nino.empty=Nodwch eich rhif Yswiriant Gwladol
@@ -153,7 +153,7 @@ contactTradingAddressCheck.title=Ai hwn yw’ch prif gyfeiriad masnachu?
 contactTradingAddressCheck.option.yes=Iawn – hoffwn ddefnyddio’r cyfeiriad hwn ar gyfer fy holl ohebiaeth ynghylch gwasanaethau asiant
 contactTradingAddressCheck.option.no=Na – mae angen i mi nodi cyfeiriad gwahanol
 contactTradingAddressCheck.continue.button=Yn eich blaen
-error.contact-trading-address-check.invalid=Dewiswch ‘Iawn’ os mai hwn yw’ch prif gyfeiriad masnachu
+error.contact-trading-address-check.invalid=Dewiswch ‘Iawn’ os mai dyma'r prif gyfeiriad masnachu yr ydych am ei ddefnyddio ar gyfer gohebiaeth eich cyfrif gwasanaethau asiant
 
 ##Modifying address
 address.form.with-errors.error.summary =Gwiriwch y canlynol:
@@ -167,7 +167,7 @@ address.form.with-errors.button.confirm_address=Cadarnhewch y cyfeiriad
 
 ##Confirm business
 confirmBusiness.title=Ai dyma’ch busnes?
-confirmBusiness.content.utr=Dyma’r manylion sydd gennym ar gyfer Cyfeirnod Unigryw y Trethdalwr (UTR) <strong class="bold">{0}</strong>. You will be able to change these details before you finish creating an agent services account.
+confirmBusiness.content.utr=Dyma’r manylion sydd gennym ar gyfer Cyfeirnod Unigryw y Trethdalwr (UTR) <strong class="bold">{0}</strong>. Byddwch yn gallu newid y manylion hyn cyn i chi orffen creu cyfrif gwasanaethau asiant.
 confirmBusiness.option.yes=Iawn
 confirmBusiness.option.no=Na – hoffwn nodi UTR gwahanol
 confirmBusiness.error.no-radio-selected=Dewiswch ‘Iawn’ os mai dyma’ch busnes
@@ -236,7 +236,7 @@ businessType.option.invalid=Dim un o’r mathau hyn o fusnes
 businessType.progressive.title=Nid yw fy math o fusnes wedi’i restru yma
 businessType.progressive.content.p1=Dim ond os yw’ch busnes yn unig fasnachwr, yn gwmni cyfyngedig, yn bartneriaeth neu’n bartneriaeth atebolrwydd cyfyngedig y gallwch gael cyfrif gwasanaethau asiant.
 businessType.progressive.content.link=Gorffen ac allgofnodi
-businessType.error.invalid-choice =Dewiswch a yw’ch math o fusnes yn gwmni cyfyngedig, yn unig fasnachwr, yn bartneriaeth neu’n bartneriaeth atebolrwydd cyfyngedig (PAC)
+businessType.error.invalid-choice=Dewiswch pa fath o fusnes ydych chi
 
 #LLP Interrupt
 llp-interrupt.title=We need more information to check your identity
@@ -273,12 +273,12 @@ postcode.llp.title=Beth yw cod post cyfeiriad cofrestredig eich partneriaeth ate
 #Nino page
 nino.title=Beth yw’ch rhif Yswiriant Gwladol?
 nino.hint=Mae hwn ar eich cerdyn Yswiriant Gwladol, llythyr ynghylch budd-daliadau, slip cyflog neu P60. Er enghraifft, ‘QQ 12 34 56 C’.
-nino.hint-llp=We only need your National Insurance number to confirm your identity as a registered member of the Limited Liability Partnership. It will not be stored on the agent services account.
+nino.hint-llp=Dim ond eich rhif Yswiriant Gwladol sydd ei angen arnom i gadarnhau pwy ydych fel aelod cofrestredig o’r Bartneriaeth Atebolrwydd Cyfyngedig. Ni chaiff ei storio ar y cyfrif gwasanaethau asiant.
 
 #Date of Birth page
 date-of-birth.title=Beth yw’ch dyddiad geni?
 date-of-birth.hint=Er enghraifft, 31 3 1980
-date-of-birth.hint-llp=We only need your date of birth to confirm your identity as a registered member of the Limited Liability Partnership. It will not be stored on the agent services account.
+date-of-birth.hint-llp=Dim ond eich dyddiad geni sydd ei angen arnom i gadarnhau pwy ydych fel aelod cofrestredig o’r Bartneriaeth Atebolrwydd Cyfyngedig. Ni chaiff ei storio ar y cyfrif gwasanaethau asiant.
 date-of-birth.empty=Nodwch eich dyddiad geni
 date-of-birth.invalid=Nodwch ddyddiad geni go iawn
 date-of-birth.day.invalid=Rhaid i’r dyddiad geni gynnwys diwrnod dilys
@@ -592,7 +592,7 @@ accessibility.statement.howtested.p3=Paratowyd y dudalen hon ar 23 Medi 2019. Ca
 footer.links.accessibility.text=Hygyrchedd
 footer.links.accessibility.url=/agent-subscription/accessibility-statement
 
-address.lookup.title=What is your business address?- Create an agent services account - GOV.UK
-address.lookup.header=What is your business address?
-address.lookup.editPageLabels.title=Change your address- Create an agent services account - GOV.UK
-address.lookup.editPageLabels.header=Change your address
+address.lookup.title=Beth yw cyfeiriad eich busnes?- Creu cyfrif gwasanaethau asiant - GOV.UK
+address.lookup.header=Beth yw cyfeiriad eich busnes?
+address.lookup.editPageLabels.title=Newid eich cyfeiriad- Creu cyfrif gwasanaethau asiant - GOV.UK
+address.lookup.editPageLabels.header=Newid eich cyfeiriad

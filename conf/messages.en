@@ -79,7 +79,7 @@ error.client.sautr.invalid=Self Assessment Unique Taxpayer Reference (UTR) must 
 error.crn.empty=Enter the company registration number of your business
 error.crn.invalid=Company registration number must be 8 numbers, or 2 letters followed by 6 numbers
 error.business-name.empty = Enter your business name
-error.business-name.invalid = Business name must only include letters a to z, numbers, commas, full stops, apostrophes, hyphens, forward slashes, and spaces
+error.business-name.invalid = Enter your business name in the correct format
 error.business-name.maxlength = Business name must be 40 characters or less
 error.business-email.empty=Enter your business email address
 error.confirm-business-value.invalid=Select yes if this is your business
@@ -153,7 +153,7 @@ contactTradingAddressCheck.title=Is this your main trading address?
 contactTradingAddressCheck.option.yes=Yes - I want to use this address for all my agents services correspondence
 contactTradingAddressCheck.option.no=No - I need to enter a different address
 contactTradingAddressCheck.continue.button=Continue
-error.contact-trading-address-check.invalid=Select yes if this is your main trading address
+error.contact-trading-address-check.invalid=Select yes if this is the main trading address you want to use for your agent services account correspondence
 
 #Modifying address
 address.form.with-errors.error.summary = Please check the following:
@@ -236,7 +236,7 @@ businessType.option.invalid=None of these types of business
 businessType.progressive.title=My business type is not listed here
 businessType.progressive.content.p1=You can only get an agent services account if your business is a sole trader, limited company, partnership or limited liability partnership.
 businessType.progressive.content.link=Finish and sign out
-businessType.error.invalid-choice = Select if your business type is limited company, sole trader, partnership or limited liability partnership (LLP)
+businessType.error.invalid-choice = Select what type of business you are
 
 #LLP Interrupt
 llp-interrupt.title=We need more information to check your identity
