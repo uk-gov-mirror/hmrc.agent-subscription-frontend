@@ -46,11 +46,11 @@ trait EndpointBehaviours {
 
   protected def aPageWithFeedbackLinks(action: PlayRequest, request: => Request[AnyContent] = FakeRequest("GET", "url")): Unit = {
 
-    "have a 'get help with this page' link" in new TestSetupWithCompleteJourneyRecord {
+    "have a 'is this page not working properly?' link" in new TestSetupWithCompleteJourneyRecord {
       await(sessionStoreService.cacheAgentSession(AgentSession(Some(BusinessType.SoleTrader)))(hc(request), global))
       val result = await(action(request))
 
-      bodyOf(result) should include("Get help with this page.")
+      bodyOf(result) should include("Is this page not working properly?")
     }
 
     "have a beta feedback banner" in new TestSetupWithCompleteJourneyRecord {
