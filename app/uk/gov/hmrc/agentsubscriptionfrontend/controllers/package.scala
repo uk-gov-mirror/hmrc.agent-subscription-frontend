@@ -41,7 +41,8 @@ package object controllers extends Logging {
       case Some("save")     => routes.TaskListController.savedProgress(Some(previous.url))
       case _ => {
         logger.warn("unexpected value in submit")
-        routes.TaskListController.showTaskList()
+        //routes.TaskListController.showTaskList()
+        next
       }
     }
     call
