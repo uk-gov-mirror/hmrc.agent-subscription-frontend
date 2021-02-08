@@ -147,7 +147,7 @@ class BusinessIdentificationControllerISpec extends BaseISpec {
 
         val result = await(
           controller.submitChangeBusinessName(
-            authenticatedRequest.withFormUrlEncodedBody("name" -> "New Agency Name", "continue" -> "continue")))
+            authenticatedRequest.withFormUrlEncodedBody("name" -> "New Agency Name", "submit" -> "continue")))
 
         status(result) shouldBe 303
         redirectLocation(result) shouldBe Some(routes.SubscriptionController.showCheckAnswers.url)
@@ -159,7 +159,7 @@ class BusinessIdentificationControllerISpec extends BaseISpec {
 
         val result = await(
           controller.submitChangeBusinessName(
-            authenticatedRequest.withFormUrlEncodedBody("name" -> "New Agency Name", "continue" -> "save")))
+            authenticatedRequest.withFormUrlEncodedBody("name" -> "New Agency Name", "submit" -> "save")))
 
         status(result) shouldBe 303
 
@@ -202,7 +202,7 @@ class BusinessIdentificationControllerISpec extends BaseISpec {
 
       val result = await(
         controller.submitChangeBusinessEmail(
-          authenticatedRequest.withFormUrlEncodedBody("email" -> "new@gmail.com", "continue" -> "continue")))
+          authenticatedRequest.withFormUrlEncodedBody("email" -> "new@gmail.com", "submit" -> "continue")))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.SubscriptionController.showCheckAnswers.url)
@@ -214,7 +214,7 @@ class BusinessIdentificationControllerISpec extends BaseISpec {
 
       val result = await(
         controller.submitChangeBusinessEmail(
-          authenticatedRequest.withFormUrlEncodedBody("email" -> "new@gmail.com", "continue" -> "save")))
+          authenticatedRequest.withFormUrlEncodedBody("email" -> "new@gmail.com", "submit" -> "save")))
 
       status(result) shouldBe 303
 
