@@ -34,15 +34,13 @@ package object controllers extends Logging {
   def continueOrStop(next: Call, previous: Call)(implicit request: Request[AnyContent]): Call = {
 
     val submitAction = request.body.asFormUrlEncoded
-      .fold(Seq.empty: Seq[String])(someMap => someMap.getOrElse("continue", Seq.empty))
+      .fold(Seq.empty: Seq[String])(someMap => someMap.getOrElse("submit", Seq.empty))
 
     val call = submitAction.headOption match {
       case Some("continue") => next
       case Some("save")     => routes.TaskListController.savedProgress(Some(previous.url))
-      case _ => {
-        logger.warn("unexpected value in submit")
-        //routes.TaskListController.showTaskList()
-        next
+      case e => {
+        throw new Exception(s"unexpected value in submit $e")
       }
     }
     call

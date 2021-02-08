@@ -117,7 +117,7 @@ class AMLSControllerISpec extends BaseISpec {
       givenSubscriptionRecordCreated(id, record.copy(amlsData = Some(AmlsData.registeredUserNoDataEntered)))
 
       val result =
-        await(controller.submitAmlsRegistered(authenticatedRequest.withFormUrlEncodedBody("registeredAmls" -> "yes", "continue" -> "continue")))
+        await(controller.submitAmlsRegistered(authenticatedRequest.withFormUrlEncodedBody("registeredAmls" -> "yes", "submit" -> "continue")))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.AMLSController.showAmlsDetailsForm().url)
@@ -126,7 +126,7 @@ class AMLSControllerISpec extends BaseISpec {
       givenSubscriptionRecordCreated(id, record.copy(amlsData = Some(AmlsData.registeredUserNoDataEntered)))
 
       val result =
-        await(controller.submitAmlsRegistered(authenticatedRequest.withFormUrlEncodedBody("registeredAmls" -> "yes", "continue" -> "save")))
+        await(controller.submitAmlsRegistered(authenticatedRequest.withFormUrlEncodedBody("registeredAmls" -> "yes", "submit" -> "save")))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.TaskListController.savedProgress(Some(routes.AMLSController.showAmlsRegisteredPage().url)).url)
@@ -136,7 +136,7 @@ class AMLSControllerISpec extends BaseISpec {
       givenSubscriptionRecordCreated(id, record.copy(amlsData = Some(AmlsData.nonRegisteredUserNoDataEntered)))
 
       val result =
-        await(controller.submitAmlsRegistered(authenticatedRequest.withFormUrlEncodedBody("registeredAmls" -> "no", "continue" -> "continue")))
+        await(controller.submitAmlsRegistered(authenticatedRequest.withFormUrlEncodedBody("registeredAmls" -> "no", "submit" -> "continue")))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.AMLSController.showCheckAmlsAlreadyAppliedForm().url)
@@ -155,7 +155,7 @@ class AMLSControllerISpec extends BaseISpec {
         record.copy(amlsData = Some(AmlsData(amlsRegistered = true, None, None))))
 
       val result =
-        await(controller.submitAmlsRegistered(authenticatedRequest.withFormUrlEncodedBody("registeredAmls" -> "yes", "continue" -> "continue")))
+        await(controller.submitAmlsRegistered(authenticatedRequest.withFormUrlEncodedBody("registeredAmls" -> "yes", "submit" -> "continue")))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.AMLSController.showAmlsDetailsForm().url)
@@ -174,7 +174,7 @@ class AMLSControllerISpec extends BaseISpec {
         record.copy(amlsData = Some(AmlsData(amlsRegistered = true, None, None))))
 
       val result =
-        await(controller.submitAmlsRegistered(authenticatedRequest.withFormUrlEncodedBody("registeredAmls" -> "yes", "continue" -> "save")))
+        await(controller.submitAmlsRegistered(authenticatedRequest.withFormUrlEncodedBody("registeredAmls" -> "yes", "submit" -> "save")))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.TaskListController.savedProgress(Some(routes.AMLSController.showAmlsRegisteredPage().url)).url)
@@ -190,7 +190,7 @@ class AMLSControllerISpec extends BaseISpec {
       givenSubscriptionRecordCreated(id, record.copy(amlsData = Some(completeAmlsData)))
 
       val result =
-        await(controller.submitAmlsRegistered(authenticatedRequest.withFormUrlEncodedBody("registeredAmls" -> "yes", "continue" -> "continue")))
+        await(controller.submitAmlsRegistered(authenticatedRequest.withFormUrlEncodedBody("registeredAmls" -> "yes", "submit" -> "continue")))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.AMLSController.showAmlsDetailsForm().url)
@@ -271,7 +271,7 @@ class AMLSControllerISpec extends BaseISpec {
 
       val result = await(
         controller.submitCheckAmlsAlreadyAppliedForm(
-          authenticatedRequest.withFormUrlEncodedBody("amlsAppliedFor" -> "yes", "continue" -> "continue")))
+          authenticatedRequest.withFormUrlEncodedBody("amlsAppliedFor" -> "yes", "submit" -> "continue")))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.AMLSController.showAmlsApplicationDatePage().url)
@@ -285,7 +285,7 @@ class AMLSControllerISpec extends BaseISpec {
 
       val result = await(
         controller.submitCheckAmlsAlreadyAppliedForm(
-          authenticatedRequest.withFormUrlEncodedBody("amlsAppliedFor" -> "yes", "continue" -> "save")))
+          authenticatedRequest.withFormUrlEncodedBody("amlsAppliedFor" -> "yes", "submit" -> "save")))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.TaskListController.savedProgress(Some(routes.AMLSController.showCheckAmlsAlreadyAppliedForm().url)).url)
@@ -299,7 +299,7 @@ class AMLSControllerISpec extends BaseISpec {
 
       val result = await(
         controller.submitCheckAmlsAlreadyAppliedForm(
-          authenticatedRequest.withFormUrlEncodedBody("amlsAppliedFor" -> "no", "continue" -> "continue")))
+          authenticatedRequest.withFormUrlEncodedBody("amlsAppliedFor" -> "no", "submit" -> "continue")))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.AMLSController.showAmlsNotAppliedPage().url)
@@ -313,7 +313,7 @@ class AMLSControllerISpec extends BaseISpec {
 
       val result = await(
         controller.submitCheckAmlsAlreadyAppliedForm(
-          authenticatedRequest.withFormUrlEncodedBody("amlsAppliedFor" -> "no", "continue" -> "save")))
+          authenticatedRequest.withFormUrlEncodedBody("amlsAppliedFor" -> "no", "submit" -> "save")))
 
       status(result) shouldBe 303
       redirectLocation(result) shouldBe Some(routes.TaskListController.savedProgress(Some(routes.AMLSController.showCheckAmlsAlreadyAppliedForm().url)).url)
@@ -515,7 +515,7 @@ class AMLSControllerISpec extends BaseISpec {
         "expiry.day"       -> expiryDay,
         "expiry.month"     -> expiryMonth,
         "expiry.year"      -> expiryYear,
-      "continue" -> "continue")
+      "submit" -> "continue")
 
       sessionStoreService.currentSession.changingAnswers = Some(false)
 
@@ -539,7 +539,7 @@ class AMLSControllerISpec extends BaseISpec {
         "expiry.day"       -> expiryDay,
         "expiry.month"     -> expiryMonth,
         "expiry.year"      -> expiryYear,
-      "continue" -> "continue")
+      "submit" -> "continue")
 
       sessionStoreService.currentSession.changingAnswers = Some(true)
 
@@ -790,7 +790,7 @@ class AMLSControllerISpec extends BaseISpec {
         "appliedOn.day"   -> day,
         "appliedOn.month" -> month,
         "appliedOn.year"  -> year,
-      "continue" -> "continue")
+      "submit" -> "continue")
 
       sessionStoreService.currentSession.changingAnswers = Some(false)
 
@@ -813,7 +813,7 @@ class AMLSControllerISpec extends BaseISpec {
         "appliedOn.day"   -> day,
         "appliedOn.month" -> month,
         "appliedOn.year"  -> year,
-      "continue" -> "continue")
+      "submit" -> "continue")
 
       sessionStoreService.currentSession.changingAnswers = Some(true)
 
