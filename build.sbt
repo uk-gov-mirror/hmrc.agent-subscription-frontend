@@ -104,7 +104,6 @@ lazy val root = Project("agent-subscription-frontend", file("."))
       "-Xfatal-warnings",
       "-Xlint:-missing-interpolator,_",
       "-Yno-adapted-args",
-      "-Ywarn-value-discard",
       "-Ywarn-dead-code",
       "-deprecation",
       "-feature",

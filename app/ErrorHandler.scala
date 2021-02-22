@@ -16,6 +16,7 @@
 
 import com.google.inject.name.Named
 import javax.inject.{Inject, Singleton}
+import play.api.Logger.logger
 import play.api.http.Status.FORBIDDEN
 import play.api.i18n.{Messages, MessagesApi}
 import play.api.mvc.Results._
@@ -48,15 +49,18 @@ class ErrorHandler @Inject()(
 
     if (statusCode == FORBIDDEN)
       Future.successful(Forbidden(standardErrorTemplate("global.error.403.title", "global.error.403.heading", "global.error.403.message")(request)))
-    else
+    else {
+      logger.error(s"onClientError $message")
       super.onClientError(request, statusCode, message)
+    }
   }
 
   override def resolveError(request: RequestHeader, exception: Throwable): Result = {
     auditServerError(request, exception)
 
     exception match {
-      case _: NoActiveSession =>
+      case e: NoActiveSession =>
+        logger.error(s"NoActiveSession ${e.getMessage}")
         toGGLogin(if (env.mode.equals(Mode.Dev)) s"http://${request.host}${request.uri}" else s"${request.uri}")
       case _: InsufficientEnrolments =>
         Forbidden(standardErrorTemplate("global.error.403.title", "global.error.403.heading", "global.error.403.message")(request))
@@ -64,10 +68,15 @@ class ErrorHandler @Inject()(
     }
   }
 
-  override def standardErrorTemplate(pageTitle: String, heading: String, message: String)(implicit request: Request[_]): HtmlFormat.Appendable =
+  override def standardErrorTemplate(pageTitle: String, heading: String, message: String)(implicit request: Request[_]): HtmlFormat.Appendable = {
+    logger.error(s"$message")
     errorTemplate(Messages(pageTitle), Messages(heading), Messages(message))
+  }
 
-  override def internalServerErrorTemplate(implicit request: Request[_]): Html = errorTemplate5xx()
+  override def internalServerErrorTemplate(implicit request: Request[_]): Html = {
+    logger.error(s"internalServerError ${request.body}")
+    errorTemplate5xx()
+  }
 
   private implicit def rhToRequest(rh: RequestHeader): Request[_] = Request(rh, "")
 }
