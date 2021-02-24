@@ -60,11 +60,13 @@ class ErrorHandler @Inject()(
 
     exception match {
       case e: NoActiveSession =>
-        logger.error(s"NoActiveSession ${e.getMessage}")
+        logger.warn(s"NoActiveSession ${e.getMessage}")
         toGGLogin(if (env.mode.equals(Mode.Dev)) s"http://${request.host}${request.uri}" else s"${request.uri}")
       case _: InsufficientEnrolments =>
         Forbidden(standardErrorTemplate("global.error.403.title", "global.error.403.heading", "global.error.403.message")(request))
-      case _ => super.resolveError(request, exception)
+      case _ =>
+        logger.error(s"resolveError ${exception.getMessage}")
+        super.resolveError(request, exception)
     }
   }
 
