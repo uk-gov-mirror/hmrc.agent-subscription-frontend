@@ -113,7 +113,7 @@ class StartControllerISpec extends BaseISpec {
         val result = await(controller.showNotAgent(request))
 
         status(result) shouldBe SEE_OTHER
-        redirectLocation(result).head should include("gg/sign-in")
+        redirectLocation(result).head should include("bas-gateway/sign-in")
       }
     }
 

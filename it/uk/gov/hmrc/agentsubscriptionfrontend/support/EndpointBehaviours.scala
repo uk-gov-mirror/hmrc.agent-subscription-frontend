@@ -28,7 +28,7 @@ trait EndpointBehaviours {
       val result = await(doRequest(request))
 
       status(result) shouldBe 303
-      redirectLocation(result).get should include("/gg/sign-in")
+      redirectLocation(result).get should include("/bas-gateway/sign-in")
       noMetricExpectedAtThisPoint()
     }
 
