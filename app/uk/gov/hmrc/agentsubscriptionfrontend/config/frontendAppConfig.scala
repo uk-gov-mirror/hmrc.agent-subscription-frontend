@@ -26,8 +26,6 @@ import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 @ImplementedBy(classOf[FrontendAppConfig])
 trait AppConfig {
-  val analyticsToken: String
-  val analyticsHost: String
   val reportAProblemPartialUrl: String
   val reportAProblemNonJSUrl: String
   val betaFeedbackUrl: String
@@ -71,9 +69,6 @@ class FrontendAppConfig @Inject()(servicesConfig: ServicesConfig) extends AppCon
   private val servicesAccountUrl = getConf("microservice.services.agent-services-account-frontend.external-url")
   private val servicesAccountPath =
     getConf("microservice.services.agent-services-account-frontend.start.path")
-
-  override val analyticsToken: String = getConf(s"google-analytics.token")
-  override val analyticsHost: String = getConf(s"google-analytics.host")
 
   override val betaFeedbackUrl: String = getConf("betaFeedbackUrl")
   override val betaFeedbackUnauthenticatedUrl: String = getConf("betaFeedbackUnauthenticatedUrl")
