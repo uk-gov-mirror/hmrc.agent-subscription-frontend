@@ -127,8 +127,8 @@ uiMainContentHeader: uk.gov.hmrc.play.views.html.layouts.MainContentHeader,
 
 @bodyEnd = {
 @uiFooter(
-    analyticsToken = Some(appConfig.analyticsToken),
-    analyticsHost = appConfig.analyticsHost,
+    analyticsToken = None,
+    analyticsHost = "n/a",
     ssoUrl = None,
     scriptElem = Some(scriptElement),
     gaCalls = None)
