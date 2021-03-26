@@ -20,7 +20,7 @@ import javax.inject.{Inject, Singleton}
 import play.api.Logging
 import play.api.mvc._
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.SsoConnector
-import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
+import uk.gov.hmrc.agentsubscriptionfrontend.service.MongoDBSessionStoreService
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.binders.RedirectUrl._
 import uk.gov.hmrc.play.bootstrap.binders.{AbsoluteWithHostnameFromWhitelist, RedirectUrl, UnsafePermitAll}
@@ -35,7 +35,7 @@ import scala.util.{Failure, Success, Try}
   */
 
 @Singleton
-class RedirectUrlActions @Inject()(sessionStoreService: SessionStoreService, ssoConnector: SsoConnector)(implicit executor: ExecutionContext)
+class RedirectUrlActions @Inject()(sessionStoreService: MongoDBSessionStoreService, ssoConnector: SsoConnector)(implicit executor: ExecutionContext)
     extends Logging {
 
   def whitelistedDomains()(implicit hc: HeaderCarrier): Future[Set[String]] = ssoConnector.getWhitelistedDomains()

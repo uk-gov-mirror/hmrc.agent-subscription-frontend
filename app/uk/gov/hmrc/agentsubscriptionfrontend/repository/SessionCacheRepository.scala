@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-import com.google.inject.AbstractModule
-import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
-import uk.gov.hmrc.http.cache.client.SessionCache
+package uk.gov.hmrc.agentsubscriptionfrontend.repository
 
-class FrontendModule extends AbstractModule {
+import play.modules.reactivemongo.ReactiveMongoComponent
+import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
+import uk.gov.hmrc.cache.repository.CacheMongoRepository
 
-  override def configure(): Unit = {
+import javax.inject.{Inject, Singleton}
+import scala.concurrent.ExecutionContext
 
-    bind(classOf[SessionStoreService])
-
-    bind(classOf[SessionCache]).to(classOf[AgentSubscriptionSessionCache])
-    ()
-  }
-}
+@Singleton
+class SessionCacheRepository @Inject()(mongo: ReactiveMongoComponent)(implicit ec: ExecutionContext, appConfig: AppConfig)
+    extends CacheMongoRepository("sessions", appConfig.mongoDbExpireAfterSeconds)(mongo.mongoConnector.db, ec)

@@ -25,7 +25,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationForms.{clientDetailsForm, invasiveCheckStartSaAgentCodeForm}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.{LimitedCompany, Llp, Partnership, SoleTrader}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{BusinessType, TaxPayerNino, TaxPayerUtr, ValidVariantsTaxPayerOptionForm}
-import uk.gov.hmrc.agentsubscriptionfrontend.service.{AssuranceService, SessionStoreService, SubscriptionJourneyService}
+import uk.gov.hmrc.agentsubscriptionfrontend.service.{AssuranceService, MongoDBSessionStoreService, SubscriptionJourneyService}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{client_details, invasive_check_start}
 import uk.gov.hmrc.auth.core.AuthConnector
@@ -43,7 +43,7 @@ class AssuranceChecksController @Inject()(
   val env: Environment,
   val redirectUrlActions: RedirectUrlActions,
   val subscriptionJourneyService: SubscriptionJourneyService,
-  val sessionStoreService: SessionStoreService,
+  val sessionStoreService: MongoDBSessionStoreService,
   assuranceService: AssuranceService,
   invasiveCheckStartTemplate: invasive_check_start,
   clientDetailsTemplate: client_details,

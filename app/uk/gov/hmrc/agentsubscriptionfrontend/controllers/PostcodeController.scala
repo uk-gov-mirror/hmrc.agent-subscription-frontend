@@ -41,7 +41,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class PostcodeController @Inject()(
   val redirectUrlActions: RedirectUrlActions,
   val authConnector: AuthConnector,
-  val sessionStoreService: SessionStoreService,
+  val sessionStoreService: MongoDBSessionStoreService,
   val env: Environment,
   val config: Configuration,
   subscriptionService: SubscriptionService,

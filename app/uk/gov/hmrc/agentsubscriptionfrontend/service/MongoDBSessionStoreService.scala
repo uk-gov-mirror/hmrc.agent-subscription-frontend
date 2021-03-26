@@ -16,43 +16,67 @@
 
 package uk.gov.hmrc.agentsubscriptionfrontend.service
 
+import play.api.libs.json.Json
+
 import javax.inject.{Inject, Singleton}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.AgentSession
-import uk.gov.hmrc.agentsubscriptionfrontend.models.RedirectUrlJsonFormat._
+import uk.gov.hmrc.agentsubscriptionfrontend.repository.{SessionCache, SessionCacheRepository}
+import uk.gov.hmrc.cache.repository.CacheRepository
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.cache.client.SessionCache
 import uk.gov.hmrc.play.bootstrap.binders.RedirectUrl
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class SessionStoreService @Inject()(sessionCache: SessionCache) {
+class MongoDBSessionStoreService @Inject()(sessionCache: SessionCacheRepository) {
+
+  implicit val format = Json.format[RedirectUrl]
+
+  val continueUrlCache: SessionCache[RedirectUrl] = new SessionCache[RedirectUrl] {
+    override val sessionName: String = "continueUrl"
+    override val cacheRepository: CacheRepository = sessionCache
+  }
+
+  val goBackUrlCache: SessionCache[String] = new SessionCache[String] {
+    override val sessionName: String = "goBackUrl"
+    override val cacheRepository: CacheRepository = sessionCache
+  }
+
+  val isChangingAnswersCache: SessionCache[Boolean] = new SessionCache[Boolean] {
+    override val sessionName: String = "isChangingAnswers"
+    override val cacheRepository: CacheRepository = sessionCache
+  }
+
+  val agentSessionCache: SessionCache[AgentSession] = new SessionCache[AgentSession] {
+    override val sessionName: String = "agentSession"
+    override val cacheRepository: CacheRepository = sessionCache
+  }
 
   def fetchContinueUrl(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[RedirectUrl]] =
-    sessionCache.fetchAndGetEntry[RedirectUrl]("continueUrl")
+    continueUrlCache.fetch
 
   def cacheContinueUrl(url: RedirectUrl)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
-    sessionCache.cache("continueUrl", url).map(_ => ())
+    continueUrlCache.save(url).map(_ => ())
 
   def cacheGoBackUrl(url: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
-    sessionCache.cache("goBackUrl", url).map(_ => ())
+    goBackUrlCache.save(url).map(_ => ())
 
   def fetchGoBackUrl(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[String]] =
-    sessionCache.fetchAndGetEntry[String]("goBackUrl")
+    goBackUrlCache.fetch
 
   def cacheIsChangingAnswers(changing: Boolean)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
-    sessionCache.cache("isChangingAnswers", changing).map(_ => ())
+    isChangingAnswersCache.save(changing).map(_ => ())
 
   def fetchIsChangingAnswers(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[Boolean]] =
-    sessionCache.fetchAndGetEntry[Boolean]("isChangingAnswers")
+    isChangingAnswersCache.fetch
 
   def cacheAgentSession(agentSession: AgentSession)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
-    sessionCache.cache("agentSession", agentSession).map(_ => ())
+    agentSessionCache.save(agentSession).map(_ => ())
 
   def fetchAgentSession(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[AgentSession]] =
-    sessionCache.fetchAndGetEntry[AgentSession]("agentSession")
+    agentSessionCache.fetch
 
-  def remove()(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
-    sessionCache.remove().map(_ => ())
+  def remove()(implicit ec: ExecutionContext): Future[Unit] =
+    sessionCache.removeAll().map(_ => ())
 
 }

@@ -24,7 +24,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent.hasNonEmptyEnrolments
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.models.ContinueId
-import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService, SubscriptionService}
+import uk.gov.hmrc.agentsubscriptionfrontend.service.{MongoDBSessionStoreService, SubscriptionJourneyService, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{accessibility_statement, cannot_create_account, not_agent, sign_in_check}
 import uk.gov.hmrc.auth.core.AuthConnector
 import scala.concurrent.{ExecutionContext, Future}
@@ -36,7 +36,7 @@ class StartController @Inject()(
   val authConnector: AuthConnector,
   val redirectUrlActions: RedirectUrlActions,
   val metrics: Metrics,
-  val sessionStoreService: SessionStoreService,
+  val sessionStoreService: MongoDBSessionStoreService,
   val config: Configuration,
   val env: Environment,
   subscriptionService: SubscriptionService,

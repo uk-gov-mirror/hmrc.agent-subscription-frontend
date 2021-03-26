@@ -37,7 +37,7 @@ class AssuranceService @Inject()(
   appConfig: AppConfig,
   assuranceConnector: AgentAssuranceConnector,
   auditService: AuditService,
-  sessionStoreService: SessionStoreService) {
+  sessionStoreService: MongoDBSessionStoreService) {
 
   def assureIsAgent(utr: Utr)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[AssuranceResults]] =
     if (appConfig.agentAssuranceRun) {

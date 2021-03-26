@@ -54,7 +54,7 @@ case class SubscriptionProcess(state: SubscriptionState, details: Option[Registr
 @Singleton
 class SubscriptionService @Inject()(
   agentSubscriptionConnector: AgentSubscriptionConnector,
-  sessionStoreService: SessionStoreService,
+  sessionStoreService: MongoDBSessionStoreService,
   subscriptionJourneyService: SubscriptionJourneyService,
   val metrics: Metrics)
     extends Monitoring with Logging {

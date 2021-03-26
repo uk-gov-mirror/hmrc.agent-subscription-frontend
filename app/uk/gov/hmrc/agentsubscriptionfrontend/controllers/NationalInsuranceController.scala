@@ -27,7 +27,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationF
 import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.{Llp, Partnership, SoleTrader}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.DesignatoryDetails.Person
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, BusinessType}
-import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService, SubscriptionService}
+import uk.gov.hmrc.agentsubscriptionfrontend.service.{MongoDBSessionStoreService, SubscriptionJourneyService, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TaxIdentifierFormatters.normalizeNino
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html.national_insurance_number
@@ -42,7 +42,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class NationalInsuranceController @Inject()(
   val redirectUrlActions: RedirectUrlActions,
   val authConnector: AuthConnector,
-  val sessionStoreService: SessionStoreService,
+  val sessionStoreService: MongoDBSessionStoreService,
   val env: Environment,
   val config: Configuration,
   val metrics: Metrics,

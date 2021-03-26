@@ -22,11 +22,10 @@ import play.api.{Configuration, Environment}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Result}
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
-import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService}
+import uk.gov.hmrc.agentsubscriptionfrontend.service.{MongoDBSessionStoreService, SubscriptionJourneyService}
 import uk.gov.hmrc.agentsubscriptionfrontend.support.CallOps.addParamsToUrl
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html.timed_out
 import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.http.cache.client.NoSessionException
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -34,7 +33,7 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class SignedOutController @Inject()(
   timedOutTemplate: timed_out,
-  val sessionStoreService: SessionStoreService,
+  val sessionStoreService: MongoDBSessionStoreService,
   val redirectUrlActions: RedirectUrlActions,
   val metrics: Metrics,
   val authConnector: AuthConnector,
@@ -91,7 +90,7 @@ class SignedOutController @Inject()(
     }
 
     result.recover {
-      case NoSessionException => startNewSession
+      case _: RuntimeException => startNewSession
     }
   }
 

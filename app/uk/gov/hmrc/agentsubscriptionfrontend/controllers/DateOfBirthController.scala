@@ -30,7 +30,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.DateOfBirthController._
 import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.{Llp, Partnership, SoleTrader}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, BusinessType, DateOfBirth}
-import uk.gov.hmrc.agentsubscriptionfrontend.service.{AssuranceService, SessionStoreService, SubscriptionJourneyService, SubscriptionService}
+import uk.gov.hmrc.agentsubscriptionfrontend.service.{AssuranceService, MongoDBSessionStoreService, SubscriptionJourneyService, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.validators.CommonValidators.checkOneAtATime
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html.date_of_birth
@@ -49,7 +49,7 @@ class DateOfBirthController @Inject()(
   val metrics: Metrics,
   val env: Environment,
   val config: Configuration,
-  val sessionStoreService: SessionStoreService,
+  val sessionStoreService: MongoDBSessionStoreService,
   val subscriptionService: SubscriptionService,
   val subscriptionJourneyService: SubscriptionJourneyService,
   mcc: MessagesControllerComponents,

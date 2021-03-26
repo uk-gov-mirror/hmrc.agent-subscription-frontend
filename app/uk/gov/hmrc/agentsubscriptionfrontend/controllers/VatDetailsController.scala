@@ -33,7 +33,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.controllers.VatDetailsController.{f
 import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.{LimitedCompany, Llp, Partnership, SoleTrader}
 import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
-import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService, SubscriptionService}
+import uk.gov.hmrc.agentsubscriptionfrontend.service.{MongoDBSessionStoreService, SubscriptionJourneyService, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.validators.CommonValidators.{checkOneAtATime, radioInputSelected}
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{registered_for_vat, vat_details}
@@ -50,7 +50,7 @@ class VatDetailsController @Inject()(
   val metrics: Metrics,
   val config: Configuration,
   val env: Environment,
-  val sessionStoreService: SessionStoreService,
+  val sessionStoreService: MongoDBSessionStoreService,
   val subscriptionService: SubscriptionService,
   val subscriptionJourneyService: SubscriptionJourneyService,
   mcc: MessagesControllerComponents,

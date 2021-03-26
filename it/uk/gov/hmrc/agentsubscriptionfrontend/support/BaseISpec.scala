@@ -12,7 +12,7 @@ import play.api.mvc.{AnyContentAsEmpty, Request, Result}
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{contentType, _}
 import play.twirl.api.HtmlFormat.escape
-import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
+import uk.gov.hmrc.agentsubscriptionfrontend.service.MongoDBSessionStoreService
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.AuthStub.userIsAuthenticated
 import uk.gov.hmrc.agentsubscriptionfrontend.stubs.DataStreamStubs
 import uk.gov.hmrc.http.HeaderCarrier
@@ -54,7 +54,7 @@ abstract class BaseISpec
 
   private class TestGuiceModule extends AbstractModule {
     override def configure(): Unit = {
-      bind(classOf[SessionStoreService]).toInstance(sessionStoreService)
+      bind(classOf[MongoDBSessionStoreService]).toInstance(sessionStoreService)
     }
   }
 

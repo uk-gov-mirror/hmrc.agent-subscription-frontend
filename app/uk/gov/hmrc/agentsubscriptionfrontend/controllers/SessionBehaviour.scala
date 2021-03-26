@@ -20,7 +20,7 @@ import play.api.mvc.{Call, Result}
 import play.api.mvc.Results._
 import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.SubscriptionJourneyRecord
 import uk.gov.hmrc.agentsubscriptionfrontend.models.{AgentSession, BusinessType}
-import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService}
+import uk.gov.hmrc.agentsubscriptionfrontend.service.{MongoDBSessionStoreService, SubscriptionJourneyService}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -28,7 +28,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 trait SessionBehaviour {
 
-  val sessionStoreService: SessionStoreService
+  val sessionStoreService: MongoDBSessionStoreService
   implicit val ec: ExecutionContext
   val subscriptionJourneyService: SubscriptionJourneyService
 

@@ -39,8 +39,6 @@ trait AppConfig {
   val surveyRedirectUrl: String
   val companyAuthSignInUrl: String
   val chainedSessionDetailsTtl: Int
-  val cachableSessionDomain: String
-  val sessionCacheBaseUrl: String
   val agentMappingBaseUrl: String
   val addressLookupFrontendBaseUrl: String
   def agentMappingFrontendStartUrl(continueId: String): String
@@ -57,6 +55,7 @@ trait AppConfig {
   val languageMap: Map[String, Lang]
   def routeToSwitchLanguage: String => Call
   val companiesHouseUrl: String
+  val mongoDbExpireAfterSeconds: Int
 }
 
 @Singleton
@@ -85,12 +84,9 @@ class FrontendAppConfig @Inject()(servicesConfig: ServicesConfig) extends AppCon
     getConf("microservice.services.address-lookup-frontend.new-address-callback.url")
   override val surveyRedirectUrl: String = getConf("surveyRedirectUrl")
   override val agentSubscriptionFrontendExternalUrl: String = getConf("microservice.services.agent-subscription-frontend.external-url")
-  override val sessionCacheBaseUrl: String = servicesConfig.baseUrl("cachable.session-cache")
 
   override val companyAuthSignInUrl: String = getConf("microservice.services.companyAuthSignInUrl")
   override val chainedSessionDetailsTtl: Int = servicesConfig.getInt("mongodb.chainedsessiondetails.ttl")
-  override val cachableSessionDomain: String =
-    getConf("microservice.services.cachable.session-cache.domain")
   override val agentMappingBaseUrl: String = servicesConfig.baseUrl("agent-mapping")
   override def agentMappingFrontendStartUrl(continueId: String): String =
     s"${getConf("microservice.services.agent-mapping-frontend.external-url")}${getConf("microservice.services.agent-mapping-frontend.start.path")}?continueId=$continueId"
@@ -127,5 +123,5 @@ class FrontendAppConfig @Inject()(servicesConfig: ServicesConfig) extends AppCon
     (lang: String) => routes.AgentSubscriptionLanguageController.switchToLanguage(lang)
 
   override val companiesHouseUrl: String = getConf("companies-house.url")
-
+  override val mongoDbExpireAfterSeconds: Int = servicesConfig.getInt("mongodb.session.expireAfterSeconds")
 }

@@ -24,9 +24,9 @@ import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationForms.businessTypeForm
 import uk.gov.hmrc.agentsubscriptionfrontend.models.AgentSession
-import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService, SubscriptionService}
+import uk.gov.hmrc.agentsubscriptionfrontend.service.{MongoDBSessionStoreService, SubscriptionJourneyService, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
-import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{business_type}
+import uk.gov.hmrc.agentsubscriptionfrontend.views.html.business_type
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
@@ -35,7 +35,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class BusinessTypeController @Inject()(
   val redirectUrlActions: RedirectUrlActions,
   val authConnector: AuthConnector,
-  val sessionStoreService: SessionStoreService,
+  val sessionStoreService: MongoDBSessionStoreService,
   val metrics: Metrics,
   val config: Configuration,
   val env: Environment,

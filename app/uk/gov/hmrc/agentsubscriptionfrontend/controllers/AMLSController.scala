@@ -27,7 +27,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentAssuranceConnector
 import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.AmlsData
-import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService}
+import uk.gov.hmrc.agentsubscriptionfrontend.service.{MongoDBSessionStoreService, SubscriptionJourneyService}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html.amls._
 import uk.gov.hmrc.auth.core.AuthConnector
@@ -45,7 +45,7 @@ class AMLSController @Inject()(
   val env: Environment,
   val redirectUrlActions: RedirectUrlActions,
   val subscriptionJourneyService: SubscriptionJourneyService,
-  val sessionStoreService: SessionStoreService,
+  val sessionStoreService: MongoDBSessionStoreService,
   agentAssuranceConnector: AgentAssuranceConnector,
   mcc: MessagesControllerComponents,
   checkAmlsTemplate: check_amls,

@@ -27,12 +27,12 @@ import uk.gov.hmrc.play.test.UnitSpec
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
 
-class SessionStoreServiceSpec extends UnitSpec with MockFactory {
+class MongoDBSessionStoreServiceSpec extends UnitSpec with MockFactory {
 
   val utr = Utr("2000000000")
   val testPostcode = "AA1 1AA"
 
-  val mockSessionStoreService = mock[SessionStoreService]
+  val mockSessionStoreService = mock[MongoDBSessionStoreService]
   implicit lazy val hc: HeaderCarrier = HeaderCarrier()
 
   "cacheContinueUrl and fetchContinueUrl" should {
@@ -116,8 +116,8 @@ class SessionStoreServiceSpec extends UnitSpec with MockFactory {
         .expects(hc, *)
         .returns(Future(Some(RedirectUrl("/continue/url"))))
       (mockSessionStoreService
-        .remove()(_: HeaderCarrier, _: ExecutionContext))
-        .expects(hc, *)
+        .remove()(_: ExecutionContext))
+        .expects(*)
         .returns(Future(()))
       (mockSessionStoreService
         .fetchContinueUrl(_: HeaderCarrier, _: ExecutionContext))

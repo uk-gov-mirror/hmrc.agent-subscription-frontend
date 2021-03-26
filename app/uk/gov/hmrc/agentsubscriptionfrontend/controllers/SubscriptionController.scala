@@ -29,7 +29,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.connectors.{AddressLookupFrontendCo
 import uk.gov.hmrc.agentsubscriptionfrontend.form.DesAddressForm
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.{SubscriptionJourneyRecord, UserMapping}
-import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService, SubscriptionReturnedHttpError, SubscriptionService}
+import uk.gov.hmrc.agentsubscriptionfrontend.service.{MongoDBSessionStoreService, SubscriptionJourneyService, SubscriptionReturnedHttpError, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{address_form_with_errors, check_answers, sign_in_new_id, subscription_complete}
 import uk.gov.hmrc.auth.core.AuthConnector
@@ -43,7 +43,7 @@ import scala.util.control.NonFatal
 class SubscriptionController @Inject()(
                                         val authConnector: AuthConnector,
                                         subscriptionService: SubscriptionService,
-                                        val sessionStoreService: SessionStoreService,
+                                        val sessionStoreService: MongoDBSessionStoreService,
                                         val metrics: Metrics,
                                         val config: Configuration,
                                         val env: Environment,

@@ -25,7 +25,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.controllers.CompanyRegistrationForms._
 import uk.gov.hmrc.agentsubscriptionfrontend.models.AgentSession
 import uk.gov.hmrc.agentsubscriptionfrontend.models.BusinessType.Llp
-import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService, SubscriptionService}
+import uk.gov.hmrc.agentsubscriptionfrontend.service.{MongoDBSessionStoreService, SubscriptionJourneyService, SubscriptionService}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{company_registration, llp_interrupt}
 import uk.gov.hmrc.auth.core.AuthConnector
@@ -37,7 +37,7 @@ import scala.concurrent.ExecutionContext
 class CompanyRegistrationController @Inject()(
   val redirectUrlActions: RedirectUrlActions,
   val authConnector: AuthConnector,
-  val sessionStoreService: SessionStoreService,
+  val sessionStoreService: MongoDBSessionStoreService,
   val subscriptionService: SubscriptionService,
   val config: Configuration,
   val env: Environment,

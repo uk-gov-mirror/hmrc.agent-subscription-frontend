@@ -28,7 +28,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.controllers.ContactDetailsForms._
 import uk.gov.hmrc.agentsubscriptionfrontend.form.DesAddressForm
 import uk.gov.hmrc.agentsubscriptionfrontend.models.RadioInputAnswer.{No, Yes}
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
-import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService}
+import uk.gov.hmrc.agentsubscriptionfrontend.service.{MongoDBSessionStoreService, SubscriptionJourneyService}
 import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html._
 import uk.gov.hmrc.auth.core.AuthConnector
@@ -40,7 +40,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class ContactDetailsController @Inject()(
   val redirectUrlActions: RedirectUrlActions,
   val authConnector: AuthConnector,
-  val sessionStoreService: SessionStoreService,
+  val sessionStoreService: MongoDBSessionStoreService,
   val metrics: Metrics,
   val config: Configuration,
   val env: Environment,

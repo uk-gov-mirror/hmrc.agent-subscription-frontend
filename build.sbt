@@ -70,7 +70,7 @@ lazy val compileDeps = Seq(
   "uk.gov.hmrc"   %% "play-partials"                 % "7.1.0-play-27",
   "uk.gov.hmrc"   %% "agent-kenshoo-monitoring"      % "4.4.0",
   "uk.gov.hmrc"   %% "agent-mtd-identifiers"         % "0.22.0-play-27",
-  "uk.gov.hmrc"   %% "http-caching-client"           % "9.1.0-play-27",
+  "uk.gov.hmrc"   %% "mongo-caching"                 % "6.16.0-play-27",
   "uk.gov.hmrc"   %% "play-conditional-form-mapping" % "1.6.0-play-27",
   "uk.gov.hmrc"   %% "simple-reactivemongo"          % "7.31.0-play-27",
   "uk.gov.hmrc"   %% "play-language"                 % "4.10.0-play-27",
@@ -78,12 +78,12 @@ lazy val compileDeps = Seq(
 )
 
 def testDeps(scope: String) = Seq(
-  "uk.gov.hmrc" %% "hmrctest" % "3.9.0-play-26" % scope,
+  "uk.gov.hmrc" %% "hmrctest" % "3.10.0-play-26" % scope,
   "org.scalatest" %% "scalatest" % "3.0.8" % scope,
-  "org.mockito" % "mockito-core" % "2.27.0" % scope,
+  "org.mockito" % "mockito-core" % "3.4.6" % scope,
   "org.scalatestplus.play" %% "scalatestplus-play" % "3.1.3" % scope,
   "com.github.tomakehurst" % "wiremock-jre8" % "2.23.2" % scope,
-  "uk.gov.hmrc" %% "reactivemongo-test" % "4.21.0-play-27" % scope,
+  "uk.gov.hmrc" %% "reactivemongo-test" % "4.22.0-play-27" % scope,
   "org.scalamock" %% "scalamock" % "4.4.0" % scope,
   "org.jsoup" % "jsoup" % "1.12.1" % scope
 )

@@ -17,16 +17,15 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.support
 
 import uk.gov.hmrc.agentsubscriptionfrontend.models.AgentSession
-import uk.gov.hmrc.agentsubscriptionfrontend.service.SessionStoreService
+import uk.gov.hmrc.agentsubscriptionfrontend.service.MongoDBSessionStoreService
 import uk.gov.hmrc.agentsubscriptionfrontend.util._
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.cache.client.NoSessionException
 import uk.gov.hmrc.play.bootstrap.binders.RedirectUrl._
 import uk.gov.hmrc.play.bootstrap.binders.{RedirectUrl, UnsafePermitAll}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class TestSessionStoreService extends SessionStoreService(null) {
+class TestSessionStoreService extends MongoDBSessionStoreService(null) {
 
   class Session(
     var continueUrl: Option[String] = None,
@@ -66,7 +65,7 @@ class TestSessionStoreService extends SessionStoreService(null) {
   private def fetchFromSession[A](property: Option[A]): Future[Option[A]] =
     currentSessionTest match {
       case NormalSession => toFuture(property)
-      case SessionLost => Future.failed(NoSessionException)
+      case SessionLost => Future.failed(new RuntimeException)
     }
 
   override def fetchGoBackUrl(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[String]] =
@@ -84,8 +83,8 @@ class TestSessionStoreService extends SessionStoreService(null) {
   override def fetchAgentSession(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[AgentSession]] =
     fetchFromSession(currentSession.agentSession)
 
-  override def remove()(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] = {
-    sessions.remove(sessionKey)
+  override def remove()(implicit ec: ExecutionContext): Future[Unit] = {
+    sessions.clear()
     toFuture(())
   }
 

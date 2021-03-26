@@ -22,7 +22,7 @@ import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentAssuranceConnector
-import uk.gov.hmrc.agentsubscriptionfrontend.service.{SessionStoreService, SubscriptionJourneyService, TaskListService}
+import uk.gov.hmrc.agentsubscriptionfrontend.service.{MongoDBSessionStoreService, SubscriptionJourneyService, TaskListService}
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{saved_progress, task_list}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
@@ -36,7 +36,7 @@ class TaskListController @Inject()(
   val config: Configuration,
   agentAssuranceConnector: AgentAssuranceConnector,
   val redirectUrlActions: RedirectUrlActions,
-  val sessionStoreService: SessionStoreService,
+  val sessionStoreService: MongoDBSessionStoreService,
   val subscriptionJourneyService: SubscriptionJourneyService,
   taskListService: TaskListService,
   mcc: MessagesControllerComponents,
