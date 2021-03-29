@@ -528,6 +528,13 @@ timed-out.p1=You have not done anything for {0}, so we have signed you out to ke
 timed-out.p2.link=Sign in again
 timed-out.p2=to use this service.
 
+#already started
+already-started.title=You have already started to create an account on a different Government Gateway user ID
+already-started.heading={0} has already started to create an account on a different Government Gateway user ID
+already-started.p1=If you want to continue to create an account,
+already-started.p1.link=you must sign out and sign back in with the Government Gateway user ID you originally used.
+already-started.p2=If you do not want to continue with the Government Gateway user ID you originally used, you will lose the details you entered. You will have to wait until {0} to start again.
+
 accessibility.statement.title=Accessibility statement for create an agent services account
 accessibility.statement.h1=Accessibility statement for create an agent services account
 accessibility.statement.intro.p1=This accessibility statement explains how accessible this service is, what to do if you have difficulty using it, and how to report accessibility problems with the service.

@@ -74,7 +74,7 @@ lazy val compileDeps = Seq(
   "uk.gov.hmrc"   %% "play-conditional-form-mapping" % "1.6.0-play-27",
   "uk.gov.hmrc"   %% "simple-reactivemongo"          % "7.31.0-play-27",
   "uk.gov.hmrc"   %% "play-language"                 % "4.10.0-play-27",
-  "org.typelevel" %% "cats"                          % "0.9.0"
+  "org.typelevel" %% "cats-core"                     % "2.2.0"
 )
 
 def testDeps(scope: String) = Seq(

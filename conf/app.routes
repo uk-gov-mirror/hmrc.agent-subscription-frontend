@@ -112,6 +112,7 @@ GET         /business-email                                uk.gov.hmrc.agentsubs
 POST        /business-email                                uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.submitBusinessEmailForm
 GET         /change-business-email                         uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.changeBusinessEmail
 POST        /change-business-email                         uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.submitChangeBusinessEmail
+GET         /already-started                               uk.gov.hmrc.agentsubscriptionfrontend.controllers.BusinessIdentificationController.showAlreadyStarted
 
 GET         /business-address                              uk.gov.hmrc.agentsubscriptionfrontend.controllers.SubscriptionController.showBusinessAddressForm
 

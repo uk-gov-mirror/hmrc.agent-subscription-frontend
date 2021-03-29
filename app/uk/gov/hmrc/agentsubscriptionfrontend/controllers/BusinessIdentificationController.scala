@@ -17,6 +17,9 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import com.kenshoo.play.metrics.Metrics
+import cats.implicits._
+import cats.data.OptionT
+
 import javax.inject.{Inject, Singleton}
 import play.api.data.Form
 import play.api.i18n.I18nSupport
@@ -40,8 +43,10 @@ import uk.gov.hmrc.agentsubscriptionfrontend.validators.BusinessDetailsValidator
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html._
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.bootstrap.binders.RedirectUrl
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
+import java.time.format.DateTimeFormatter
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
@@ -68,7 +73,8 @@ class BusinessIdentificationController @Inject()(
                                                   businessNameTemplate: business_name,
                                                   alreadySubscribedTemplate: already_subscribed,
                                                   updateBusinessAddressTemplate: update_business_address,
-                                                  postcodeNotAllowedTemplate: postcode_not_allowed)(
+                                                  postcodeNotAllowedTemplate: postcode_not_allowed,
+                                                  alreadyStartedTemplate: already_started)(
   implicit val appConfig: AppConfig,
   val ec: ExecutionContext)
     extends FrontendController(mcc) with AuthActions
@@ -154,7 +160,6 @@ class BusinessIdentificationController @Inject()(
                     mark("Count-Subscription-AlreadySubscribed-RegisteredInETMP")
                     Redirect(routes.BusinessIdentificationController.showAlreadySubscribed())
                   } else validatedBusinessDetailsAndRedirect(existingSession, agent)
-
                 case No =>
                   Redirect(routes.UtrController.showUtrForm())
               }
@@ -174,12 +179,10 @@ class BusinessIdentificationController @Inject()(
       case Failure(responses) if responses.contains(InvalidEmail) =>
         Redirect(routes.BusinessIdentificationController.showBusinessEmailForm())
       case _ =>
-
-          subscriptionService.handlePartiallySubscribedAndRedirect(
-            agent,
-            existingSession)(
-            whenNotPartiallySubscribed = createRecordAndRedirectToTasklist(existingSession, agent))
-
+        subscriptionService.handlePartiallySubscribedAndRedirect(
+          agent,
+          existingSession)(
+          whenNotPartiallySubscribed = createRecordAndRedirectToTasklist(existingSession, agent))
     }
 
   private def createRecordAndRedirectToTasklist(existingSession: AgentSession, agent: Agent)
@@ -187,7 +190,7 @@ class BusinessIdentificationController @Inject()(
     subscriptionJourneyService
     .createJourneyRecord(existingSession, agent) map {
     case Right(()) => Redirect(routes.TaskListController.showTaskList())
-    case Left(msg) => logger.warn(msg); Conflict
+    case Left(msg) => logger.warn(msg); Redirect(routes.BusinessIdentificationController.showAlreadyStarted())
   }
 
   def showBusinessEmailForm: Action[AnyContent] = Action.async { implicit request =>
@@ -454,4 +457,24 @@ class BusinessIdentificationController @Inject()(
       case Failure(responses) if responses.contains(InvalidEmail) => true
       case _                                                      => false
     }
+
+  def showAlreadyStarted: Action[AnyContent] = Action.async { implicit request =>
+      withValidSession { (_, existingSession) =>
+        {
+          for {
+            utr <- OptionT(Future(existingSession.utr))
+            journey <- OptionT(subscriptionJourneyService.getJourneyByUtr(utr))
+            name <- OptionT(Future(journey.businessDetails.registration.flatMap(_.taxpayerName)))
+            date <- OptionT(Future(journey.lastModifiedDate))
+          } yield {
+            sessionStoreService.cacheContinueUrl(RedirectUrl("/agent-subscriptions/start"))
+            Ok(alreadyStartedTemplate(name, date.plusDays(31).format(BusinessIdentificationController.dateFormatter)))
+          }
+        }.value.map(_.getOrElse(Conflict))
+      }
+    }
+}
+
+object BusinessIdentificationController {
+  val dateFormatter = DateTimeFormatter.ofPattern("dd MM yyyy")
 }

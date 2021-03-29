@@ -30,22 +30,19 @@ import scala.concurrent.{ExecutionContext, Future}
 class SubscriptionJourneyService @Inject()(agentSubscriptionConnector: AgentSubscriptionConnector)(implicit ec: ExecutionContext) {
 
   def getMandatoryJourneyRecord(continueId: ContinueId)(implicit hc: HeaderCarrier): Future[SubscriptionJourneyRecord] =
-    for {
-      record <- agentSubscriptionConnector.getJourneyByContinueId(continueId)
-    } yield extractMandatoryRecord(record)
+    agentSubscriptionConnector.getJourneyByContinueId(continueId).map(extractMandatoryRecord)
 
   def existsJourneyForUtr(utr: Utr)(implicit hc: HeaderCarrier): Future[Boolean] =
     agentSubscriptionConnector.getJourneyByUtr(utr).map(_.isDefined)
 
   def getJourneyRecord(internalId: AuthProviderId)(implicit hc: HeaderCarrier): Future[Option[SubscriptionJourneyRecord]] =
-    for {
-      record <- agentSubscriptionConnector.getJourneyById(internalId)
-    } yield record
+    agentSubscriptionConnector.getJourneyById(internalId)
 
   def getMandatoryJourneyRecord(internalId: AuthProviderId)(implicit hc: HeaderCarrier): Future[SubscriptionJourneyRecord] =
-    for {
-      record <- agentSubscriptionConnector.getJourneyById(internalId)
-    } yield extractMandatoryRecord(record)
+    agentSubscriptionConnector.getJourneyById(internalId).map(extractMandatoryRecord)
+
+  def getJourneyByUtr(utr: Utr)(implicit hc: HeaderCarrier): Future[Option[SubscriptionJourneyRecord]] =
+    agentSubscriptionConnector.getJourneyByUtr(utr)
 
   private def extractMandatoryRecord(record: Option[SubscriptionJourneyRecord]): SubscriptionJourneyRecord =
     record match {

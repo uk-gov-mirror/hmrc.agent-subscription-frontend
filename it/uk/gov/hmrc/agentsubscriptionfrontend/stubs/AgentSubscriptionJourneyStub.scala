@@ -117,4 +117,12 @@ object AgentSubscriptionJourneyStub {
       ).willReturn(aResponse().withStatus(Status.BAD_GATEWAY))
     )
 
+  def givenConflictingSubscriptionJourneyRecordExists(authProviderId: AuthProviderId) =
+    stubFor(
+      post(urlEqualTo(
+        s"/agent-subscription/subscription/journey/primaryId/${encodePathSegment(authProviderId.id)}"))
+        .willReturn(
+          aResponse()
+            .withStatus(Status.CONFLICT))
+    )
 }

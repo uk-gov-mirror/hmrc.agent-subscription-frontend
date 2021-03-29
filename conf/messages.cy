@@ -528,6 +528,13 @@ timed-out.p1=Nid ydych wedi gwneud dim byd ers {0}, felly rydym wedi’ch allgof
 timed-out.p2.link=Mewngofnodwch eto
 timed-out.p2=i ddefnyddio’r gwasanaeth hwn.
 
+#already started
+already-started.title=Rydych eisoes wedi dechrau creu cyfrif gan ddefnyddio Dynodydd Defnyddiwr gwahanol (ID) ar gyfer Porth y Llywodraeth
+already-started.header=Mae {0} eisoes wedi dechrau creu cyfrif gan ddefnyddio Dynodydd Defnyddiwr gwahanol (ID) ar gyfer Porth y Llywodraeth
+already-started.p1=Os ydych eisiau parhau i greu cyfrif,
+already-started.p1.link=mae’n rhaid i chi allgofnodi a mewngofnodi eto gyda’r Dynodydd Defnyddiwr (ID) ar gyfer Porth y Llywodraeth y gwnaethoch ei ddefnyddio’n wreiddiol
+already-started.p2=Os nad ydych eisiau parhau â’r Dynodydd Defnyddiwr (ID) ar gyfer Porth y Llywodraeth y gwnaethoch ei ddefnyddio’n wreiddiol, byddwch yn colli’r manylion y gwnaethoch eu nodi. Bydd angen i chi aros tan {0} i ddechrau eto.
+
 accessibility.statement.title=Datganiad hygyrchedd ar gyfer creu cyfrif gwasanaethau asiant
 accessibility.statement.h1=Datganiad hygyrchedd ar gyfer creu cyfrif gwasanaethau asiant
 accessibility.statement.intro.p1=Mae’r datganiad hygyrchedd hwn yn esbonio pa mor hygyrch yw’r gwasanaeth hwn, beth i’w wneud os ydych yn cael anhawster wrth ei ddefnyddio, a sut i roi gwybod am broblemau hygyrchedd gyda’r gwasanaeth.
