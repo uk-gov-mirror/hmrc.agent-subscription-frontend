@@ -1,0 +1,53 @@
+@*
+ * Copyright 2021 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@this()
+
+
+@(form: Form[_],
+        fieldName: String,
+        args: (Symbol,Any)*
+)(implicit messages: Messages)
+
+
+<div class="form-group @if(form.hasErrors){form-field--error} soft--ends">
+    <fieldset class="form-date" id="@(fieldName)">
+        <legend>
+            <span @args.toMap.get('_legendSpanClass).map { clazz => class="@clazz"}>
+            @args.toMap.get('_legend).map { legend => @legend}
+            </span>
+        </legend>
+        <div @args.toMap.get('_hintDivClass).map { clazz => class="@clazz"}><span class="hint-text">@args.toMap.get('_inputHint).map { hint => @hint}</span></div>
+
+        @form.errors.headOption.map { error => <span class="error-message" id="date-error">
+            <span class="visuallyhidden">@Messages("error.prefix")</span>
+            @Messages(error.message)
+        </span>
+        }
+
+        <label class="form-group form-group-day" for="@(fieldName + ".day")">@Messages("form-input.day")
+            <input class="form-control input--xsmall" id="@(fieldName + ".day")" name="@(fieldName + ".day")" type="text" autocomplete="bday-day" pattern="[0-9]*" inputmode="numeric" @form.data.get(s"${fieldName}.day").map { v => value="@v"}>
+        </label>
+
+        <label class="form-group form-group-month" for="@(fieldName + ".month")">@Messages("form-input.month")
+            <input class="form-control input--xsmall" id="@(fieldName + ".month")" name="@(fieldName + ".month")" type="text" autocomplete="bday-month" pattern="[0-9]*" inputmode="numeric" @form.data.get(s"${fieldName}.month").map { v => value="@v"}>
+        </label>
+
+        <label class="form-group form-group-year" for="@(fieldName + ".year")">@Messages("form-input.year")
+            <input class="form-control input--xsmall" id="@(fieldName + ".year")" name="@(fieldName + ".year")" type="text" autocomplete="bday-year" pattern="[0-9]*" inputmode="numeric" @form.data.get(s"${fieldName}.year").map { v => value="@v"}>
+        </label>
+    </fieldset>
+</div>
