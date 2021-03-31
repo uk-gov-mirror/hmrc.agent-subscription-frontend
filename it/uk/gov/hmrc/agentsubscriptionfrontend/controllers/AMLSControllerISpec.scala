@@ -423,9 +423,9 @@ class AMLSControllerISpec extends BaseISpec {
         "moneyLaunderingCompliance.expiry.month.title",
         "moneyLaunderingCompliance.expiry.year.title"
       )
-      result should containInputElement("expiry.day", "tel")
-      result should containInputElement("expiry.month", "tel")
-      result should containInputElement("expiry.year", "tel")
+      result should containInputElement("expiry.day", "text")
+      result should containInputElement("expiry.month", "text")
+      result should containInputElement("expiry.year", "text")
     }
 
     "contain continue and save buttons" in new Setup {

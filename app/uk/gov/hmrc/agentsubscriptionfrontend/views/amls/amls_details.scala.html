@@ -26,7 +26,7 @@ mainTemplate: main_template,
 uiErrorSummary: uk.gov.hmrc.play.views.html.helpers.ErrorSummary,
 formHelper: uk.gov.hmrc.play.views.html.helpers.FormWithCSRF,
 inputTemplate: uk.gov.hmrc.play.views.html.helpers.Input,
-dateFieldsFreeInlineLegendTemplate: uk.gov.hmrc.play.views.html.helpers.DateFieldsFreeInlineLegend,
+        uiDateFieldsCustom: uk.gov.hmrc.agentsubscriptionfrontend.views.html.helpers.date_input_custom,
 errorPrefixTemplate: error_prefix,
     amlsDropdownTemplate: amls_dropdown
 )
@@ -107,18 +107,16 @@ errorPrefixTemplate: error_prefix,
             )
         </div>
 
-        <div class="@DayFieldError @MonthFieldError @YearFieldError @DateFieldErrorsAll">
-            @dateFieldsFreeInlineLegendTemplate(
+
+            @uiDateFieldsCustom(
             dateFormWithRefinedErrors,
             "expiry",
             '_legend -> Messages("moneyLaunderingCompliance.expiry.title"),
             '_inputHint -> Messages("moneyLaunderingCompliance.expiry.hint"),
             '_legendSpanClass -> "form-element-bold",
             '_legendClass -> "flush--ends",
-            '_hintId -> "dates",
-            '_errorPrefix -> Messages("error.prefix")
-            )
-        </div>
+            '_hintId -> "dates")
+
 
         <div class="form-field">
             <button type="submit" class="button margin-bottom-10 margin-right-5" id="amls-details-continue" name="submit" value="continue">@Messages("button.saveContinue")</button>

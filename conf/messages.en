@@ -603,3 +603,7 @@ address.lookup.title=What is your business address?- Create an agent services ac
 address.lookup.header=What is your business address?
 address.lookup.editPageLabels.title=Change your address- Create an agent services account - GOV.UK
 address.lookup.editPageLabels.header=Change your address
+
+form-input.day=Day
+form-input.month=Month
+form-input.year=Year

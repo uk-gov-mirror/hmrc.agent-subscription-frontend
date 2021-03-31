@@ -603,3 +603,7 @@ address.lookup.title=Beth yw cyfeiriad eich busnes?- Creu cyfrif gwasanaethau as
 address.lookup.header=Beth yw cyfeiriad eich busnes?
 address.lookup.editPageLabels.title=Newid eich cyfeiriad- Creu cyfrif gwasanaethau asiant - GOV.UK
 address.lookup.editPageLabels.header=Newid eich cyfeiriad
+
+form-input.day=Diwrnod
+form-input.month=Mis
+form-input.year=Blwyddyn
