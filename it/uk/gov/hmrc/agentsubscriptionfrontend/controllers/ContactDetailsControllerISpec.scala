@@ -49,7 +49,9 @@ class ContactDetailsControllerISpec extends BaseISpec {
 
       result should containMessages(
         "contactEmailCheck.title",
-        "contactEmailCheck.option.differentEmail",
+        "contactEmailCheck.p",
+        "contactEmailCheck.option.yes",
+        "contactEmailCheck.option.no",
         "contactEmailCheck.continue.button"
       )
 
@@ -87,7 +89,9 @@ class ContactDetailsControllerISpec extends BaseISpec {
 
       result should containMessages(
         "contactEmailCheck.title",
-        "contactEmailCheck.option.differentEmail",
+        "contactEmailCheck.p",
+        "contactEmailCheck.option.yes",
+        "contactEmailCheck.option.no",
         "contactEmailCheck.continue.button"
       )
 
@@ -532,7 +536,7 @@ class ContactDetailsControllerISpec extends BaseISpec {
   "submitTradingNameCheck (POST /trading-name) " should {
     behave like anAgentAffinityGroupOnlyEndpoint(controller.submitTradingNameCheck(_))
 
-    "303 redirect to /task-list when No selected" in {
+    "303 redirect to /main-trading-name when No selected" in {
 
       val sjr = TestData.minimalSubscriptionJourneyRecordWithAmls(id).copy(
         businessDetails = BusinessDetails(SoleTrader,
@@ -559,10 +563,10 @@ class ContactDetailsControllerISpec extends BaseISpec {
         await(controller.submitTradingNameCheck(request.withFormUrlEncodedBody("check" -> "no")))
 
       status(result) shouldBe 303
-      redirectLocation(result) shouldBe Some(routes.TaskListController.showTaskList().url)
+      redirectLocation(result) shouldBe Some(routes.ContactDetailsController.showTradingName().url)
     }
 
-    "303 redirect to /main-trading-name when Yes is selected" in {
+    "303 redirect to /task-list when Yes is selected" in {
 
       val sjr = TestData.minimalSubscriptionJourneyRecordWithAmls(id).copy(
         businessDetails = BusinessDetails(SoleTrader,
@@ -587,7 +591,7 @@ class ContactDetailsControllerISpec extends BaseISpec {
         await(controller.submitTradingNameCheck(request.withFormUrlEncodedBody("check" -> "yes")))
 
       status(result) shouldBe 303
-      redirectLocation(result) shouldBe Some(routes.ContactDetailsController.showTradingName().url)
+      redirectLocation(result) shouldBe Some(routes.TaskListController.showTaskList().url)
     }
 
     "200 OK with error messages when submit without making a choice" in {

@@ -48,11 +48,13 @@
         @uiInputRadioGroupCustom(
             contactEmailCheckForm("check"),
             Seq(
-                "yes" -> s"$businessEmail",
-                "no" -> Messages("contactEmailCheck.option.differentEmail")
+                "yes" -> Messages("contactEmailCheck.option.yes"),
+                "no" -> Messages("contactEmailCheck.option.no")
             ),
-            '_legend -> Html(s"""<h1 class="heading-xlarge ${if(contactEmailCheckForm.hasErrors)"push--top" else ""}">${Messages("contactEmailCheck.title")}</h1>"""),
-            '_groupDivClass -> "form-group",
+            '_legend             -> Html(s"""<h1 class="heading-xlarge ${if(contactEmailCheckForm.hasErrors)"push--top" else ""}">${Messages("contactEmailCheck.title")}</h1>"""),
+            '_inputHint          -> Html(s"""<p class="inputHintClass" ${if(contactEmailCheckForm.hasErrors)"push--top" else ""}">${Messages("contactEmailCheck.p")}</p>"""),
+            '_fieldsetDiv        -> Html(s"""<p class="inputEmailClass" ${if(contactEmailCheckForm.hasErrors)"push--top" else ""}">${Messages(s"$businessEmail")}</p>"""),
+            '_groupDivClass      -> "form-group",
             '_fieldsetAttributes -> Html("""id='check'""")
         )
             <button class="button" type="submit" id="continue">@Messages("contactEmailCheck.continue.button")</button>

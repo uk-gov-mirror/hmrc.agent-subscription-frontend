@@ -120,14 +120,16 @@ error.amls.pending.appliedOn.date.too-old=The date you applied must be after {0}
 error.amls.pending.appliedOn.date.cannot-be-in-future=The date you applied must be today or in the past
 
 #Contact Email Check
-contactEmailCheck.title=Which email address do you want to use for your agent services account?
-contactEmailCheck.option.differentEmail=use a different email address
+contactEmailCheck.title=Is this the email address you want to use for your agent services account?
+contactEmailCheck.p=We will use it to tell you when your agent services account has been created and to let you know the status of authorisation requests.
+contactEmailCheck.option.yes=Yes
+contactEmailCheck.option.no=No - I want to use a different email address
 contactEmailCheck.continue.button=Continue
 error.contact-email-check.invalid=Select if you want to use the email address displayed or a different email address
 
 #Contact Email Address
-contactEmailAddress.title=What is the email address you want to use?
-contactEmailAddress.p=We will only use this to send you a confirmation email. Your email address will only be updated in your agent services account.
+contactEmailAddress.title=What is the email address you want to use for your agent services account?
+contactEmailAddress.p=We will use it to tell you when your agent services account has been created and to let you know the status of authorisation requests.
 contactEmailAddress.button=Continue
 error.contact-email.empty=Enter an email address
 error.contact-email.maxLength=Email address must be 132 characters or fewer
@@ -135,23 +137,26 @@ error.contact-email.missingSeparator=Enter an email address in the correct forma
 error.contact-email.invalidChar=Email address must only contain letters a to z, numbers, full stops, hyphens, underscores and @ signs
 
 #Contact Trading Name Check
-contactTradingNameCheck.title=Do you trade under a different name to {0}?
+contactTradingNameCheck.title=Is this the name you want to show to your clients?
+contactTradingNameCheck.p=Clients will see this name when they accept or manage your authorisations.
 contactTradingNameCheck.option.yes=Yes
 contactTradingNameCheck.option.no=No
 contactTradingNameCheck.continue.button=Continue
 error.contact-trading-name-check.invalid=Select yes if you trade under a different name
 
 #Contact Trading Name
-contactTradingName.title=What is the main trading name of your business?
+contactTradingName.title=What is the name you want to show to your clients?
+contactTradingName.p=Clients will see this name when they accept or manage your authorisations.
 contactTradingName.continue.button=Continue
 error.trading-name-name.maxlength=Main trading name must be 40 characters or fewer
 error.trading-name.invalid=Main trading name must only include letters a to z, numbers, commas, full stops, apostrophes, hyphens, forward slashes and spaces
 error.trading-name.empty=Enter the main trading name of your business
 
 #Contact Trading Address Check
-contactTradingAddressCheck.title=Is this your main trading address?
-contactTradingAddressCheck.option.yes=Yes - I want to use this address for all my agents services correspondence
-contactTradingAddressCheck.option.no=No - I need to enter a different address
+contactTradingAddressCheck.title=Is this the address you want to use for your agent services account?
+contactTradingAddressCheck.p=This is the address we will use to check your identity if you call us. We may send some correspondence to this address.
+contactTradingAddressCheck.option.yes=Yes
+contactTradingAddressCheck.option.no=No - I want to enter a different address
 contactTradingAddressCheck.continue.button=Continue
 error.contact-trading-address-check.invalid=Select yes if this is the main trading address you want to use for your agent services account correspondence
 
@@ -188,15 +193,15 @@ existingJourneyFound.p3=To finish this step, sign in again with the user ID you 
 
 #Task list
 task-list.header=Create an agent services account
-task-list.subheader=Complete each section in turn. You can save your progress as you go.
+task-list.subheader=Complete each section in turn. You can save your progress as you go. Your details will be saved for 30 days.
 task-list.1.number=1.
 task-list.amlsTask.header=Enter your money laundering compliance details
 task-list.amlsSubTask=Enter your money laundering compliance details
 task-list.2.number=2.
-task-list.contactDetailsTask.header=Enter your agent services account contact details
-task-list.contactDetailsEmailSubTask=Enter a contact email address
-task-list.contactDetailsTradingNameSubTask=Enter a trading name if you have one
-task-list.contactDetailsTradingAddressSubTask=Enter a trading address if you have one
+task-list.contactDetailsTask.header=Enter your agent services account details
+task-list.contactDetailsEmailSubTask=Confirm your email address
+task-list.contactDetailsTradingNameSubTask=Confirm your name
+task-list.contactDetailsTradingAddressSubTask=Confirm your address
 task-list.3.number=3.
 task-list.mappingTask.header=Copy across your existing client relationships
 task-list.mappingSubTask=Copy across VAT and Self Assessment clients to your new account
@@ -459,8 +464,6 @@ moneyLaunderingCompliance.continue=Continue
 amls.pending.appliedOn.title=When did you apply to register for money laundering supervision with HMRC?
 
 checkAnswers.title=Check your details before creating your account
-checkAnswers.description.p1=These are the business details we will use for your agent services account.
-checkAnswers.description.p2=Your business name will be the name shown to clients. We need your business address to check your details. We will only use your email address to contact you about your agent services account.
 checkAnswers.description.p3=By setting up this account, you confirm that, to the best of your knowledge, the details you provided are correct.
 checkAnswers.businessName.label=Business name
 checkAnswers.businessAddress.label=Business address
@@ -473,12 +476,12 @@ checkAnswers.userMapping.label=Number of client relationships copied
 checkAnswers.addMore.button=Add more
 checkAnswers.ggId.label=Government Gateway user IDs entered (for your security only the last 4 numbers are shown)
 checkAnswers.ggId.xs=XXXX-XXXX-{0}
-checkAnswers.contactEmailAddress.label=Contact email address
-checkAnswers.contactTradingName.label=Trading name
-checkAnswers.contactTradingAddress.label=Trading address
+checkAnswers.contactEmailAddress.label=Email address
+checkAnswers.contactTradingName.label=Name
+checkAnswers.contactTradingAddress.label=Address
 checkAnswers.amls.h2=Money laundering compliance details
 checkAnswers.businessDetails.h2=Business details
-checkAnswers.contactDetails.h2=Agent services account contact details
+checkAnswers.contactDetails.h2=Agent services account details
 checkAnswers.mapping.h2=Existing client relationships
 checkAnswers.tradingName.none=None
 

@@ -120,14 +120,16 @@ error.amls.pending.appliedOn.date.too-old=Rhaid i’r dyddiad y gwnaethoch gais 
 error.amls.pending.appliedOn.date.cannot-be-in-future=Rhaid i’r dyddiad y gwnaethoch gais fod heddiw neu yn y gorffennol
 
 #Contact Email Check
-contactEmailCheck.title=Pa gyfeiriad e-bost yr hoffech ei ddefnyddio ar gyfer eich cyfrif gwasanaethau asiant?
-contactEmailCheck.option.differentEmail=defnyddiwch gyfeiriad e-bost gwahanol
+contactEmailCheck.title=Ai dyma’r cyfeiriad e-bost yr hoffech ei ddefnyddio ar gyfer eich cyfrif gwasanaethau asiant?
+contactEmailCheck.p=Byddwn yn ei ddefnyddio i roi gwybod i chi pan fo’ch cyfrif gwasanaethau asiant wedi’i greu, ac i roi gwybod i chi am statws ceisiadau am awdurdodiad.
+contactEmailCheck.option.yes=Iawn
+contactEmailCheck.option.no=Na – hoffwn ddefnyddio cyfeiriad e-bost gwahanol
 contactEmailCheck.continue.button=Yn eich blaen
 error.contact-email-check.invalid=Dewiswch a hoffech ddefnyddio’r cyfeiriad e-bost a ddangosir neu gyfeiriad e-bost gwahanol
 
 #Contact Email Address
-contactEmailAddress.title=Beth yw’r cyfeiriad e-bost yr hoffech ei ddefnyddio?
-contactEmailAddress.p=Byddwn ond yn defnyddio hwn i anfon e-bost cadarnhau atoch. Bydd eich cyfeiriad e-bost yn cael ei ddiweddaru yn eich cyfrif gwasanaethau asiant yn unig.
+contactEmailAddress.title=Beth yw’r cyfeiriad e-bost yr hoffech ei ddefnyddio ar gyfer eich cyfrif gwasanaethau asiant?
+contactEmailAddress.p=Byddwn yn ei ddefnyddio i roi gwybod i chi pan fo’ch cyfrif gwasanaethau asiant wedi’i greu, ac i roi gwybod i chi am statws ceisiadau am awdurdodiad.
 contactEmailAddress.button=Yn eich blaen
 error.contact-email.empty=Nodwch gyfeiriad e-bost
 error.contact-email.maxLength=Mae’n rhaid i’r cyfeiriad e-bost gynnwys 132 o gymeriadau neu lai
@@ -135,23 +137,26 @@ error.contact-email.missingSeparator=Nodwch gyfeiriad e-bost yn y fformat cywir,
 error.contact-email.invalidChar=Mae’n rhaid i’r cyfeiriad e-bost gynnwys y llythrennau a i z, rhifau, atalnodau llawn, cysylltnodau, tanlinellau a’r symbol @ yn unig
 
 #Contact Trading Name Check
-contactTradingNameCheck.title=A ydych yn masnachu o dan enw gwahanol i {0}?
+contactTradingNameCheck.title=Ai dyma’r enw yr hoffech ei ddangos i’ch cleientiaid?
+contactTradingNameCheck.p=Bydd cleientiaid yn gweld yr enw hwn wrth dderbyn neu reoli’ch awdurdodiadau.
 contactTradingNameCheck.option.yes=Iawn
 contactTradingNameCheck.option.no=Na
 contactTradingNameCheck.continue.button=Yn eich blaen
 error.contact-trading-name-check.invalid=Dewiswch  ‘Iawn’ os ydych yn masnachu o dan enw gwahanol
 
 #Contact Trading Name
-contactTradingName.title=Beth yw prif enw masnachu eich busnes?
+contactTradingName.title=Beth yw’r enw yr hoffech ei ddangos i’ch cleientiaid?
+contactTradingName.p=Bydd cleientiaid yn gweld yr enw hwn wrth dderbyn neu reoli’ch awdurdodiadau.
 contactTradingName.continue.button=Yn eich blaen
 error.trading-name-name.maxlength=Mae’n rhaid i’r prif enw masnachu gynnwys 40 o gymeriadau neu lai
 error.trading-name.invalid=Mae’n rhaid i’r prif enw masnachu gynnwys y llythrennau a i z, rhifau, comas, atalnodau llawn, collnodau, cysylltnodau, blaenslaesau a bylchau yn unig
 error.trading-name.empty=Nodwch brif enw masnachu eich busnes
 
 #Contact Trading Address Check
-contactTradingAddressCheck.title=Ai hwn yw’ch prif gyfeiriad masnachu?
-contactTradingAddressCheck.option.yes=Iawn – hoffwn ddefnyddio’r cyfeiriad hwn ar gyfer fy holl ohebiaeth ynghylch gwasanaethau asiant
-contactTradingAddressCheck.option.no=Na – mae angen i mi nodi cyfeiriad gwahanol
+contactTradingAddressCheck.title=Ai dyma’r cyfeiriad yr hoffech ei ddefnyddio ar gyfer eich cyfrif gwasanaethau asiant?
+contactTradingAddressCheck.p=Dyma’r cyfeiriad y byddwn yn ei ddefnyddio er mwyn gwirio pwy ydych os byddwch yn ein ffonio. Efallai y byddwn yn anfon rhywfaint o ohebiaeth i’r cyfeiriad hwn.
+contactTradingAddressCheck.option.yes=Iawn
+contactTradingAddressCheck.option.no=Na – hoffwn nodi cyfeiriad gwahanol
 contactTradingAddressCheck.continue.button=Yn eich blaen
 error.contact-trading-address-check.invalid=Dewiswch ‘Iawn’ os mai dyma'r prif gyfeiriad masnachu yr ydych am ei ddefnyddio ar gyfer gohebiaeth eich cyfrif gwasanaethau asiant
 
@@ -193,10 +198,10 @@ task-list.1.number=1.
 task-list.amlsTask.header=Nodwch eich manylion cydymffurfiad gwyngalchu arian
 task-list.amlsSubTask=Nodwch eich manylion cydymffurfiad gwyngalchu arian
 task-list.2.number=2.
-task-list.contactDetailsTask.header=Nodwch fanylion cyswllt eich cyfrif gwasanaethau asiant
-task-list.contactDetailsEmailSubTask=Nodwch gyfeiriad e-bost cyswllt
-task-list.contactDetailsTradingNameSubTask=Nodwch enw masnachu, os oes un gennych
-task-list.contactDetailsTradingAddressSubTask=Nodwch gyfeiriad masnachu, os oes un gennych
+task-list.contactDetailsTask.header=Nodwch fanylion eich cyfrif gwasanaethau asiant
+task-list.contactDetailsEmailSubTask=Cadarnhewch eich cyfeiriad e-bost
+task-list.contactDetailsTradingNameSubTask=Cadarnhewch eich enw
+task-list.contactDetailsTradingAddressSubTask=Cadarnhewch eich cyfeiriad
 task-list.3.number=3.
 task-list.mappingTask.header=Copïwch ar draws eich perthnasoedd presennol â chleientiaid
 task-list.mappingSubTask=Copïwch eich cleientiaid Hunanasesiad a TAW presennol ar draws i’ch cyfrif newydd
@@ -459,8 +464,6 @@ moneyLaunderingCompliance.continue=Yn eich blaen
 amls.pending.appliedOn.title=Pryd gwnaethoch gais i CThEM i gofrestru ar gyfer goruchwyliaeth gwyngalchu arian?
 
 checkAnswers.title=Gwiriwch eich atebion cyn creu eich cyfrif
-checkAnswers.description.p1=Dyma’r manylion busnes y byddwn yn eu defnyddio ar gyfer eich cyfrif gwasanaethau asiant.
-checkAnswers.description.p2=Eich enw busnes fydd yr enw a ddangosir i gleientiaid. Mae angen eich cyfeiriad busnes arnom i wirio’ch manylion. Byddwn ond yn defnyddio’ch cyfeiriad e-bost i gysylltu â chi ynglŷn â’ch cyfrif gwasanaethau asiant.
 checkAnswers.description.p3=Drwy greu’r cyfrif hwn, rydych yn cadarnhau, hyd eithaf eich gwybodaeth, fod y manylion a roesoch yn gywir.
 checkAnswers.businessName.label=Enw’r busnes
 checkAnswers.businessAddress.label=Cyfeiriad y busnes
@@ -473,12 +476,12 @@ checkAnswers.userMapping.label=Nifer y perthnasoedd cleientiaid a gopïwyd
 checkAnswers.addMore.button=Ychwanegu rhagor
 checkAnswers.ggId.label=Dynodyddion Defnyddiwr (ID) ar gyfer Porth y Llywodraeth a nodwyd (er eich diogelwch dangosir y 4 rhif olaf yn unig)
 checkAnswers.ggId.xs=XXXX-XXXX-{0}
-checkAnswers.contactEmailAddress.label=Cyfeiriad e-bost cyswllt
-checkAnswers.contactTradingName.label=Enw masnachu
-checkAnswers.contactTradingAddress.label=Cyfeiriad masnachu
+checkAnswers.contactEmailAddress.label=Cyfeiriad e-bost
+checkAnswers.contactTradingName.label=Enw
+checkAnswers.contactTradingAddress.label=Cyfeiriad
 checkAnswers.amls.h2=Manylion cydymffurfiad gwyngalchu arian
 checkAnswers.businessDetails.h2=Manylion y busnes
-checkAnswers.contactDetails.h2=Manylion cyswllt y cyfrif gwasanaethau asiant
+checkAnswers.contactDetails.h2=Manylion y cyfrif gwasanaethau asiant
 checkAnswers.mapping.h2=Perthnasoedd â chleientiaid presennol
 checkAnswers.tradingName.none=Dim
 

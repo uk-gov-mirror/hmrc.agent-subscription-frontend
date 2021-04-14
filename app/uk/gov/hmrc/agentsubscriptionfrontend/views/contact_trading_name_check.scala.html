@@ -53,8 +53,10 @@
         "yes" -> Messages("contactTradingNameCheck.option.yes"),
         "no" -> Messages("contactTradingNameCheck.option.no")
       ),
-      '_legend -> Html(s"""<h1 class="heading-xlarge">${Messages("contactTradingNameCheck.title", businessName)}</h1>"""),
-      '_groupDivClass -> "form-group",
+      '_legend             -> Html(s"""<h1 class="heading-xlarge">${Messages("contactTradingNameCheck.title")}</h1>"""),
+      '_inputHint          -> Html(s"""<p>${Messages("contactTradingNameCheck.p")}</p>"""),
+      '_fieldsetDiv        -> Html(s"""<p>${Messages(s"$businessName")}</p>"""),
+      '_groupDivClass      -> "form-group",
       '_fieldsetAttributes -> Html("""id='check'""")
     )
       <button class="button" type="submit" id="continue">@Messages("contactTradingNameCheck.continue.button")</button>

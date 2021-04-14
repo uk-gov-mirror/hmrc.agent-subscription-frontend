@@ -45,6 +45,7 @@
             <h1>
                 <label for="name" class="heading-xlarge">@Messages("contactTradingName.title")</label>
             </h1>
+            <p>@Messages("contactTradingName.p")</p>
             @contactTradingNameForm.error("name").map { formError =>
                 <span class="error-notification" data-journey="search-page:error:contact-trading-name" id="name-error">
                     <span class="visuallyhidden">@Messages("error.prefix")</span>

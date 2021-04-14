@@ -52,7 +52,7 @@
                <label class="heading-xlarge" for="email">@Messages("contactEmailAddress.title")</label>
            </h1>
 
-        <p class="hint-text" id="email-hint">@Messages("contactEmailAddress.p")</p>
+        <p id="email-hint">@Messages("contactEmailAddress.p")</p>
 
            @contactEmailForm.error("email").map { formError =>
            <span class="error-notification" data-journey="search-page:error:contact-email" id="email-error">

@@ -222,7 +222,7 @@ class ContactDetailsController @Inject()(
                         else (false, None))
 
                     val call: Call =
-                      if (hasTradingName) routes.ContactDetailsController.showTradingName
+                      if (!hasTradingName) routes.ContactDetailsController.showTradingName
                       else if (isChanging.getOrElse(false)) routes.SubscriptionController.showCheckAnswers()
                       else routes.TaskListController.showTaskList()
 

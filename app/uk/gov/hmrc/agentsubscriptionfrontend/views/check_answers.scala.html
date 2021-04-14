@@ -52,14 +52,6 @@ mainTemplate: main_template,
 
     <h1 class="heading-xlarge margin-bottom-20">@Messages("checkAnswers.title")</h1>
 
-            <p>@Messages("checkAnswers.description.p1")</p>
-            <p>@Messages("checkAnswers.description.p2")</p>
-
-    <h2 class="govuk-heading-m margin-top-30">@Messages("checkAnswers.businessDetails.h2")</h2>
-
-
-                @checkAnswerBlock("registration-name", checkYourAnswers.businessNameRow)
-                @checkAnswerBlock("address", checkYourAnswers.businessAddressRow)
 
                 @for(amlsRow <- checkYourAnswers.maybeAmlsDataRow) {
 

@@ -173,17 +173,13 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       val result = await(controller.showCheckAnswers(request))
       result should containMessages(
         "checkAnswers.title",
-        "checkAnswers.description.p1",
-        "checkAnswers.description.p2",
+        "checkAnswers.description.p3",
         "checkAnswers.change.button",
         "checkAnswers.confirm.button",
-        "checkAnswers.businessName.label",
-        "checkAnswers.businessAddress.label",
         "checkAnswers.contactEmailAddress.label",
         "checkAnswers.contactTradingName.label",
         "checkAnswers.contactTradingAddress.label",
         "checkAnswers.amls.h2",
-        "checkAnswers.businessDetails.h2",
         "checkAnswers.contactDetails.h2"
 
       )
@@ -191,7 +187,7 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       result shouldNot containMessages("checkAnswers.userMapping.label", "checkAnswers.mapping.h2")
 
       result should containSubstrings(
-        registrationName,  testRegistration.address.addressLine1, testRegistration.address.postalCode.get)
+        testRegistration.address.addressLine1, testRegistration.address.postalCode.get)
 
       sessionStoreService.fetchGoBackUrl.futureValue shouldBe Some(routes.SubscriptionController.showCheckAnswers().url)
     }
@@ -204,16 +200,11 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       val result = await(controller.showCheckAnswers(request))
       result should containMessages(
         "checkAnswers.title",
-        "checkAnswers.description.p1",
-        "checkAnswers.description.p2",
         "checkAnswers.change.button",
         "checkAnswers.confirm.button",
-        "checkAnswers.businessName.label",
-        "checkAnswers.businessAddress.label",
         "checkAnswers.contactEmailAddress.label",
         "checkAnswers.contactTradingName.label",
         "checkAnswers.contactTradingAddress.label",
-        "checkAnswers.businessDetails.h2",
         "checkAnswers.contactDetails.h2"
       )
       result should not(containMessages("checkAnswers.userMapping.label", "checkAnswers.mapping.h2"))
@@ -229,19 +220,14 @@ class SubscriptionControllerISpec extends BaseISpec with SessionDataMissingSpec 
       val result = await(controller.showCheckAnswers(request))
       result should containMessages(
         "checkAnswers.title",
-        "checkAnswers.description.p1",
-        "checkAnswers.description.p2",
         "checkAnswers.change.button",
         "checkAnswers.confirm.button",
-        "checkAnswers.businessName.label",
-        "checkAnswers.businessAddress.label",
         "checkAnswers.userMapping.label",
         "checkAnswers.ggId.label",
         "checkAnswers.contactEmailAddress.label",
         "checkAnswers.contactTradingName.label",
         "checkAnswers.contactTradingAddress.label",
         "checkAnswers.mapping.h2",
-        "checkAnswers.businessDetails.h2",
         "checkAnswers.contactDetails.h2"
       )
 
