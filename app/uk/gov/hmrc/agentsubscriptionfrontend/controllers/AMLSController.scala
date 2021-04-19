@@ -69,15 +69,13 @@ class AMLSController @Inject()(
     withSubscribingAgent { agent =>
       withManuallyAssuredAgent(agent) {
         sessionStoreService.fetchIsChangingAnswers.flatMap { isChange =>
-          agent.getMandatorySubscriptionRecord.map { record =>
-            record.amlsData match {
-              case Some(amlsData) =>
-                Ok(
-                  checkAmlsTemplate(
-                    checkAmlsForm.bind(Map("registeredAmls" -> RadioInputAnswer(amlsData.amlsRegistered))),
-                    isChange = isChange.getOrElse(false)))
-              case None => Ok(checkAmlsTemplate(checkAmlsForm, isChange.getOrElse(false)))
-            }
+          agent.getMandatorySubscriptionRecord.amlsData match {
+            case Some(amlsData) =>
+              Ok(
+                checkAmlsTemplate(
+                  checkAmlsForm.bind(Map("registeredAmls" -> RadioInputAnswer(amlsData.amlsRegistered))),
+                  isChange = isChange.getOrElse(false)))
+            case None => Ok(checkAmlsTemplate(checkAmlsForm, isChange.getOrElse(false)))
           }
         }
       }
@@ -121,12 +119,10 @@ class AMLSController @Inject()(
   def showCheckAmlsAlreadyAppliedForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { agent =>
       withManuallyAssuredAgent(agent) {
-        agent.getMandatoryAmlsData.map { data =>
-          data.amlsAppliedFor match {
-            case Some(appliedFor) =>
-              Ok(amlsAppliedForTemplate(appliedForAmlsForm.bind(Map("amlsAppliedFor" -> RadioInputAnswer(appliedFor)))))
-            case None => Ok(amlsAppliedForTemplate(appliedForAmlsForm))
-          }
+        agent.getMandatoryAmlsData.amlsAppliedFor match {
+          case Some(appliedFor) =>
+            Ok(amlsAppliedForTemplate(appliedForAmlsForm.bind(Map("amlsAppliedFor" -> RadioInputAnswer(appliedFor)))))
+          case None => Ok(amlsAppliedForTemplate(appliedForAmlsForm))
         }
       }
     }
@@ -154,25 +150,22 @@ class AMLSController @Inject()(
   def showAmlsDetailsForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { agent =>
       withManuallyAssuredAgent(agent) {
-        for {
-          record <- agent.getMandatoryAmlsData
-        } yield
-          record.amlsDetails match {
-            case Some(amlsDetails) =>
-              amlsDetails.details match {
-                case Left(PendingDetails(_)) => Ok(amlsDetailsTemplate(amlsForm(amlsBodies.keySet), amlsBodies))
-                case Right(RegisteredDetails(membershipNumber, membershipExpiresOn)) =>
-                  val form: Map[String, String] = Map(
-                    "amlsCode"         -> amlsBodies.find(_._2 == amlsDetails.supervisoryBody).map(_._1).getOrElse(""),
-                    "membershipNumber" -> membershipNumber,
-                    "expiry.day"       -> membershipExpiresOn.getDayOfMonth.toString,
-                    "expiry.month"     -> membershipExpiresOn.getMonthValue.toString,
-                    "expiry.year"      -> membershipExpiresOn.getYear.toString
-                  )
-                  Ok(amlsDetailsTemplate(amlsForm(amlsBodies.keySet).bind(form), amlsBodies))
-              }
-            case _ => Ok(amlsDetailsTemplate(amlsForm(amlsBodies.keySet), amlsBodies))
-          }
+        agent.getMandatoryAmlsData.amlsDetails match {
+          case Some(amlsDetails) =>
+            amlsDetails.details match {
+              case Left(PendingDetails(_)) => Ok(amlsDetailsTemplate(amlsForm(amlsBodies.keySet), amlsBodies))
+              case Right(RegisteredDetails(membershipNumber, membershipExpiresOn)) =>
+                val form: Map[String, String] = Map(
+                  "amlsCode"         -> amlsBodies.find(_._2 == amlsDetails.supervisoryBody).map(_._1).getOrElse(""),
+                  "membershipNumber" -> membershipNumber,
+                  "expiry.day"       -> membershipExpiresOn.getDayOfMonth.toString,
+                  "expiry.month"     -> membershipExpiresOn.getMonthValue.toString,
+                  "expiry.year"      -> membershipExpiresOn.getYear.toString
+                )
+                Ok(amlsDetailsTemplate(amlsForm(amlsBodies.keySet).bind(form), amlsBodies))
+            }
+          case _ => Ok(amlsDetailsTemplate(amlsForm(amlsBodies.keySet), amlsBodies))
+        }
       }
     }
   }
@@ -216,24 +209,20 @@ class AMLSController @Inject()(
   def showAmlsApplicationDatePage: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { agent =>
       withManuallyAssuredAgent(agent) {
-        for {
-          amlsData <- agent.getMandatoryAmlsData
-        } yield {
-          amlsData.amlsDetails match {
-            case Some(amlsDetails) =>
-              amlsDetails.details match {
-                case Left(PendingDetails(appliedOn)) =>
-                  val form: Map[String, String] = Map(
-                    "amlsCode"        -> "HMRC",
-                    "appliedOn.day"   -> appliedOn.getDayOfMonth.toString,
-                    "appliedOn.month" -> appliedOn.getMonthValue.toString,
-                    "appliedOn.year"  -> appliedOn.getYear.toString
-                  )
-                  Ok(amlsPendingDetailsTemplate(amlsPendingForm.bind(form)))
-                case Right(RegisteredDetails(_, _)) => Ok(amlsPendingDetailsTemplate(amlsPendingForm))
-              }
-            case _ => Ok(amlsPendingDetailsTemplate(amlsPendingForm))
-          }
+        agent.getMandatoryAmlsData.amlsDetails match {
+          case Some(amlsDetails) =>
+            amlsDetails.details match {
+              case Left(PendingDetails(appliedOn)) =>
+                val form: Map[String, String] = Map(
+                  "amlsCode"        -> "HMRC",
+                  "appliedOn.day"   -> appliedOn.getDayOfMonth.toString,
+                  "appliedOn.month" -> appliedOn.getMonthValue.toString,
+                  "appliedOn.year"  -> appliedOn.getYear.toString
+                )
+                Ok(amlsPendingDetailsTemplate(amlsPendingForm.bind(form)))
+              case Right(RegisteredDetails(_, _)) => Ok(amlsPendingDetailsTemplate(amlsPendingForm))
+            }
+          case _ => Ok(amlsPendingDetailsTemplate(amlsPendingForm))
         }
       }
     }
@@ -283,18 +272,18 @@ class AMLSController @Inject()(
   private def updateAmlsJourneyRecord(
     agent: Agent,
     updateExistingAmlsData: AmlsData => Option[AmlsData],
-    maybeCreateNewAmlsData: Option[AmlsData] = None)(implicit hc: HeaderCarrier): Future[Unit] =
-    for {
-      record <- agent.getMandatorySubscriptionRecord
-      updatedRecord <- {
-        val newAmlsData: Option[AmlsData] = record.amlsData match {
-          case Some(amlsData) => updateExistingAmlsData(amlsData)
-          case None =>
-            if (maybeCreateNewAmlsData.isDefined) maybeCreateNewAmlsData
-            else throw new RuntimeException("No AMLS data found in record")
-        }
-        record.copy(amlsData = newAmlsData)
+    maybeCreateNewAmlsData: Option[AmlsData] = None)(implicit hc: HeaderCarrier): Future[Unit] = {
+
+    val record = agent.getMandatorySubscriptionRecord
+    val updatedRecord = {
+      val newAmlsData: Option[AmlsData] = record.amlsData match {
+        case Some(amlsData) => updateExistingAmlsData(amlsData)
+        case None =>
+          if (maybeCreateNewAmlsData.isDefined) maybeCreateNewAmlsData
+          else throw new RuntimeException("No AMLS data found in record")
       }
-      _ <- subscriptionJourneyService.saveJourneyRecord(updatedRecord)
-    } yield ()
+      record.copy(amlsData = newAmlsData)
+    }
+    subscriptionJourneyService.saveJourneyRecord(updatedRecord).map(_ => ())
+  }
 }

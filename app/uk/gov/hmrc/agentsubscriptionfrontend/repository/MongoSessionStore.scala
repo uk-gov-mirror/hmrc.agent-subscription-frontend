@@ -21,7 +21,7 @@ import play.api.libs.json._
 import uk.gov.hmrc.cache.model.Id
 import uk.gov.hmrc.cache.repository.CacheRepository
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
+import uk.gov.hmrc.agentsubscriptionfrontend.util.valueOps
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -35,8 +35,8 @@ trait MongoSessionStore[T] extends Logging {
       case Some(sessionId) ⇒
         cacheRepository
           .findById(Id(sessionId))
-          .flatMap(_.flatMap(_.data))
-          .flatMap {
+          .map(_.flatMap(_.data))
+          .map {
             case Some(cache) =>
               (cache \ sessionName).asOpt[JsObject] match {
                 case None => Right(None)
@@ -59,7 +59,7 @@ trait MongoSessionStore[T] extends Logging {
 
       case None ⇒
         logger.warn("no sessionId found in the HeaderCarrier to query mongo")
-        Right(None)
+        Right(None).toFuture
     }
 
   def store(newSession: T)(implicit writes: Writes[T], hc: HeaderCarrier, ec: ExecutionContext): Future[Either[String, Unit]] =
@@ -80,7 +80,7 @@ trait MongoSessionStore[T] extends Logging {
           }
 
       case None ⇒
-        Left(s"no sessionId found in the HeaderCarrier to store in mongo")
+        Left(s"no sessionId found in the HeaderCarrier to store in mongo").toFuture
     }
 
   def delete()(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[String, Unit]] =
@@ -101,6 +101,6 @@ trait MongoSessionStore[T] extends Logging {
           }
 
       case None ⇒
-        Right(())
+        Right(()).toFuture
     }
 }

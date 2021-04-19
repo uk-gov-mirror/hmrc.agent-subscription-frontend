@@ -17,20 +17,21 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import com.kenshoo.play.metrics.Metrics
+
 import javax.inject.{Inject, Singleton}
 import play.api.i18n.Lang
 import play.api.mvc.{AnyContent, _}
 import play.api.{Configuration, Environment, Logger}
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.agentsubscriptionfrontend.auth.{Agent, AuthActions}
+import uk.gov.hmrc.agentsubscriptionfrontend.auth.AuthActions
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.config.view._
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.{AddressLookupFrontendConnector, AgentAssuranceConnector}
 import uk.gov.hmrc.agentsubscriptionfrontend.form.DesAddressForm
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.{SubscriptionJourneyRecord, UserMapping}
-import uk.gov.hmrc.agentsubscriptionfrontend.service.{MongoDBSessionStoreService, SubscriptionJourneyService, SubscriptionReturnedHttpError, SubscriptionService}
-import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
+import uk.gov.hmrc.agentsubscriptionfrontend.service.{HttpError, MongoDBSessionStoreService, SubscriptionJourneyService, SubscriptionService}
+import uk.gov.hmrc.agentsubscriptionfrontend.util.{toFuture, valueOps}
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html.{address_form_with_errors, check_answers, sign_in_new_id, subscription_complete}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.{HeaderCarrier, HttpException}
@@ -142,14 +143,24 @@ class SubscriptionController @Inject()(
           sjr.contactTradingNameData,
           sjr.contactTradingAddressData,
         sjr.userMappings) match {
-          case (utr, postcode, Some(registration), amlsData, Some(email), Some(name), Some(address), userMappings) =>
-                    for {
-                    agencyDetails <- updateSessionAndReturnAgencyBeforeSubscribing(registration)(email, name, address, userMappings)
-                    langForEmail = extractLangPreferenceFromCookie
-                    subscriptionResponse <- subscriptionService.subscribe(utr, postcode, agencyDetails, langForEmail, amlsData)
-                    result <- redirectSubscriptionResponse(subscriptionResponse, agent)
-                    } yield result
-
+          case (utr, postcode, Some(registration), amlsData, Some(email), Some(name), Some(address), userMappings) => {
+            for {
+              agencyDetails <- updateSessionAndReturnAgencyBeforeSubscribing(registration)(email, name, address, userMappings)
+              langForEmail = extractLangPreferenceFromCookie
+              _ <- subscriptionService.subscribe(utr, postcode, agencyDetails, langForEmail, amlsData)
+              result <- redirectSubscriptionResponse
+            } yield result
+          } recoverWith {
+            case HttpError(_, CONFLICT) =>
+              mark("Count-Subscription-AlreadySubscribed-APIResponse")
+              Future successful Redirect(routes.BusinessIdentificationController.showAlreadySubscribed())
+            case HttpError(_, INTERNAL_SERVER_ERROR) =>
+              mark("Count-Subscription-Failed-Agent_Terminated")
+              Future successful Redirect(routes.StartController.showCannotCreateAccount())
+            case HttpError(_, status) =>
+              mark("Count-Subscription-Failed")
+              Future failed new HttpException(s"Subscription failed: HTTP status $status from agent-subscription service ", status)
+          }
           case _ =>
             Logger(getClass).warn(s"Missing data in session, redirecting back to /business-type")
             Redirect(routes.BusinessTypeController.showBusinessTypeForm())
@@ -173,26 +184,10 @@ class SubscriptionController @Inject()(
       .get("PLAY_LANG").map(x => Lang(x.value))
 
 
-  private def redirectSubscriptionResponse(either: Either[SubscriptionReturnedHttpError, (Arn, String)], agent: Agent): Future[Result] =
-    either match {
-      case Right((_, _)) =>
-        mark("Count-Subscription-Complete")
-        for {
-          gotoComplete <- Redirect(routes.SubscriptionController.showSubscriptionComplete())
-        } yield gotoComplete
-
-      case Left(SubscriptionReturnedHttpError(CONFLICT)) =>
-        mark("Count-Subscription-AlreadySubscribed-APIResponse")
-        Redirect(routes.BusinessIdentificationController.showAlreadySubscribed())
-
-      case Left(SubscriptionReturnedHttpError(INTERNAL_SERVER_ERROR)) =>
-        mark("Count-Subscription-Failed-Agent_Terminated")
-        Redirect(routes.StartController.showCannotCreateAccount())
-
-      case Left(SubscriptionReturnedHttpError(status)) =>
-        mark("Count-Subscription-Failed")
-        throw new HttpException(s"Subscription failed: HTTP status $status from agent-subscription service ", status)
-    }
+  private def redirectSubscriptionResponse: Future[Result] = {
+    mark("Count-Subscription-Complete")
+    Redirect(routes.SubscriptionController.showSubscriptionComplete())
+  }
 
   def returnFromAddressLookup(id: String): Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { agent =>
@@ -271,9 +266,9 @@ class SubscriptionController @Inject()(
         val clientCount = sjr.userMappings.map(_.count).sum
 
         (agencyName, agencyEmail, clientCount)
-      }
+      }.toFuture
       case None => {
-        sessionStoreService.fetchAgentSession.flatMap {
+        sessionStoreService.fetchAgentSession.map {
           case Some(agentSession) => {
             val reg = agentSession.registration.getOrElse(throw new Exception("agent session should have a registration "))
             val agencyName = reg.taxpayerName.getOrElse(throw new Exception("taxpayer name should be defined"))

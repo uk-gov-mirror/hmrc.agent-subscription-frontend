@@ -17,9 +17,6 @@
 package uk.gov.hmrc.agentsubscriptionfrontend.controllers
 
 import com.kenshoo.play.metrics.Metrics
-import cats.implicits._
-import cats.data.OptionT
-
 import javax.inject.{Inject, Singleton}
 import play.api.data.Form
 import play.api.i18n.I18nSupport
@@ -38,7 +35,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.models._
 import uk.gov.hmrc.agentsubscriptionfrontend.models.subscriptionJourney.SubscriptionJourneyRecord
 import uk.gov.hmrc.agentsubscriptionfrontend.service._
 import uk.gov.hmrc.agentsubscriptionfrontend.support.TaxIdentifierFormatters
-import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
+import uk.gov.hmrc.agentsubscriptionfrontend.util._
 import uk.gov.hmrc.agentsubscriptionfrontend.validators.BusinessDetailsValidator
 import uk.gov.hmrc.agentsubscriptionfrontend.views.html._
 import uk.gov.hmrc.auth.core.AuthConnector
@@ -84,26 +81,26 @@ class BusinessIdentificationController @Inject()(
 
   def showCreateNewAccount: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      Ok(createNewAccountTemplate())
+      Ok(createNewAccountTemplate()).toFuture
     }
   }
 
   def showNoMatchFound: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      Ok(noMatchFoundTemplate())
+      Ok(noMatchFoundTemplate()).toFuture
     }
   }
 
   def setupIncomplete: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
-      Ok(cannotCreateAccountTemplate())
+      Ok(cannotCreateAccountTemplate()).toFuture
     }
   }
 
   def showConfirmBusinessForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
       withValidSession { (_, existingSession) =>
-        getConfirmBusinessPage(existingSession)
+        getConfirmBusinessPage(existingSession).toFuture
       }
     }
   }
@@ -152,13 +149,13 @@ class BusinessIdentificationController @Inject()(
         confirmBusinessForm
           .bindFromRequest()
           .fold(
-            formWithErrors => getConfirmBusinessPage(existingSession, formWithErrors),
+            formWithErrors => getConfirmBusinessPage(existingSession, formWithErrors).toFuture,
             validatedBusiness => {
               validatedBusiness.confirm match {
                 case Yes =>
                   if (existingSession.registration.exists(_.isSubscribedToAgentServices)) {
                     mark("Count-Subscription-AlreadySubscribed-RegisteredInETMP")
-                    Redirect(routes.BusinessIdentificationController.showAlreadySubscribed())
+                    Redirect(routes.BusinessIdentificationController.showAlreadySubscribed()).toFuture
                   } else validatedBusinessDetailsAndRedirect(existingSession, agent)
                 case No =>
                   Redirect(routes.UtrController.showUtrForm())
@@ -187,11 +184,13 @@ class BusinessIdentificationController @Inject()(
 
   private def createRecordAndRedirectToTasklist(existingSession: AgentSession, agent: Agent)
                                                (implicit hc: HeaderCarrier): Future[Result] =
-    subscriptionJourneyService
-    .createJourneyRecord(existingSession, agent) map {
-    case Right(()) => Redirect(routes.TaskListController.showTaskList())
-    case Left(msg) => logger.warn(msg); Redirect(routes.BusinessIdentificationController.showAlreadyStarted())
-  }
+    subscriptionJourneyService.createJourneyRecord(existingSession, agent)
+      .map(_ => Redirect(routes.TaskListController.showTaskList()))
+    .recover {
+      case HttpError(msg, _) =>
+        logger.warn(msg)
+        Redirect(routes.BusinessIdentificationController.showAlreadyStarted())
+    }
 
   def showBusinessEmailForm: Action[AnyContent] = Action.async { implicit request =>
     withSubscribingAgent { _ =>
@@ -462,10 +461,10 @@ class BusinessIdentificationController @Inject()(
       withValidSession { (_, existingSession) =>
         {
           for {
-            utr <- OptionT(Future(existingSession.utr))
-            journey <- OptionT(subscriptionJourneyService.getJourneyByUtr(utr))
-            name <- OptionT(Future(journey.businessDetails.registration.flatMap(_.taxpayerName)))
-            date <- OptionT(Future(journey.lastModifiedDate))
+            utr <- existingSession.utr.toOptionT
+            journey <- subscriptionJourneyService.getJourneyByUtr(utr).toOptionT
+            name <- journey.businessDetails.registration.flatMap(_.taxpayerName).toOptionT
+            date <- journey.lastModifiedDate.toOptionT
           } yield {
             sessionStoreService.cacheContinueUrl(RedirectUrl("/agent-subscriptions/start"))
             Ok(alreadyStartedTemplate(name, date.plusDays(31).format(BusinessIdentificationController.dateFormatter)))

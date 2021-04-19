@@ -37,7 +37,7 @@ import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-case class SubscriptionReturnedHttpError(httpStatusCode: Int) extends Product with Serializable
+case class HttpError(msg: String, httpStatusCode: Int) extends RuntimeException
 
 sealed abstract class SubscriptionState
 
@@ -63,17 +63,16 @@ class SubscriptionService @Inject()(
 
   def subscribe(utr: Utr, postcode: Postcode, agency: Agency, langForEmail: Option[Lang], amlsData: Option[AmlsData])(
     implicit hc: HeaderCarrier,
-    ec: ExecutionContext): Future[Either[SubscriptionReturnedHttpError, (Arn, String)]] = {
+    ec: ExecutionContext): Future[(Arn, String)] = {
     val subscriptionDetails = mapper(utr, postcode, agency, amlsData)
-    subscribeAgencyToMtd(subscriptionDetails, langForEmail) map {
-      case Right(arn) => Right((arn, subscriptionDetails.name))
-      case Left(x)    => Left(SubscriptionReturnedHttpError(x))
+    subscribeAgencyToMtd(subscriptionDetails, langForEmail) map { arn =>
+      (arn, subscriptionDetails.name)
     }
   }
 
   def subscribeAgencyToMtd(subscriptionDetails: SubscriptionDetails, langForEmail: Option[Lang])(
     implicit hc: HeaderCarrier,
-    ec: ExecutionContext): Future[Either[Int, Arn]] = {
+    ec: ExecutionContext): Future[Arn] = {
     val address = if (subscriptionDetails.address.countryCode != "GB") {
       logger.warn(
         s"Non-GB country code chosen by user for UTR ${subscriptionDetails.utr.value}. " +
@@ -94,15 +93,13 @@ class SubscriptionService @Inject()(
       }
     )
 
-    agentSubscriptionConnector.subscribeAgencyToMtd(request).map[Either[Int, Arn]] { arn =>
-      Right(arn)
-    } recover {
+    agentSubscriptionConnector.subscribeAgencyToMtd(request).recoverWith {
       case e: UpstreamErrorResponse if Seq(Status.FORBIDDEN, Status.CONFLICT) contains e.statusCode =>
         logger.warn("Upstream error (in agent-subscription): see agent-subscription log for details")
-        Left(e.statusCode)
+        Future failed HttpError("Upstream error", e.statusCode)
       case e: UpstreamErrorResponse if e.message contains ("AGENT_TERMINATED") =>
         logger.warn(s"Terminated agent is trying to re-subscribe ${e.message}")
-        Left(e.statusCode)
+        Future failed HttpError("Terminated agent", e.statusCode)
       case e =>
         logger.error("Upstream error (in agent-subscription): see agent-subscription log for details", e)
         throw e
@@ -199,10 +196,11 @@ class SubscriptionService @Inject()(
                  agent.cleanCredsFold(isDirty = {
                    subscriptionJourneyService
                      .createJourneyRecord(agentSession, agent)
-                     .map {
-                       case Right(()) => Redirect(routes.SubscriptionController.showSignInWithNewID())
-                       case Left(msg) => logger.warn(msg); Conflict
-                     }
+                     .map { _ =>
+                       Redirect(routes.SubscriptionController.showSignInWithNewID())
+                     } recover {
+                     case HttpError(msg, _) => logger.warn(msg); Conflict
+                   }
                  })(
                    isClean = completePartialSubscriptionAndGoToComplete(utr, postcode)
                  )

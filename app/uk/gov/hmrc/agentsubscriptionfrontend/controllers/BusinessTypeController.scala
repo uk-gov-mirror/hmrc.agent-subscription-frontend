@@ -78,7 +78,7 @@ class BusinessTypeController @Inject()(
           formWithErrors => Ok(businessTypeTemplate(formWithErrors)),
           validatedBusinessType => {
             sessionStoreService.fetchAgentSession
-              .flatMap(_.getOrElse(AgentSession()))
+              .map(_.getOrElse(AgentSession()))
               .flatMap { agentSession =>
                 updateSessionAndRedirect(agentSession.copy(businessType = Some(validatedBusinessType)))(routes.UtrController.showUtrForm())
               }

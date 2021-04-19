@@ -53,13 +53,13 @@ class SubscriptionJourneyService @Inject()(agentSubscriptionConnector: AgentSubs
   def saveJourneyRecord(subscriptionJourneyRecord: SubscriptionJourneyRecord)(implicit hc: HeaderCarrier): Future[Int] =
     agentSubscriptionConnector.createOrUpdateJourney(subscriptionJourneyRecord)
 
-  def createJourneyRecord(agentSession: AgentSession, agent: Agent)(implicit hc: HeaderCarrier): Future[Either[String, Unit]] = {
+  def createJourneyRecord(agentSession: AgentSession, agent: Agent)(implicit hc: HeaderCarrier): Future[Unit] = {
     val sjr =
       SubscriptionJourneyRecord
         .fromAgentSession(agentSession, agent.authProviderId, agent.maybeCleanCredsAuthProviderId)
-    saveJourneyRecord(sjr) map {
-      case 204 => Right(())
-      case 409 => Left("the subscription journey record already exists in the database")
+    saveJourneyRecord(sjr) flatMap {
+      case 204 => Future successful (())
+      case 409 => Future failed HttpError("the subscription journey record already exists in the database", 409)
     }
   }
 }

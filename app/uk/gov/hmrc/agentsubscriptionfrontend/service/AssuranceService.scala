@@ -25,7 +25,7 @@ import uk.gov.hmrc.agentsubscriptionfrontend.auth.Agent
 import uk.gov.hmrc.agentsubscriptionfrontend.config.AppConfig
 import uk.gov.hmrc.agentsubscriptionfrontend.connectors.AgentAssuranceConnector
 import uk.gov.hmrc.agentsubscriptionfrontend.models._
-import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
+import uk.gov.hmrc.agentsubscriptionfrontend.util.valueOps
 import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -120,7 +120,7 @@ class AssuranceService @Inject()(
                           userEnteredNino = userEnteredNino
                         ))
                     )
-                  case _ => toFuture(())
+                  case _ => ().toFuture
                 }
 
               case None =>

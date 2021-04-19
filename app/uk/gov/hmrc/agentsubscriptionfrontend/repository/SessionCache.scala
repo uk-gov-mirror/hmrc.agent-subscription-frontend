@@ -19,7 +19,7 @@ package uk.gov.hmrc.agentsubscriptionfrontend.repository
 import play.api.Logging
 import play.api.libs.json.{Reads, Writes}
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.agentsubscriptionfrontend.util.toFuture
+import uk.gov.hmrc.agentsubscriptionfrontend.util._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -27,7 +27,7 @@ trait SessionCache[T] extends MongoSessionStore[T] with Logging {
 
   def fetch(implicit hc: HeaderCarrier, reads: Reads[T], ec: ExecutionContext): Future[Option[T]] =
     get.flatMap {
-      case Right(input) => input
+      case Right(input) => input.toFuture
       case Left(error) =>
         logger.warn(error)
         Future.failed(new RuntimeException(error))
@@ -40,7 +40,7 @@ trait SessionCache[T] extends MongoSessionStore[T] with Logging {
     } yield cache
 
     result.flatMap {
-      case Right(input) => input
+      case Right(input) => input.toFuture
       case Left(error) =>
         logger.warn(error)
         Future.failed(new RuntimeException(error))
@@ -49,7 +49,7 @@ trait SessionCache[T] extends MongoSessionStore[T] with Logging {
 
   def save(input: T)(implicit hc: HeaderCarrier, writes: Writes[T], ec: ExecutionContext): Future[T] =
     store(input).flatMap {
-      case Right(_) => input
+      case Right(_) => input.toFuture
       case Left(error) =>
         logger.warn(error)
         Future.failed(new RuntimeException(error))
