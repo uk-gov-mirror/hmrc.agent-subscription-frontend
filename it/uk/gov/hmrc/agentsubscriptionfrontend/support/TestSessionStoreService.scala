@@ -60,11 +60,11 @@ class TestSessionStoreService extends MongoDBSessionStoreService(null) {
     Future.successful(currentSession.continueUrl = Some(url.get(UnsafePermitAll).url))
 
   override def cacheGoBackUrl(url: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
-    toFuture(currentSession.goBackUrl =  Some(url))
+    (currentSession.goBackUrl = Some(url)).toFuture
 
   private def fetchFromSession[A](property: Option[A]): Future[Option[A]] =
     currentSessionTest match {
-      case NormalSession => toFuture(property)
+      case NormalSession => property.toFuture
       case SessionLost => Future.failed(new RuntimeException)
     }
 
@@ -72,20 +72,20 @@ class TestSessionStoreService extends MongoDBSessionStoreService(null) {
     fetchFromSession(currentSession.goBackUrl)
 
   override def cacheIsChangingAnswers(changing: Boolean)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
-    toFuture(currentSession.changingAnswers =  Some(true))
+    (currentSession.changingAnswers = Some(true)).toFuture
 
   override def fetchIsChangingAnswers(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[Boolean]] =
     fetchFromSession(currentSession.changingAnswers)
 
   override def cacheAgentSession(agentSession: AgentSession)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
-    toFuture(currentSession.agentSession = Some(agentSession))
+    (currentSession.agentSession = Some(agentSession)).toFuture
 
   override def fetchAgentSession(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[AgentSession]] =
     fetchFromSession(currentSession.agentSession)
 
   override def remove()(implicit ec: ExecutionContext): Future[Unit] = {
     sessions.clear()
-    toFuture(())
+    ().toFuture
   }
 
 
